@@ -2,17 +2,26 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>متجر البطاقات الرقمية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر Seconds Card</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #0f172a; color: white; text-align: center; padding: 50px; }
+        body { font-family: Arial, sans-serif; background-color: #0f172a; color: white; text-align: center; padding: 20px; }
         .card { background: #1e293b; border-radius: 15px; padding: 20px; margin: 15px auto; max-width: 400px; border: 1px solid #334155; transition: 0.3s; }
         .card:hover { transform: translateY(-5px); border-color: #38bdf8; }
         .btn { display: block; background: #38bdf8; color: #0f172a; text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 10px; }
         h1 { color: #38bdf8; }
+        
+        /* تنسيق قسم خدمة العملاء الجديد */
+        .support-section { margin-top: 50px; padding: 20px; border-top: 2px solid #334155; }
+        .support-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
+        .support-card { background: #1e293b; padding: 20px; border-radius: 12px; width: 250px; border-bottom: 4px solid #38bdf8; }
+        .support-btn { display: inline-block; margin-top: 10px; color: #38bdf8; text-decoration: none; font-weight: bold; border: 1px solid #38bdf8; padding: 5px 15px; border-radius: 5px; }
+        .support-btn:hover { background: #38bdf8; color: #0f172a; }
     </style>
 </head>
 <body>
-    <h1>مرحباً بك في متجري الرقمي</h1>
+
+    <h1>مرحباً بك في Seconds Card</h1>
     <p>اختر العرض المناسب لك وسيتم توجيهك للشراء مباشرة</p>
 
     <div class="card">
@@ -27,10 +36,24 @@
         <a href="رابط-الأفليت-هنا" class="btn">اطلب بطاقتك</a>
     </div>
 
-    <div class="card">
-        <h3>🌐 إنترنت دولي eSIM</h3>
-        <p>ابقَ متصلاً عبر KryptoMate</p>
-        <a href="https://kryptomate.com/" class="btn">شراء الشريحة</a>
+    <div class="support-section">
+        <h2>مركز خدمة العملاء</h2>
+        <p>هل تواجه مشكلة؟ نحن هنا للمساعدة</p>
+        
+        <div class="support-container">
+            <div class="support-card">
+                <h4>واتساب مباشر</h4>
+                <p>للاستفسارات السريعة</p>
+                <a href="https://wa.me/رقم_هاتفك_هنا" class="support-btn">تواصل الآن</a>
+            </div>
+
+            <div class="support-card" style="border-bottom-color: #f87171;">
+                <h4>نموذج الدعم</h4>
+                <p>لرفع شكوى أو تذكرة</p>
+                <a href="https://forms.gle/cHQH5ZKswZfqz5Hf6" target="_blank" class="support-btn" style="color: #f87171; border-color: #f87171;">فتح النموذج</a>
+            </div>
+        </div>
     </div>
+
 </body>
 </html>
