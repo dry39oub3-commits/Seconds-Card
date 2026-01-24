@@ -54,6 +54,40 @@ header { display: flex; justify-content: space-between; align-items: center; }
     border-radius: 25px;
     margin-top: 10px;
 }
+/* تنسيق البطاقة الأساسي */
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* حركة انسيابية */
+    cursor: pointer;
+    overflow: hidden;
+}
+
+/* التأثير عند مرور الماوس (أو اللمس في الجوال) */
+.card:hover {
+    transform: translateY(-8px); /* ارتفاع البطاقة للأعلى */
+    box-shadow: 0 14px 28px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.1); /* ظل أعمق */
+}
+
+/* حركة الصورة داخل البطاقة */
+.card img {
+    transition: transform 0.5s ease;
+}
+
+.card:hover img {
+    transform: scale(1.08); /* زووم بسيط للصورة */
+}
+
+/* تأثير زر الشراء عند التحويم */
+.btn-buy {
+    transition: background 0.3s ease;
+}
+
+.card:hover .btn-buy {
+    background: #5a5d17; /* يتغير اللون للدرجة الأغمق */
+    transform: scale(1.05);
+}
 
 .admin-panel { background: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 20px; }
 .input-group input, .input-group select { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ddd; }
