@@ -13,16 +13,23 @@
     </style>
 </head>
 <body>
-    <div class="admin-form">
-        <h2 class="admin-title">➕ إضافة منتج جديد</h2>
-        <input type="text" id="pTitle" placeholder="اسم المنتج">
-        <input type="text" id="pPrice" placeholder="السعر (مثلاً: 50 ريال)">
-        <input type="text" id="pLink" placeholder="رابط الأفلييت">
-        <label style="display: block; margin: 10px 0 5px; font-size: 14px;">اختر صورة المنتج:</label>
-        <input type="file" id="pImg" accept="image/*">
-        <button onclick="addProduct()">حفظ ونشر المنتج فوراً</button>
+   <div class="admin-form">
+    <h2>➕ إضافة منتج مع خصم</h2>
+    <input type="text" id="pTitle" placeholder="اسم المنتج">
+    
+    <div style="display: flex; gap: 5px;">
+        <input type="number" id="pPriceOld" placeholder="السعر قبل الخصم">
+        <input type="number" id="pPriceNew" placeholder="السعر الحالي (بعد الخصم)">
     </div>
-
+    
+    <input type="text" id="pLink" placeholder="رابط الأفلييت">
+    <textarea id="pDesc" placeholder="وصف المنتج..."></textarea>
+    
+    <label>اختر صور المنتج:</label>
+    <input type="file" id="pImgs" accept="image/*" multiple>
+    
+    <button onclick="addProduct()">نشر العرض الخاص</button>
+</div>
     <hr>
     <h2 style="text-align: center;">المنتجات المعروضة حالياً</h2>
     <div id="adminDisplay" class="product-grid"></div>
