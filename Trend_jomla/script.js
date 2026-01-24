@@ -1,54 +1,84 @@
-// وظيفة التبديل بين الوضع الليلي والنهاري
-function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    const btn = document.getElementById('themeToggle');
-    btn.innerText = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-}
+// مصفوفة المنتجات (تُحمل من الذاكرة المحلية أو تكون فارغة)
+let products = JSON.parse(localStorage.getItem('myProducts')) || [];
 
-// إضافة رابط جديد
-function addLink() {
-    const title = document.getElementById('prodTitle').value;
-    const link = document.getElementById('prodLink').value;
-    const img = document.getElementById('prodImg').value;
-    const category = document.getElementById('prodCategory').value;
+// وظيفة إضافة منتج (للإدارة)
+async function addProduct() {
+    const title = document.getElementById('pTitle').value;
+    const price = document.getElementById('pPrice').value;
+    const link = document.getElementById('pLink').value;
+    const fileInput = document.getElementById('pImg');
 
-    if(!title || !link) return alert("يرجى ملء البيانات!");
-
-    const grid = document.getElementById('linksGrid');
-    const card = document.createElement('div');
-    card.className = `card ${category}`;
-    
-    // التحقق إذا كان الرابط فيديو أو صورة
-    const mediaTag = img.includes('mp4') ? 
-        `<video src="${img}" autoplay muted loop></video>` : 
-        `<img src="${img}" alt="${title}">`;
-
-    card.innerHTML = `
-    <div onclick="window.open('${link}', '_blank')" style="cursor:pointer">
-        ${mediaTag}
-        <div class="card-content">
-            <h3>${title}</h3>
-            <p>التصنيف: ${category}</p>
-            <span class="btn-buy">مشاهدة المنتج ✨</span>
-        </div>
-    </div>
-`;
-
-    grid.appendChild(card);
-    clearInputs();
-}
-
-function clearInputs() {
-    document.querySelectorAll('.input-group input').forEach(i => i.value = '');
-}
-
-// وظيفة البحث
-function searchLinks() {
-    let input = document.getElementById('searchInput').value.toLowerCase();
-    let cards = document.getElementsByClassName('card');
-
-    for (let i = 0; i < cards.length; i++) {
-        let title = cards[i].getElementsByTagName('h3')[0].innerText.toLowerCase();
-        cards[i].style.display = title.includes(input) ? "" : "none";
+    if(title && price && link && fileInput.files[0]) {
+        // تحويل الصورة من المعرض إلى نص يمكن حفظه
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgBase64 = e.target.result;
+            
+            const newProduct = { 
+                id: Date.now(), 
+                title, 
+                price, 
+                link, 
+                img: imgBase64 // الصورة أصبحت الآن نصاً محفوظاً
+            };
+            
+            products.push(newProduct);
+            // لاحظ: يجب نسخ مصفوفة products الجديدة ووضعها في الكود يدوياً
+            // لتظهر للجميع في تيك توك كما اتفقنا سابقاً
+            console.log("انسخ هذا المنتج وأضفه للمصفوفة في script.js:", newProduct);
+            alert("تم تجهيز المنتج! تأكد من حفظ التغييرات في VS Code ونشرها.");
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    } else {
+        alert("يرجى ملء جميع الخانات واختيار صورة!");
     }
 }
+
+// وظيفة عرض المنتجات للزبون
+function displayProducts() {
+    const display = document.getElementById('productDisplay');
+    if(!display) return;
+    
+    display.innerHTML = products.map(p => `
+        <div class="card">
+            <img src="${p.img}" alt="${p.title}">
+            <div class="card-content">
+                <h3>${p.title}</h3>
+                <p class="price">${p.price}</p>
+                <a href="${p.link}" target="_blank" class="btn-buy">عرض المنتج</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+// وظيفة البحث (للزوار)
+function filterProducts() {
+    let term = document.getElementById('searchInput').value.toLowerCase();
+    let cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        let title = card.querySelector('h3').innerText.toLowerCase();
+        card.style.display = title.includes(term) ? "block" : "none";
+    });
+}
+
+// وظيفة الإدارة (للحذف)
+function displayAdminProducts() {
+    const display = document.getElementById('adminDisplay');
+    if(!display) return;
+
+    display.innerHTML = products.map(p => `
+        <div class="card" style="border: 2px solid red;">
+            <h3>${p.title}</h3>
+            <button class="delete-btn" onclick="deleteProduct(${p.id})">حذف المنتج ❌</button>
+        </div>
+    `).join('');
+}
+
+function deleteProduct(id) {
+    products = products.filter(p => p.id !== id);
+    localStorage.setItem('myProducts', JSON.stringify(products));
+    location.reload();
+}
+
+// تشغيل العرض للزبائن تلقائياً
+displayProducts();

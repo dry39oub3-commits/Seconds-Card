@@ -6,36 +6,15 @@
     <title>Trend_jomla</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="light-mode">
-
-    <div class="container">
-        <header>
-            <h1>Trend_jomla 📦</h1>
-            <button id="themeToggle" onclick="toggleTheme()">🌙</button>
-        </header>
-
-        <section class="admin-panel">
-            <div class="input-group">
-                <input type="text" id="prodTitle" placeholder="عنوان المنتج">
-                <input type="text" id="prodLink" placeholder="رابط الأفلييت">
-                <input type="text" id="prodImg" placeholder="رابط الصورة أو الفيديو">
-                <select id="prodCategory">
-                    <option value="all">التصنيف</option>
-                    <option value="tech">تقنية</option>
-                    <option value="fashion">أزياء</option>
-                    <option value="home">منزل</option>
-                </select>
-                <button onclick="addLink()">إضافة للمتجر +</button>
-            </div>
-        </section>
-
-        <div class="filter-bar">
-            <input type="text" id="searchInput" onkeyup="searchLinks()" placeholder="ابحث عن منتج...">
+<body>
+    <header>
+        <h1>🏠 Trend_jomla</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="ابحث عن أداة منزلية..." onkeyup="filterProducts()">
         </div>
+    </header>
 
-        <div class="grid-container" id="linksGrid">
-            </div>
-    </div>
+    <main id="productDisplay" class="product-grid"></main>
 
     <script src="script.js"></script>
 </body>
