@@ -2,32 +2,31 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم - إضافة منتجات</title>
+    <title>لوحة التحكم - Trend_jomla</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .admin-form { background: #f4f4f4; padding: 20px; border-radius: 10px; max-width: 500px; margin: 20px auto; }
-        input { width: 90%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ddd; }
-        button { background: #797c1f; color: white; padding: 10px 20px; border: none; cursor: pointer; width: 100%; }
-        .delete-btn { background: #c0392b; margin-top: 10px; }
+        .admin-form { background: #f4f4f4; padding: 20px; border-radius: 10px; max-width: 500px; margin: 20px auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 94%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd; }
+        button { background: #797c1f; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        button:hover { background: #5a5d17; }
+        .admin-title { margin-bottom: 20px; color: #333; }
     </style>
 </head>
 <body>
     <div class="admin-form">
-        <h2>➕ إضافة منتج جديد</h2>
+        <h2 class="admin-title">➕ إضافة منتج جديد</h2>
         <input type="text" id="pTitle" placeholder="اسم المنتج">
         <input type="text" id="pPrice" placeholder="السعر (مثلاً: 50 ريال)">
         <input type="text" id="pLink" placeholder="رابط الأفلييت">
-       <label for="pImg" style="display: block; margin-bottom: 5px;">اختر صورة من المعرض:</label>
-<input type="file" id="pImg" accept="image/*">
-        <button onclick="addProduct()">حفظ المنتج ونشره</button>
+        <label style="display: block; margin: 10px 0 5px; font-size: 14px;">اختر صورة المنتج:</label>
+        <input type="file" id="pImg" accept="image/*">
+        <button onclick="addProduct()">حفظ ونشر المنتج فوراً</button>
     </div>
 
+    <hr>
+    <h2 style="text-align: center;">المنتجات المعروضة حالياً</h2>
     <div id="adminDisplay" class="product-grid"></div>
 
-    <script src="script.js"></script>
-    <script>
-        // تشغيل عرض المنتجات للإدارة عند الفتح
-        window.onload = displayAdminProducts;
-    </script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

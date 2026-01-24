@@ -1,84 +1,77 @@
-// مصفوفة المنتجات (تُحمل من الذاكرة المحلية أو تكون فارغة)
-let products = JSON.parse(localStorage.getItem('myProducts')) || [];
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// وظيفة إضافة منتج (للإدارة)
-async function addProduct() {
+// إعدادات Firebase الخاصة بمشروعك "trend-jomla"
+const firebaseConfig = {
+  apiKey: "AIzaSyDElVuFjIc2_N3PlieSQa0CE4JFObLTaRc",
+  authDomain: "trend-jomla.firebaseapp.com",
+  databaseURL: "https://trend-jomla-default-rtdb.firebaseio.com", // الرابط المستخرج من صورتك
+  projectId: "trend-jomla",
+  storageBucket: "trend-jomla.firebasestorage.app",
+  messagingSenderId: "243297350402",
+  appId: "1:243297350402:web:c9edba7477bb74a7fd481b",
+  measurementId: "G-42D33N1BFW"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const productsRef = ref(db, "products");
+
+// دالة إضافة المنتج (تعمل عند الضغط على زر الحفظ)
+window.addProduct = function() {
     const title = document.getElementById('pTitle').value;
     const price = document.getElementById('pPrice').value;
     const link = document.getElementById('pLink').value;
     const fileInput = document.getElementById('pImg');
 
-    if(title && price && link && fileInput.files[0]) {
-        // تحويل الصورة من المعرض إلى نص يمكن حفظه
+    if (title && price && fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            const imgBase64 = e.target.result;
-            
-            const newProduct = { 
-                id: Date.now(), 
-                title, 
-                price, 
-                link, 
-                img: imgBase64 // الصورة أصبحت الآن نصاً محفوظاً
-            };
-            
-            products.push(newProduct);
-            // لاحظ: يجب نسخ مصفوفة products الجديدة ووضعها في الكود يدوياً
-            // لتظهر للجميع في تيك توك كما اتفقنا سابقاً
-            console.log("انسخ هذا المنتج وأضفه للمصفوفة في script.js:", newProduct);
-            alert("تم تجهيز المنتج! تأكد من حفظ التغييرات في VS Code ونشرها.");
+            push(productsRef, {
+                title: title,
+                price: price,
+                link: link || "#",
+                img: e.target.result
+            }).then(() => {
+                alert("تم بنجاح! المنتج سيظهر في الأسفل فوراً.");
+                // تفريغ الحقول بعد الإضافة
+                document.getElementById('pTitle').value = "";
+                document.getElementById('pPrice').value = "";
+                document.getElementById('pLink').value = "";
+                fileInput.value = "";
+            });
         };
         reader.readAsDataURL(fileInput.files[0]);
     } else {
-        alert("يرجى ملء جميع الخانات واختيار صورة!");
+        alert("يرجى إدخال اسم المنتج والسعر واختيار صورة");
     }
-}
+};
 
-// وظيفة عرض المنتجات للزبون
-function displayProducts() {
-    const display = document.getElementById('productDisplay');
-    if(!display) return;
+// دالة عرض المنتجات تلقائياً في الأسفل (تحديث لحظي)
+onValue(productsRef, (snapshot) => {
+    const data = snapshot.val();
+    const display = document.getElementById('adminDisplay') || document.getElementById('productDisplay');
+    if (!display) return;
     
-    display.innerHTML = products.map(p => `
-        <div class="card">
-            <img src="${p.img}" alt="${p.title}">
-            <div class="card-content">
-                <h3>${p.title}</h3>
-                <p class="price">${p.price}</p>
-                <a href="${p.link}" target="_blank" class="btn-buy">عرض المنتج</a>
-            </div>
-        </div>
-    `).join('');
-}
+    display.innerHTML = ""; 
+    for (let id in data) {
+        const p = data[id];
+        display.innerHTML += `
+            <div class="card">
+                <img src="${p.img}">
+                <div class="card-content">
+                    <h3>${p.title}</h3>
+                    <p class="price">${p.price}</p>
+                    <a href="${p.link}" target="_blank" class="btn-buy">اطلب الآن</a>
+                    ${display.id === 'adminDisplay' ? `<button onclick="window.deleteProduct('${id}')" style="background:#c0392b; margin-top:10px; border:none; color:white; padding:5px; width:100%; cursor:pointer;">حذف المنتج ❌</button>` : ""}
+                </div>
+            </div>`;
+    }
+});
 
-// وظيفة البحث (للزوار)
-function filterProducts() {
-    let term = document.getElementById('searchInput').value.toLowerCase();
-    let cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        let title = card.querySelector('h3').innerText.toLowerCase();
-        card.style.display = title.includes(term) ? "block" : "none";
-    });
-}
-
-// وظيفة الإدارة (للحذف)
-function displayAdminProducts() {
-    const display = document.getElementById('adminDisplay');
-    if(!display) return;
-
-    display.innerHTML = products.map(p => `
-        <div class="card" style="border: 2px solid red;">
-            <h3>${p.title}</h3>
-            <button class="delete-btn" onclick="deleteProduct(${p.id})">حذف المنتج ❌</button>
-        </div>
-    `).join('');
-}
-
-function deleteProduct(id) {
-    products = products.filter(p => p.id !== id);
-    localStorage.setItem('myProducts', JSON.stringify(products));
-    location.reload();
-}
-
-// تشغيل العرض للزبائن تلقائياً
-displayProducts();
+// دالة حذف المنتج
+window.deleteProduct = function(id) {
+    if(confirm("هل تريد حذف هذا المنتج نهائياً؟")) {
+        remove(ref(db, `products/${id}`));
+    }
+};
