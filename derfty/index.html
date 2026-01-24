@@ -1,0 +1,197 @@
+<!doctype html>
+
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>حاسبة يعقوب صيني</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --panel:#0b1220;
+      --accent:#0ea5e9;
+      --btn:#1f2937;
+      --btn-hover:#374151;
+      --txt:#e6eef6;
+      --danger:#ef4444;
+    }
+    *{box-sizing:border-box;font-family: "Segoe UI", Tahoma, Arial, "Noto Naskh Arabic", sans-serif}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071029 0%, #0b1530 100%);color:var(--txt);display:flex;align-items:center;justify-content:center;padding:20px}
+    .calculator{
+      width:360px;
+      max-width:95vw;
+      background:linear-gradient(180deg,var(--panel), #071427);
+      border-radius:14px;
+      box-shadow:0 10px 30px rgba(2,6,23,0.7);
+      padding:18px;
+    }
+    .brand{
+      display:flex;gap:10px;align-items:center;margin-bottom:12px;
+    }
+    .logo{
+      width:54px;height:54px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#0369a1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white;box-shadow:0 6px 18px rgba(14,165,233,0.12)
+    }
+    .brand .title{font-size:18px;font-weight:700}
+    .brand .subtitle{font-size:12px;color:#9fb6cc;margin-top:2px}
+    .display{
+      background:rgba(255,255,255,0.03);
+      border-radius:10px;padding:12px 14px;margin-bottom:12px;min-height:70px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
+      word-break:break-all;
+    }
+    .display .expr{font-size:18px;color:#9fb6cc;min-height:20px}
+    .display .result{font-size:26px;font-weight:700;margin-top:4px}
+    .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    button.key{
+      background:var(--btn);border:0;padding:14px 10px;border-radius:10px;font-size:18px;color:var(--txt);cursor:pointer;
+      box-shadow:inset 0 -3px 0 rgba(0,0,0,0.2);
+    }
+    button.key:hover{background:var(--btn-hover)}
+    button.op{background:linear-gradient(180deg,#075985,#0369a1);font-weight:700}
+    button.wide{grid-column:span 2}
+    button.clear{background:linear-gradient(180deg,#7f1d1d,#b91c1c)}
+    .small{font-size:14px;color:#cfeffb}
+    footer{margin-top:12px;text-align:center;font-size:12px;color:#9fb6cc}
+    /* Responsive */
+    @media (max-width:420px){
+      .calculator{padding:12px}
+      .display{min-height:64px;padding:10px}
+      button.key{padding:12px;font-size:16px}
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" role="application" aria-label="حاسبة يعقوب صيني">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">ي ش</div>
+      <div>
+        <div class="title">حاسبة يعقوب صيني</div>
+        <div class="subtitle">حاسبة بسيطة للعمليات الحسابية الأساسية</div>
+      </div>
+    </div>
+
+```
+<div class="display" id="display" aria-live="polite">
+  <div class="expr" id="expression">&nbsp;</div>
+  <div class="result" id="result">0</div>
+</div>
+
+<div class="keys" role="group" aria-label="مفاتيح الحاسبة">
+  <button class="key clear" data-action="clear">C</button>
+  <button class="key" data-action="back">⌫</button>
+  <button class="key" data-value="(">(</button>
+  <button class="key" data-value=")">)</button>
+
+  <button class="key" data-value="7">7</button>
+  <button class="key" data-value="8">8</button>
+  <button class="key" data-value="9">9</button>
+  <button class="key op" data-value="/">÷</button>
+
+  <button class="key" data-value="4">4</button>
+  <button class="key" data-value="5">5</button>
+  <button class="key" data-value="6">6</button>
+  <button class="key op" data-value="*">×</button>
+
+  <button class="key" data-value="1">1</button>
+  <button class="key" data-value="2">2</button>
+  <button class="key" data-value="3">3</button>
+  <button class="key op" data-value="-">−</button>
+
+  <button class="key wide" data-value="0">0</button>
+  <button class="key" data-value=".">.</button>
+  <button class="key op" data-value="+">+</button>
+
+  <button class="key wide" id="equals" data-action="equals">=</button>
+</div>
+
+<footer>صنع بواسطة يعقوب صيني — يدعم لوحة المفاتيح</footer>
+```
+
+  </main>
+
+  <script>
+    (function(){
+      const exprEl = document.getElementById('expression');
+      const resEl = document.getElementById('result');
+      const keys = document.querySelectorAll('button.key');
+
+      let expression = '';
+
+      function updateDisplay(){
+        exprEl.textContent = expression || '\u00A0';
+        resEl.textContent = evaluateSafe(expression) ?? '0';
+      }
+
+      function safeAppend(char){
+        // Allow digits, operators, parentheses and dot only
+        const allowed = /[0-9+\-*/().]/;
+        if(char.length === 1 && allowed.test(char)){
+          expression += char;
+        } else if (char === '÷'){ expression += '/'; }
+        else if (char === '×'){ expression += '*'; }
+      }
+
+      function clearAll(){
+        expression = '';
+      }
+
+      function backspace(){
+        expression = expression.slice(0, -1);
+      }
+
+      function evaluateSafe(expr){
+        if(!expr) return '';
+        // Reject if contains invalid chars
+        if(!/^[0-9+\-*/().\s]+$/.test(expr)) return 'خطأ';
+        try {
+          // Prevent accidental huge computations: limit length
+          if(expr.length > 200) return 'خطأ';
+          // Evaluate using Function (safer than eval in this context since we validated chars)
+          const value = Function('"use strict"; return (' + expr + ')')();
+          if(typeof value === 'number' && isFinite(value)){
+            // Format: if integer show as integer else show up to 8 decimals trimmed
+            return Number.isInteger(value) ? value.toString() : (+value.toFixed(8)).toString();
+          } else return 'خطأ';
+        } catch(e){
+          return 'خطأ';
+        }
+      }
+
+      keys.forEach(btn=>{
+        const val = btn.dataset.value;
+        const action = btn.dataset.action;
+        btn.addEventListener('click', ()=>{
+          if(action === 'clear'){ clearAll(); updateDisplay(); return; }
+          if(action === 'back'){ backspace(); updateDisplay(); return; }
+          if(action === 'equals'){ resEl.textContent = evaluateSafe(expression) ?? '0'; expression = String(evaluateSafe(expression) === 'خطأ' ? '' : evaluateSafe(expression)); updateDisplay(); return; }
+          if(val){ safeAppend(val); updateDisplay(); }
+        });
+      });
+
+      // Keyboard support
+      document.addEventListener('keydown', (e)=>{
+        const key = e.key;
+        if(/^[0-9]$/.test(key) || ['+','-','*','/','(',')','.'].includes(key)){
+          safeAppend(key);
+          updateDisplay();
+          e.preventDefault();
+          return;
+        }
+        if(key === 'Enter' || key === '='){ // evaluate
+          const out = evaluateSafe(expression);
+          resEl.textContent = out ?? '0';
+          expression = String(out === 'خطأ' ? '' : out);
+          updateDisplay();
+          e.preventDefault();
+          return;
+        }
+        if(key === 'Backspace'){ backspace(); updateDisplay(); e.preventDefault(); return; }
+        if(key.toLowerCase() === 'c'){ clearAll(); updateDisplay(); return; }
+      });
+
+      // initialize
+      updateDisplay();
+    })();
+  </script>
+
+</body>
+</html>
