@@ -74,7 +74,7 @@ window.addToCart = function() {
     });
     localStorage.setItem('cart', JSON.stringify(cart));
     alert('تمت الإضافة إلى السلة ✅');
-    window.location.href = 'cart.html';
+    
 };
 
 window.handleLogout = async function() {

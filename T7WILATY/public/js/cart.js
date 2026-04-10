@@ -64,8 +64,10 @@ function renderCart() {
 
 // --- 3. وظائف التحكم (تحديث الكمية والحذف) ---
 window.updateQty = (index, change) => {
-    if (cart[index].quantity + change > 0) {
-        cart[index].quantity += change;
+    if (!cart[index].quantity) cart[index].quantity = 1;
+    const newQty = cart[index].quantity + change;
+    if (newQty > 0) {
+        cart[index].quantity = newQty;
         saveAndReload();
     }
 };
