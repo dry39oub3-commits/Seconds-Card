@@ -1,4 +1,4 @@
-    import { supabase } from '../js/supabase-config.js';
+    import { supabase } from '../../js/supabase-config.js';
 
     async function loadMethods() {
         const { data, error } = await supabase
