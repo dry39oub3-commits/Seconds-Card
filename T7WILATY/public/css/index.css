@@ -129,26 +129,106 @@ body {
 }
 
 /* --- شبكة البطاقات --- */
+/* الحاوية الرئيسية للبطاقات */
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* زيادة العرض قليلاً لتناسب الصور */
+    gap: 25px;
     padding: 30px 20px;
     max-width: 1200px;
     margin: 0 auto;
 }
-.card {
-    background: var(--card-bg);
-    border-radius: 15px;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    transition: 0.3s;
-}
-.card:hover { transform: translateY(-5px); }
 
-/* --- تأثيرات التحريك --- */
+/* تصميم البطاقة الفردية */
+.card-item {
+    background: var(--card-bg);
+    border-radius: 20px; /* زوايا أكثر نعومة */
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* تأثير عند تمرير الماوس */
+.card-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    border-color: var(--primary-color); /* تأكد من تعريف لون رئيسي لموقعك */
+}
+
+/* حاوية الصورة - هذا هو الجزء الأهم لإصلاح مشكلة صورة نيتفليكس */
+.card-image {
+    width: 100%;
+    height: 160px;
+    background: #f1f1f1; /* لون خلفية خفيف خلف الصور الشفافة */
+    border-radius: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* يضمن عدم قص الصورة أو تمددها بشكل سيء */
+    padding: 10px; /* مسافة داخلية للصورة */
+    transition: transform 0.5s ease;
+}
+
+.card-item:hover .card-image img {
+    transform: scale(1.1); /* تكبير الصورة قليلاً عند التحويم */
+}
+
+/* معلومات البطاقة */
+.card-info h3 {
+    font-size: 1.1rem;
+    margin: 10px 0;
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+.price-start {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.price-start span {
+    color: #2ecc71; /* لون أخضر للسعر */
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* زر عرض الفئات */
+.view-btn {
+    width: 100%;
+    padding: 10px;
+    background: #f8f9fa;
+    border: none;
+    border-radius: 10px;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.card-item:hover .view-btn {
+    background: var(--primary-color, #007bff);
+    color: white;
+}
+
+/* حركة الظهور التدريجي */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
