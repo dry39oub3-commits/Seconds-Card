@@ -895,3 +895,59 @@ h2 i {
     background: #219150;
     transform: translateY(-2px);
 }
+
+
+
+/* الحاوية التي تضم قائمة البنوك */
+.methods-list {
+    display: grid;
+    /* إنشاء أعمدة: كل عمود لا يقل عن 250px ويتوزع تلقائياً لملء المساحة */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+    gap: 20px; /* المسافة بين البطاقات */
+    margin-top: 30px;
+    direction: rtl;
+}
+
+/* تصميم كل بطاقة بنك كعمود مستقل */
+.method-card {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column; /* ترتيب العناصر داخلياً بشكل رأسي */
+    align-items: center; /* توسيط المحتوى */
+    text-align: center;
+    transition: 0.3s ease;
+}
+
+.method-card:hover {
+    transform: translateY(-5px);
+    border-color: #00a884;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* ضبط حجم شعار البنك ليكون متناسقاً داخل العمود */
+.method-card img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain; /* يمنع تمدد الصورة ويحافظ على أبعادها */
+    margin-bottom: 15px;
+}
+
+/* اسم البنك ورقم الحساب */
+.method-card h3 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.method-card .acc-number {
+    font-size: 0.9rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 20px;
+}

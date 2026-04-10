@@ -1,57 +1,42 @@
-// استيراد auth من ملف الإعدادات الرئيسي
-import { auth } from './supabase-config.js';
-import { 
-    signInWithEmailAndPassword, 
-    onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { supabase } from './supabase-config.js';
 
-const loginForm = document.getElementById('login-form');
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('login-form');
+    const googleBtn = document.getElementById('google-login-btn');
 
-if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // تسجيل الدخول بالهاتف وكلمة المرور
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('user-phone').value.trim();
+            const pass = document.getElementById('user-pass').value;
+            const loginBtn = document.getElementById('login-btn');
+            const email = `${phone}@storcards.com`;
 
-        const phone = document.getElementById('user-phone').value.trim();
-        const pass = document.getElementById('user-pass').value;
-        const loginBtn = document.getElementById('login-btn');
+            loginBtn.innerText = "جاري التحقق...";
+            loginBtn.disabled = true;
 
-        // تحويل رقم الهاتف إلى إيميل ليعمل مع Firebase Auth في مشروع StorCards
-        const email = `${phone}@storcards.com`;
+            const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
 
-        loginBtn.innerText = "جاري التحقق سحابياً...";
-        loginBtn.disabled = true;
-
-        try {
-            // تسجيل الدخول في Firebase Auth (الإصدار الجديد)
-            await signInWithEmailAndPassword(auth, email, pass);
-            
-            alert("مرحباً بك في StorCards");
-            window.location.href = "index.html";
-
-        } catch (error) {
-            console.error("Login Error:", error.code);
-            
-            // معالجة الأخطاء الشائعة
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            if (error) {
                 alert("رقم الهاتف أو كلمة المرور غير صحيحة");
-            } else if (error.code === 'auth/too-many-requests') {
-                alert("محاولات كثيرة خاطئة، يرجى المحاولة لاحقاً.");
             } else {
-                alert("حدث خطأ أثناء الدخول: " + error.message);
+                window.location.href = "index.html";
             }
-        } finally {
+
             loginBtn.innerText = "دخول آمن";
             loginBtn.disabled = false;
-        }
-    });
-}
+        });
+    }
 
-// مراقب حالة تسجيل الدخول لتحديث واجهة المستخدم
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log("StorCards Auth: المستخدم مسجل دخوله بـ ID:", user.uid);
-        // هنا يمكنك إضافة كود لإظهار أزرار المحفظة أو إخفاء زر الدخول
-    } else {
-        console.log("StorCards Auth: لا يوجد مستخدم مسجل حالياً");
+    // تسجيل الدخول بـ Google
+    if (googleBtn) {
+        googleBtn.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin + '/index.html' }
+            });
+            if (error) alert("خطأ في تسجيل الدخول بـ Google: " + error.message);
+        });
     }
 });

@@ -48,33 +48,46 @@
         </div>
     </header>
 
-    <main class="checkout-container">
-        <div class="checkout-card">
-            <h2><i class="fas fa-shield-alt"></i> مراجعة الدفع</h2>
-            
-            <div class="payment-summary">
-                <div class="summary-line">
-                    <span>إجمالي المشتريات:</span>
-                    <span id="checkout-total">0 MRU</span>
-                </div>
-                <div class="summary-line wallet-balance-line">
-                    <span>رصيد محفظتك الحالي:</span>
-                    <span id="current-wallet-balance">جاري التحميل...</span>
-                </div>
+<main class="checkout-container">
+    <div class="checkout-card">
+        <h2><i class="fas fa-shield-alt"></i> مراجعة الدفع</h2>
+        
+        <div class="payment-summary">
+            <div class="summary-line">
+                <span>إجمالي المشتريات:</span>
+                <span id="checkout-total">0 MRU</span>
             </div>
-
-            <div id="payment-status-msg"></div>
-
-            <button id="confirm-payment-btn" class="pay-now-btn" onclick="executePayment()" disabled>
-                تأكيد الدفع الآن
-            </button>
-            
-            <p class="security-note"><i class="fas fa-lock"></i> سيتم خصم المبلغ من محفظتك فوراً وتصلك أكواد البطاقات في "طلباتي".</p>
+            <div class="summary-line wallet-balance-line">
+                <span>رصيد محفظتك الحالي:</span>
+                <span id="current-wallet-balance">جاري التحميل...</span>
+            </div>
         </div>
-    </main>
+
+        <!-- طرق الدفع -->
+        <div id="payment-methods-section" style="margin: 20px 0;">
+            <h3 style="margin-bottom: 12px; font-size: 16px;"><i class="fas fa-wallet"></i> اختر طريقة الدفع</h3>
+            <div id="payment-methods-list" style="display:flex; flex-wrap:wrap; gap:12px;">
+                <p style="color:#888;">جاري تحميل طرق الدفع...</p>
+            </div>
+            <div id="selected-method-info" style="display:none; margin-top:15px; background:#1e293b; border-radius:10px; padding:15px;">
+                <p style="margin:0; color:#94a3b8; font-size:14px;">رقم الحساب:</p>
+                <p id="selected-account" style="margin:5px 0 0; font-size:18px; font-weight:bold; color:#f97316;"></p>
+            </div>
+        </div>
+
+        <div id="payment-status-msg"></div>
+        <button id="confirm-payment-btn" class="pay-now-btn" onclick="executePayment()" disabled>
+            تأكيد الدفع الآن
+        </button>
+        
+        <p class="security-note"><i class="fas fa-lock"></i> سيتم خصم المبلغ من محفظتك فوراً وتصلك أكواد البطاقات في "طلباتي".</p>
+    </div>
+</main>
+
+<script type="module" src="js/checkout.js"></script>
 
     
     <script src="js/supabase-config.js"></script>
-    <script src="js/checkout.js"></script>
+    
 </body>
 </html>

@@ -2,15 +2,64 @@ import { supabase } from './supabase-config.js';
 
 let totalAmount = 0;
 let userBalance = 0;
+let selectedPaymentMethod = null;
 
-// --- 1. تشغيل الدوال الأساسية ---
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     setupUserMenu();
     checkAuthAndLoadData();
+    loadPaymentMethods();
 });
 
-// --- 2. مراقب حالة تسجيل الدخول ومعالجة الرصيد ---
+// --- جلب طرق الدفع ---
+async function loadPaymentMethods() {
+    const { data: methods, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+
+    const list = document.getElementById('payment-methods-list');
+    if (error || !methods || methods.length === 0) {
+        list.innerHTML = '<p style="color:#888;">لا توجد طرق دفع متاحة حالياً.</p>';
+        return;
+    }
+
+    list.innerHTML = methods.map(m => `
+        <div class="payment-method-card" id="pm-${m.id}" onclick="selectMethod('${m.id}', '${m.account_number}', '${m.name}')"
+            style="cursor:pointer; border:2px solid #334155; border-radius:12px; padding:12px 18px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; transition:0.3s;">
+            <img src="${m.logo_url || ''}" alt="${m.name}" style="width:50px; height:50px; object-fit:contain;" onerror="this.style.display='none'">
+            <span style="font-size:14px; font-weight:bold;">${m.name}</span>
+        </div>
+    `).join('');
+}
+
+window.selectMethod = function(id, account, name) {
+    // إزالة التحديد السابق
+    document.querySelectorAll('.payment-method-card').forEach(c => {
+        c.style.borderColor = '#334155';
+        c.style.background = '';
+    });
+
+    // تحديد الجديد
+    const card = document.getElementById(`pm-${id}`);
+    if (card) {
+        card.style.borderColor = '#f97316';
+        card.style.background = 'rgba(249,115,22,0.1)';
+    }
+
+    selectedPaymentMethod = { id, account, name };
+
+    // عرض رقم الحساب
+    const infoDiv = document.getElementById('selected-method-info');
+    const accountElem = document.getElementById('selected-account');
+    if (infoDiv && accountElem) {
+        infoDiv.style.display = 'block';
+        accountElem.textContent = account || 'غير متوفر';
+    }
+};
+
+// --- مراقب حالة تسجيل الدخول ---
 async function checkAuthAndLoadData() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -20,18 +69,15 @@ async function checkAuthAndLoadData() {
         return;
     }
 
-    // تحديث أيقونة المستخدم
     const userIcon = document.querySelector('#user-icon-btn i');
     if (userIcon) userIcon.className = 'fas fa-user-check';
 
-    // حساب الإجمالي من السلة (LocalStorage)
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
 
     const totalElem = document.getElementById('checkout-total');
     if (totalElem) totalElem.textContent = `${totalAmount} MRU`;
 
-    // جلب بيانات المستخدم من Supabase
     try {
         const { data: userData, error } = await supabase
             .from("users")
@@ -57,14 +103,18 @@ async function checkAuthAndLoadData() {
             }
             if (confirmBtn) confirmBtn.disabled = true;
         }
-
     } catch (error) {
         console.error("Error fetching balance:", error);
     }
 }
 
-// --- 3. دالة تنفيذ الدفع (خصم الرصيد وإنشاء طلب) ---
+// --- تنفيذ الدفع ---
 window.executePayment = async () => {
+    if (!selectedPaymentMethod) {
+        alert('⚠️ الرجاء اختيار طريقة الدفع أولاً!');
+        return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     const btn = document.getElementById('confirm-payment-btn');
@@ -77,7 +127,6 @@ window.executePayment = async () => {
     try {
         const newBalance = userBalance - totalAmount;
 
-        // أ) تحديث الرصيد في Supabase
         const { error: updateError } = await supabase
             .from("users")
             .update({ balance: newBalance })
@@ -85,7 +134,6 @@ window.executePayment = async () => {
 
         if (updateError) throw updateError;
 
-        // ب) تسجيل الطلبات في جدول "orders"
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         const orders = cart.map(item => ({
             userId: user.id,
@@ -93,6 +141,7 @@ window.executePayment = async () => {
             cardImage: item.image || "",
             price: item.price,
             cardCode: "جاري استخراج الكود...",
+            paymentMethod: selectedPaymentMethod.name,
             timestamp: new Date().toISOString()
         }));
 
@@ -102,21 +151,18 @@ window.executePayment = async () => {
 
         if (insertError) throw insertError;
 
-        // ج) تنظيف السلة
         localStorage.removeItem('cart');
-
-        alert("✅ تمت عملية الدفع بنجاح! شكراً لثقتك في StorCards.");
+        alert("✅ تمت عملية الدفع بنجاح!");
         window.location.href = "orders.html";
 
     } catch (error) {
         console.error("Payment Error:", error);
-        alert("❌ حدث خطأ أثناء الدفع: " + error.message);
+        alert("❌ حدث خطأ: " + error.message);
         btn.disabled = false;
         btn.innerHTML = "تأكيد الدفع الآن";
     }
 };
 
-// --- وظائف التنسيق العام (Theme & Menu) ---
 function initTheme() {
     const themeToggle = document.getElementById('theme-toggle');
     if (!themeToggle) return;
