@@ -68,11 +68,10 @@ async function displayProducts() {
     const cardsGrid = document.getElementById('cards-grid');
     if (!cardsGrid) return;
 
-    // جلب المنتجات مرتبة حسب timestamp تنازلياً
     const { data: products, error } = await supabase
         .from("products")
         .select("*")
-        .order("timestamp", { ascending: false });
+        .order("created_at", { ascending: false });
 
     if (error) {
         console.error("Supabase Error:", error);
