@@ -71,7 +71,7 @@ async function displayProducts() {
     const { data: products, error } = await supabase
         .from("products")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("id", { ascending: false });
 
     if (error) {
         console.error("Supabase Error:", error);
