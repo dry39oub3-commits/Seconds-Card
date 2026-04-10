@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر الخدمات الرقمية - اطلب الآن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mt-10">
+    <div class="bg-indigo-600 p-4 text-white text-center">
+        <h2 class="text-xl font-bold">شحن ألعاب مباشر (ID)</h2>
+    </div>
+    
+    <div class="p-6 space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">اختر اللعبة</label>
+            <select id="gameSelect" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="pubg">PUBG Mobile (شدات)</option>
+                <option value="freefire">Free Fire (جواهر)</option>
+                <option value="ludo">Ludo Star (ذهب)</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">معرّف اللاعب (Player ID)</label>
+            <input type="number" id="playerID" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="123456789">
+        </div>
+
+        <div class="border-2 border-dashed border-indigo-100 p-4 rounded-xl text-center bg-indigo-50">
+            <p class="text-xs text-indigo-600 mb-2">ارفع لقطة شاشة لتحويل Bankily</p>
+            <input type="file" id="bankilyReceipt" class="text-sm">
+        </div>
+
+        <button onclick="sendGameOrder()" id="orderBtn" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition shadow-lg">
+            تأكيد وطلب الشحن
+        </button>
+    </div>
+</div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

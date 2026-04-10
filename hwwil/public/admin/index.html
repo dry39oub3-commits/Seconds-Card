@@ -3,747 +3,885 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>لوحة الأدمن | حوّل</title>
+<title>حوّل | لوحة الإدارة</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="../css/base.css"/>
-<link rel="stylesheet" href="css/dashboard-main.css"/>
 <style>
-  :root{
-    --red:#DC2626;--red-light:#FEF2F2;
-    --bg:#F0F4F2;--sand:#E8EFeb;
-    --shadow:0 2px 16px rgba(10,124,78,.08);
-    --shadow-lg:0 8px 32px rgba(10,124,78,.14);
+  :root {
+    --green:       #0A7C4E;
+    --green2:      #0d9960;
+    --green-light: #e8f5ee;
+    --red:         #C0392B;
+    --red-light:   #fdecea;
+    --orange:      #E67E22;
+    --orange-light:#fef3e2;
+    --bg:          #f4f6f8;
+    --card:        #ffffff;
+    --border:      #e2e8f0;
+    --dark:        #1a202c;
+    --mid:         #718096;
+    --light:       #edf2f7;
+    --sidebar-w:   260px;
   }
-  .content-section{background:var(--white);border-radius:16px;box-shadow:var(--shadow);border:1.5px solid var(--sand);margin-bottom:1.5rem;overflow:hidden}
-  .content-section-hdr{padding:1rem 1.4rem;border-bottom:1.5px solid var(--sand);display:flex;align-items:center;justify-content:space-between}
-  .content-section-title{font-size:1rem;font-weight:800}
-  .cm-modal{background:var(--white);border-radius:24px;width:100%;max-width:560px;box-shadow:0 24px 64px rgba(0,0,0,.22);margin:auto;max-height:90vh;overflow-y:auto}
-  .preview-circle{width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid var(--sand)}
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Tajawal',sans-serif; background:var(--bg); color:var(--dark); min-height:100vh; }
+ 
+  /* ══ LOGIN ══ */
+  #loginScreen {
+    position:fixed; inset:0; background:linear-gradient(135deg,#0A7C4E 0%,#064d31 100%);
+    display:flex; align-items:center; justify-content:center; z-index:9999;
+  }
+  .login-box {
+    background:#fff; border-radius:20px; padding:2.5rem 2rem; width:360px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+  }
+  .login-logo { text-align:center; font-size:2rem; font-weight:900; color:var(--green); margin-bottom:.3rem; }
+  .login-sub  { text-align:center; color:var(--mid); font-size:.9rem; margin-bottom:2rem; }
+  .login-box label { font-size:.85rem; font-weight:700; display:block; margin-bottom:.4rem; }
+  .login-box input {
+    width:100%; padding:.75rem 1rem; border:1.5px solid var(--border);
+    border-radius:10px; font-family:inherit; font-size:.95rem; margin-bottom:1rem;
+    transition:border .2s;
+  }
+  .login-box input:focus { outline:none; border-color:var(--green); }
+  .login-btn {
+    width:100%; padding:.85rem; background:var(--green); color:#fff;
+    border:none; border-radius:10px; font-family:inherit; font-size:1rem;
+    font-weight:700; cursor:pointer; transition:background .2s;
+  }
+  .login-btn:hover { background:var(--green2); }
+  .login-err { color:var(--red); font-size:.82rem; text-align:center; margin-top:.8rem; display:none; }
+ 
+  /* ══ LAYOUT ══ */
+  #appShell { display:none; }
+  .sidebar {
+    position:fixed; top:0; right:0; bottom:0; width:var(--sidebar-w);
+    background:#fff; border-left:1px solid var(--border);
+    display:flex; flex-direction:column; z-index:100;
+  }
+  .sidebar-logo {
+    padding:1.5rem 1.2rem; font-size:1.4rem; font-weight:900; color:var(--green);
+    border-bottom:1px solid var(--border); display:flex; align-items:center; gap:.5rem;
+  }
+  .sidebar-logo span { font-size:1.6rem; }
+  .sidebar-nav { flex:1; padding:1rem .8rem; overflow-y:auto; }
+  .nav-section { font-size:.72rem; font-weight:800; color:var(--mid); padding:.5rem .6rem .3rem; letter-spacing:.08em; }
+  .nav-item {
+    display:flex; align-items:center; gap:.7rem; padding:.7rem .9rem;
+    border-radius:10px; cursor:pointer; font-size:.9rem; font-weight:500;
+    color:var(--mid); margin-bottom:.2rem; transition:all .15s;
+  }
+  .nav-item:hover { background:var(--light); color:var(--dark); }
+  .nav-item.active { background:var(--green-light); color:var(--green); font-weight:700; }
+  .nav-item .icon { font-size:1.1rem; width:1.4rem; text-align:center; }
+  .sidebar-footer {
+    padding:1rem .8rem; border-top:1px solid var(--border);
+  }
+  .logout-btn {
+    width:100%; padding:.6rem; background:var(--red-light); color:var(--red);
+    border:none; border-radius:8px; font-family:inherit; font-size:.88rem;
+    font-weight:700; cursor:pointer; transition:background .2s;
+  }
+  .logout-btn:hover { background:#f5c6c2; }
+ 
+  .main { margin-right:var(--sidebar-w); padding:2rem; min-height:100vh; }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:2rem;
+  }
+  .page-title { font-size:1.5rem; font-weight:800; }
+  .page-title span { color:var(--green); }
+ 
+  /* ══ STATS ══ */
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+  .stat-card {
+    background:#fff; border-radius:14px; padding:1.2rem 1.4rem;
+    border:1px solid var(--border); display:flex; align-items:center; gap:1rem;
+  }
+  .stat-icon { font-size:1.8rem; width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+  .stat-icon.g { background:var(--green-light); }
+  .stat-icon.o { background:var(--orange-light); }
+  .stat-icon.r { background:var(--red-light); }
+  .stat-icon.b { background:#eff6ff; }
+  .stat-val { font-size:1.6rem; font-weight:800; }
+  .stat-label { font-size:.78rem; color:var(--mid); font-weight:500; }
+ 
+  /* ══ SECTION ══ */
+  .section { background:#fff; border-radius:16px; border:1px solid var(--border); margin-bottom:1.5rem; }
+  .section-head {
+    padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .section-head h3 { font-size:1rem; font-weight:800; }
+  .section-body { padding:1.5rem; }
+ 
+  /* ══ BUTTONS ══ */
+  .btn { padding:.55rem 1.1rem; border-radius:8px; border:none; font-family:inherit; font-size:.85rem; font-weight:700; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:.4rem; }
+  .btn-green  { background:var(--green); color:#fff; }
+  .btn-green:hover  { background:var(--green2); }
+  .btn-red    { background:var(--red-light); color:var(--red); }
+  .btn-red:hover    { background:#f5c6c2; }
+  .btn-orange { background:var(--orange-light); color:var(--orange); }
+  .btn-orange:hover { background:#fde0b0; }
+  .btn-ghost  { background:var(--light); color:var(--dark); }
+  .btn-ghost:hover  { background:var(--border); }
+  .btn-sm { padding:.4rem .8rem; font-size:.78rem; }
+ 
+  /* ══ TABLE ══ */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  th { background:var(--bg); padding:.7rem 1rem; text-align:right; font-size:.78rem; font-weight:700; color:var(--mid); border-bottom:1px solid var(--border); }
+  td { padding:.75rem 1rem; font-size:.88rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#fafbfc; }
+ 
+  /* ══ BADGE ══ */
+  .badge { display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .7rem; border-radius:99px; font-size:.75rem; font-weight:700; }
+  .badge-pending  { background:#fff3cd; color:#856404; }
+  .badge-done     { background:var(--green-light); color:var(--green); }
+  .badge-rejected { background:var(--red-light); color:var(--red); }
+ 
+  /* ══ FORM ══ */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .form-grid.cols3 { grid-template-columns:1fr 1fr 1fr; }
+  .form-group { display:flex; flex-direction:column; gap:.4rem; }
+  .form-group.full { grid-column:1/-1; }
+  .form-group label { font-size:.82rem; font-weight:700; }
+  .form-input, .form-select {
+    padding:.65rem .9rem; border:1.5px solid var(--border); border-radius:9px;
+    font-family:inherit; font-size:.9rem; background:#fff; transition:border .2s;
+  }
+  .form-input:focus, .form-select:focus { outline:none; border-color:var(--green); }
+ 
+  /* ══ PKG LIST ══ */
+  .pkg-list { display:flex; flex-direction:column; gap:.5rem; margin-top:.5rem; }
+  .pkg-item {
+    display:flex; align-items:center; gap:.7rem; padding:.6rem .8rem;
+    background:var(--bg); border-radius:8px; border:1px solid var(--border);
+  }
+  .pkg-item input { flex:1; padding:.35rem .6rem; border:1px solid var(--border); border-radius:6px; font-family:inherit; font-size:.85rem; }
+  .pkg-item input:focus { outline:none; border-color:var(--green); }
+  .pkg-remove { background:var(--red-light); color:var(--red); border:none; border-radius:6px; padding:.3rem .6rem; cursor:pointer; font-size:.8rem; font-weight:700; }
+ 
+  /* ══ MODAL ══ */
+  .modal-ov {
+    position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:500;
+    display:none; align-items:center; justify-content:center; padding:1rem;
+  }
+  .modal-ov.open { display:flex; }
+  .modal-box {
+    background:#fff; border-radius:18px; width:100%; max-width:560px;
+    max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.2);
+  }
+  .modal-hd {
+    padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#fff; z-index:1;
+  }
+  .modal-hd h3 { font-size:1rem; font-weight:800; }
+  .modal-close { background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--mid); padding:.2rem .5rem; border-radius:6px; }
+  .modal-close:hover { background:var(--light); }
+  .modal-bd { padding:1.5rem; }
+ 
+  /* ══ EMPTY ══ */
+  .empty { text-align:center; padding:3rem 1rem; color:var(--mid); }
+  .empty-icon { font-size:3rem; margin-bottom:.8rem; }
+  .empty p { font-size:.9rem; }
+ 
+  /* ══ TOAST ══ */
+  .toast {
+    position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(80px);
+    background:#1a202c; color:#fff; padding:.75rem 1.5rem; border-radius:10px;
+    font-size:.9rem; font-weight:600; z-index:9999; transition:transform .3s;
+    pointer-events:none;
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+ 
+  /* ══ BANK CARDS ══ */
+  .banks-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; }
+  .bank-card {
+    border:1.5px solid var(--border); border-radius:12px; padding:1rem;
+    display:flex; flex-direction:column; gap:.6rem;
+  }
+  .bank-card-top { display:flex; align-items:center; gap:.7rem; }
+  .bank-logo-box {
+    width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:.85rem; color:#fff; flex-shrink:0;
+  }
+  .bank-card-name { font-weight:700; font-size:.9rem; }
+  .bank-card-acc  { font-size:.75rem; color:var(--mid); word-break:break-all; }
+  .bank-card-actions { display:flex; gap:.5rem; margin-top:.3rem; }
+ 
+  /* ══ GAME CARDS ══ */
+  .games-admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem; }
+  .game-admin-card {
+    border:1.5px solid var(--border); border-radius:12px; overflow:hidden;
+  }
+  .game-admin-top {
+    height:80px; display:flex; align-items:center; justify-content:center;
+    font-size:2.5rem; position:relative;
+  }
+  .game-admin-body { padding:.9rem; }
+  .game-admin-name { font-weight:700; font-size:.95rem; margin-bottom:.3rem; }
+  .game-admin-pkgs { font-size:.78rem; color:var(--mid); margin-bottom:.6rem; }
+  .game-admin-actions { display:flex; gap:.5rem; }
+ 
+  /* ══ STATUS SELECT ══ */
+  .status-sel {
+    padding:.3rem .6rem; border-radius:6px; border:1.5px solid var(--border);
+    font-family:inherit; font-size:.78rem; font-weight:700; cursor:pointer;
+  }
+ 
+  /* ══ SPINNER ══ */
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+ 
+  @media(max-width:900px) {
+    .stats-row { grid-template-columns:1fr 1fr; }
+    .form-grid { grid-template-columns:1fr; }
+    .form-grid.cols3 { grid-template-columns:1fr; }
+  }
+  @media(max-width:650px) {
+    :root { --sidebar-w:0px; }
+    .sidebar { transform:translateX(100%); transition:transform .3s; }
+    .sidebar.open { transform:translateX(0); --sidebar-w:260px; }
+    .main { margin-right:0; padding:1rem; }
+    .stats-row { grid-template-columns:1fr; }
+  }
 </style>
 </head>
 <body>
-
-<!-- LOGIN -->
-<div class="login-wrap" id="loginWrap">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="login-logo-icon">💱</div>
-      <h1>لوحة الأدمن</h1>
-      <p>حوّل — إدارة الطلبات</p>
-    </div>
-    <div class="login-field">
-      <label>اسم المستخدم</label>
-      <input class="login-input" id="loginUser" type="text" placeholder="admin" autocomplete="username"/>
-    </div>
-    <div class="login-field">
-      <label>كلمة المرور</label>
-      <input class="login-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
-    </div>
-    <button class="login-btn" id="loginBtn">🔐 تسجيل الدخول</button>
-    <div class="login-err" id="loginErr">❌ اسم المستخدم أو كلمة المرور غير صحيحة</div>
+ 
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">💱 حوّل</div>
+    <div class="login-sub">لوحة إدارة النظام</div>
+    <label>البريد الإلكتروني</label>
+    <input type="email" id="loginEmail" placeholder="admin@hawwil.mr" autocomplete="username"/>
+    <label>كلمة المرور</label>
+    <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+    <button class="login-btn" onclick="doLogin()">🔐 تسجيل الدخول</button>
+    <div class="login-err" id="loginErr">بيانات خاطئة، حاول مجدداً</div>
   </div>
 </div>
-
-<!-- APP -->
-<div class="app" id="app">
-  <div class="topbar">
-    <div class="topbar-logo"><div class="topbar-logo-icon">💱</div><span>حوّل — لوحة الأدمن</span></div>
-    <div class="topbar-right">
-      <div class="live-badge"><div class="live-dot"></div> مباشر</div>
-      <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="الوضع الليلي">🌙</button>
-      <button class="stock-btn" id="openStockBtn">📦 إضافة بطاقات</button>
-      <button class="logout-btn" id="logoutBtn">خروج</button>
+ 
+<!-- ══ APP ══ -->
+<div id="appShell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><span>💱</span> حوّل — أدمن</div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">لوحة التحكم</div>
+      <div class="nav-item active" onclick="goTab('dashboard')"><span class="icon">📊</span>الإحصاءات</div>
+      <div class="nav-section">الطلبات</div>
+      <div class="nav-item" onclick="goTab('transfers')"><span class="icon">🏦</span>طلبات التحويل <span id="pendingTransfersBadge" style="margin-right:auto;background:var(--red);color:#fff;border-radius:99px;font-size:.7rem;padding:.1rem .5rem;display:none"></span></div>
+      <div class="nav-item" onclick="goTab('cards')"><span class="icon">🎮</span>طلبات البطاقات <span id="pendingCardsBadge" style="margin-right:auto;background:var(--red);color:#fff;border-radius:99px;font-size:.7rem;padding:.1rem .5rem;display:none"></span></div>
+      <div class="nav-section">الإعدادات</div>
+      <div class="nav-item" onclick="goTab('banks')"><span class="icon">🏛️</span>إدارة البنوك</div>
+      <div class="nav-item" onclick="goTab('games')"><span class="icon">🕹️</span>إدارة الألعاب</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
     </div>
-  </div>
-
-  <div class="main">
-    <div class="stats">
-      <div class="stat-card green"><div class="stat-icon">📋</div><div class="stat-val" id="sTotal">—</div><div class="stat-label">إجمالي الطلبات</div></div>
-      <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val" id="sPending">—</div><div class="stat-label">طلبات معلقة</div></div>
-      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-val" id="sDone">—</div><div class="stat-label">طلبات مكتملة</div></div>
-      <div class="stat-card gold"><div class="stat-icon">💰</div><div class="stat-val" id="sAmount">—</div><div class="stat-label">إجمالي المبالغ (أوقية)</div></div>
+  </aside>
+ 
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">📊 <span>الإحصاءات</span></div>
+      <div id="topbarAction"></div>
     </div>
-
-    <div class="tabs">
-      <button class="tab active" id="tab-transfers">🏦 التحويلات</button>
-      <button class="tab" id="tab-cards">🎮 البطاقات</button>
-      <button class="tab" id="tab-stock">📦 المخزون</button>
-      <button class="tab" id="tab-content">⚙️ إدارة المحتوى</button>
-    </div>
-
-    <!-- TRANSFERS -->
-    <div id="tabTransfers" class="table-card">
-      <div class="table-header">
-        <div class="table-title">طلبات التحويل البنكي</div>
-        <input class="search-input" id="searchTransfer" placeholder="🔍 بحث..."/>
+ 
+    <!-- ── DASHBOARD ── -->
+    <div id="tab-dashboard">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-icon g">🏦</div><div><div class="stat-val" id="statBanks">—</div><div class="stat-label">بنك مسجّل</div></div></div>
+        <div class="stat-card"><div class="stat-icon o">🎮</div><div><div class="stat-val" id="statGames">—</div><div class="stat-label">لعبة متاحة</div></div></div>
+        <div class="stat-card"><div class="stat-icon b">💸</div><div><div class="stat-val" id="statTransfers">—</div><div class="stat-label">طلب تحويل</div></div></div>
+        <div class="stat-card"><div class="stat-icon r">🃏</div><div><div class="stat-val" id="statCards">—</div><div class="stat-label">طلب بطاقة</div></div></div>
       </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>رقم الطلب</th><th>الاسم</th><th>الهاتف</th><th>المبلغ</th><th>العمولة</th><th>يستلم</th><th>من بنك</th><th>إلى بنك</th><th>رقم الحساب</th><th>التاريخ</th><th>الحالة</th></tr></thead>
-        <tbody id="transfersBody"><tr><td colspan="11" class="loading">⏳ جاري التحميل...</td></tr></tbody></table>
+      <div class="section">
+        <div class="section-head"><h3>⏳ آخر طلبات التحويل المعلّقة</h3><button class="btn btn-ghost btn-sm" onclick="goTab('transfers')">عرض الكل</button></div>
+        <div class="section-body"><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>من</th><th>إلى</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody id="dashTransfers"><tr><td colspan="5" class="empty"><div class="empty-icon">⏳</div><p>لا توجد طلبات معلّقة</p></td></tr></tbody></table></div></div>
       </div>
-    </div>
-
-    <!-- CARDS -->
-    <div id="tabCards" class="table-card" style="display:none">
-      <div class="table-header">
-        <div class="table-title">طلبات البطاقات الرقمية</div>
-        <input class="search-input" id="searchCards" placeholder="🔍 بحث..."/>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>رقم الطلب</th><th>اللعبة</th><th>الباقة</th><th>السعر</th><th>معرف اللاعب</th><th>الهاتف</th><th>التاريخ</th><th>الحالة</th></tr></thead>
-        <tbody id="cardsBody"><tr><td colspan="8" class="loading">⏳ جاري التحميل...</td></tr></tbody></table>
+      <div class="section">
+        <div class="section-head"><h3>⏳ آخر طلبات البطاقات المعلّقة</h3><button class="btn btn-ghost btn-sm" onclick="goTab('cards')">عرض الكل</button></div>
+        <div class="section-body"><div class="table-wrap"><table><thead><tr><th>اللعبة</th><th>الباقة</th><th>معرّف اللاعب</th><th>الهاتف</th><th>الحالة</th></tr></thead><tbody id="dashCards"><tr><td colspan="5" class="empty"><div class="empty-icon">⏳</div><p>لا توجد طلبات معلّقة</p></td></tr></tbody></table></div></div>
       </div>
     </div>
-
-    <!-- STOCK TAB -->
-    <div id="tabStock" style="display:none">
-      <div class="stats" style="margin-bottom:1.2rem">
-        <div class="stat-card green"><div class="stat-icon">🃏</div><div class="stat-val" id="stTotal">—</div><div class="stat-label">إجمالي البطاقات</div></div>
-        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" id="stAvail">—</div><div class="stat-label">متاح</div></div>
-        <div class="stat-card gold"><div class="stat-icon">📤</div><div class="stat-val" id="stUsed">—</div><div class="stat-label">مستخدم</div></div>
-        <div class="stat-card"><div class="stat-icon">🏷️</div><div class="stat-val" id="stCategories">—</div><div class="stat-label">فئات</div></div>
-      </div>
-      <div class="table-card" style="margin-bottom:1rem">
-        <div style="padding:1rem 1.4rem;display:flex;gap:.8rem;flex-wrap:wrap;align-items:center">
-          <select class="status-select" id="filterCat" style="padding:.5rem .8rem;font-size:.85rem"><option value="">كل الفئات</option></select>
-          <select class="status-select" id="filterStatus" style="padding:.5rem .8rem;font-size:.85rem">
-            <option value="">كل الحالات</option>
-            <option value="available">✅ متاح</option>
-            <option value="used">📤 مستخدم</option>
+ 
+    <!-- ── TRANSFERS ── -->
+    <div id="tab-transfers" style="display:none">
+      <div class="section">
+        <div class="section-head">
+          <h3>💸 طلبات التحويل</h3>
+          <select class="form-select" style="padding:.4rem .8rem;font-size:.82rem;width:auto" onchange="filterTransfers(this.value)">
+            <option value="all">الكل</option>
+            <option value="pending">معلّق</option>
+            <option value="done">مكتمل</option>
+            <option value="rejected">مرفوض</option>
           </select>
-          <input class="search-input" id="searchStock" placeholder="🔍 بحث بالكود..." style="width:200px"/>
         </div>
+        <div class="section-body"><div class="table-wrap"><table>
+          <thead><tr><th>الرقم</th><th>الاسم</th><th>الهاتف</th><th>من</th><th>إلى</th><th>المبلغ</th><th>يستلم</th><th>الحالة</th><th>إجراء</th></tr></thead>
+          <tbody id="transfersTable"></tbody>
+        </table></div></div>
       </div>
-      <div class="table-card">
-        <div class="table-header">
-          <div class="table-title">📦 مخزون البطاقات</div>
-          <span id="stockCount" style="font-size:.82rem;color:var(--muted)"></span>
+    </div>
+ 
+    <!-- ── CARDS ── -->
+    <div id="tab-cards" style="display:none">
+      <div class="section">
+        <div class="section-head">
+          <h3>🎮 طلبات البطاقات</h3>
+          <select class="form-select" style="padding:.4rem .8rem;font-size:.82rem;width:auto" onchange="filterCards(this.value)">
+            <option value="all">الكل</option>
+            <option value="pending">معلّق</option>
+            <option value="done">مكتمل</option>
+            <option value="rejected">مرفوض</option>
+          </select>
         </div>
-        <div class="table-wrap">
-          <table><thead><tr><th>الفئة</th><th>البطاقة</th><th>الباقة</th><th>المورد</th><th>الكود</th><th>تاريخ الإضافة</th><th>الحالة</th><th>إجراء</th></tr></thead>
-          <tbody id="stockBody"><tr><td colspan="8" class="loading">⏳ جاري التحميل...</td></tr></tbody></table>
+        <div class="section-body"><div class="table-wrap"><table>
+          <thead><tr><th>الرقم</th><th>اللعبة</th><th>الباقة</th><th>السعر</th><th>معرّف اللاعب</th><th>الهاتف</th><th>الحالة</th><th>إجراء</th></tr></thead>
+          <tbody id="cardsTable"></tbody>
+        </table></div></div>
+      </div>
+    </div>
+ 
+    <!-- ── BANKS ── -->
+    <div id="tab-banks" style="display:none">
+      <div class="section">
+        <div class="section-head">
+          <h3>🏛️ البنوك المسجّلة</h3>
+          <button class="btn btn-green btn-sm" onclick="openBankModal()">＋ إضافة بنك</button>
+        </div>
+        <div class="section-body">
+          <div class="banks-grid" id="banksGrid">
+            <div class="empty"><div class="empty-icon">🏦</div><p>لا توجد بنوك بعد</p></div>
+          </div>
         </div>
       </div>
     </div>
-
-    <!-- CONTENT TAB -->
-    <div id="tabContent" style="display:none">
-      <div class="content-section">
-        <div class="content-section-hdr">
-          <div class="content-section-title">🏦 إدارة البنوك</div>
-          <button class="stock-btn" id="openAddBankBtn">➕ إضافة بنك</button>
+ 
+    <!-- ── GAMES ── -->
+    <div id="tab-games" style="display:none">
+      <div class="section">
+        <div class="section-head">
+          <h3>🕹️ الألعاب المتاحة</h3>
+          <button class="btn btn-green btn-sm" onclick="openGameModal()">＋ إضافة لعبة</button>
         </div>
-        <div class="table-wrap">
-          <table><thead><tr><th>البنك</th><th>رابط الشعار</th><th>اللون</th><th>الترتيب</th><th>إجراء</th></tr></thead>
-          <tbody id="banksBody"><tr><td colspan="5" class="loading">⏳ جاري التحميل...</td></tr></tbody></table>
-        </div>
-      </div>
-      <div class="content-section">
-        <div class="content-section-hdr">
-          <div class="content-section-title">🎮 إدارة الألعاب</div>
-          <button class="stock-btn" id="openAddGameBtn">➕ إضافة لعبة</button>
-        </div>
-        <div class="table-wrap">
-          <table><thead><tr><th>اللعبة</th><th>الشارة</th><th>الباقات</th><th>الترتيب</th><th>إجراء</th></tr></thead>
-          <tbody id="gamesBody"><tr><td colspan="5" class="loading">⏳ جاري التحميل...</td></tr></tbody></table>
+        <div class="section-body">
+          <div class="games-admin-grid" id="gamesGrid">
+            <div class="empty"><div class="empty-icon">🎮</div><p>لا توجد ألعاب بعد</p></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+ 
+  </main>
 </div>
-
-<!-- STOCK MODAL -->
-<div class="modal-overlay" id="stockModal">
+ 
+<!-- ══ BANK MODAL ══ -->
+<div class="modal-ov" id="bankModal">
   <div class="modal-box">
-    <div class="modal-hdr">
-      <div style="font-size:1.1rem;font-weight:900">📦 إضافة بطاقات للمخزون</div>
-      <button class="modal-x" id="closeStockBtn">✕</button>
+    <div class="modal-hd">
+      <h3 id="bankModalTitle">إضافة بنك جديد</h3>
+      <button class="modal-close" onclick="closeBankModal()">✕</button>
     </div>
-    <div class="modal-bod">
-      <div class="form-row">
-        <label class="flabel">١ — الفئة</label>
-        <div class="cat-grid" id="catGrid">
-          <div class="cat-btn active" data-cat="Apple">🍎 Apple</div>
-          <div class="cat-btn" data-cat="Google Play">🎮 Google Play</div>
-          <div class="cat-btn" data-cat="Netflix">🎬 Netflix</div>
-          <div class="cat-btn" data-cat="PlayStation">🕹️ PlayStation</div>
-          <div class="cat-btn" data-cat="PUBG">🎯 PUBG</div>
-          <div class="cat-btn" data-cat="Free Fire">🔥 Free Fire</div>
-          <div class="cat-btn" data-cat="Steam">🖥️ Steam</div>
-          <div class="cat-btn" data-cat="أخرى">➕ أخرى</div>
+    <div class="modal-bd">
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>اسم البنك *</label>
+          <input class="form-input" id="bName" placeholder="بنك موريتانيا للتجارة"/>
         </div>
-        <input class="finput" id="customCat" placeholder="فئة مخصصة..." style="display:none;margin-top:.5rem"/>
-      </div>
-      <div class="form-row">
-        <label class="flabel">٢ — نوع البطاقة</label>
-        <select class="finput" id="cardType"><option value="">— اختر —</option></select>
-      </div>
-      <div class="form-row">
-        <label class="flabel">٣ — المورد</label>
-        <input class="finput" id="supplier" type="text" placeholder="اسم المورد..."/>
-      </div>
-      <div class="form-row">
-        <label class="flabel">٤ — الكودات (كل كود في سطر)</label>
-        <textarea class="finput" id="codesArea" rows="6" style="resize:vertical;font-family:monospace;font-size:.88rem;line-height:1.8"></textarea>
-        <div style="display:flex;justify-content:space-between;margin-top:.3rem">
-          <span style="font-size:.78rem;color:var(--muted)" id="codesCount">٠ كود</span>
-          <button id="clearCodesBtn" style="background:none;border:none;color:var(--red);font-size:.78rem;cursor:pointer;font-family:inherit">مسح الكل</button>
+        <div class="form-group">
+          <label>الترتيب (للعرض)</label>
+          <input class="form-input" id="bOrder" type="number" placeholder="1"/>
+        </div>
+        <div class="form-group full">
+          <label>رقم الحساب / IBAN</label>
+          <input class="form-input" id="bAccount" placeholder="MR12 0000 0000 0000 0000 0000 00"/>
+        </div>
+        <div class="form-group">
+          <label>رابط الشعار (URL)</label>
+          <input class="form-input" id="bLogo" placeholder="https://..."/>
+        </div>
+        <div class="form-group">
+          <label>لون البنك</label>
+          <input class="form-input" id="bColor" type="color" value="#0A7C4E" style="height:44px;padding:.3rem"/>
         </div>
       </div>
-      <div class="preview-box" id="previewBox" style="display:none">
-        <div style="font-size:.82rem;font-weight:800;margin-bottom:.5rem;color:var(--green)">📋 معاينة</div>
-        <div id="previewContent"></div>
+      <div style="display:flex;gap:.7rem;justify-content:flex-end;margin-top:1rem">
+        <button class="btn btn-ghost" onclick="closeBankModal()">إلغاء</button>
+        <button class="btn btn-green" id="bankSaveBtn" onclick="saveBank()">💾 حفظ البنك</button>
       </div>
-      <button class="save-btn" id="saveStockBtn">💾 حفظ البطاقات في المخزون</button>
     </div>
   </div>
 </div>
-
-<!-- BANK MODAL -->
-<div class="modal-overlay" id="bankModal">
-  <div class="cm-modal">
-    <div class="modal-hdr">
-      <div style="font-size:1.1rem;font-weight:900" id="bankModalTitle">➕ إضافة بنك</div>
-      <button class="modal-x" id="closeBankBtn">✕</button>
+ 
+<!-- ══ GAME MODAL ══ -->
+<div class="modal-ov" id="gameModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3 id="gameModalTitle">إضافة لعبة جديدة</h3>
+      <button class="modal-close" onclick="closeGameModal()">✕</button>
     </div>
-    <div class="modal-bod">
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;background:var(--bg);border-radius:14px;padding:1rem 1.2rem">
-        <div class="preview-circle" id="bankPreview"></div>
-        <div style="font-size:.85rem;color:var(--mid)">معاينة مباشرة</div>
-      </div>
-      <div class="form-row"><label class="flabel">اسم البنك *</label><input class="finput" id="bankName" type="text" placeholder="مثال: BCI"/></div>
-      <div class="form-row"><label class="flabel">رابط الشعار (URL)</label><input class="finput" id="bankLogo" type="url" placeholder="https://..."/></div>
-      <div class="form-row">
-        <label class="flabel">لون الخلفية</label>
-        <div style="display:flex;align-items:center;gap:.7rem">
-          <input type="color" id="bankColor" value="#0A7C4E" style="width:50px;height:40px;border:none;border-radius:8px;cursor:pointer"/>
+    <div class="modal-bd">
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>اسم اللعبة *</label>
+          <input class="form-input" id="gName" placeholder="PUBG Mobile"/>
+        </div>
+        <div class="form-group">
+          <label>الترتيب</label>
+          <input class="form-input" id="gOrder" type="number" placeholder="1"/>
+        </div>
+        <div class="form-group">
+          <label>الأيقونة (emoji)</label>
+          <input class="form-input" id="gIcon" placeholder="🎮"/>
+        </div>
+        <div class="form-group">
+          <label>لون الخلفية</label>
+          <input class="form-input" id="gBg" type="color" value="#1a1a2e" style="height:44px;padding:.3rem"/>
+        </div>
+        <div class="form-group full">
+          <label>وصف قصير</label>
+          <input class="form-input" id="gDesc" placeholder="شحن UC للعبة ببجي موبايل"/>
+        </div>
+        <div class="form-group full">
+          <label>رابط شعار اللعبة (URL)</label>
+          <input class="form-input" id="gLogo" placeholder="https://..."/>
+        </div>
+        <div class="form-group">
+          <label>شارة (اختياري)</label>
+          <input class="form-input" id="gBadge" placeholder="🔥 الأكثر طلباً"/>
         </div>
       </div>
-      <div class="form-row"><label class="flabel">معرّف البنك (ID)</label><input class="finput" id="bankId" type="text" placeholder="مثال: bci (فارغ = تلقائي)"/></div>
-      <div class="form-row"><label class="flabel">الترتيب</label><input class="finput" id="bankOrder" type="number" value="0"/></div>
-      <button class="save-btn" id="saveBankBtn">💾 حفظ البنك</button>
+      <div style="margin-bottom:.5rem;font-weight:700;font-size:.88rem">الباقات والأسعار</div>
+      <div class="pkg-list" id="pkgList"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:.7rem" onclick="addPkgRow()">＋ إضافة باقة</button>
+      <div style="display:flex;gap:.7rem;justify-content:flex-end;margin-top:1.5rem">
+        <button class="btn btn-ghost" onclick="closeGameModal()">إلغاء</button>
+        <button class="btn btn-green" id="gameSaveBtn" onclick="saveGame()">💾 حفظ اللعبة</button>
+      </div>
     </div>
   </div>
 </div>
-
-<!-- GAME MODAL -->
-<div class="modal-overlay" id="gameModal">
-  <div class="cm-modal">
-    <div class="modal-hdr">
-      <div style="font-size:1.1rem;font-weight:900" id="gameModalTitle">➕ إضافة لعبة</div>
-      <button class="modal-x" id="closeGameBtn">✕</button>
-    </div>
-    <div class="modal-bod">
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;background:var(--bg);border-radius:14px;padding:1rem 1.2rem">
-        <div class="preview-circle" id="gamePreview"></div>
-        <div style="font-size:.85rem;color:var(--mid)">معاينة مباشرة</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-        <div class="form-row" style="margin-bottom:0"><label class="flabel">اسم اللعبة *</label><input class="finput" id="gameName" type="text" placeholder="مثال: شدات ببجي"/></div>
-        <div class="form-row" style="margin-bottom:0"><label class="flabel">الأيقونة</label><input class="finput" id="gameIcon" type="text" placeholder="🎮"/></div>
-      </div>
-      <div class="form-row" style="margin-top:1rem"><label class="flabel">رابط الشعار (URL)</label><input class="finput" id="gameLogo" type="url" placeholder="https://..."/></div>
-      <div class="form-row">
-        <label class="flabel">لون الخلفية</label>
-        <input type="color" id="gameBg" value="#1A1A2E" style="width:50px;height:40px;border:none;border-radius:8px;cursor:pointer"/>
-      </div>
-      <div class="form-row"><label class="flabel">وصف قصير</label><input class="finput" id="gameDesc" type="text" placeholder="مثال: شحن UC لحساب ببجي"/></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-        <div class="form-row" style="margin-bottom:0"><label class="flabel">شارة</label><input class="finput" id="gameBadge" type="text" placeholder="الأكثر طلباً"/></div>
-        <div class="form-row" style="margin-bottom:0"><label class="flabel">الترتيب</label><input class="finput" id="gameOrder" type="number" value="0"/></div>
-      </div>
-      <div class="form-row" style="margin-top:1rem"><label class="flabel">معرّف اللعبة (ID)</label><input class="finput" id="gameId" type="text" placeholder="مثال: pubg (فارغ = تلقائي)"/></div>
-      <div class="form-row" style="margin-top:1rem">
-        <label class="flabel">الباقات والأسعار</label>
-        <div id="pkgsEditor" style="margin-top:.5rem"></div>
-      </div>
-      <button class="save-btn" id="saveGameBtn" style="margin-top:1rem">💾 حفظ اللعبة</button>
-    </div>
-  </div>
-</div>
-
+ 
 <div class="toast" id="toast"></div>
-
+ 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc,
-         orderBy, query, addDoc, deleteDoc, serverTimestamp }
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
+         updateDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-// ── Firebase ──
-const app = initializeApp({
-  apiKey:"AIzaSyCov8KnTUdzywlejDGk74WODUEbZfx1nIc",
-  authDomain:"hawwil.firebaseapp.com",
-  projectId:"hawwil",
-  storageBucket:"hawwil.firebasestorage.app",
-  messagingSenderId:"797332872661",
-  appId:"1:797332872661:web:5c1da802f0bad15332715c"
-});
-const db = getFirestore(app);
-
-
-
-
-// ── AUTH ──
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'hawwil2026';
-
-function doLogin() {
-  const u = document.getElementById('loginUser').value.trim();
-  const p = document.getElementById('loginPass').value.trim();
-  if (u === ADMIN_USER && p === ADMIN_PASS) {
-    document.getElementById('loginWrap').style.display = 'none';
-    document.getElementById('app').classList.add('show');
+ 
+const firebaseConfig = {
+  apiKey:            "AIzaSyCov8KnTUdzywlejDGk74WODUEbZfx1nIc",
+  authDomain:        "hawwil.firebaseapp.com",
+  projectId:         "hawwil",
+  storageBucket:     "hawwil.firebasestorage.app",
+  messagingSenderId: "797332872661",
+  appId:             "1:797332872661:web:5c1da802f0bad15332715c"
+};
+ 
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+ 
+// ══ STATE ══
+let BANKS     = [];
+let GAMES     = [];
+let TRANSFERS = [];
+let CARDS_D   = [];
+let editBankId = null;
+let editGameId = null;
+let transferFilter = 'all';
+let cardsFilter    = 'all';
+ 
+// ══ AUTH ══
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
     startListeners();
   } else {
-    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
   }
-}
-
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  document.getElementById('loginWrap').style.display = 'flex';
-  document.getElementById('app').classList.remove('show');
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
 });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('loginWrap').style.display !== 'none') doLogin();
-});
-
-// ── DATA ──
-let allTransfers = [], allCards = [], allStock = [], allBanks = [], allGames = [];
-
+ 
+window.doLogin = async function() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginErr');
+  err.style.display = 'none';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    err.style.display = 'block';
+    err.textContent = e.code === 'auth/invalid-credential'
+      ? 'بيانات خاطئة، حاول مجدداً'
+      : e.message;
+  }
+};
+ 
+window.doLogout = async function() {
+  await signOut(auth);
+};
+ 
+// أدخل بـ Enter
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
+ 
+// ══ LISTENERS ══
 function startListeners() {
-  onSnapshot(query(collection(db,'transfers'), orderBy('createdAt','desc')), snap => {
-    allTransfers = snap.docs.map(d => ({id:d.id,...d.data()}));
-    renderTransfers(allTransfers); updateStats();
-  });
-  onSnapshot(query(collection(db,'cards'), orderBy('createdAt','desc')), snap => {
-    allCards = snap.docs.map(d => ({id:d.id,...d.data()}));
-    renderCards(allCards); updateStats();
-  });
-  onSnapshot(query(collection(db,'stock'), orderBy('createdAt','desc')), snap => {
-    allStock = snap.docs.map(d => ({id:d.id,...d.data()}));
-    renderStock(); updateStockStats(); updateCatFilter();
-  });
+  // Banks
   onSnapshot(query(collection(db,'banks'), orderBy('order','asc')), snap => {
-    allBanks = snap.docs.map(d => ({id:d.id,...d.data()}));
-    renderBanksTable();
+    BANKS = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    document.getElementById('statBanks').textContent = BANKS.length;
+    renderBanksGrid();
   });
+ 
+  // Games
   onSnapshot(query(collection(db,'games'), orderBy('order','asc')), snap => {
-    allGames = snap.docs.map(d => ({id:d.id,...d.data()}));
-    renderGamesTable();
+    GAMES = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    document.getElementById('statGames').textContent = GAMES.length;
+    renderGamesGrid();
+  });
+ 
+  // Transfers
+  onSnapshot(query(collection(db,'transfers'), orderBy('createdAt','desc')), snap => {
+    TRANSFERS = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const pending = TRANSFERS.filter(t => t.status==='pending').length;
+    document.getElementById('statTransfers').textContent = TRANSFERS.length;
+    const badge = document.getElementById('pendingTransfersBadge');
+    if (pending > 0) { badge.style.display='inline'; badge.textContent=pending; }
+    else badge.style.display='none';
+    renderTransfersTable();
+    renderDashTransfers();
+  });
+ 
+  // Cards
+  onSnapshot(query(collection(db,'cards'), orderBy('createdAt','desc')), snap => {
+    CARDS_D = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const pending = CARDS_D.filter(c => c.status==='pending').length;
+    document.getElementById('statCards').textContent = CARDS_D.length;
+    const badge = document.getElementById('pendingCardsBadge');
+    if (pending > 0) { badge.style.display='inline'; badge.textContent=pending; }
+    else badge.style.display='none';
+    renderCardsTable();
+    renderDashCards();
   });
 }
-
-// ── TABS ──
-const TABS = ['transfers','cards','stock','content'];
-document.querySelectorAll('.tab').forEach((btn, i) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    TABS.forEach((t, j) => {
-      const el = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-      if (el) el.style.display = j === i ? 'block' : 'none';
-    });
+ 
+// ══ TABS ══
+window.goTab = function(name) {
+  ['dashboard','transfers','cards','banks','games'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name ? 'block' : 'none';
   });
-});
-
-// ── STATS ──
-function updateStats() {
-  const all = [...allTransfers,...allCards];
-  document.getElementById('sTotal').textContent   = fmt(all.length);
-  document.getElementById('sPending').textContent = fmt(all.filter(r=>r.status==='pending').length);
-  document.getElementById('sDone').textContent    = fmt(all.filter(r=>r.status==='done').length);
-  document.getElementById('sAmount').textContent  = fmt(Math.round(
-    allTransfers.reduce((s,r)=>s+(r.amount||0),0)+allCards.reduce((s,r)=>s+(r.price||0),0)
-  ));
-}
-function updateStockStats() {
-  document.getElementById('stTotal').textContent      = fmt(allStock.length);
-  document.getElementById('stAvail').textContent      = fmt(allStock.filter(s=>s.status==='available').length);
-  document.getElementById('stUsed').textContent       = fmt(allStock.filter(s=>s.status==='used').length);
-  document.getElementById('stCategories').textContent = fmt(new Set(allStock.map(s=>s.category)).size);
-}
-
-// ── RENDER TRANSFERS ──
-function renderTransfers(data) {
-  const tbody = document.getElementById('transfersBody');
-  if (!data.length) { tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><div class="empty-icon">📭</div>لا توجد طلبات</div></td></tr>`; return; }
-  tbody.innerHTML = data.map(r=>`<tr>
-    <td><span class="ref">${r.ref||'—'}</span></td>
-    <td><strong>${r.name||'—'}</strong></td>
-    <td dir="ltr">${r.phone||'—'}</td>
-    <td><strong>${fmt(r.amount||0)} أوقية</strong></td>
-    <td style="color:#DC2626">-${fmt(r.commission||0)}</td>
-    <td style="color:var(--green);font-weight:800">${fmt(r.receive||0)}</td>
-    <td>${r.fromBank||'—'}</td><td>${r.toBank||'—'}</td>
-    <td dir="ltr" style="font-size:.78rem">${r.account||'—'}</td>
-    <td style="font-size:.78rem">${fmtDate(r.createdAt)}</td>
-    <td><select class="status-select" onchange="changeStatus('transfers','${r.id}',this.value)">
-      <option value="pending" ${r.status==='pending'?'selected':''}>⏳ معلق</option>
-      <option value="done" ${r.status==='done'?'selected':''}>✅ مكتمل</option>
-      <option value="rejected" ${r.status==='rejected'?'selected':''}>❌ مرفوض</option>
-    </select></td></tr>`).join('');
-}
-
-// ── RENDER CARDS ──
-function renderCards(data) {
-  const tbody = document.getElementById('cardsBody');
-  if (!data.length) { tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🎮</div>لا توجد طلبات</div></td></tr>`; return; }
-  tbody.innerHTML = data.map(r=>`<tr>
-    <td><span class="ref">${r.ref||'—'}</span></td>
-    <td><strong>${r.game||'—'}</strong></td>
-    <td>${r.package||'—'}</td>
-    <td style="color:var(--green);font-weight:800">${fmt(r.price||0)} أوقية</td>
-    <td dir="ltr">${r.playerId||'—'}</td>
-    <td dir="ltr">${r.phone||'—'}</td>
-    <td style="font-size:.78rem">${fmtDate(r.createdAt)}</td>
-    <td><select class="status-select" onchange="changeStatus('cards','${r.id}',this.value)">
-      <option value="pending" ${r.status==='pending'?'selected':''}>⏳ معلق</option>
-      <option value="done" ${r.status==='done'?'selected':''}>✅ مكتمل</option>
-      <option value="rejected" ${r.status==='rejected'?'selected':''}>❌ مرفوض</option>
-    </select></td></tr>`).join('');
-}
-
-// ── RENDER STOCK ──
-function renderStock() {
-  const catF   = document.getElementById('filterCat').value;
-  const statF  = document.getElementById('filterStatus').value;
-  const searchF= document.getElementById('searchStock').value.toLowerCase();
-  const data   = allStock.filter(s=>{
-    if(catF  && s.category!==catF)  return false;
-    if(statF && s.status!==statF)   return false;
-    if(searchF && !(s.code||'').toLowerCase().includes(searchF)) return false;
-    return true;
-  });
-  document.getElementById('stockCount').textContent = `${fmt(data.length)} بطاقة`;
-  const tbody = document.getElementById('stockBody');
-  if (!data.length) { tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📭</div>لا توجد بطاقات</div></td></tr>`; return; }
-  tbody.innerHTML = data.map(s=>`<tr>
-    <td><strong>${s.category||'—'}</strong></td>
-    <td>${s.cardType||'—'}</td><td>${s.value||'—'}</td><td>${s.supplier||'—'}</td>
-    <td><span class="code-cell" onclick="copyCode('${s.code}')">${s.code||'—'}</span></td>
-    <td style="font-size:.78rem">${fmtDate(s.createdAt)}</td>
-    <td><select class="status-select" onchange="changeStatus('stock','${s.id}',this.value)">
-      <option value="available" ${s.status==='available'?'selected':''}>✅ متاح</option>
-      <option value="used" ${s.status==='used'?'selected':''}>📤 مستخدم</option>
-    </select></td>
-    <td><button class="del-btn" onclick="deleteStock('${s.id}')">🗑️</button></td></tr>`).join('');
-}
-
-function updateCatFilter() {
-  const sel = document.getElementById('filterCat');
-  const cats = [...new Set(allStock.map(s=>s.category).filter(Boolean))];
-  const cur  = sel.value;
-  sel.innerHTML = '<option value="">كل الفئات</option>'+cats.map(c=>`<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
-}
-
-// ── BANKS TABLE ──
-function renderBanksTable() {
-  const tbody = document.getElementById('banksBody'); if (!tbody) return;
-  tbody.innerHTML = allBanks.map(b=>`<tr>
-    <td><div style="display:flex;align-items:center;gap:.7rem">
-      <div style="width:40px;height:40px;border-radius:8px;background:${b.color||'#888'};display:flex;align-items:center;justify-content:center;overflow:hidden">
-        ${b.logo?`<img src="${b.logo}" style="width:36px;height:36px;object-fit:contain" onerror="this.parentElement.innerHTML='<span style=color:#fff;font-weight:800;font-size:.75rem>${(b.name||'').substring(0,3)}</span>'">`:`<span style="color:#fff;font-weight:800;font-size:.75rem">${(b.name||'').substring(0,3)}</span>`}
-      </div><strong>${b.name}</strong></div></td>
-    <td><span style="font-size:.75rem;color:var(--muted)">${b.logo?b.logo.substring(0,40)+'...':'لا يوجد'}</span></td>
-    <td><div style="width:24px;height:24px;border-radius:50%;background:${b.color||'#888'}"></div></td>
-    <td>${b.order||0}</td>
-    <td><div style="display:flex;gap:.4rem">
-      <button class="stock-btn" style="font-size:.75rem;padding:.3rem .7rem" onclick="openEditBank('${b.id}')">✏️</button>
-      <button class="del-btn" onclick="deleteBank('${b.id}')">🗑️</button>
-    </div></td></tr>`).join('');
-}
-
-// ── GAMES TABLE ──
-function renderGamesTable() {
-  const tbody = document.getElementById('gamesBody'); if (!tbody) return;
-  tbody.innerHTML = allGames.map(g=>`<tr>
-    <td><div style="display:flex;align-items:center;gap:.7rem">
-      <div style="width:44px;height:44px;border-radius:10px;background:${g.bg||'#1a1a2e'};display:flex;align-items:center;justify-content:center;overflow:hidden">
-        ${g.logo?`<img src="${g.logo}" style="width:38px;height:38px;object-fit:contain" onerror="this.parentElement.innerHTML='<span style=font-size:1.4rem>${g.icon||'🎮'}</span>'">`:`<span style="font-size:1.4rem">${g.icon||'🎮'}</span>`}
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const map = { dashboard:0, transfers:1, cards:2, banks:3, games:4 };
+  document.querySelectorAll('.nav-item')[map[name]]?.classList.add('active');
+  const titles = { dashboard:'📊 الإحصاءات', transfers:'💸 طلبات التحويل', cards:'🎮 طلبات البطاقات', banks:'🏛️ إدارة البنوك', games:'🕹️ إدارة الألعاب' };
+  document.getElementById('pageTitle').innerHTML = titles[name] || '';
+};
+ 
+// ══ BANKS ══
+function renderBanksGrid() {
+  const g = document.getElementById('banksGrid');
+  if (!BANKS.length) { g.innerHTML='<div class="empty"><div class="empty-icon">🏦</div><p>لا توجد بنوك بعد</p></div>'; return; }
+  g.innerHTML = BANKS.map(b => `
+    <div class="bank-card">
+      <div class="bank-card-top">
+        <div class="bank-logo-box" style="background:${b.color||'#0A7C4E'}">
+          ${b.logo ? `<img src="${b.logo}" style="width:36px;height:36px;object-fit:contain;border-radius:6px" onerror="this.outerHTML='<span>${(b.name||'').substring(0,3)}</span>'"/>` : (b.name||'').substring(0,3)}
+        </div>
+        <div>
+          <div class="bank-card-name">${b.name}</div>
+          <div class="bank-card-acc">${b.account||'—'}</div>
+        </div>
       </div>
-      <div><div style="font-weight:800">${g.name}</div><div style="font-size:.75rem;color:var(--muted)">${g.desc||''}</div></div>
-    </div></td>
-    <td>${g.badge||'—'}</td>
-    <td>${(g.pkgs||[]).length} باقة</td>
-    <td>${g.order||0}</td>
-    <td><div style="display:flex;gap:.4rem">
-      <button class="stock-btn" style="font-size:.75rem;padding:.3rem .7rem" onclick="openEditGame('${g.id}')">✏️</button>
-      <button class="del-btn" onclick="deleteGame('${g.id}')">🗑️</button>
-    </div></td></tr>`).join('');
+      <div style="font-size:.75rem;color:var(--mid)">ترتيب: ${b.order??'—'}</div>
+      <div class="bank-card-actions">
+        <button class="btn btn-orange btn-sm" onclick="window.openBankModal('${b.id}')">✏️ تعديل</button>
+        <button class="btn btn-red btn-sm" onclick="window.deleteBank('${b.id}','${b.name}')">🗑️ حذف</button>
+      </div>
+    </div>`).join('');
 }
-
-// ── ACTIONS ──
-window.changeStatus = async (col, docId, status) => {
-  try { await updateDoc(doc(db,col,docId),{status}); showToast('✅ تم تحديث الحالة'); }
-  catch { showToast('❌ خطأ في التحديث'); }
-};
-window.deleteStock = async (id) => {
-  if (!confirm('حذف هذه البطاقة؟')) return;
-  try { await deleteDoc(doc(db,'stock',id)); showToast('🗑️ تم الحذف'); }
-  catch { showToast('❌ خطأ في الحذف'); }
-};
-window.copyCode = (code) => {
-  navigator.clipboard.writeText(code).then(()=>showToast('📋 تم نسخ: '+code));
-};
-window.deleteBank = async (id) => {
-  if (!confirm('حذف هذا البنك؟')) return;
-  try { await deleteDoc(doc(db,'banks',id)); showToast('🗑️ تم الحذف'); }
-  catch { showToast('❌ خطأ'); }
-};
-window.deleteGame = async (id) => {
-  if (!confirm('حذف هذه اللعبة؟')) return;
-  try { await deleteDoc(doc(db,'games',id)); showToast('🗑️ تم الحذف'); }
-  catch { showToast('❌ خطأ'); }
-};
-
-// ── SEARCH ──
-document.getElementById('searchTransfer').addEventListener('input', function() {
-  const q = this.value.toLowerCase();
-  renderTransfers(allTransfers.filter(r=>(r.name||'').toLowerCase().includes(q)||(r.phone||'').includes(q)||(r.ref||'').toLowerCase().includes(q)));
-});
-document.getElementById('searchCards').addEventListener('input', function() {
-  const q = this.value.toLowerCase();
-  renderCards(allCards.filter(r=>(r.game||'').toLowerCase().includes(q)||(r.ref||'').toLowerCase().includes(q)));
-});
-document.getElementById('filterCat').addEventListener('change', renderStock);
-document.getElementById('filterStatus').addEventListener('change', renderStock);
-document.getElementById('searchStock').addEventListener('input', renderStock);
-
-// ── STOCK MODAL ──
-const CARD_OPTIONS = {
-  'Apple':['iTunes 10$','iTunes 25$','iTunes 50$','iTunes 100$'],
-  'Google Play':['Google Play 5$','Google Play 10$','Google Play 25$','Google Play 50$'],
-  'Netflix':['Netflix 1 شهر','Netflix 3 أشهر','Netflix 6 أشهر'],
-  'PlayStation':['PSN 10$','PSN 20$','PSN 50$','PSN 100$','PS Plus شهر','PS Plus سنة'],
-  'PUBG':['60 UC','325 UC','660 UC','1800 UC','3850 UC','8100 UC'],
-  'Free Fire':['100 جوهرة','310 جوهرة','520 جوهرة','1060 جوهرة','2180 جوهرة'],
-  'Steam':['Steam 5$','Steam 10$','Steam 20$','Steam 50$','Steam 100$'],
-  'أخرى':['مخصص'],
-};
-let selectedCat = 'Apple';
-
-function updateCardOptions() {
-  const opts = CARD_OPTIONS[selectedCat]||['مخصص'];
-  document.getElementById('cardType').innerHTML = '<option value="">— اختر —</option>'+opts.map(o=>`<option value="${o}">${o}</option>`).join('');
-}
-
-document.getElementById('catGrid').addEventListener('click', e => {
-  const btn = e.target.closest('.cat-btn'); if (!btn) return;
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  selectedCat = btn.dataset.cat;
-  document.getElementById('customCat').style.display = selectedCat==='أخرى'?'block':'none';
-  updateCardOptions();
-});
-
-document.getElementById('codesArea').addEventListener('input', function() {
-  const codes = this.value.split('\n').map(c=>c.trim()).filter(c=>c);
-  document.getElementById('codesCount').textContent = codes.length+' كود';
-});
-
-document.getElementById('openStockBtn').addEventListener('click', () => {
-  document.getElementById('stockModal').classList.add('open');
-  updateCardOptions();
-});
-document.getElementById('closeStockBtn').addEventListener('click', () => {
-  document.getElementById('stockModal').classList.remove('open');
-});
-document.getElementById('stockModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('stockModal')) document.getElementById('stockModal').classList.remove('open');
-});
-document.getElementById('clearCodesBtn').addEventListener('click', () => {
-  document.getElementById('codesArea').value = '';
-  document.getElementById('codesCount').textContent = '٠ كود';
-});
-
-document.getElementById('saveStockBtn').addEventListener('click', async () => {
-  const cardType = document.getElementById('cardType').value;
-  const supplier = document.getElementById('supplier').value.trim();
-  const codes    = document.getElementById('codesArea').value.split('\n').map(c=>c.trim()).filter(c=>c);
-  const cat      = selectedCat==='أخرى'?(document.getElementById('customCat').value.trim()||'أخرى'):selectedCat;
-  if (!cardType) { showToast('⚠️ اختر نوع البطاقة أولاً'); return; }
-  if (!codes.length) { showToast('⚠️ أدخل كود واحد على الأقل'); return; }
-  const btn = document.getElementById('saveStockBtn');
-  btn.disabled = true; btn.textContent = '⏳ جاري الحفظ...';
-  try {
-    await Promise.all(codes.map(code=>addDoc(collection(db,'stock'),{
-      category:cat, cardType, value:cardType, supplier:supplier||'غير محدد',
-      code, status:'available', createdAt:serverTimestamp()
-    })));
-    showToast(`✅ تم حفظ ${codes.length} بطاقة!`);
-    document.getElementById('stockModal').classList.remove('open');
-    document.getElementById('codesArea').value = '';
-  } catch { showToast('❌ خطأ في الحفظ'); }
-  btn.disabled = false; btn.textContent = '💾 حفظ البطاقات في المخزون';
-});
-
-// ── BANK MODAL ──
-let editingBankId = null;
-
-function updateBankPreview() {
-  const logo  = document.getElementById('bankLogo').value.trim();
-  const color = document.getElementById('bankColor').value;
-  const name  = document.getElementById('bankName').value.trim();
-  const prev  = document.getElementById('bankPreview');
-  prev.style.background = color;
-  prev.innerHTML = logo
-    ? `<img src="${logo}" style="width:40px;height:40px;object-fit:contain" onerror="this.parentElement.innerHTML='<span style=color:#fff;font-weight:900>${name.substring(0,3)}</span>'">`
-    : `<span style="color:#fff;font-weight:900;font-size:.9rem">${name.substring(0,3)||'؟'}</span>`;
-}
-
-document.getElementById('bankName').addEventListener('input', updateBankPreview);
-document.getElementById('bankLogo').addEventListener('input', updateBankPreview);
-document.getElementById('bankColor').addEventListener('input', updateBankPreview);
-
-document.getElementById('openAddBankBtn').addEventListener('click', () => {
-  editingBankId = null;
-  document.getElementById('bankModalTitle').textContent = '➕ إضافة بنك';
-  ['bankName','bankLogo','bankId'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('bankColor').value = '#0A7C4E';
-  document.getElementById('bankOrder').value = allBanks.length;
-  updateBankPreview();
-  document.getElementById('bankModal').classList.add('open');
-});
-document.getElementById('closeBankBtn').addEventListener('click', ()=>document.getElementById('bankModal').classList.remove('open'));
-document.getElementById('bankModal').addEventListener('click', e=>{ if(e.target===document.getElementById('bankModal')) document.getElementById('bankModal').classList.remove('open'); });
-
-window.openEditBank = (id) => {
-  const b = allBanks.find(x=>x.id===id); if (!b) return;
-  editingBankId = id;
-  document.getElementById('bankModalTitle').textContent = '✏️ تعديل البنك';
-  document.getElementById('bankName').value  = b.name||'';
-  document.getElementById('bankLogo').value  = b.logo||'';
-  document.getElementById('bankColor').value = b.color||'#0A7C4E';
-  document.getElementById('bankOrder').value = b.order||0;
-  document.getElementById('bankId').value    = b.id||'';
-  updateBankPreview();
+ 
+window.openBankModal = function(id) {
+  editBankId = id || null;
+  document.getElementById('bankModalTitle').textContent = id ? 'تعديل البنك' : 'إضافة بنك جديد';
+  if (id) {
+    const b = BANKS.find(x => x.id===id);
+    if (!b) return;
+    document.getElementById('bName').value    = b.name    || '';
+    document.getElementById('bOrder').value   = b.order   ?? '';
+    document.getElementById('bAccount').value = b.account || '';
+    document.getElementById('bLogo').value    = b.logo    || '';
+    document.getElementById('bColor').value   = b.color   || '#0A7C4E';
+  } else {
+    ['bName','bAccount','bLogo'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('bOrder').value = BANKS.length + 1;
+    document.getElementById('bColor').value = '#0A7C4E';
+  }
   document.getElementById('bankModal').classList.add('open');
 };
-
-document.getElementById('saveBankBtn').addEventListener('click', async () => {
-  const name  = document.getElementById('bankName').value.trim();
-  const logo  = document.getElementById('bankLogo').value.trim();
-  const color = document.getElementById('bankColor').value;
-  const order = parseInt(document.getElementById('bankOrder').value)||0;
-  const bid   = document.getElementById('bankId').value.trim()||name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+ 
+window.closeBankModal = function() { document.getElementById('bankModal').classList.remove('open'); };
+ 
+window.saveBank = async function() {
+  const name    = document.getElementById('bName').value.trim();
+  const order   = parseInt(document.getElementById('bOrder').value) || (BANKS.length + 1);
+  const account = document.getElementById('bAccount').value.trim();
+  const logo    = document.getElementById('bLogo').value.trim();
+  const color   = document.getElementById('bColor').value;
   if (!name) { showToast('⚠️ أدخل اسم البنك'); return; }
-  const btn = document.getElementById('saveBankBtn');
-  btn.disabled=true; btn.textContent='⏳...';
+  const btn = document.getElementById('bankSaveBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   try {
-    if (editingBankId) await updateDoc(doc(db,'banks',editingBankId),{name,logo,color,order});
-    else await setDoc(doc(db,'banks',bid),{name,logo,color,order,createdAt:serverTimestamp()});
-    showToast('✅ تم حفظ البنك');
-    document.getElementById('bankModal').classList.remove('open');
-  } catch(e) { showToast('❌ '+e.message); }
-  btn.disabled=false; btn.textContent='💾 حفظ البنك';
-});
-
-// ── GAME MODAL ──
-let editingGameId = null;
-let gamePkgs = [];
-
-function updateGamePreview() {
-  const logo = document.getElementById('gameLogo').value.trim();
-  const bg   = document.getElementById('gameBg').value;
-  const icon = document.getElementById('gameIcon').value;
-  const prev = document.getElementById('gamePreview');
-  prev.style.background = bg;
-  prev.innerHTML = logo
-    ? `<img src="${logo}" style="width:48px;height:48px;object-fit:contain;border-radius:8px" onerror="this.outerHTML='<span style=font-size:2rem>${icon}</span>'">`
-    : `<span style="font-size:2rem">${icon||'🎮'}</span>`;
+    const data = { name, order, account, logo, color };
+    if (editBankId) {
+      await setDoc(doc(db,'banks',editBankId), data, { merge:true });
+      showToast('✅ تم تحديث البنك');
+    } else {
+      await addDoc(collection(db,'banks'), { ...data, createdAt: serverTimestamp() });
+      showToast('✅ تم إضافة البنك');
+    }
+    window.closeBankModal();
+  } catch(e) {
+    console.error(e);
+    showToast('❌ خطأ: ' + e.message);
+  }
+  btn.disabled = false; btn.innerHTML = '💾 حفظ البنك';
+};
+ 
+window.deleteBank = async function(id, name) {
+  if (!confirm(`هل تريد حذف بنك "${name}"؟`)) return;
+  try {
+    await deleteDoc(doc(db,'banks',id));
+    showToast('🗑️ تم حذف البنك');
+  } catch(e) { showToast('❌ خطأ: ' + e.message); }
+};
+ 
+// ══ GAMES ══
+function renderGamesGrid() {
+  const g = document.getElementById('gamesGrid');
+  if (!GAMES.length) { g.innerHTML='<div class="empty"><div class="empty-icon">🎮</div><p>لا توجد ألعاب بعد</p></div>'; return; }
+  g.innerHTML = GAMES.map(gm => `
+    <div class="game-admin-card">
+      <div class="game-admin-top" style="background:${gm.bg||'#1a1a2e'}">
+        ${gm.logo ? `<img src="${gm.logo}" style="width:60px;height:60px;object-fit:contain;border-radius:10px" onerror="this.outerHTML='<span style=font-size:2.5rem>${gm.icon||'🎮'}</span>'"/>` : `<span style="font-size:2.5rem">${gm.icon||'🎮'}</span>`}
+        ${gm.badge?`<div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:99px;font-size:.65rem;padding:.15rem .5rem">${gm.badge}</div>`:''}
+      </div>
+      <div class="game-admin-body">
+        <div class="game-admin-name">${gm.name}</div>
+        <div class="game-admin-pkgs">${(gm.pkgs||[]).length} باقة متاحة</div>
+        <div class="game-admin-actions">
+          <button class="btn btn-orange btn-sm" onclick="window.openGameModal('${gm.id}')">✏️ تعديل</button>
+          <button class="btn btn-red btn-sm" onclick="window.deleteGame('${gm.id}','${gm.name}')">🗑️ حذف</button>
+        </div>
+      </div>
+    </div>`).join('');
 }
-
-function renderPkgsEditor() {
-  const cont = document.getElementById('pkgsEditor');
-  cont.innerHTML = gamePkgs.map((p,i)=>`
-    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
-      <input class="finput" style="flex:1" value="${p.amount||''}" oninput="gamePkgUpdate(${i},'amount',this.value)" placeholder="مثال: 60 UC"/>
-      <input class="finput" style="width:110px" type="number" value="${p.price||''}" oninput="gamePkgUpdate(${i},'price',this.value)" placeholder="السعر"/>
-      <button onclick="gamePkgRemove(${i})" style="background:var(--red-light);color:var(--red);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer">✕</button>
-    </div>`).join('')
-    +`<button onclick="gamePkgAdd()" class="stock-btn" style="font-size:.82rem;padding:.4rem .9rem;margin-top:.3rem">➕ إضافة باقة</button>`;
-}
-
-window.gamePkgAdd    = () => { gamePkgs.push({amount:'',price:0}); renderPkgsEditor(); };
-window.gamePkgRemove = (i) => { gamePkgs.splice(i,1); renderPkgsEditor(); };
-window.gamePkgUpdate = (i,f,v) => { gamePkgs[i][f]=f==='price'?parseFloat(v)||0:v; };
-
-document.getElementById('gameName').addEventListener('input', updateGamePreview);
-document.getElementById('gameLogo').addEventListener('input', updateGamePreview);
-document.getElementById('gameIcon').addEventListener('input', updateGamePreview);
-document.getElementById('gameBg').addEventListener('input', updateGamePreview);
-
-document.getElementById('openAddGameBtn').addEventListener('click', () => {
-  editingGameId=null; gamePkgs=[];
-  document.getElementById('gameModalTitle').textContent='➕ إضافة لعبة';
-  ['gameName','gameLogo','gameDesc','gameBadge','gameId'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('gameIcon').value='🎮';
-  document.getElementById('gameBg').value='#1A1A2E';
-  document.getElementById('gameOrder').value=allGames.length;
-  renderPkgsEditor(); updateGamePreview();
-  document.getElementById('gameModal').classList.add('open');
-});
-document.getElementById('closeGameBtn').addEventListener('click', ()=>document.getElementById('gameModal').classList.remove('open'));
-document.getElementById('gameModal').addEventListener('click', e=>{ if(e.target===document.getElementById('gameModal')) document.getElementById('gameModal').classList.remove('open'); });
-
-window.openEditGame = (id) => {
-  const g=allGames.find(x=>x.id===id); if (!g) return;
-  editingGameId=id; gamePkgs=JSON.parse(JSON.stringify(g.pkgs||[]));
-  document.getElementById('gameModalTitle').textContent='✏️ تعديل اللعبة';
-  document.getElementById('gameName').value  = g.name||'';
-  document.getElementById('gameIcon').value  = g.icon||'🎮';
-  document.getElementById('gameLogo').value  = g.logo||'';
-  document.getElementById('gameBg').value    = g.bg||'#1A1A2E';
-  document.getElementById('gameDesc').value  = g.desc||'';
-  document.getElementById('gameBadge').value = g.badge||'';
-  document.getElementById('gameOrder').value = g.order||0;
-  document.getElementById('gameId').value    = g.id||'';
-  renderPkgsEditor(); updateGamePreview();
+ 
+window.openGameModal = function(id) {
+  editGameId = id || null;
+  document.getElementById('gameModalTitle').textContent = id ? 'تعديل اللعبة' : 'إضافة لعبة جديدة';
+  if (id) {
+    const gm = GAMES.find(x => x.id===id);
+    if (!gm) return;
+    document.getElementById('gName').value  = gm.name  || '';
+    document.getElementById('gOrder').value = gm.order ?? '';
+    document.getElementById('gIcon').value  = gm.icon  || '';
+    document.getElementById('gBg').value    = gm.bg    || '#1a1a2e';
+    document.getElementById('gDesc').value  = gm.desc  || '';
+    document.getElementById('gLogo').value  = gm.logo  || '';
+    document.getElementById('gBadge').value = gm.badge || '';
+    renderPkgList(gm.pkgs || []);
+  } else {
+    ['gName','gIcon','gDesc','gLogo','gBadge'].forEach(i => document.getElementById(i).value='');
+    document.getElementById('gOrder').value = GAMES.length + 1;
+    document.getElementById('gBg').value    = '#1a1a2e';
+    renderPkgList([]);
+  }
   document.getElementById('gameModal').classList.add('open');
 };
-
-document.getElementById('saveGameBtn').addEventListener('click', async () => {
-  const name  = document.getElementById('gameName').value.trim();
-  const icon  = document.getElementById('gameIcon').value.trim();
-  const logo  = document.getElementById('gameLogo').value.trim();
-  const bg    = document.getElementById('gameBg').value;
-  const desc  = document.getElementById('gameDesc').value.trim();
-  const badge = document.getElementById('gameBadge').value.trim();
-  const order = parseInt(document.getElementById('gameOrder').value)||0;
-  const gid   = document.getElementById('gameId').value.trim()||name.toLowerCase().replace(/\s+/g,'-').replace(/[^\w-]/g,'').substring(0,20);
+ 
+window.closeGameModal = function() { document.getElementById('gameModal').classList.remove('open'); };
+ 
+function renderPkgList(pkgs) {
+  const list = document.getElementById('pkgList');
+  list.innerHTML = pkgs.map((p,i) => `
+    <div class="pkg-item">
+      <input placeholder="الكمية (مثل: 60 UC)" value="${p.amount||''}" oninput="updatePkg(${i},'amount',this.value)"/>
+      <input placeholder="السعر بالأوقية" type="number" value="${p.price||''}" oninput="updatePkg(${i},'price',this.value)" style="max-width:130px"/>
+      <button class="pkg-remove" onclick="removePkg(${i})">✕</button>
+    </div>`).join('');
+}
+ 
+let _pkgs = [];
+window.addPkgRow = function() {
+  _pkgs = getPkgs();
+  _pkgs.push({ amount:'', price:'' });
+  renderPkgList(_pkgs);
+};
+window.updatePkg = function(i, field, val) {
+  _pkgs = getPkgs(); _pkgs[i] = _pkgs[i] || {};
+  _pkgs[i][field] = field==='price' ? parseFloat(val)||0 : val;
+};
+window.removePkg = function(i) {
+  _pkgs = getPkgs(); _pkgs.splice(i,1); renderPkgList(_pkgs);
+};
+function getPkgs() {
+  const items = document.querySelectorAll('#pkgList .pkg-item');
+  return Array.from(items).map(item => {
+    const inputs = item.querySelectorAll('input');
+    return { amount: inputs[0].value.trim(), price: parseFloat(inputs[1].value)||0 };
+  });
+}
+ 
+window.saveGame = async function() {
+  const name  = document.getElementById('gName').value.trim();
+  const order = parseInt(document.getElementById('gOrder').value) || (GAMES.length + 1);
+  const pkgs  = getPkgs().filter(p => p.amount);
   if (!name) { showToast('⚠️ أدخل اسم اللعبة'); return; }
-  const pkgs = gamePkgs.filter(p=>p.amount&&p.price>0);
-  const btn  = document.getElementById('saveGameBtn');
-  btn.disabled=true; btn.textContent='⏳...';
+  const btn = document.getElementById('gameSaveBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   try {
-    const data={name,icon,logo,bg,desc,badge,order,pkgs};
-    if(editingGameId) await updateDoc(doc(db,'games',editingGameId),data);
-    else await setDoc(doc(db,'games',gid),{...data,createdAt:serverTimestamp()});
-    showToast('✅ تم حفظ اللعبة');
-    document.getElementById('gameModal').classList.remove('open');
-  } catch(e) { showToast('❌ '+e.message); }
-  btn.disabled=false; btn.textContent='💾 حفظ اللعبة';
-});
-
-// ── HELPERS ──
-function fmt(n) { return Number(n).toLocaleString('ar-MA'); }
-function fmtDate(ts) {
-  if(!ts) return '—';
+    const data = {
+      name, order, pkgs,
+      icon:  document.getElementById('gIcon').value.trim(),
+      bg:    document.getElementById('gBg').value,
+      desc:  document.getElementById('gDesc').value.trim(),
+      logo:  document.getElementById('gLogo').value.trim(),
+      badge: document.getElementById('gBadge').value.trim(),
+    };
+    if (editGameId) {
+      await setDoc(doc(db,'games',editGameId), data, { merge:true });
+      showToast('✅ تم تحديث اللعبة');
+    } else {
+      await addDoc(collection(db,'games'), { ...data, createdAt: serverTimestamp() });
+      showToast('✅ تم إضافة اللعبة');
+    }
+    window.closeGameModal();
+  } catch(e) {
+    console.error(e);
+    showToast('❌ خطأ: ' + e.message);
+  }
+  btn.disabled = false; btn.innerHTML = '💾 حفظ اللعبة';
+};
+ 
+window.deleteGame = async function(id, name) {
+  if (!confirm(`هل تريد حذف لعبة "${name}"؟`)) return;
   try {
-    const d=ts.toDate?ts.toDate():new Date(ts);
-    return d.toLocaleDateString('ar-MA',{day:'2-digit',month:'2-digit',year:'numeric'})
-      +' '+d.toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'});
-  } catch { return '—'; }
+    await deleteDoc(doc(db,'games',id));
+    showToast('🗑️ تم حذف اللعبة');
+  } catch(e) { showToast('❌ خطأ: ' + e.message); }
+};
+ 
+// ══ TRANSFERS TABLE ══
+window.filterTransfers = function(v) { transferFilter = v; renderTransfersTable(); };
+function renderTransfersTable() {
+  const list = transferFilter==='all' ? TRANSFERS : TRANSFERS.filter(t => t.status===transferFilter);
+  const tbody = document.getElementById('transfersTable');
+  if (!list.length) { tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><p>لا توجد طلبات</p></div></td></tr>`; return; }
+  tbody.innerHTML = list.map(t => `
+    <tr>
+      <td><code style="font-size:.75rem;background:var(--bg);padding:.2rem .4rem;border-radius:4px">${t.ref||'—'}</code></td>
+      <td><strong>${t.name||'—'}</strong></td>
+      <td><a href="https://wa.me/${t.phone}" target="_blank" style="color:var(--green);text-decoration:none">📱 ${t.phone||'—'}</a></td>
+      <td>${t.fromBank||'—'}</td>
+      <td>${t.toBank||'—'}</td>
+      <td style="font-weight:700">${fmt(t.amount)} أوقية</td>
+      <td style="color:var(--green);font-weight:700">${fmt(t.receive)} أوقية</td>
+      <td>${badgeHTML(t.status)}</td>
+      <td>
+        <select class="status-sel" onchange="updateStatus('transfers','${t.id}',this.value)">
+          <option value="pending"  ${t.status==='pending'?'selected':''}>⏳ معلّق</option>
+          <option value="done"     ${t.status==='done'?'selected':''}>✅ مكتمل</option>
+          <option value="rejected" ${t.status==='rejected'?'selected':''}>❌ مرفوض</option>
+        </select>
+      </td>
+    </tr>`).join('');
 }
-function showToast(msg) {
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
+ 
+// ══ CARDS TABLE ══
+window.filterCards = function(v) { cardsFilter = v; renderCardsTable(); };
+function renderCardsTable() {
+  const list = cardsFilter==='all' ? CARDS_D : CARDS_D.filter(c => c.status===cardsFilter);
+  const tbody = document.getElementById('cardsTable');
+  if (!list.length) { tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📭</div><p>لا توجد طلبات</p></div></td></tr>`; return; }
+  tbody.innerHTML = list.map(c => `
+    <tr>
+      <td><code style="font-size:.75rem;background:var(--bg);padding:.2rem .4rem;border-radius:4px">${c.ref||'—'}</code></td>
+      <td>${c.game||'—'}</td>
+      <td>${c.package||'—'}</td>
+      <td style="font-weight:700">${fmt(c.price)} أوقية</td>
+      <td><code>${c.playerId||'—'}</code></td>
+      <td><a href="https://wa.me/${c.phone}" target="_blank" style="color:var(--green);text-decoration:none">📱 ${c.phone||'—'}</a></td>
+      <td>${badgeHTML(c.status)}</td>
+      <td>
+        <select class="status-sel" onchange="updateStatus('cards','${c.id}',this.value)">
+          <option value="pending"  ${c.status==='pending'?'selected':''}>⏳ معلّق</option>
+          <option value="done"     ${c.status==='done'?'selected':''}>✅ مكتمل</option>
+          <option value="rejected" ${c.status==='rejected'?'selected':''}>❌ مرفوض</option>
+        </select>
+      </td>
+    </tr>`).join('');
 }
+ 
+// ══ DASHBOARD ══
+function renderDashTransfers() {
+  const list = TRANSFERS.filter(t => t.status==='pending').slice(0,5);
+  const tbody = document.getElementById('dashTransfers');
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">✅</div><p>لا توجد طلبات معلّقة</p></div></td></tr>'; return; }
+  tbody.innerHTML = list.map(t => `
+    <tr>
+      <td><strong>${t.name||'—'}</strong></td>
+      <td>${t.fromBank||'—'}</td>
+      <td>${t.toBank||'—'}</td>
+      <td style="font-weight:700">${fmt(t.amount)} أوقية</td>
+      <td>${badgeHTML(t.status)}</td>
+    </tr>`).join('');
+}
+function renderDashCards() {
+  const list = CARDS_D.filter(c => c.status==='pending').slice(0,5);
+  const tbody = document.getElementById('dashCards');
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">✅</div><p>لا توجد طلبات معلّقة</p></div></td></tr>'; return; }
+  tbody.innerHTML = list.map(c => `
+    <tr>
+      <td>${c.game||'—'}</td>
+      <td>${c.package||'—'}</td>
+      <td><code>${c.playerId||'—'}</code></td>
+      <td>${c.phone||'—'}</td>
+      <td>${badgeHTML(c.status)}</td>
+    </tr>`).join('');
+}
+ 
+// ══ UPDATE STATUS ══
+window.updateStatus = async function(col, id, status) {
+  try {
+    await updateDoc(doc(db,col,id), { status });
+    showToast('✅ تم تحديث الحالة');
+  } catch(e) { showToast('❌ خطأ: ' + e.message); }
+};
+ 
+// ══ HELPERS ══
+function badgeHTML(status) {
+  const map = { pending:'badge-pending ⏳ معلّق', done:'badge-done ✅ مكتمل', rejected:'badge-rejected ❌ مرفوض' };
+  const [cls, ...rest] = (map[status]||'badge-pending ⏳ معلّق').split(' ');
+  return `<span class="badge ${cls}">${rest.join(' ')}</span>`;
+}
+function fmt(n) { return Number(n||0).toLocaleString('ar-MA'); }
+ 
+window.showToast = function(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+};
 </script>
 </body>
 </html>
+ 
