@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header class="admin-top-header">
+<body>
+
+        <header class="admin-top-header">
     <div class="header-container">
         <div class="logo">
     <a href="dashboard.html" style="text-decoration: none; color: inherit;">
@@ -37,46 +39,33 @@
     </div>
 </header>
 
-    <main class="dashboard-main-area">
-    <section class="section-header">
-        <h2><i class="fas fa-tachometer-alt"></i> مؤشرات الأداء الرئيسية</h2>
-    </section>
+    <div class="admin-container">
+        <h1><i class="fas fa-credit-card"></i> إدارة طرق الدفع</h1>
 
-    <div class="stats-grid">
-        <div class="stat-card" style="color: #03a9f4;"> <div class="stat-icon" style="background: #e1f5fe;">
-                <i class="fas fa-money-bill-wave"></i>
+        <div class="add-form">
+            <h2><i class="fas fa-plus-circle"></i> إضافة طريقة دفع جديدة</h2>
+            <div class="form-group">
+                <label>اسم البنك / طريقة الدفع</label>
+                <input type="text" id="method-name" placeholder="مثال: بنك موريتانيا">
             </div>
-            <div class="stat-info">
-                <h3>إجمالي المبيعات</h3>
-                <p class="stat-value">
-                    <span id="total-sales">0</span>
-                    <small>MRU</small>
-                </p>
+            <div class="form-group">
+                <label>رابط الشعار (URL)</label>
+                <input type="text" id="method-logo" placeholder="https://...">
             </div>
+            <div class="form-group">
+                <label>رقم الحساب</label>
+                <input type="text" id="method-account" placeholder="مثال: 1234 5678 9012">
+            </div>
+            <button class="save-btn" onclick="addMethod()">
+                <i class="fas fa-save"></i> حفظ طريقة الدفع
+            </button>
         </div>
 
-        <div class="stat-card" style="color: #4caf50;">
-            <div class="stat-icon" style="background: #e8f5e9;">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-info">
-                <h3>الطلبات المنجزة</h3>
-                <p class="stat-value" id="orders-count">0</p>
-            </div>
-        </div>
-
-        <div class="stat-card" style="color: #ff9800;">
-            <div class="stat-icon" style="background: #fff3e0;">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stat-info">
-                <h3>إجمالي المستخدمين</h3>
-                <p class="stat-value" id="users-count">0</p>
-            </div>
+        <div class="methods-list" id="methods-list">
+            <p style="text-align:center; color:#94a3b8;">جاري التحميل...</p>
         </div>
     </div>
-</main>
 
-    <script type="module" src="./js/stats.js"></script>
+    <script type="module" src="./js/payment-methods.js"></script>
 </body>
 </html>
