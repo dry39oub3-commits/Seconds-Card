@@ -60,17 +60,43 @@ function renderCart() {
 
     list.innerHTML = html;
     updateSummary(total);
+    updateCartBadge();
 }
 
 // --- 3. وظائف التحكم (تحديث الكمية والحذف) ---
 window.updateQty = (index, change) => {
     if (!cart[index].quantity) cart[index].quantity = 1;
     const newQty = cart[index].quantity + change;
+    if (newQty > 5) {
+        showToast('⚠️ لا يمكن إضافة أكثر من 5 قطع!', 'warning');
+        return;
+    }
     if (newQty > 0) {
         cart[index].quantity = newQty;
         saveAndReload();
     }
 };
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#22c55e' : '#c70d0d'};
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 16px;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        transition: opacity 0.5s;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2000);
+}
 
 window.removeItem = (index) => {
     cart.splice(index, 1);
@@ -147,3 +173,39 @@ window.handleLogout = async () => {
         console.error("Logout Error:", error);
     }
 };
+
+
+function updateCartBadge() {
+    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    
+    // أضف badge إذا لم يكن موجوداً
+    let badge = document.querySelector('.cart-badge');
+    const cartIcon = document.querySelector('a[href="cart.html"]');
+    
+    if (!cartIcon) return;
+    
+    if (!badge) {
+        cartIcon.style.position = 'relative';
+        badge = document.createElement('span');
+        badge.className = 'cart-badge';
+        badge.style.cssText = `
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: #f97316;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        `;
+        cartIcon.appendChild(badge);
+    }
+    
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'flex' : 'none';
+}

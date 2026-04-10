@@ -27,6 +27,7 @@ async function loadProduct() {
 
     currentProduct = product;
     renderProduct(product);
+    updateCartBadge();
 }
 
 function renderProduct(product) {
@@ -53,6 +54,7 @@ function renderProduct(product) {
             <i class="fas fa-cart-plus"></i> أضف إلى السلة
         </button>
     `;
+    
 }
 
 window.selectPrice = function(index, value) {
@@ -65,17 +67,50 @@ window.selectPrice = function(index, value) {
 window.addToCart = function() {
     if (!selectedPrice) return;
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    const exists = cart.find(
+        item => item.productId === currentProduct.id && item.label === selectedPrice.label
+    );
+    
+    if (exists) {
+        showToast('⚠️ هذه البطاقة بنفس الفئة موجودة مسبقاً في سلتك!', 'warning');
+        return;
+    }
+    
     cart.push({
         productId: currentProduct.id,
         name: currentProduct.name,
         image: currentProduct.image,
         label: selectedPrice.label,
-        price: selectedPrice.value
+        price: selectedPrice.value,
+        quantity: 1
     });
+    
     localStorage.setItem('cart', JSON.stringify(cart));
-    alert('تمت الإضافة إلى السلة ✅');
+    showToast('✅ تمت الإضافة إلى السلة!', 'success');
     
 };
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#22c55e' : '#c70d0d'};
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 16px;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        transition: opacity 0.5s;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2000);
+}
 
 window.handleLogout = async function() {
     if (confirm("هل تريد تسجيل الخروج؟")) {
@@ -106,4 +141,40 @@ function setupUserMenu() {
         if (!userDropdown.contains(e.target) && !userBtn.contains(e.target))
             userDropdown.classList.remove('show');
     });
+}
+
+
+function updateCartBadge() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    
+    let badge = document.querySelector('.cart-badge');
+    const cartIcon = document.querySelector('a[href="cart.html"]');
+    
+    if (!cartIcon) return;
+    
+    if (!badge) {
+        cartIcon.style.position = 'relative';
+        badge = document.createElement('span');
+        badge.className = 'cart-badge';
+        badge.style.cssText = `
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: #f97316;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        `;
+        cartIcon.appendChild(badge);
+    }
+    
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }

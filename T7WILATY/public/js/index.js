@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     setupUserMenu();
     displayProducts();
+    updateCartBadge()
 });
 
 // --- 2. إدارة الوضع الليلي (Dark Mode) ---
@@ -112,4 +113,40 @@ async function displayProducts() {
         `;
         cardsGrid.insertAdjacentHTML('beforeend', cardHTML);
     });
+}
+
+
+function updateCartBadge() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    
+    let badge = document.querySelector('.cart-badge');
+    const cartIcon = document.querySelector('a[href="cart.html"]');
+    
+    if (!cartIcon) return;
+    
+    if (!badge) {
+        cartIcon.style.position = 'relative';
+        badge = document.createElement('span');
+        badge.className = 'cart-badge';
+        badge.style.cssText = `
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: #f97316;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        `;
+        cartIcon.appendChild(badge);
+    }
+    
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }
