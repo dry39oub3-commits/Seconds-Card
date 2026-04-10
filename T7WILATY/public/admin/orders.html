@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الطلبات | Seconds-Card</title>
+    
+    <link rel="stylesheet" href="./css/dashboard-main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="admin-top-header">
+    <div class="header-container">
+        <div class="logo">
+    <a href="dashboard.html" style="text-decoration: none; color: inherit;">
+        Seconds<span>Card</span>
+    </a>
+</div>
+        
+        <nav class="main-nav">
+            <ul class="nav-list">
+                <li><a href="dashboard.html" class="nav-link"><i class="fas fa-chart-line"></i> الإحصائيات</a></li>
+                <li><a href="orders.html" class="nav-link"><i class="fas fa-shopping-cart"></i> الطلبات</a></li>
+                <li><a href="addcard.html" class="nav-link"><i class="fas fa-plus-circle"></i> إضافة منتج</a></li>
+                <li><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i> إدارة المنتجات</a></li>
+                <li><a href="stocks.html" class="nav-link"><i class="fas fa-layer-group"></i> المخزون</a></li>
+                <li><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i> الطلبات المكتملة</a></li>
+            </ul>
+        </nav>
+
+        <div class="user-actions">
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+    <main class="dashboard-main-area">
+        <section class="content-card">
+            <div class="section-header">
+                <h2><i class="fas fa-shopping-basket"></i> إدارة الطلبات الحالية</h2>
+                <div class="search-box">
+                    <input type="text" id="orderSearch" placeholder="بحث برقم الطلب أو البريد..." onkeyup="filterOrders()">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>المستخدم</th>
+                            <th>نوع البطاقة</th>
+                            <th>المبلغ</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-orders-list">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="./js/orders.js"></script>
+</body>
+</html>

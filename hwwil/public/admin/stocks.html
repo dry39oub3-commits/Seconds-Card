@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>المخزون | حوّل</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../css/base.css"/>
+<link rel="stylesheet" href="css/dashboard-main.css"/>
+<style>:root{--red:#DC2626;--red-light:#FEF2F2;--bg:#F0F4F2;--sand:#E8EFeb;--shadow:0 2px 16px rgba(10,124,78,.08)}</style>
+</head>
+<body>
+<div id="loginWrap" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">💱</div><h1>لوحة الأدمن</h1></div>
+    <div class="login-field"><label>اسم المستخدم</label><input class="login-input" id="loginUser" type="text"/></div>
+    <div class="login-field"><label>كلمة المرور</label><input class="login-input" id="loginPass" type="password"/></div>
+    <button class="login-btn" onclick="doLogin()">🔐 دخول</button>
+    <div class="login-err" id="loginErr" style="display:none">❌ بيانات خاطئة</div>
+  </div>
+</div>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-logo"><div class="topbar-logo-icon">💱</div><span>حوّل — المخزون</span></div>
+    <div class="topbar-right">
+      <a href="addcard.html" class="stock-btn" style="text-decoration:none">➕ إضافة بطاقات</a>
+      <a href="index.html" class="stock-btn" style="text-decoration:none;background:var(--mid)">🏠 الرئيسية</a>
+      <button class="logout-btn" onclick="doLogout()">خروج</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="stats" style="margin-bottom:1.2rem">
+      <div class="stat-card green"><div class="stat-icon">🃏</div><div class="stat-val" id="stTotal">—</div><div class="stat-label">إجمالي البطاقات</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" id="stAvail">—</div><div class="stat-label">متاح</div></div>
+      <div class="stat-card gold"><div class="stat-icon">📤</div><div class="stat-val" id="stUsed">—</div><div class="stat-label">مستخدم</div></div>
+      <div class="stat-card"><div class="stat-icon">🏷️</div><div class="stat-val" id="stCategories">—</div><div class="stat-label">فئات</div></div>
+    </div>
+    <div class="table-card" style="margin-bottom:1rem">
+      <div style="padding:1rem 1.4rem;display:flex;gap:.8rem;flex-wrap:wrap;align-items:center">
+        <select class="status-select" id="filterCat" onchange="renderStock()" style="padding:.5rem .8rem;font-size:.85rem"><option value="">كل الفئات</option></select>
+        <select class="status-select" id="filterStatus" onchange="renderStock()" style="padding:.5rem .8rem;font-size:.85rem">
+          <option value="">كل الحالات</option>
+          <option value="available">✅ متاح</option>
+          <option value="used">📤 مستخدم</option>
+        </select>
+        <input class="search-input" id="searchStock" placeholder="🔍 بحث بالكود..." oninput="renderStock()" style="width:200px"/>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">📦 مخزون البطاقات</div>
+        <span id="stockCount" style="font-size:.82rem;color:var(--muted)"></span>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>الفئة</th><th>البطاقة</th><th>الباقة</th><th>المورد</th><th>الكود</th><th>تاريخ الإضافة</th><th>الحالة</th><th>إجراء</th></tr></thead>
+        <tbody id="stockBody"><tr><td colspan="8" class="loading">⏳ جاري التحميل...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script type="module">
+  import { initStocks, renderStock, changeStockStatus, deleteStock, copyCode } from './js/stocks.js';
+  const U='admin',P='hawwil2026';
+  window.doLogin=function(){
+    if(document.getElementById('loginUser').value===U&&document.getElementById('loginPass').value===P){
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('app').classList.add('show');
+      initStocks();
+    } else document.getElementById('loginErr').style.display='block';
+  };
+  window.doLogout=function(){ document.getElementById('loginWrap').style.display='flex'; document.getElementById('app').classList.remove('show'); };
+  window.renderStock=renderStock;
+  window.changeStockStatus=changeStockStatus;
+  window.deleteStock=deleteStock;
+  window.copyCode=copyCode;
+  document.addEventListener('keydown',e=>{ if(e.key==='Enter') window.doLogin(); });
+</script>
+</body></html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seconds-Card | الرئيسية</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-link">
+                <div class="logo">Seconds<span>Card</span></div>
+            </a>
+            
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
+                
+                <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
+
+                <div class="user-menu-container">
+                    <button class="action-btn" id="user-icon-btn">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+
+                    <div class="dropdown-menu" id="user-dropdown">
+                        <nav class="dropdown-nav">
+                            <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
+                            <a href="wallet.html"><i class="fas fa-wallet"></i> المحفظة</a>
+                            <a href="profile.html"><i class="fas fa-user"></i> حسابي</a>
+                            <hr>
+                            <button onclick="handleLogout()" class="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="cards-grid" class="cards-grid"></div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script type="module" src="js/index.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. تفعيل الوضع الليلي
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+
+                themeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const target = current === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', target);
+                    localStorage.setItem('theme', target);
+                    const icon = themeBtn.querySelector('i');
+                    if (icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+                };
+            }
+
+            // 2. تفعيل قائمة المستخدم (Dropdown)
+            const userBtn = document.getElementById('user-icon-btn');
+            const userMenu = document.getElementById('user-dropdown');
+
+            if (userBtn && userMenu) {
+                userBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    userMenu.classList.toggle('show');
+                };
+
+                document.addEventListener('click', (e) => {
+                    if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
+                        userMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

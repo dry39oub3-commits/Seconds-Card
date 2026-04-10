@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seconds-Card | حسابي</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-link">
+                <div class="logo">Seconds<span>Card</span></div>
+            </a>
+            <a href="index.html" class="action-btn"><i class="fas fa-home"></i></a>
+        </div>
+    </header>
+
+    <main class="profile-container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar-container">
+                    <div class="profile-avatar" id="avatar-container">
+                        <i class="fas fa-user-circle"></i> <img id="user-display-photo" src="" alt="" style="display:none; border-radius:50%">
+                    </div>
+                    <input type="file" id="photo-input" accept="image/*" style="display:none">
+                    <button class="edit-photo-btn" onclick="triggerPhotoUpload()"><i class="fas fa-camera"></i></button>
+                </div>
+                
+                <div class="edit-name-container">
+                    <input type="text" id="user-display-name" class="profile-name-input" value="جاري التحميل..." required>
+                    <i class="fas fa-pencil-alt edit-icon-hint"></i>
+                </div>
+                
+                <p id="user-display-email">--</p>
+                <button id="save-profile-btn" class="save-btn" onclick="updateProfileData()" style="display:none;">حفظ التعديلات</button>
+            </div>
+
+            <div class="profile-details">
+                <div class="detail-item">
+                    <span>رقم التعريف (UID):</span>
+                    <small id="user-uid">--</small>
+                </div>
+                <div class="detail-item">
+                    <span> اسم المستخدم:</span>
+                    <span id="user-name">--</span>
+                </div>
+                <div class="detail-item">
+                    <span>تاريخ الانضمام:</span>
+                    <span id="user-joined">--</span>
+                </div>
+                
+            </div>
+
+            <div class="profile-actions">
+                <button onclick="handleLogout()" class="logout-full-btn">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+    <script src="js/profile.js"></script>
+    <script>
+        // دالة شاملة لربط الأحداث فور تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. تفعيل الوضع الليلي
+    const themeBtn = document.getElementById('theme-toggle');
+    if (themeBtn) {
+        // جلب الحالة المحفوظة
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        themeBtn.onclick = (e) => {
+            e.preventDefault();
+            const current = document.documentElement.getAttribute('data-theme');
+            const target = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', target);
+            localStorage.setItem('theme', target);
+            // تحديث شكل الأيقونة فوراً
+            const icon = themeBtn.querySelector('i');
+            if(icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        };
+    }
+
+    // 2. تفعيل قائمة المستخدم (Dropdown)
+    const userBtn = document.getElementById('user-icon-btn');
+    const userMenu = document.getElementById('user-dropdown');
+    
+    if (userBtn && userMenu) {
+        userBtn.onclick = (e) => {
+            e.stopPropagation();
+            userMenu.classList.toggle('show');
+        };
+
+        // إغلاق المنيو عند الضغط في أي مكان آخر
+        document.addEventListener('click', (e) => {
+            if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
+                userMenu.classList.remove('show');
+            }
+        });
+    }
+});
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+/* ══════════════════════════════════════
+   base.css — المتغيرات والأساسيات
+   ══════════════════════════════════════ */
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --green:#0A7C4E;
+  --green-dark:#065C39;
+  --green-light:#E8F5EE;
+  --green-mid:#12A368;
+  --gold:#D4A853;
+  --gold-light:#FBF4E3;
+  --ink:#0F1F17;
+  --mid:#4A6357;
+  --muted:#8BA898;
+  --bg:#F4F9F6;
+  --white:#FFFFFF;
+  --sand:#EEF5F1;
+  --radius:16px;
+  --shadow:0 4px 28px rgba(10,124,78,.10);
+  --shadow-lg:0 16px 48px rgba(10,124,78,.18);
+}
+
+body{
+  font-family:'Tajawal',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  direction:rtl;
+  overflow-x:hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--sand)}
+::-webkit-scrollbar-thumb{background:var(--green-mid);border-radius:99px}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:2rem;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--green-dark);color:#fff;border-radius:99px;
+  padding:.75rem 1.8rem;font-size:.9rem;font-weight:700;
+  box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:999;
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s;
+  opacity:0;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ANIMATIONS */
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}

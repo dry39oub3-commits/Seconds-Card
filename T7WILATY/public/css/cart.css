@@ -1,0 +1,68 @@
+.cart-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    display: flex;
+    gap: 20px;
+    padding: 0 20px;
+    flex-wrap: wrap;
+}
+
+.cart-items { flex: 2; min-width: 300px; }
+.cart-summary { flex: 1; min-width: 300px; }
+
+/* تصميم عنصر البطاقة في السلة */
+.cart-item {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    gap: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.cart-item img { width: 80px; border-radius: 8px; }
+
+.item-info { flex-grow: 1; }
+.item-info h4 { margin: 0; font-size: 16px; }
+.item-info p { color: var(--primary); font-weight: bold; margin: 5px 0; }
+
+/* التحكم في الكمية */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.05);
+    padding: 5px 10px;
+    border-radius: 8px;
+}
+
+.qty-btn {
+    background: none; border: none; color: var(--text);
+    cursor: pointer; font-size: 18px;
+}
+
+/* ملخص الطلب */
+.summary-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    position: sticky; top: 100px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.summary-item {
+    display: flex; justify-content: space-between;
+    margin: 15px 0;
+}
+
+.total { font-size: 18px; font-weight: bold; color: var(--primary); }
+
+.checkout-btn {
+    width: 100%; background: var(--primary); color: white;
+    border: none; padding: 15px; border-radius: 10px;
+    font-size: 16px; font-weight: bold; cursor: pointer;
+    transition: 0.3s;
+}
+.checkout-btn:hover { opacity: 0.9; transform: scale(1.02); }

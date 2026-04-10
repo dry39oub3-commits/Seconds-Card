@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seconds-Card | سلة المشتريات</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/cart.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-link">
+                <div class="logo">Seconds<span>Card</span></div>
+            </a>
+            
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
+                
+                <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
+
+                <div class="user-menu-container">
+                    <button class="action-btn" id="user-icon-btn">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+
+                    <div class="dropdown-menu" id="user-dropdown">
+                        <nav class="dropdown-nav">
+                            <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
+                            <a href="wallet.html"><i class="fas fa-wallet"></i> المحفظة</a>
+                            <a href="profile.html"><i class="fas fa-user"></i> حسابي</a>
+                            <hr>
+                            <button onclick="handleLogout()" class="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="cart-container">
+        <section class="cart-items" id="cart-items-list">
+            <h2>سلة المشتريات (<span id="items-count">0</span>)</h2>
+            <div id="empty-cart-msg" style="display:none; text-align:center; padding:50px;">
+                <i class="fas fa-shopping-basket" style="font-size: 50px; color: #334155;"></i>
+                <p>سلتك فارغة حالياً</p>
+            </div>
+        </section>
+
+        <aside class="cart-summary">
+            <div class="summary-card">
+                <h3>ملخص الطلب</h3>
+                <div class="summary-item">
+                    <span>إجمالي العناصر:</span>
+                    <span id="subtotal">0 MRU</span>
+                </div>
+                <div class="summary-item">
+                    <span>الضريبة (0%):</span>
+                    <span>0 MRU</span>
+                </div>
+                <hr>
+                <div class="summary-item total">
+                    <span>المجموع النهائي:</span>
+                    <span id="final-total">0 MRU</span>
+                </div>
+                <button class="checkout-btn" onclick="processCheckout()">إتمام الطلب</button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- ✅ Supabase بدل Firebase -->
+    <script type="module" src="js/supabase-config.js"></script>
+    <script type="module" src="js/cart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. تفعيل الوضع الليلي
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+
+                themeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const target = current === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', target);
+                    localStorage.setItem('theme', target);
+                    const icon = themeBtn.querySelector('i');
+                    if (icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+                };
+            }
+
+            // 2. تفعيل قائمة المستخدم (Dropdown)
+            const userBtn = document.getElementById('user-icon-btn');
+            const userMenu = document.getElementById('user-dropdown');
+
+            if (userBtn && userMenu) {
+                userBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    userMenu.classList.toggle('show');
+                };
+
+                document.addEventListener('click', (e) => {
+                    if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
+                        userMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

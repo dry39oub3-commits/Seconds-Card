@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>الإحصاءات | حوّل</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../css/base.css"/>
+<link rel="stylesheet" href="css/dashboard-main.css"/>
+<style>:root{--red:#DC2626;--red-light:#FEF2F2;--bg:#F0F4F2;--sand:#E8EFeb;--shadow:0 2px 16px rgba(10,124,78,.08)}</style>
+</head>
+<body>
+<div id="loginWrap" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">💱</div><h1>لوحة الأدمن</h1></div>
+    <div class="login-field"><label>اسم المستخدم</label><input class="login-input" id="loginUser" type="text"/></div>
+    <div class="login-field"><label>كلمة المرور</label><input class="login-input" id="loginPass" type="password"/></div>
+    <button class="login-btn" onclick="doLogin()">🔐 دخول</button>
+    <div class="login-err" id="loginErr" style="display:none">❌ بيانات خاطئة</div>
+  </div>
+</div>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-logo"><div class="topbar-logo-icon">💱</div><span>حوّل — الإحصاءات</span></div>
+    <div class="topbar-right">
+      <a href="index.html" class="stock-btn" style="text-decoration:none">🏠 الرئيسية</a>
+      <button class="logout-btn" onclick="doLogout()">خروج</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="stats">
+      <div class="stat-card green"><div class="stat-icon">📋</div><div class="stat-val" id="statAllOrders">—</div><div class="stat-label">إجمالي الطلبات</div></div>
+      <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val" id="statPending">—</div><div class="stat-label">معلق</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-val" id="statDone">—</div><div class="stat-label">مكتمل</div></div>
+      <div class="stat-card gold"><div class="stat-icon">💰</div><div class="stat-val" id="statRevenue">—</div><div class="stat-label">إجمالي الإيرادات</div></div>
+    </div>
+    <div class="stats" style="margin-top:1rem">
+      <div class="stat-card gold"><div class="stat-icon">💸</div><div class="stat-val" id="statCommission">—</div><div class="stat-label">إجمالي العمولات</div></div>
+      <div class="stat-card"><div class="stat-icon">🃏</div><div class="stat-val" id="statStockTotal">—</div><div class="stat-label">مخزون كلي</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-val" id="statStockAvail">—</div><div class="stat-label">مخزون متاح</div></div>
+      <div class="stat-card"><div class="stat-icon">📤</div><div class="stat-val" id="statStockUsed">—</div><div class="stat-label">مخزون مستخدم</div></div>
+    </div>
+    <div class="table-card" style="margin-top:1.5rem">
+      <div class="table-header"><div class="table-title">📊 آخر الطلبات</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>رقم الطلب</th><th>العميل/اللعبة</th><th>المبلغ</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+        <tbody id="recentBody"><tr><td colspan="5" class="loading">⏳ جاري التحميل...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script type="module">
+  import { initStats } from './js/stats.js';
+  const U='admin',P='hawwil2026';
+  window.doLogin=function(){
+    if(document.getElementById('loginUser').value===U&&document.getElementById('loginPass').value===P){
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('app').classList.add('show');
+      initStats();
+    } else document.getElementById('loginErr').style.display='block';
+  };
+  window.doLogout=function(){ document.getElementById('loginWrap').style.display='flex'; document.getElementById('app').classList.remove('show'); };
+  document.addEventListener('keydown',e=>{ if(e.key==='Enter') window.doLogin(); });
+</script>
+</body></html>

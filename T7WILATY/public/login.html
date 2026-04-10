@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول | Seconds-Card</title>
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <a href="index.html" class="logo-link">
+                <div class="logo">Seconds<span>Card</span></div>
+            </a>
+            <h2>مرحباً بك مجدداً</h2>
+            <p>سجل دخولك لإدارة محفظتك وطلباتك</p>
+
+            <form id="login-form">
+                <div class="input-group">
+                    <label>رقم الهاتف</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="user-phone" placeholder="32XXXXXX" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>كلمة المرور</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="user-pass" placeholder="أدخل كلمة المرور" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="login-btn">دخول آمن</button>
+            </form>
+
+            <div class="login-footer">
+                ليس لديك حساب؟ <a href="register.html">إنشاء حساب جديد</a>
+            </div>
+        </div>
+    </div>
+
+    
+    
+    <script src="js/supabase-config.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>

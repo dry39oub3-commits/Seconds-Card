@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seconds-Card | طلباتي</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/orders.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-link">
+                <div class="logo">Seconds<span>Card</span></div>
+            </a>
+            
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
+                
+                <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
+
+                <div class="user-menu-container">
+                    <button class="action-btn" id="user-icon-btn">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+
+                    <div class="dropdown-menu" id="user-dropdown">
+                        <nav class="dropdown-nav">
+                            <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
+                            <a href="wallet.html"><i class="fas fa-wallet"></i> المحفظة</a>
+                            <a href="profile.html"><i class="fas fa-user"></i> حسابي</a>
+                            <hr>
+                            <button onclick="handleLogout()" class="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="orders-container">
+        <h2 class="page-title"><i class="fas fa-shopping-bag"></i> سجل طلباتي</h2>
+        
+        <div id="orders-list" class="orders-list">
+            <div class="loading-spinner">جاري تحميل طلباتك...</div>
+        </div>
+
+        <div id="no-orders" style="display:none; text-align:center; padding:50px;">
+            <i class="fas fa-box-open" style="font-size: 60px; color: #334155; margin-bottom: 20px;"></i>
+            <p>لا توجد طلبات سابقة حتى الآن.</p>
+            <a href="index.html" class="shop-now-btn">تصفح البطاقات الآن</a>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/orders.js"></script>
+    <script>
+        // دالة شاملة لربط الأحداث فور تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. تفعيل الوضع الليلي
+    const themeBtn = document.getElementById('theme-toggle');
+    if (themeBtn) {
+        // جلب الحالة المحفوظة
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        themeBtn.onclick = (e) => {
+            e.preventDefault();
+            const current = document.documentElement.getAttribute('data-theme');
+            const target = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', target);
+            localStorage.setItem('theme', target);
+            // تحديث شكل الأيقونة فوراً
+            const icon = themeBtn.querySelector('i');
+            if(icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        };
+    }
+
+    // 2. تفعيل قائمة المستخدم (Dropdown)
+    const userBtn = document.getElementById('user-icon-btn');
+    const userMenu = document.getElementById('user-dropdown');
+    
+    if (userBtn && userMenu) {
+        userBtn.onclick = (e) => {
+            e.stopPropagation();
+            userMenu.classList.toggle('show');
+        };
+
+        // إغلاق المنيو عند الضغط في أي مكان آخر
+        document.addEventListener('click', (e) => {
+            if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
+                userMenu.classList.remove('show');
+            }
+        });
+    }
+});
+    </script>
+</body>
+</html>

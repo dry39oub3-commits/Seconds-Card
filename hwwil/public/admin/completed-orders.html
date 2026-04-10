@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>الطلبات المكتملة | حوّل</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../css/base.css"/>
+<link rel="stylesheet" href="css/dashboard-main.css"/>
+<style>:root{--red:#DC2626;--red-light:#FEF2F2;--bg:#F0F4F2;--sand:#E8EFeb;--shadow:0 2px 16px rgba(10,124,78,.08)}</style>
+</head>
+<body>
+<div id="loginWrap" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">💱</div><h1>لوحة الأدمن</h1></div>
+    <div class="login-field"><label>اسم المستخدم</label><input class="login-input" id="loginUser" type="text"/></div>
+    <div class="login-field"><label>كلمة المرور</label><input class="login-input" id="loginPass" type="password"/></div>
+    <button class="login-btn" onclick="doLogin()">🔐 دخول</button>
+    <div class="login-err" id="loginErr" style="display:none">❌ بيانات خاطئة</div>
+  </div>
+</div>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-logo"><div class="topbar-logo-icon">💱</div><span>حوّل — الطلبات المكتملة</span></div>
+    <div class="topbar-right">
+      <a href="index.html" class="stock-btn" style="text-decoration:none">🏠 الرئيسية</a>
+      <button class="logout-btn" onclick="doLogout()">خروج</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="tabs">
+      <button class="tab active" onclick="showSection('transfers',this)">✅ تحويلات مكتملة</button>
+      <button class="tab" onclick="showSection('cards',this)">✅ بطاقات مكتملة</button>
+    </div>
+    <div id="secTransfers" class="table-card">
+      <div class="table-header"><div class="table-title">✅ التحويلات المكتملة</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>رقم الطلب</th><th>الاسم</th><th>الهاتف</th><th>المبلغ</th><th>يستلم</th><th>البنوك</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+        <tbody id="completedTransfersBody"><tr><td colspan="8" class="loading">⏳ جاري التحميل...</td></tr></tbody>
+      </table></div>
+    </div>
+    <div id="secCards" class="table-card" style="display:none">
+      <div class="table-header"><div class="table-title">✅ البطاقات المكتملة</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>رقم الطلب</th><th>اللعبة</th><th>الباقة</th><th>السعر</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+        <tbody id="completedCardsBody"><tr><td colspan="6" class="loading">⏳ جاري التحميل...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script type="module">
+  import { initCompletedOrders } from './js/completed-orders.js';
+  const U='admin',P='hawwil2026';
+  window.doLogin=function(){
+    if(document.getElementById('loginUser').value===U&&document.getElementById('loginPass').value===P){
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('app').classList.add('show');
+      initCompletedOrders();
+    } else document.getElementById('loginErr').style.display='block';
+  };
+  window.doLogout=function(){ document.getElementById('loginWrap').style.display='flex'; document.getElementById('app').classList.remove('show'); };
+  window.showSection=function(sec,btn){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('secTransfers').style.display=sec==='transfers'?'block':'none';
+    document.getElementById('secCards').style.display=sec==='cards'?'block':'none';
+  };
+  document.addEventListener('keydown',e=>{ if(e.key==='Enter') window.doLogin(); });
+</script>
+</body></html>

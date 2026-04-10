@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>إضافة بطاقات | حوّل</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../css/base.css"/>
+<link rel="stylesheet" href="css/dashboard-main.css"/>
+<style>:root{--red:#DC2626;--red-light:#FEF2F2;--bg:#F0F4F2;--sand:#E8EFeb;--shadow:0 2px 16px rgba(10,124,78,.08)}</style>
+</head>
+<body>
+<div id="loginWrap" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">💱</div><h1>لوحة الأدمن</h1><p>حوّل</p></div>
+    <div class="login-field"><label>اسم المستخدم</label><input class="login-input" id="loginUser" type="text"/></div>
+    <div class="login-field"><label>كلمة المرور</label><input class="login-input" id="loginPass" type="password"/></div>
+    <button class="login-btn" onclick="doLogin()">🔐 دخول</button>
+    <div class="login-err" id="loginErr" style="display:none">❌ بيانات خاطئة</div>
+  </div>
+</div>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-logo"><div class="topbar-logo-icon">💱</div><span>حوّل — إضافة بطاقات</span></div>
+    <div class="topbar-right">
+      <a href="index.html" class="stock-btn" style="text-decoration:none">🏠 الرئيسية</a>
+      <button class="logout-btn" onclick="doLogout()">خروج</button>
+    </div>
+  </div>
+  <div class="main" style="max-width:700px">
+    <div style="background:var(--white);border-radius:20px;padding:2rem;box-shadow:var(--shadow);border:1.5px solid var(--sand)">
+      <h2 style="font-size:1.2rem;font-weight:900;margin-bottom:1.5rem">📦 إضافة بطاقات للمخزون</h2>
+      <div class="form-row">
+        <label class="flabel">١ — الفئة الكبيرة</label>
+        <div class="cat-grid">
+          <div class="cat-btn active" data-cat="Apple"       onclick="selectCat(this)">🍎 Apple</div>
+          <div class="cat-btn"        data-cat="Google Play" onclick="selectCat(this)">🎮 Google Play</div>
+          <div class="cat-btn"        data-cat="Netflix"     onclick="selectCat(this)">🎬 Netflix</div>
+          <div class="cat-btn"        data-cat="PlayStation" onclick="selectCat(this)">🕹️ PlayStation</div>
+          <div class="cat-btn"        data-cat="PUBG"        onclick="selectCat(this)">🎯 PUBG</div>
+          <div class="cat-btn"        data-cat="Free Fire"   onclick="selectCat(this)">🔥 Free Fire</div>
+          <div class="cat-btn"        data-cat="Steam"       onclick="selectCat(this)">🖥️ Steam</div>
+          <div class="cat-btn"        data-cat="أخرى"        onclick="selectCat(this)">➕ أخرى</div>
+        </div>
+        <input class="finput" id="customCat" placeholder="فئة مخصصة..." style="display:none;margin-top:.5rem" oninput="updateCardOptions()"/>
+      </div>
+      <div class="form-row">
+        <label class="flabel">٢ — نوع البطاقة</label>
+        <select class="finput" id="cardType" onchange="updateCardOptions()"><option value="">— اختر —</option></select>
+      </div>
+      <div class="form-row">
+        <label class="flabel">٣ — المورد</label>
+        <input class="finput" id="supplier" type="text" placeholder="اسم المورد..."/>
+      </div>
+      <div class="form-row">
+        <label class="flabel">٤ — الكودات (كل كود في سطر)</label>
+        <textarea class="finput" id="codesArea" rows="8" style="resize:vertical;font-family:monospace;font-size:.88rem;line-height:1.8"></textarea>
+        <div style="display:flex;justify-content:space-between;margin-top:.3rem">
+          <span style="font-size:.78rem;color:var(--muted)" id="codesCount">٠ كود</span>
+          <button onclick="clearCodes()" style="background:none;border:none;color:var(--red);font-size:.78rem;cursor:pointer;font-family:inherit">مسح الكل</button>
+        </div>
+      </div>
+      <div class="preview-box" id="previewBox" style="display:none">
+        <div style="font-size:.82rem;font-weight:800;margin-bottom:.5rem;color:var(--green)">📋 معاينة</div>
+        <div id="previewContent"></div>
+      </div>
+      <button class="save-btn" onclick="saveStock()" id="saveStockBtn">💾 حفظ البطاقات</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script type="module" src="js/add-card.js"></script>
+<script type="module">
+  import { initAddCard } from './js/add-card.js';
+  const U='admin', P='hawwil2026';
+  window.doLogin=function(){
+    if(document.getElementById('loginUser').value===U&&document.getElementById('loginPass').value===P){
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('app').classList.add('show');
+      initAddCard();
+    } else document.getElementById('loginErr').style.display='block';
+  };
+  window.doLogout=function(){
+    document.getElementById('loginWrap').style.display='flex';
+    document.getElementById('app').classList.remove('show');
+  };
+  document.addEventListener('keydown',e=>{ if(e.key==='Enter') window.doLogin(); });
+</script>
+</body></html>

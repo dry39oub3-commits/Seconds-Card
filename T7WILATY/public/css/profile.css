@@ -1,0 +1,168 @@
+.profile-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+    min-height: 80vh;
+}
+
+.profile-card {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 450px;
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.profile-avatar i {
+    font-size: 80px;
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.profile-header h2 {
+    margin: 10px 0 5px;
+    color: var(--text);
+}
+
+.profile-header p {
+    color: #64748b;
+    margin-bottom: 25px;
+}
+
+.profile-details {
+    background: rgba(0,0,0,0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: right;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.detail-item:last-child { border-bottom: none; }
+
+.logout-full-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    transition: 0.3s;
+}
+
+.logout-full-btn:hover { background: #dc2626; }
+
+/* تنسيق الصورة وتعديلها */
+.profile-avatar-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.profile-avatar i {
+    font-size: 80px;
+    color: var(--primary);
+}
+
+.profile-avatar img {
+    width: 80px; height: 80px;
+    object-fit: cover;
+}
+
+.edit-photo-btn {
+    position: absolute; bottom: 0; right: 0;
+    background: #4caf50; color: white; border: none;
+    border-radius: 50%; width: 30px; height: 30px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* تنسيق تعديل الاسم */
+/* --- إصلاح حاوية الاسم لضمان ظهورها في سطر مستقل --- */
+.edit-name-container {
+    display: flex;
+    flex-direction: column; /* التأكد من أن العناصر تحت بعضها */
+    align-items: center;
+    position: relative;
+    width: 100%;
+    margin: 15px 0; /* إعطاء مساحة فوق وتحت الاسم */
+}
+
+.profile-name-input {
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--text);
+    background: rgba(0, 0, 0, 0.05); /* خلفية خفيفة لتمييز مكان الإدخال */
+    border: 1px dashed transparent;
+    text-align: center;
+    padding: 8px 15px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 300px;
+    transition: 0.3s;
+}
+
+/* عند الضغط للتعديل */
+.profile-name-input:focus {
+    border: 1px solid var(--primary);
+    background: var(--card-bg);
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.2);
+}
+
+/* أيقونة القلم التوضيحية */
+.edit-icon-hint {
+    margin-top: 5px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+/* تحسين السطر الفاصل بين الاسم والإيميل */
+#user-display-email {
+    margin-top: 0;
+    margin-bottom: 20px;
+    opacity: 0.8;
+    font-size: 14px;
+}
+.profile-name-input {
+    font-size: 20px; font-weight: bold; color: var(--text);
+    background: transparent; border: 1px solid transparent; text-align: center;
+    padding: 5px; cursor: pointer; border-radius: 8px;
+    text-decoration: none; /* إزالة الخطوط */
+}
+
+.profile-name-input:focus {
+    border: 1px solid var(--primary); outline: none; background: rgba(0,0,0,0.1);
+}
+
+.edit-icon-hint {
+    position: absolute; right: calc(50% + 70px); top: 5px;
+    color: #94a3b8; font-size: 14px;
+}
+
+/* زر الحفظ */
+.save-btn {
+    background: #4caf50; color: white; border: none;
+    padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    font-weight: bold; margin-bottom: 20px; animation: fadeIn 0.3s;
+}
+
+.save-btn:hover { background: #388e3c; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

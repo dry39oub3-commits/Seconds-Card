@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seconds-Card | إتمام الدفع</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/checkout.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-link">
+                <div class="logo">Seconds<span>Card</span></div>
+            </a>
+            
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
+                
+                <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
+
+                <div class="user-menu-container">
+                    <button class="action-btn" id="user-icon-btn">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+
+                    <div class="dropdown-menu" id="user-dropdown">
+                        <nav class="dropdown-nav">
+                            <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
+                            <a href="wallet.html"><i class="fas fa-wallet"></i> المحفظة</a>
+                            <a href="profile.html"><i class="fas fa-user"></i> حسابي</a>
+                            <hr>
+                            <button onclick="handleLogout()" class="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="checkout-container">
+        <div class="checkout-card">
+            <h2><i class="fas fa-shield-alt"></i> مراجعة الدفع</h2>
+            
+            <div class="payment-summary">
+                <div class="summary-line">
+                    <span>إجمالي المشتريات:</span>
+                    <span id="checkout-total">0 MRU</span>
+                </div>
+                <div class="summary-line wallet-balance-line">
+                    <span>رصيد محفظتك الحالي:</span>
+                    <span id="current-wallet-balance">جاري التحميل...</span>
+                </div>
+            </div>
+
+            <div id="payment-status-msg"></div>
+
+            <button id="confirm-payment-btn" class="pay-now-btn" onclick="executePayment()" disabled>
+                تأكيد الدفع الآن
+            </button>
+            
+            <p class="security-note"><i class="fas fa-lock"></i> سيتم خصم المبلغ من محفظتك فوراً وتصلك أكواد البطاقات في "طلباتي".</p>
+        </div>
+    </main>
+
+    
+    <script src="js/supabase-config.js"></script>
+    <script src="js/checkout.js"></script>
+</body>
+</html>

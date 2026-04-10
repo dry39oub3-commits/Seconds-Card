@@ -1,0 +1,154 @@
+:root {
+    --primary: #ff9800;
+    --dark-blue: #1a2236;
+    --bg: #f8fafc;
+    --text: #1e293b;
+    --card-bg: #ffffff;
+    --dropdown-bg: #1e293b; /* لون القائمة المنسدلة */
+}
+
+[data-theme="dark"] {
+    --bg: #0f172a;
+    --text: #f8fafc;
+    --card-bg: #1e293b;
+    --dropdown-bg: #111b2d;
+}
+
+body {
+    direction: rtl;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    transition: 0.3s;
+}
+
+/* --- الهيدر (المكان الأساسي للسليكتر) --- */
+.main-header {
+    background: var(--dark-blue);
+    color: white;
+    padding: 10px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+}
+
+.logo { font-size: 22px; font-weight: bold; min-width: 150px; color: white; cursor: pointer; }
+.logo span { color: var(--primary); }
+.logo-link { text-decoration: none; display: inline-block; transition: 0.2s; }
+
+/* --- شريط البحث --- */
+.search-container { flex-grow: 1; display: flex; justify-content: center; }
+.search-bar {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    border-radius: 25px;
+    display: flex;
+    padding: 5px 15px;
+}
+.search-bar input { border: none; outline: none; width: 100%; padding: 8px; font-size: 14px; }
+.search-bar button { background: none; border: none; color: #667; cursor: pointer; }
+
+/* --- الأزرار الجانبية والسليكتر --- */
+.header-actions { display: flex; align-items: center; gap: 15px; min-width: 180px; justify-content: flex-end; }
+.action-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; position: relative; text-decoration: none; }
+
+/* --- إدارة القائمة المنسدلة (Dropdown) --- */
+.user-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none; /* مخفية افتراضياً وتظهر بـ JS */
+    position: absolute;
+    top: 45px;
+    left: 0;
+    background: var(--dropdown-bg);
+    min-width: 180px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    border-radius: 12px;
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.dropdown-menu.show {
+    display: block; /* تظهر عند الضغط */
+    animation: fadeIn 0.2s ease-out;
+}
+
+.dropdown-nav {
+    display: flex;
+    flex-direction: column; /* ترتيب العناصر من الأعلى للأسفل */
+    padding: 5px 0;
+}
+
+.dropdown-nav a, .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: white;
+    text-decoration: none; /* إزالة الخطوط تماماً */
+    font-size: 14px;
+    transition: 0.3s;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: right;
+    cursor: pointer;
+}
+
+.dropdown-nav a:hover, .logout-btn:hover {
+    background: rgba(255, 152, 0, 0.1);
+    color: var(--primary);
+}
+
+.dropdown-nav hr {
+    border: 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 5px 0;
+}
+
+.logout-btn {
+    color: #ff4d4d; /* لون أحمر لتنبيه تسجيل الخروج */
+    font-weight: bold;
+}
+
+/* --- شبكة البطاقات --- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 30px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    transition: 0.3s;
+}
+.card:hover { transform: translateY(-5px); }
+
+/* --- تأثيرات التحريك --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

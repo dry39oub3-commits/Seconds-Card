@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>حوّل | خدمات التحويل والبطاقات الرقمية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/index.css"/>
+<link rel="stylesheet" href="css/main.css"/>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">💱</div>حوّل
+  </a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">الرئيسية</button>
+    <button class="nav-tab" onclick="showPage('transfer')">التحويل البنكي</button>
+    <button class="nav-tab" onclick="showPage('cards')">البطاقات الرقمية</button>
+  </div>
+  <div class="nav-right">
+    <button class="whatsapp-btn" onclick="window.open('https://wa.me/22234362534','_blank')">
+      📞 تواصل معنا
+    </button>
+  </div>
+</nav>
+
+<!-- ══ HOME PAGE ══ -->
+<div class="page active" id="page-home">
+  <div style="max-width:1300px;margin:0 auto">
+    <div class="hero">
+      <div>
+        <div class="hero-badge">🇲🇷 خدمات مالية موريتانية موثوقة</div>
+        <h1>حوّل أموالك بين<br/><em>البنوك الموريتانية</em><br/>بكل سهولة</h1>
+        <p class="hero-sub">منصة آمنة وسريعة لتحويل الأموال بين البنوك مع خصم عمولة شفافة، وكذلك شراء بطاقات الألعاب والشحن الرقمي.</p>
+        <div class="hero-features">
+          <div class="hero-feat"><div class="feat-check">✓</div>تحويل بين جميع البنوك الموريتانية</div>
+          <div class="hero-feat"><div class="feat-check">✓</div>عمولة واضحة وشفافة بدون رسوم مخفية</div>
+          <div class="hero-feat"><div class="feat-check">✓</div>بطاقات رقمية فورية لجميع الألعاب</div>
+          <div class="hero-feat"><div class="feat-check">✓</div>خدمة عملاء على مدار الساعة</div>
+        </div>
+        <div class="hero-cta">
+          <button class="btn-main" onclick="showPage('transfer')">🏦 ابدأ التحويل الآن</button>
+          <button class="btn-outline" onclick="showPage('cards')">🎮 تسوق البطاقات</button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="visual-card">
+          <div class="visual-card-title">المبلغ المُرسَل</div>
+          <div class="visual-amount">50,000 <span style="font-size:1rem;opacity:.7">أوقية</span></div>
+          <div class="visual-sub">بنك الراجحي ← حوّل</div>
+        </div>
+        <div class="visual-arrow">⬇️</div>
+        <div class="visual-result">
+          <div class="visual-result-label">المبلغ الذي تستلمه</div>
+          <div class="visual-result-amount">47,500 أوقية</div>
+          <div style="font-size:.78rem;opacity:.7;margin-top:.3rem">بعد خصم عمولة 5%</div>
+        </div>
+        <div class="visual-banks">
+          <div class="vbank">🏦 BCI</div>
+          <div class="vbank">🏦 BMCI</div>
+          <div class="vbank">🏦 GBM</div>
+          <div class="vbank">🏦 Attijari</div>
+          <div class="vbank">🏦 Banque Pop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat"><div class="stat-val">+10,000</div><div class="stat-label">عملية تحويل ناجحة</div></div>
+      <div class="stat"><div class="stat-val">5%</div><div class="stat-label">عمولة شفافة فقط</div></div>
+      <div class="stat"><div class="stat-val">24س</div><div class="stat-label">دعم متواصل</div></div>
+      <div class="stat"><div class="stat-val">100%</div><div class="stat-label">أمان مضمون</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2 class="section-title">كيف <span>يعمل</span> التحويل؟</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">١</div><div class="step-title">أرسل المبلغ</div><div class="step-desc">أرسل المبلغ إلى رقم حسابنا في أي بنك موريتاني</div></div>
+      <div class="step"><div class="step-num">٢</div><div class="step-title">أرسل الطلب</div><div class="step-desc">أرسل لنا معلومات التحويل عبر الموقع أو واتساب</div></div>
+      <div class="step"><div class="step-num">٣</div><div class="step-title">نُراجع الطلب</div><div class="step-desc">نتحقق من الإيداع ونحسب المبلغ بعد خصم العمولة</div></div>
+      <div class="step"><div class="step-num">٤</div><div class="step-title">تستلم المبلغ</div><div class="step-desc">نحوّل المبلغ فوراً للبنك الذي تختاره مع إشعار تأكيد</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2 class="section-title">البطاقات <span>الرقمية</span></h2>
+      <a href="#" class="see-all" onclick="showPage('cards');return false">عرض الكل ←</a>
+    </div>
+    <div class="games-grid" id="homeGamesGrid"></div>
+  </div>
+
+  <div style="max-width:1300px;margin:0 auto">
+    <div class="trust-banner">
+      <div>
+        <h2>ابدأ التحويل الآن بكل ثقة</h2>
+        <p>نخدم آلاف العملاء في موريتانيا يومياً بأعلى معايير الأمان والشفافية.</p>
+      </div>
+      <button class="trust-btn" onclick="showPage('transfer')">🏦 ابدأ التحويل الآن</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRANSFER PAGE ══ -->
+<div class="page" id="page-transfer">
+  <div class="transfer-page">
+    <div class="transfer-header">
+      <div style="display:inline-flex;align-items:center;gap:.5rem;background:var(--green-light);color:var(--green);border-radius:99px;padding:.35rem 1rem;font-size:.82rem;font-weight:700;margin-bottom:1rem">🏦 خدمة التحويل البنكي</div>
+      <h2>تحويل بين البنوك الموريتانية</h2>
+      <p>أرسل لنا المبلغ وسنحوله لأي بنك تختاره بعد خصم عمولة 5% فقط</p>
+    </div>
+    <div class="form-card" id="transferForm">
+      <div class="form-section-title"><div class="form-section-icon">👤</div>بيانات العميل</div>
+      <div class="form-grid">
+        <div class="form-group"><label>الاسم الكامل</label><input class="form-input" id="clientName" type="text" placeholder="محمد ولد أحمد"/></div>
+        <div class="form-group"><label>رقم الهاتف</label><input class="form-input" id="clientPhone" type="tel" placeholder="2222 00 222"/></div>
+      </div>
+      <div class="form-section-title" style="margin-top:1.5rem"><div class="form-section-icon">💰</div>المبلغ والعمولة</div>
+      <div class="form-grid">
+        <div class="form-group"><label>المبلغ المُرسَل (أوقية)</label><input class="form-input" id="sendAmount" type="number" placeholder="10000" oninput="calcAmount()"/></div>
+        <div class="form-group"><label>نسبة العمولة</label>
+          <select class="form-select" id="commRate" onchange="calcAmount()">
+            <option value="5">5% — عادي</option>
+            <option value="3">3% — VIP</option>
+          </select>
+        </div>
+      </div>
+      <div class="calc-box">
+        <div class="calc-row"><span class="calc-label">المبلغ المُرسَل</span><span class="calc-val" id="calcSent">—</span></div>
+        <div class="calc-row"><span class="calc-label">العمولة</span><span class="calc-val" id="calcComm" style="color:#C0392B">—</span></div>
+        <div class="calc-row calc-total"><span class="calc-label">✅ المبلغ الذي يستلمه العميل</span><span class="calc-val" id="calcReceive">—</span></div>
+      </div>
+      <div class="form-section-title" style="margin-top:1.5rem"><div class="form-section-icon">📤</div>بنك الإرسال</div>
+      <div class="banks-grid" id="fromBanks"></div>
+      <div class="divider">⬇ سيتم التحويل إلى</div>
+      <div class="form-section-title"><div class="form-section-icon">📥</div>بنك الاستلام</div>
+      <div class="banks-grid" id="toBanks"></div>
+      <div class="form-group full" style="margin-top:1.2rem">
+        <label>رقم الحساب / IBAN في بنك الاستلام</label>
+        <input class="form-input" id="toAccount" type="text" placeholder="MR12 0000 0000 0000 0000 0000 00"/>
+      </div>
+      <div class="form-group" style="margin-top:.8rem">
+        <label>ملاحظات إضافية (اختياري)</label>
+        <input class="form-input" id="notes" type="text" placeholder="أي معلومات إضافية..."/>
+      </div>
+      <div class="info-note" style="margin-top:1.2rem">
+        ⚠️ <div>يُرجى إرسال الحوالة أولاً إلى رقم حسابنا، ثم إرسال صورة الإيصال مع هذا الطلب عبر واتساب.</div>
+      </div>
+      <button class="submit-btn" style="margin-top:1.5rem" onclick="submitTransfer()">✅ إرسال طلب التحويل</button>
+    </div>
+    <div class="success-card" id="successCard">
+      <div class="success-icon">✅</div>
+      <div class="success-title">تم استلام طلبك بنجاح!</div>
+      <div class="success-sub">سيتم مراجعة طلبك وإتمام التحويل في أقرب وقت ممكن.</div>
+      <div class="success-ref" id="successRef">رقم الطلب: #——</div>
+      <button class="btn-main" onclick="resetTransfer()" style="width:100%">طلب تحويل جديد</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CARDS PAGE ══ -->
+<div class="page" id="page-cards">
+  <div class="section" style="padding-top:3rem">
+    <div class="transfer-header" style="margin-bottom:2.5rem">
+      <div style="display:inline-flex;align-items:center;gap:.5rem;background:var(--green-light);color:var(--green);border-radius:99px;padding:.35rem 1rem;font-size:.82rem;font-weight:700;margin-bottom:1rem">🎮 بطاقات رقمية فورية</div>
+      <h2>اشترِ بطاقاتك الآن</h2>
+      <p style="color:var(--mid);font-size:1rem">اختر اللعبة وحدة الشحن وسنرسل لك الكود فوراً</p>
+    </div>
+    <div class="games-grid" id="fullGamesGrid"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">اختر الباقة</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-game-info">
+        <div class="modal-icon" id="modalIcon" style="background:var(--green-light)"></div>
+        <div><div class="modal-game-name" id="modalGameName"></div><div class="modal-game-sub">اختر الكمية المناسبة</div></div>
+      </div>
+      <div class="modal-pkgs" id="modalPkgs"></div>
+      <div class="form-group" style="margin-bottom:1rem"><label>معرّف اللاعب / ID</label><input class="form-input" id="modalPlayerId" type="text" placeholder="أدخل معرفك في اللعبة"/></div>
+      <div class="form-group" style="margin-bottom:1.2rem"><label>رقم هاتفك للتأكيد</label><input class="form-input" id="modalPhone" type="tel" placeholder="2222 00 222"/></div>
+      <div class="calc-box" style="margin-bottom:1.2rem">
+        <div class="calc-row calc-total"><span class="calc-label">💰 إجمالي المبلغ</span><span class="calc-val" id="modalTotal">اختر باقة أولاً</span></div>
+      </div>
+      <button class="submit-btn" onclick="submitCard()">🛒 اطلب الآن عبر واتساب</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo"><div class="footer-logo-icon">💱</div>حوّل</div>
+      <p class="footer-desc">منصة موريتانية متخصصة في خدمات التحويل بين البنوك وبيع البطاقات الرقمية.</p>
+      <div class="footer-contact">
+        <div class="footer-contact-item">📱 واتساب: 0022234362534</div>
+        <div class="footer-contact-item">📧 info@hawwil.mr</div>
+        <div class="footer-contact-item">🕐 متاح: ٨ص – ١٢م</div>
+      </div>
+    </div>
+    <div>
+      <div class="fh">الخدمات</div>
+      <ul class="fl">
+        <li><a href="#" onclick="showPage('transfer');return false">التحويل البنكي</a></li>
+        <li><a href="#" onclick="showPage('cards');return false">البطاقات الرقمية</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="fh">دعم</div>
+      <ul class="fl">
+        <li><a href="#">الأسئلة الشائعة</a></li>
+        <li><a href="#">سياسة الخصوصية</a></li>
+        <li><a href="#">تواصل معنا</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© ٢٠٢٦ حوّل — جميع الحقوق محفوظة</div>
+    <div class="footer-social">
+      <button class="soc" onclick="window.open('https://facebook.com','_blank')">📘</button>
+      <button class="soc" onclick="window.open('https://instagram.com','_blank')">📸</button>
+      <button class="soc" onclick="window.open('https://wa.me/0022234362534','_blank')">💬</button>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="js/index.js"></script>
+</body>
+</html>
