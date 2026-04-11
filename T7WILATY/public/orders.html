@@ -62,49 +62,38 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/orders.js"></script>
+    <script type="module" src="js/orders.js"></script>
     <script>
-        // دالة شاملة لربط الأحداث فور تحميل الصفحة
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. تفعيل الوضع الليلي
-    const themeBtn = document.getElementById('theme-toggle');
-    if (themeBtn) {
-        // جلب الحالة المحفوظة
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        themeBtn.onclick = (e) => {
-            e.preventDefault();
-            const current = document.documentElement.getAttribute('data-theme');
-            const target = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', target);
-            localStorage.setItem('theme', target);
-            // تحديث شكل الأيقونة فوراً
-            const icon = themeBtn.querySelector('i');
-            if(icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-        };
-    }
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                themeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const target = current === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', target);
+                    localStorage.setItem('theme', target);
+                    const icon = themeBtn.querySelector('i');
+                    if(icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+                };
+            }
 
-    // 2. تفعيل قائمة المستخدم (Dropdown)
-    const userBtn = document.getElementById('user-icon-btn');
-    const userMenu = document.getElementById('user-dropdown');
-    
-    if (userBtn && userMenu) {
-        userBtn.onclick = (e) => {
-            e.stopPropagation();
-            userMenu.classList.toggle('show');
-        };
-
-        // إغلاق المنيو عند الضغط في أي مكان آخر
-        document.addEventListener('click', (e) => {
-            if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
-                userMenu.classList.remove('show');
+            const userBtn = document.getElementById('user-icon-btn');
+            const userMenu = document.getElementById('user-dropdown');
+            if (userBtn && userMenu) {
+                userBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    userMenu.classList.toggle('show');
+                };
+                document.addEventListener('click', (e) => {
+                    if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
+                        userMenu.classList.remove('show');
+                    }
+                });
             }
         });
-    }
-});
     </script>
 </body>
 </html>
