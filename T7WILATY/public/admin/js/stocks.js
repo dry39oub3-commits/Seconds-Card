@@ -146,3 +146,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const addBtn = document.getElementById('addCodesBtn');
     if (addBtn) addBtn.addEventListener('click', addCodesToStock);
 });
+
+

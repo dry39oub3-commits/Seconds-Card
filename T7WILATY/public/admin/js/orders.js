@@ -37,7 +37,7 @@ async function loadOrders() {
                 <td>${order.customer_name || 'غير معروف'}</td>
                 <td>${imageCell}</td>
                 <td>${order.product_name || 'غير محدد'}</td>
-                <td><strong>${order.price} MRU</strong></td>
+                <td><strong>${(order.price * (order.quantity || 1))} MRU</strong></td>
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
                 <td>${order.paymentMethod || order.payment_method || '-'}</td>
@@ -228,26 +228,20 @@ window.approveOrder = async (orderId) => {
         }
     }
 
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
+    // التحقق من عدم تكرار الكود في جدول used_codes
     const { data: existingCode } = await supabase
-        .from('orders')
+        .from('used_codes')
         .select('id')
-        .eq('card_code', code)
-        .gte('created_at', sixMonthsAgo.toISOString())
+        .eq('code', code)
         .maybeSingle();
 
     if (existingCode) {
-        alert('⚠️ هذا الكود مستخدم بالفعل خلال آخر 6 أشهر!');
+        alert('⚠️ هذا الكود مستخدم بالفعل ومسجل كمباع!');
         return;
     }
 
-    // تحقق من الـ orderId
-    console.log("Approving order:", orderId);
-    console.log("Update data:", { status: 'مكتمل', card_code: code, cost_price: parseFloat(cost) || 0, supplier_id: supplierId });
-
-    const { data, error } = await supabase
+    // تحديث الطلب
+    const { data: orderData, error } = await supabase
         .from('orders')
         .update({
             status: 'مكتمل',
@@ -256,17 +250,30 @@ window.approveOrder = async (orderId) => {
             supplier_id: supplierId
         })
         .eq('id', orderId)
-        .select();
-
-    console.log("Result:", data, error);
+        .select()
+        .single();
 
     if (error) {
         alert('خطأ: ' + error.message);
-    } else {
-        document.getElementById('order-modal').remove();
-        alert('✅ تم قبول الطلب بنجاح!');
-        loadOrders();
+        return;
     }
+
+    // تسجيل الكود في جدول used_codes
+    const { error: codeError } = await supabase
+        .from('used_codes')
+        .insert({
+            code: code,
+            order_id: orderId,
+            product_name: orderData.product_name
+        });
+
+    if (codeError) {
+        console.error('خطأ في تسجيل الكود:', codeError);
+    }
+
+    document.getElementById('order-modal').remove();
+    alert('✅ تم قبول الطلب وتسجيل الكود بنجاح!');
+    loadOrders();
 };
 
 document.addEventListener('DOMContentLoaded', loadOrders);
@@ -297,3 +304,36 @@ window.rejectOrder = async (orderId) => {
         loadOrders();
     }
 };
+
+async function checkNewOrders() {
+    const { data: orders } = await supabase
+        .from('orders')
+        .select('id')
+        .not('status', 'in', '("مكتمل","ملغي","مسترد")');
+
+    const count = orders?.length || 0;
+    const badge = document.getElementById('orders-badge');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+    }
+
+    // صوت تنبيه لو في طلبات جديدة
+    if (count > 0) {
+        document.title = `(${count}) طلب جديد | إدارة الطلبات`;
+    } else {
+        document.title = 'إدارة الطلبات | SecondsCard';
+    }
+}
+
+// تشغيل كل 30 ثانية
+document.addEventListener('DOMContentLoaded', () => {
+    loadOrders();
+    checkNewOrders();
+    setInterval(() => {
+        loadOrders();
+        checkNewOrders();
+    }, 30000);
+});
+// تحديث تلقائي كل 30 ثانية
+setInterval(loadOrders, 30000);

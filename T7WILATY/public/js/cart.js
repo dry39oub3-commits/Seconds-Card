@@ -208,4 +208,3 @@ function updateCartBadge() {
     
     badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
-}

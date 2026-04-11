@@ -162,3 +162,5 @@ window.deleteProduct = async (id) => {
 };
 
 document.addEventListener("DOMContentLoaded", loadProducts);
+
+

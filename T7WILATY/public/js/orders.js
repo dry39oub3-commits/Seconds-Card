@@ -90,7 +90,7 @@ async function fetchUserOrders() {
                 ${image ? `<img src="${image}" alt="${order.product_name}" style="width:60px; height:60px; object-fit:contain; background:white; border-radius:8px; padding:4px;">` : ''}
                 <div class="card-details">
                     <h4>${order.product_name || 'غير محدد'}</h4>
-                    <p>السعر: <strong>${order.price} MRU</strong></p>
+                    <p>السعر: <strong>${order.price * (order.quantity || 1)} MRU</strong></p>
                     <p>الكمية: <strong>${order.quantity || 1}</strong></p>
                     <p>طريقة الدفع: ${order.payment_method || order.paymentMethod || 'غير محدد'}</p>
                 </div>

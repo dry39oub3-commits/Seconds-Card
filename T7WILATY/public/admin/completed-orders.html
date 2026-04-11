@@ -25,6 +25,14 @@
                 <li><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i> الطلبات المكتملة</a></li>
             </ul>
         </nav>
+
+        <div style="position:relative; display:inline-block; margin-left:15px;">
+    <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
+        <i class="fas fa-bell"></i>
+        <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+    </button>
+</div>
+
         <div class="user-actions">
             <button class="logout-btn" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
@@ -132,7 +140,7 @@
     </section>
 
 </div>
-
+<script type="module" src="./js/bell.js"></script>
 <script type="module" src="./js/completed-orders.js"></script>
 </body>
 </html>

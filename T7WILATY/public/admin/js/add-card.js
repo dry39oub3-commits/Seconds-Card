@@ -66,3 +66,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addPriceBtn').addEventListener('click', addPriceField);
     document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
 });
+
+
