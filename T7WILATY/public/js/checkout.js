@@ -78,6 +78,9 @@ async function checkAuthAndLoadData() {
     const totalElem = document.getElementById('checkout-total');
     if (totalElem) totalElem.textContent = `${totalAmount} MRU`;
 
+    const totalDisplay = document.getElementById('checkout-total-display');
+    if (totalDisplay) totalDisplay.textContent = `${totalAmount} MRU`;
+
     try {
         const { data: userData, error } = await supabase
             .from("users")
