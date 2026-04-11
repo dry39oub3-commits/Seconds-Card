@@ -13,4 +13,4 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     }
 });
 
-console.log("Supabase StorCards Connected Successfully!");
+console.log("Supabase SecondsCard Connected Successfully!");
