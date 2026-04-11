@@ -75,10 +75,21 @@
             </div>
         </div>
 
+        <div id="receipt-upload-section" style="display:none; margin-top:15px;">
+    <h3 style="font-size:15px; margin-bottom:10px;"><i class="fas fa-receipt"></i> ارفع إيصال الدفع</h3>
+    <input type="file" id="receipt-input" accept="image/*" style="display:none">
+    <div onclick="document.getElementById('receipt-input').click()" 
+         style="border:2px dashed #f97316; border-radius:12px; padding:20px; text-align:center; cursor:pointer;">
+        <i class="fas fa-upload" style="font-size:24px; color:#f97316;"></i>
+        <p style="margin:8px 0 0; color:#94a3b8;">اضغط لرفع صورة الإيصال</p>
+    </div>
+    <img id="receipt-preview" src="" style="display:none; width:100%; border-radius:10px; margin-top:10px;">
+</div>
+
         <div id="payment-status-msg"></div>
-        <button id="confirm-payment-btn" class="pay-now-btn" onclick="executePayment()" disabled>
-            تأكيد الدفع الآن
-        </button>
+        <button id="confirm-payment-btn" class="pay-now-btn">
+    تأكيد الدفع الآن
+</button>
         
         <p class="security-note"><i class="fas fa-lock"></i> سيتم خصم المبلغ من محفظتك فوراً وتصلك أكواد البطاقات في "طلباتي".</p>
     </div>

@@ -9,6 +9,22 @@ document.addEventListener('DOMContentLoaded', () => {
     setupUserMenu();
     checkAuthAndLoadData();
     loadPaymentMethods();
+
+    // ربط زر الدفع
+    document.getElementById('confirm-payment-btn')?.addEventListener('click', executePayment);
+
+    // مراقبة تغيير الإيصال
+    document.getElementById('receipt-input')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const preview = document.getElementById('receipt-preview');
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
 });
 
 // --- جلب طرق الدفع ---
@@ -35,13 +51,11 @@ async function loadPaymentMethods() {
 }
 
 window.selectMethod = function(id, account, name) {
-    // إزالة التحديد السابق
     document.querySelectorAll('.payment-method-card').forEach(c => {
         c.style.borderColor = '#334155';
         c.style.background = '';
     });
 
-    // تحديد الجديد
     const card = document.getElementById(`pm-${id}`);
     if (card) {
         card.style.borderColor = '#f97316';
@@ -50,13 +64,16 @@ window.selectMethod = function(id, account, name) {
 
     selectedPaymentMethod = { id, account, name };
 
-    // عرض رقم الحساب
     const infoDiv = document.getElementById('selected-method-info');
     const accountElem = document.getElementById('selected-account');
     if (infoDiv && accountElem) {
         infoDiv.style.display = 'block';
         accountElem.textContent = account || 'غير متوفر';
     }
+
+    // إظهار قسم رفع الإيصال
+    const receiptSection = document.getElementById('receipt-upload-section');
+    if (receiptSection) receiptSection.style.display = 'block';
 };
 
 // --- مراقب حالة تسجيل الدخول ---
@@ -95,12 +112,10 @@ async function checkAuthAndLoadData() {
         const confirmBtn = document.getElementById('confirm-payment-btn');
         const statusMsg = document.getElementById('payment-status-msg');
 
-        if (userBalance >= totalAmount && totalAmount > 0) {
+        if (totalAmount > 0) {
             if (confirmBtn) confirmBtn.disabled = false;
         } else {
-            if (statusMsg) {
-                statusMsg.innerHTML = `<p style="color:red; font-weight:bold;">⚠️ رصيدك غير كافٍ (${userBalance} MRU)، يرجى شحن المحفظة.</p>`;
-            }
+            if (statusMsg) statusMsg.innerHTML = `<p style="color:red; font-weight:bold;">⚠️ سلتك فارغة!</p>`;
             if (confirmBtn) confirmBtn.disabled = true;
         }
     } catch (error) {
@@ -115,6 +130,12 @@ window.executePayment = async () => {
         return;
     }
 
+    const receiptFile = document.getElementById('receipt-input')?.files[0];
+    if (!receiptFile) {
+        alert('⚠️ الرجاء رفع إيصال الدفع!');
+        return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     const btn = document.getElementById('confirm-payment-btn');
@@ -125,14 +146,17 @@ window.executePayment = async () => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
     try {
-        const newBalance = userBalance - totalAmount;
+        // رفع الإيصال
+        const filePath = `receipts/${user.id}_${Date.now()}`;
+        const { error: uploadError } = await supabase.storage
+            .from('receipts')
+            .upload(filePath, receiptFile);
 
-        const { error: updateError } = await supabase
-            .from("users")
-            .update({ balance: newBalance })
-            .eq("id", user.id);
-
-        if (updateError) throw updateError;
+        let receiptUrl = '';
+        if (!uploadError) {
+            const { data } = supabase.storage.from('receipts').getPublicUrl(filePath);
+            receiptUrl = data.publicUrl;
+        }
 
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         const orders = cart.map(item => ({
@@ -142,6 +166,7 @@ window.executePayment = async () => {
             price: item.price,
             cardCode: "جاري استخراج الكود...",
             paymentMethod: selectedPaymentMethod.name,
+            receiptUrl: receiptUrl,
             timestamp: new Date().toISOString()
         }));
 
