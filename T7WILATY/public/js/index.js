@@ -150,3 +150,10 @@ function updateCartBadge() {
     badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }
+async function checkUserIcon() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userIcon = document.querySelector('#user-icon-btn i');
+    if (userIcon && session?.user) {
+        userIcon.className = 'fas fa-user-check';
+    }
+}
