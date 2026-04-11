@@ -7,9 +7,10 @@ async function loadOrders() {
     ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">جاري التحميل...</td></tr>';
 
     const { data: orders, error } = await supabase
-        .from('orders')
-        .select('*, products(image, prices)')
-        .order('created_at', { ascending: false });
+    .from('orders')
+    .select('*, products(image, prices)')
+    .neq('status', 'مكتمل')  // ← إخفاء المكتملة
+    .order('created_at', { ascending: false });
 
     if (error) {
         ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
@@ -23,7 +24,6 @@ async function loadOrders() {
 
     ordersList.innerHTML = orders.map(order => {
         const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : 'غير محدد';
-        const status = order.status || 'قيد الانتظار';
         const receiptUrl = order.receiptUrl || order.receipt_url;
         const receiptBtn = receiptUrl ?
             `<a href="${receiptUrl}" target="_blank" class="btn-check" title="عرض الإيصال"><i class="fas fa-receipt"></i></a>` : '-';
@@ -53,16 +53,13 @@ async function loadOrders() {
     }).join('');
 }
 
-// فتح نافذة القبول
 window.openOrderModal = (order) => {
     const product = order.products || {};
     const image = product.image || '';
     const prices = product.prices || [];
-    
-    // بناء خيارات الموردين من بيانات المنتج
     const priceItem = prices.find(p => p.value == order.price) || prices[0] || {};
     const suppliers = priceItem.suppliers || [];
-    const supplierOptions = suppliers.map(s => 
+    const supplierOptions = suppliers.map(s =>
         `<option value="${s.url}">${s.name}</option>`
     ).join('');
 
@@ -72,10 +69,11 @@ window.openOrderModal = (order) => {
         position:fixed; top:0; left:0; width:100%; height:100%;
         background:rgba(0,0,0,0.7); z-index:9999;
         display:flex; align-items:center; justify-content:center;
+        overflow-y:auto;
     `;
 
     modal.innerHTML = `
-        <div style="background:#1e293b; border-radius:16px; padding:30px; width:90%; max-width:500px; color:#e2e8f0; position:relative;">
+        <div style="background:#1e293b; border-radius:16px; padding:30px; width:90%; max-width:500px; color:#e2e8f0; position:relative; margin:20px auto;">
             
             <button onclick="document.getElementById('order-modal').remove()" 
                     style="position:absolute; top:15px; left:15px; background:#ef4444; color:white; border:none; border-radius:8px; padding:6px 12px; cursor:pointer;">
@@ -97,43 +95,61 @@ window.openOrderModal = (order) => {
                 </div>
             </div>
 
-            <!-- حقل سعر التكلفة -->
+            <!-- سعر التكلفة -->
             <div style="margin-bottom:15px;">
                 <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)</label>
                 <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
+                    oninput="calcProfit(${order.price})"
                     style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
             </div>
 
-            <!-- حقل الكود -->
+            <!-- الربح -->
+            <div id="profit-display" style="display:none; margin-bottom:15px; background:#0f172a; border-radius:8px; padding:12px; text-align:center;">
+                <span style="color:#94a3b8; font-size:13px;">الربح: </span>
+                <span id="profit-value" style="color:#22c55e; font-size:18px; font-weight:bold;"></span>
+                <span style="color:#94a3b8; font-size:13px;"> MRU</span>
+            </div>
+
+            <!-- كود البطاقة -->
             <div style="margin-bottom:15px;">
                 <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔑 كود البطاقة</label>
                 <input type="text" id="modal-code" placeholder="أدخل الكود هنا..."
                     style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
             </div>
 
-            <!-- حقل معرف المورد -->
-<div style="margin-bottom:15px;">
-    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🏪 معرف المورد</label>
-    <input type="text" id="modal-supplier-id" placeholder="معرف المورد..."
-        style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
-</div>
+            <!-- معرف المورد -->
+            <div style="margin-bottom:15px;">
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🏪 معرف المورد</label>
+                <input type="text" id="modal-supplier-id" placeholder="معرف المورد..."
+                    style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+            </div>
 
-<!-- تحديد المورد -->
-${suppliers.length > 0 ? `
-<div style="margin-bottom:20px;">
-    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔗 اختر المورد</label>
-    <div style="display:flex; gap:10px; align-items:center;">
-        <select id="modal-supplier-select" onchange="onSupplierSelect(this)"
-            style="flex:1; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px;">
-            <option value="">-- اختر المورد --</option>
-            ${supplierOptions}
-        </select>
-        <a id="supplier-buy-btn" href="#" target="_blank"
-            style="display:none; background:#3b82f6; color:white; padding:10px 16px; border-radius:8px; text-decoration:none; font-size:13px; white-space:nowrap;">
-            <i class="fas fa-external-link-alt"></i> شراء
-        </a>
-    </div>
-</div>` : ''}
+            <!-- اختر المورد -->
+            ${suppliers.length > 0 ? `
+            <div style="margin-bottom:20px;">
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔗 اختر المورد</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <select id="modal-supplier-select" onchange="onSupplierSelect(this)"
+                        style="flex:1; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px;">
+                        <option value="">-- اختر المورد --</option>
+                        ${supplierOptions}
+                    </select>
+                    <a id="supplier-buy-btn" href="#" target="_blank"
+                        style="display:none; background:#3b82f6; color:white; padding:10px 16px; border-radius:8px; text-decoration:none; font-size:13px; white-space:nowrap;">
+                        <i class="fas fa-external-link-alt"></i> شراء
+                    </a>
+                </div>
+            </div>` : ''}
+
+            <!-- زر الرفض -->
+<div style="margin-bottom:10px;">
+    <input type="text" id="reject-reason" placeholder="سبب الرفض..."
+        style="width:100%; padding:10px; background:#0f172a; border:1px solid #ef4444; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box; margin-bottom:8px;">
+    <button onclick="rejectOrder('${order.id}')"
+        style="width:100%; padding:14px; background:#ef4444; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;">
+        <i class="fas fa-times-circle"></i> رفض الطلب
+    </button>
+</div>
 
             <!-- زر القبول -->
             <button onclick="approveOrder('${order.id}')"
@@ -146,15 +162,27 @@ ${suppliers.length > 0 ? `
     document.body.appendChild(modal);
 };
 
+window.calcProfit = (orderPrice) => {
+    const cost = parseFloat(document.getElementById('modal-cost').value) || 0;
+    const profitDisplay = document.getElementById('profit-display');
+    const profitValue = document.getElementById('profit-value');
+
+    if (cost > 0) {
+        const costInMRU = cost * 40;
+        const profit = orderPrice - costInMRU;
+        profitValue.textContent = profit.toFixed(0);
+        profitValue.style.color = profit >= 0 ? '#22c55e' : '#ef4444';
+        profitDisplay.style.display = 'block';
+    } else {
+        profitDisplay.style.display = 'none';
+    }
+};
+
 window.onSupplierSelect = (select) => {
     const url = select.value;
     const name = select.options[select.selectedIndex].text;
-    
-    // ملء معرف المورد
     const supplierInput = document.getElementById('modal-supplier-id');
     if (supplierInput) supplierInput.value = name;
-
-    // إظهار زر الشراء
     const buyBtn = document.getElementById('supplier-buy-btn');
     if (buyBtn) {
         if (url) {
@@ -172,9 +200,32 @@ window.approveOrder = async (orderId) => {
     const code = document.getElementById('modal-code').value.trim();
     const cost = document.getElementById('modal-cost').value;
     const supplierId = document.getElementById('modal-supplier-id').value;
+    const supplierSelect = document.getElementById('modal-supplier-select');
 
     if (!code) {
         alert('⚠️ يرجى إدخال كود البطاقة!');
+        return;
+    }
+
+    // 1. التحقق من تحديد المورد
+    if (supplierSelect && !supplierSelect.value) {
+        alert('⚠️ يرجى تحديد المورد أولاً!');
+        return;
+    }
+
+    // 2. التحقق من عدم تكرار الكود
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const { data: existingCode } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('card_code', code)
+        .gte('created_at', sixMonthsAgo.toISOString())
+        .single();
+
+    if (existingCode) {
+        alert('⚠️ هذا الكود مستخدم بالفعل في طلب آخر خلال آخر 6 أشهر!');
         return;
     }
 
@@ -197,11 +248,31 @@ window.approveOrder = async (orderId) => {
     }
 };
 
-window.filterOrders = () => {
-    const search = document.getElementById('orderSearch').value.toLowerCase();
-    document.querySelectorAll('#admin-orders-list tr').forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(search) ? '' : 'none';
-    });
-};
-
 document.addEventListener('DOMContentLoaded', loadOrders);
+
+window.rejectOrder = async (orderId) => {
+    const reason = document.getElementById('reject-reason').value.trim();
+
+    if (!reason) {
+        alert('⚠️ يرجى إدخال سبب الرفض!');
+        return;
+    }
+
+    if (!confirm(`هل تريد رفض هذا الطلب؟\nالسبب: ${reason}`)) return;
+
+    const { error } = await supabase
+        .from('orders')
+        .update({
+            status: 'ملغي',
+            reject_reason: reason
+        })
+        .eq('id', orderId);
+
+    if (error) {
+        alert('خطأ: ' + error.message);
+    } else {
+        document.getElementById('order-modal').remove();
+        alert('تم رفض الطلب.');
+        loadOrders();
+    }
+};

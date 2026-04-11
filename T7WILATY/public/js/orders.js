@@ -42,9 +42,7 @@ async function checkAuthState() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user || null;
     const userIcon = document.querySelector('#user-icon-btn i');
-    if (user) {
-        if (userIcon) userIcon.className = 'fas fa-user-check';
-    }
+    if (user && userIcon) userIcon.className = 'fas fa-user-check';
     fetchUserOrders();
 }
 
@@ -79,41 +77,49 @@ async function fetchUserOrders() {
         const date = order.created_at
             ? new Date(order.created_at).toLocaleDateString('ar-SA')
             : 'تاريخ غير معروف';
-
         const image = order.products?.image || '';
+        const isCompleted = order.status === 'مكتمل';
 
         return `
-    <div class="order-card">
-        <div class="order-header">
-            <span>#${order.id.toString().substring(0, 8)}</span>
-            <span>${date}</span>
-        </div>
-        <div class="order-body">
-            ${image ? `<img src="${image}" alt="${order.product_name}" style="width:60px; height:60px; object-fit:contain; background:white; border-radius:8px; padding:4px;">` : ''}
-            <div class="card-details">
-                <h4>${order.product_name || 'غير محدد'}</h4>
-                <p>السعر: <strong>${order.price} MRU</strong></p>
-                <p>الكمية: <strong>${order.quantity || 1}</strong></p>
-                <p>طريقة الدفع: ${order.paymentMethod || 'غير محدد'}</p>
+        <div class="order-card">
+            <div class="order-header">
+                <span>#${order.id.toString().substring(0, 8)}</span>
+                <span>${date}</span>
             </div>
-            <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-right:auto;">
-                <span class="status-badge ${order.status === 'مكتمل' ? 'status-completed' : order.status === 'ملغي' ? 'status-cancelled' : 'status-pending'}">
-                    ${order.status || 'قيد الانتظار'}
-                </span>
-                <button onclick="toggleCode('${order.id}')" class="copy-btn">
-                    <i class="fas fa-key"></i> عرض الكود
-                </button>
+            <div class="order-body">
+                ${image ? `<img src="${image}" alt="${order.product_name}" style="width:60px; height:60px; object-fit:contain; background:white; border-radius:8px; padding:4px;">` : ''}
+                <div class="card-details">
+                    <h4>${order.product_name || 'غير محدد'}</h4>
+                    <p>السعر: <strong>${order.price} MRU</strong></p>
+                    <p>الكمية: <strong>${order.quantity || 1}</strong></p>
+                    <p>طريقة الدفع: ${order.payment_method || order.paymentMethod || 'غير محدد'}</p>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-right:auto;">
+                    <span class="status-badge ${isCompleted ? 'status-completed' : order.status === 'ملغي' ? 'status-cancelled' : 'status-pending'}">
+                        ${order.status || 'قيد الانتظار'}
+                    </span>
+                    ${isCompleted ? `
+                        <button onclick="toggleCode('${order.id}')" class="copy-btn">
+                            <i class="fas fa-key"></i> عرض الكود
+                        </button>
+                    ` : ''}
+                </div>
             </div>
-        </div>
-        <div id="code-section-${order.id}" style="display:none; padding:10px 20px 15px;">
-            <div class="card-code-container">
-                <span class="code-text">${order.cardCode || 'جاري المعالجة...'}</span>
-                <button class="copy-btn" onclick="copyCode('${order.cardCode}')">
-                    <i class="fas fa-copy"></i> نسخ
-                </button>
-            </div>
-        </div>
-    </div>`;
+            ${isCompleted ? `
+                <div id="code-section-${order.id}" style="display:none; padding:10px 20px 15px;">
+                    <div class="card-code-container" style="background:#0f172a; border-radius:8px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                        <span class="code-text" style="font-family:monospace; font-size:16px; color:#f97316; letter-spacing:2px; word-break:break-all;">
+                            ${order.card_code || 'جاري المعالجة...'}
+                        </span>
+                        ${order.card_code ? `
+                            <button class="copy-btn" onclick="copyCode('${order.card_code}')">
+                                <i class="fas fa-copy"></i> نسخ
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            ` : ''}
+        </div>`;
     }).join('');
 }
 
@@ -125,6 +131,9 @@ window.toggleCode = (orderId) => {
 };
 
 window.copyCode = (code) => {
-    if (!code || code === 'undefined') return;
-    navigator.clipboard.writeText(code).then(() => alert("تم نسخ الكود بنجاح!"));
+    if (!code || code === 'undefined' || code === '') {
+        alert('الكود غير متوفر بعد، يرجى الانتظار.');
+        return;
+    }
+    navigator.clipboard.writeText(code).then(() => alert("✅ تم نسخ الكود بنجاح!"));
 };
