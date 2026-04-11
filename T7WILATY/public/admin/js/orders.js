@@ -8,7 +8,7 @@ async function loadOrders() {
 
     const { data: orders, error } = await supabase
         .from('orders')
-        .select('*, products(image)')
+        .select('*, products(image, prices)')
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -43,35 +43,158 @@ async function loadOrders() {
                 <td>${order.paymentMethod || order.payment_method || '-'}</td>
                 <td>${receiptBtn}</td>
                 <td>
-                    <div class="action-btns">
-                        <button onclick="updateOrderStatus('${order.id}', 'مكتمل')" class="btn-check" title="اعتماد">
-                            <i class="fas fa-check-circle"></i>
-                        </button>
-                        <button onclick="deleteOrder('${order.id}')" class="btn-delete" title="حذف">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                    <button onclick="openOrderModal(${JSON.stringify(order).replace(/"/g, '&quot;')})" 
+                            style="background:#22c55e; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:13px;">
+                        <i class="fas fa-check-circle"></i> قبول
+                    </button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-window.updateOrderStatus = async (orderId, newStatus) => {
-    const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
+// فتح نافذة القبول
+window.openOrderModal = (order) => {
+    const product = order.products || {};
+    const image = product.image || '';
+    const prices = product.prices || [];
+    
+    // بناء خيارات الموردين من بيانات المنتج
+    const priceItem = prices.find(p => p.value == order.price) || prices[0] || {};
+    const suppliers = priceItem.suppliers || [];
+    const supplierOptions = suppliers.map(s => 
+        `<option value="${s.url}">${s.name}</option>`
+    ).join('');
 
-    if (error) alert('فشل تحديث الحالة: ' + error.message);
-    else loadOrders();
+    const modal = document.createElement('div');
+    modal.id = 'order-modal';
+    modal.style.cssText = `
+        position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.7); z-index:9999;
+        display:flex; align-items:center; justify-content:center;
+    `;
+
+    modal.innerHTML = `
+        <div style="background:#1e293b; border-radius:16px; padding:30px; width:90%; max-width:500px; color:#e2e8f0; position:relative;">
+            
+            <button onclick="document.getElementById('order-modal').remove()" 
+                    style="position:absolute; top:15px; left:15px; background:#ef4444; color:white; border:none; border-radius:8px; padding:6px 12px; cursor:pointer;">
+                ✕ إغلاق
+            </button>
+
+            <h2 style="text-align:center; margin-bottom:20px; color:#f97316;">تفاصيل الطلب</h2>
+
+            <!-- بطاقة تفاصيل الطلب -->
+            <div style="background:#0f172a; border-radius:12px; padding:20px; margin-bottom:20px; display:flex; gap:15px; align-items:center;">
+                <img src="${image}" style="width:80px; height:80px; object-fit:contain; background:white; border-radius:10px; padding:5px;" onerror="this.style.display='none'">
+                <div style="flex:1;">
+                    <h3 style="margin:0 0 8px; font-size:16px;">${order.product_name || 'غير محدد'}</h3>
+                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
+                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
+                    <p style="margin:4px 0; font-size:13px;">💰 <strong style="color:#f97316;">${order.price} MRU</strong></p>
+                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
+                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">💳 ${order.payment_method || '-'}</p>
+                </div>
+            </div>
+
+            <!-- حقل سعر التكلفة -->
+            <div style="margin-bottom:15px;">
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)</label>
+                <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
+                    style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+            </div>
+
+            <!-- حقل الكود -->
+            <div style="margin-bottom:15px;">
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔑 كود البطاقة</label>
+                <input type="text" id="modal-code" placeholder="أدخل الكود هنا..."
+                    style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+            </div>
+
+            <!-- حقل معرف المورد -->
+<div style="margin-bottom:15px;">
+    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🏪 معرف المورد</label>
+    <input type="text" id="modal-supplier-id" placeholder="معرف المورد..."
+        style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+</div>
+
+<!-- تحديد المورد -->
+${suppliers.length > 0 ? `
+<div style="margin-bottom:20px;">
+    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔗 اختر المورد</label>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <select id="modal-supplier-select" onchange="onSupplierSelect(this)"
+            style="flex:1; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px;">
+            <option value="">-- اختر المورد --</option>
+            ${supplierOptions}
+        </select>
+        <a id="supplier-buy-btn" href="#" target="_blank"
+            style="display:none; background:#3b82f6; color:white; padding:10px 16px; border-radius:8px; text-decoration:none; font-size:13px; white-space:nowrap;">
+            <i class="fas fa-external-link-alt"></i> شراء
+        </a>
+    </div>
+</div>` : ''}
+
+            <!-- زر القبول -->
+            <button onclick="approveOrder('${order.id}')"
+                style="width:100%; padding:14px; background:#22c55e; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;">
+                <i class="fas fa-check-circle"></i> تأكيد القبول
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
 };
 
-window.deleteOrder = async (orderId) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
-    const { error } = await supabase.from('orders').delete().eq('id', orderId);
-    if (error) alert('خطأ في الحذف: ' + error.message);
-    else loadOrders();
+window.onSupplierSelect = (select) => {
+    const url = select.value;
+    const name = select.options[select.selectedIndex].text;
+    
+    // ملء معرف المورد
+    const supplierInput = document.getElementById('modal-supplier-id');
+    if (supplierInput) supplierInput.value = name;
+
+    // إظهار زر الشراء
+    const buyBtn = document.getElementById('supplier-buy-btn');
+    if (buyBtn) {
+        if (url) {
+            buyBtn.href = url;
+            buyBtn.style.display = 'inline-flex';
+            buyBtn.style.alignItems = 'center';
+            buyBtn.style.gap = '6px';
+        } else {
+            buyBtn.style.display = 'none';
+        }
+    }
+};
+
+window.approveOrder = async (orderId) => {
+    const code = document.getElementById('modal-code').value.trim();
+    const cost = document.getElementById('modal-cost').value;
+    const supplierId = document.getElementById('modal-supplier-id').value;
+
+    if (!code) {
+        alert('⚠️ يرجى إدخال كود البطاقة!');
+        return;
+    }
+
+    const { error } = await supabase
+        .from('orders')
+        .update({
+            status: 'مكتمل',
+            card_code: code,
+            cost_price: parseFloat(cost) || 0,
+            supplier_id: supplierId
+        })
+        .eq('id', orderId);
+
+    if (error) {
+        alert('خطأ: ' + error.message);
+    } else {
+        document.getElementById('order-modal').remove();
+        alert('✅ تم قبول الطلب بنجاح!');
+        loadOrders();
+    }
 };
 
 window.filterOrders = () => {

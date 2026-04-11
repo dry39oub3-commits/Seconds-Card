@@ -33,12 +33,25 @@ async function loadProduct() {
 function renderProduct(product) {
     const prices = Array.isArray(product.prices) ? product.prices : [];
 
-    const pricesHTML = prices.map((p, i) => `
-        <div class="price-card" onclick="selectPrice(${i}, ${p.value})" id="price-${i}">
-            <div class="label">${p.label}</div>
-            <div class="value">${p.value} MRU</div>
-        </div>
-    `).join('');
+    const pricesHTML = prices.map((p, i) => {
+        // إذا الفئة غير نشطة - اعرضها بشكل معطل
+        if (p.active === false) {
+            return `
+                <div class="price-card disabled" style="opacity:0.4; cursor:not-allowed; pointer-events:none; position:relative;">
+                    <div class="label">${p.label}</div>
+                    <div class="value">${p.value} MRU</div>
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:12px; color:#ef4444; font-weight:bold;">غير متاح</div>
+                </div>
+            `;
+        }
+        // فئة نشطة
+        return `
+            <div class="price-card" onclick="selectPrice(${i}, ${p.value})" id="price-${i}">
+                <div class="label">${p.label}</div>
+                <div class="value">${p.value} MRU</div>
+            </div>
+        `;
+    }).join('');
 
     document.getElementById('product-content').innerHTML = `
         <div class="product-header">
@@ -54,7 +67,6 @@ function renderProduct(product) {
             <i class="fas fa-cart-plus"></i> أضف إلى السلة
         </button>
     `;
-    
 }
 
 window.selectPrice = function(index, value) {
@@ -178,3 +190,29 @@ function updateCartBadge() {
     badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }
+window.addToCart = function() {
+    if (!selectedPrice) return;
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    const exists = cart.find(
+        item => item.productId === currentProduct.id && item.label === selectedPrice.label
+    );
+    
+    if (exists) {
+        showToast('⚠️ هذه البطاقة بنفس الفئة موجودة مسبقاً في سلتك!', 'warning');
+        return;
+    }
+    
+    cart.push({
+        productId: currentProduct.id,
+        name: currentProduct.name,
+        image: currentProduct.image,
+        label: selectedPrice.label,
+        price: selectedPrice.value,
+        quantity: 1
+    });
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartBadge(); // ← تحديث فوري
+    showToast('✅ تمت الإضافة إلى السلة!', 'success');
+};
