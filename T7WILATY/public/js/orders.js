@@ -61,7 +61,7 @@ async function fetchUserOrders() {
 
     const { data: orders, error } = await supabase
         .from("orders")
-        .select("*")
+        .select("*, products(image)")
         .order("created_at", { ascending: false });
 
     if (error) {
@@ -80,6 +80,8 @@ async function fetchUserOrders() {
             ? new Date(order.created_at).toLocaleDateString('ar-SA')
             : 'تاريخ غير معروف';
 
+        const image = order.products?.image || '';
+
         return `
     <div class="order-card">
         <div class="order-header">
@@ -87,9 +89,7 @@ async function fetchUserOrders() {
             <span>${date}</span>
         </div>
         <div class="order-body">
-            <img src="${order.cardImage || 'assets/placeholder.png'}" 
-                 alt="${order.product_name}" 
-                 onerror="this.src='assets/placeholder.png'">
+            ${image ? `<img src="${image}" alt="${order.product_name}" style="width:60px; height:60px; object-fit:contain; background:white; border-radius:8px; padding:4px;">` : ''}
             <div class="card-details">
                 <h4>${order.product_name || 'غير محدد'}</h4>
                 <p>السعر: <strong>${order.price} MRU</strong></p>
@@ -113,9 +113,8 @@ async function fetchUserOrders() {
                 </button>
             </div>
         </div>
-    </div>
-
-`;    }).join('');
+    </div>`;
+    }).join('');
 }
 
 window.toggleCode = (orderId) => {
