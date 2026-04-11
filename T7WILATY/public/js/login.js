@@ -12,7 +12,7 @@ loginForm.addEventListener('submit', async (e) => {
     const loginBtn = document.getElementById('login-btn');
 
     // تحقق إذا كان المدخل إيميل أو رقم هاتف
-    const email = phone.includes('@') ? phone : `${phone}@storcards.com`;
+    const email = phone.includes('@') ? phone : `${phone}@secondscard.com`;
 
     loginBtn.innerText = "جاري التحقق...";
     loginBtn.disabled = true;

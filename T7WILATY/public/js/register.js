@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const phone = document.getElementById('reg-phone').value.trim();
             const pass = document.getElementById('reg-pass').value;
             const regBtn = document.getElementById('register-btn');
-            const email = `${phone}@storcards.com`;
+            const email = `${phone}@secondscard.com`;
 
             regBtn.innerText = "جاري إنشاء الحساب...";
             regBtn.disabled = true;
