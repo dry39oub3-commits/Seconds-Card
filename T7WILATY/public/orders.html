@@ -63,37 +63,5 @@
     </main>
 
     <script type="module" src="js/orders.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const themeBtn = document.getElementById('theme-toggle');
-            if (themeBtn) {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                themeBtn.onclick = (e) => {
-                    e.preventDefault();
-                    const current = document.documentElement.getAttribute('data-theme');
-                    const target = current === 'light' ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', target);
-                    localStorage.setItem('theme', target);
-                    const icon = themeBtn.querySelector('i');
-                    if(icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-                };
-            }
-
-            const userBtn = document.getElementById('user-icon-btn');
-            const userMenu = document.getElementById('user-dropdown');
-            if (userBtn && userMenu) {
-                userBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    userMenu.classList.toggle('show');
-                };
-                document.addEventListener('click', (e) => {
-                    if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
-                        userMenu.classList.remove('show');
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>
