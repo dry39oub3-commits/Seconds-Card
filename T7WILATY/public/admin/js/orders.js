@@ -4,7 +4,7 @@ async function loadOrders() {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
 
-    ordersList.innerHTML = '<tr><td colspan="9" style="text-align:center;">جاري التحميل...</td></tr>';
+    ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">جاري التحميل...</td></tr>';
 
     const { data: orders, error } = await supabase
         .from('orders')
@@ -12,12 +12,12 @@ async function loadOrders() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        ordersList.innerHTML = '<tr><td colspan="9" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
+        ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
         return;
     }
 
     if (!orders || orders.length === 0) {
-        ordersList.innerHTML = '<tr><td colspan="9" style="text-align:center;">📭 لا توجد طلبات حالياً</td></tr>';
+        ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">📭 لا توجد طلبات حالياً</td></tr>';
         return;
     }
 
@@ -36,6 +36,7 @@ async function loadOrders() {
                 <td><strong>${order.price} MRU</strong></td>
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
+                <td>${order.payment_method || '-'}</td>
                 <td>${receiptBtn}</td>
                 <td>
                     <div class="action-btns">
