@@ -5,8 +5,17 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     setupUserMenu();
     displayProducts();
-    updateCartBadge()
+    updateCartBadge();
+    checkUserIcon();
 });
+
+async function checkUserIcon() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userMenuContainer = document.querySelector('.user-menu-container');
+    if (userMenuContainer) {
+        userMenuContainer.style.display = session?.user ? 'block' : 'none';
+    }
+}
 
 // --- 2. إدارة الوضع الليلي (Dark Mode) ---
 function initTheme() {
@@ -21,7 +30,6 @@ function initTheme() {
         e.preventDefault();
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
         updateThemeIcon(newTheme);
@@ -93,7 +101,6 @@ async function displayProducts() {
             const pricesArray = product.prices
                 .map(p => parseFloat(p.value))
                 .filter(v => !isNaN(v));
-
             if (pricesArray.length > 0) {
                 minPrice = Math.min(...pricesArray);
             }
@@ -114,7 +121,6 @@ async function displayProducts() {
         cardsGrid.insertAdjacentHTML('beforeend', cardHTML);
     });
 }
-
 
 function updateCartBadge() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');

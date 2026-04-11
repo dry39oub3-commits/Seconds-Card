@@ -1,15 +1,24 @@
 import { supabase } from './supabase-config.js';
 
-// جلب بيانات السلة من التخزين المحلي (LocalStorage)
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-// --- 1. تشغيل الدوال الأساسية عند التحميل ---
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     setupUserMenu();
     renderCart();
     checkAuthState();
+    checkUserIcon();
 });
+
+async function checkUserIcon() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userMenuContainer = document.querySelector('.user-menu-container');
+    if (userMenuContainer) {
+        userMenuContainer.style.display = session?.user ? 'block' : 'none';
+    }
+}
+
+
 
 // --- 2. عرض محتويات السلة وتحديث الواجهة ---
 function renderCart() {
