@@ -56,27 +56,12 @@ async function checkAuthState() {
 
     if (user) {
         if (userIcon) userIcon.className = 'fas fa-user-check';
-        console.log("StorCards Auth: Active User", user.id);
-
         if (document.getElementById('orders-list')) {
             fetchUserOrders(user.id);
         }
     } else {
         if (userIcon) userIcon.className = 'fas fa-user';
-        if (window.location.pathname.includes('orders') || window.location.pathname.includes('wallet')) {
-            window.location.href = "login.html";
-        }
     }
-
-    // مراقبة التغييرات في حالة الجلسة
-    supabase.auth.onAuthStateChange((_event, session) => {
-        const user = session?.user || null;
-        if (user) {
-            if (userIcon) userIcon.className = 'fas fa-user-check';
-        } else {
-            if (userIcon) userIcon.className = 'fas fa-user';
-        }
-    });
 }
 
 // --- وظيفة تسجيل الخروج ---
@@ -93,8 +78,10 @@ window.handleLogout = async () => {
 
 // --- جلب طلبات المستخدم من Supabase ---
 async function fetchUserOrders(uid) {
-    const ordersList = document.getElementById('orders-list');
-    const noOrders = document.getElementById('no-orders');
+    const { data: orders, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
 
     if (!ordersList) return;
 
@@ -115,32 +102,26 @@ async function fetchUserOrders(uid) {
 
         let html = '';
         orders.forEach(order => {
-            const date = order.timestamp
-                ? new Date(order.timestamp).toLocaleDateString('ar-SA')
-                : 'تاريخ غير معروف';
+    const date = order.created_at
+        ? new Date(order.created_at).toLocaleDateString('ar-SA')
+        : 'تاريخ غير معروف';
 
-            html += `
-                <div class="order-card">
-                    <div class="order-header">
-                        <span>رقم الطلب: #${order.id.toString().substring(0, 8)}</span>
-                        <span>التاريخ: ${date}</span>
-                    </div>
-                    <div class="order-body">
-                        <img src="${order.cardImage || 'assets/placeholder.png'}" alt="${order.cardName}">
-                        <div class="card-details">
-                            <h4>${order.cardName}</h4>
-                            <p>السعر: ${order.price} MRU</p>
-                        </div>
-                    </div>
-                    <div class="card-code-container">
-                        <span class="code-text" id="code-${order.id}">${order.cardCode || 'جاري المعالجة'}</span>
-                        <button class="copy-btn" onclick="copyCode('${order.cardCode}')">
-                            <i class="fas fa-copy"></i> نسخ الكود
-                        </button>
-                    </div>
+    html += `
+        <div class="order-card">
+            <div class="order-header">
+                <span>رقم الطلب: #${order.id.toString().substring(0, 8)}</span>
+                <span>التاريخ: ${date}</span>
+            </div>
+            <div class="order-body">
+                <div class="card-details">
+                    <h4>${order.product_name || 'غير محدد'}</h4>
+                    <p>السعر: ${order.price} MRU</p>
+                    <p>الحالة: ${order.status || 'قيد الانتظار'}</p>
                 </div>
-            `;
-        });
+            </div>
+        </div>
+    `;
+});
 
         ordersList.innerHTML = html;
 
