@@ -232,3 +232,63 @@ body {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* === تحسينات الموبايل === */
+@media (max-width: 768px) {
+
+    /* الهيدر */
+    .header-container {
+        flex-wrap: wrap;
+        padding: 8px 15px;
+        gap: 10px;
+    }
+
+    .logo { font-size: 18px; min-width: auto; }
+
+    /* إخفاء البحث في الموبايل وجعله سطر منفصل */
+    .search-container {
+        order: 3;
+        width: 100%;
+        flex-grow: unset;
+    }
+
+    .search-bar { max-width: 100%; }
+
+    .header-actions { gap: 10px; min-width: auto; }
+    .action-btn { font-size: 18px; }
+
+    /* القائمة المنسدلة */
+    .dropdown-menu {
+        left: auto;
+        right: 0;
+        min-width: 160px;
+    }
+
+    /* شبكة البطاقات */
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 15px 12px;
+    }
+
+    .card-image { height: 120px; }
+
+    .card-info h3 { font-size: 0.9rem; }
+
+    .price-start { font-size: 0.8rem; }
+
+    .price-start span { font-size: 0.95rem; }
+
+    .view-btn { padding: 8px; font-size: 13px; }
+}
+
+@media (max-width: 400px) {
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .card-image { height: 100px; }
+    .card-info h3 { font-size: 0.82rem; }
+}
