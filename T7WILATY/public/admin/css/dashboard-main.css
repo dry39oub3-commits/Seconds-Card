@@ -951,3 +951,183 @@ h2 i {
     padding: 4px 12px;
     border-radius: 20px;
 }
+
+
+/* تنسيق قائمة المنتجات المطور */
+#products-list-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.product-row-item {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.product-main-info {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.product-main-info:hover { background: #f8fafc; }
+
+.p-identity { display: flex; align-items: center; gap: 15px; }
+.p-img-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+.p-name { font-weight: bold; font-size: 1.1rem; color: #1e293b; }
+
+/* منطقة التفاصيل وبطاقات الفئات */
+.product-details-area {
+    background: #f1f5f9;
+    padding: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.cards-sub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.sub-card-item {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+/* مفتاح التفعيل (Switch) */
+.switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: #22c55e; }
+input:checked + .slider:before { transform: translateX(20px); }
+
+.delete-p-btn { background: #fee2e2; color: #ef4444; border: none; padding: 8px; border-radius: 6px; cursor: pointer; }
+
+/* تنسيق قسم المورد داخل البطاقة */
+.supplier-section {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.input-group-mini {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group-mini label {
+    font-size: 0.8rem;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+.input-group-mini input {
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: #f8fafc;
+}
+
+.add-supplier-btn {
+    width: 100%;
+    background: #1e293b;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-supplier-btn:hover {
+    background: #334155;
+}
+
+.suppliers-list {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.supplier-entry {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.input-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.input-row input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.remove-field {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.add-new-sup-field {
+    width: 100%;
+    background: #f1f5f9;
+    color: #475569;
+    border: 2px dashed #cbd5e1;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.add-new-sup-field:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.save-all-btn {
+    width: 100%;
+    background: #00a884;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
