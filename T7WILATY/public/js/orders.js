@@ -81,23 +81,49 @@ async function fetchUserOrders() {
             : 'تاريخ غير معروف';
 
         return `
-            <div class="order-card">
-                <div class="order-header">
-                    <span>رقم الطلب: #${order.id.toString().substring(0, 8)}</span>
-                    <span>التاريخ: ${date}</span>
-                </div>
-                <div class="order-body">
-                    <div class="card-details">
-                        <h4>${order.product_name || 'غير محدد'}</h4>
-                        <p>السعر: ${order.price} MRU</p>
-                        <p>الحالة: <strong>${order.status || 'قيد الانتظار'}</strong></p>
-                        <p>طريقة الدفع: ${order.paymentMethod || 'غير محدد'}</p>
-                    </div>
-                </div>
+    <div class="order-card">
+        <div class="order-header">
+            <span>#${order.id.toString().substring(0, 8)}</span>
+            <span>${date}</span>
+        </div>
+        <div class="order-body">
+            <img src="${order.cardImage || 'assets/placeholder.png'}" 
+                 alt="${order.product_name}" 
+                 onerror="this.src='assets/placeholder.png'">
+            <div class="card-details">
+                <h4>${order.product_name || 'غير محدد'}</h4>
+                <p>السعر: <strong>${order.price} MRU</strong></p>
+                <p>الكمية: <strong>${order.quantity || 1}</strong></p>
+                <p>طريقة الدفع: ${order.paymentMethod || 'غير محدد'}</p>
             </div>
-        `;
-    }).join('');
+            <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-right:auto;">
+                <span class="status-badge ${order.status === 'مكتمل' ? 'status-completed' : order.status === 'ملغي' ? 'status-cancelled' : 'status-pending'}">
+                    ${order.status || 'قيد الانتظار'}
+                </span>
+                <button onclick="toggleCode('${order.id}')" class="copy-btn">
+                    <i class="fas fa-key"></i> عرض الكود
+                </button>
+            </div>
+        </div>
+        <div id="code-section-${order.id}" style="display:none; padding:10px 20px 15px;">
+            <div class="card-code-container">
+                <span class="code-text">${order.cardCode || 'جاري المعالجة...'}</span>
+                <button class="copy-btn" onclick="copyCode('${order.cardCode}')">
+                    <i class="fas fa-copy"></i> نسخ
+                </button>
+            </div>
+        </div>
+    </div>
+
+`;    }).join('');
 }
+
+window.toggleCode = (orderId) => {
+    const section = document.getElementById(`code-section-${orderId}`);
+    if (section) {
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+};
 
 window.copyCode = (code) => {
     if (!code || code === 'undefined') return;
