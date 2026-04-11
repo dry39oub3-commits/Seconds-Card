@@ -219,14 +219,7 @@ window.approveOrder = async (orderId) => {
         return;
     }
 
-    const suppliersList = document.getElementById('suppliers-list');
-    if (suppliersList) {
-        const selected = suppliersList.querySelector('button[style*="f97316"]');
-        if (!selected) {
-            alert('⚠️ يرجى تحديد المورد أولاً!');
-            return;
-        }
-    }
+
 
     // التحقق من عدم تكرار الكود في جدول used_codes
     const { data: existingCode } = await supabase
