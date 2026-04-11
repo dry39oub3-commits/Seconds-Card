@@ -1,156 +1,157 @@
 import { supabase } from '../../js/supabase-config.js';
 
+let allProducts = [];
+
 const loadProducts = async () => {
     const container = document.getElementById('products-list-body');
-    container.innerHTML = "<div class='loading'>جاري التحميل...</div>";
-    
-    try {
-        const { data: products, error } = await supabase
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
+    container.innerHTML = "<p style='text-align:center; padding:20px;'>جاري التحميل...</p>";
 
-        if (error) throw error;
-        container.innerHTML = "";
+    const { data: products, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (!products || products.length === 0) {
-            container.innerHTML = "<div class='no-data'>لا توجد منتجات</div>";
-            return;
-        }
-
-        products.forEach(p => {
-            const productDiv = document.createElement('div');
-            productDiv.className = 'product-row-item';
-            
-            // هيكل المنتج الرئيسي مع زر الحذف الأساسي
-            productDiv.innerHTML = `
-                <div class="product-main-info" onclick="toggleDetails('${p.id}')">
-                    <div class="p-identity">
-                        <img src="${p.image}" class="p-img-thumb">
-                        <span class="p-name">${p.name}</span>
-                    </div>
-                    <div class="p-meta">
-                        <span>${p.prices?.length || 0} فئات</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <button class="delete-p-btn" onclick="event.stopPropagation(); window.deleteProduct('${p.id}')">
-                        <i class="fas fa-trash"></i>
-                    </div>
-                </div>
-                <div id="details-${p.id}" class="product-details-area" style="display:none;">
-                    <div class="cards-sub-grid">
-                        ${generatePriceCards(p.prices)}
-                    </div>
-                </div>
-            `;
-            container.appendChild(productDiv);
-        });
-
-    } catch (error) {
-        console.error("خطأ:", error);
-        container.innerHTML = "<div class='error'>خطأ في التحميل</div>";
+    if (error) {
+        container.innerHTML = "<p style='color:red; text-align:center;'>خطأ في التحميل</p>";
+        return;
     }
-};
 
-// دالة لتوليد بطاقات الفئات داخل المنتج
-// دالة لتوليد بطاقات الفئات داخل المنتج مع خيارات الموردين
-// دالة لتوليد بطاقات الفئات مع دعم الموردين المتعددين
-function generatePriceCards(prices, productId) {
-    if (!prices || prices.length === 0) return "<p>لا توجد فئات سعرية</p>";
-    
-    return prices.map((item, index) => {
-        // نتحقق إذا كان هناك قائمة موردين سابقة، وإلا ننشئ قائمة فارغة
-        const suppliers = item.suppliers || []; 
-        
-        return `
-        <div class="sub-card-item" id="card-${productId}-${index}">
-            <div class="card-header">
-                <strong>${item.label || 'فئة جديدة'}</strong>
-                <label class="switch">
-                    <input type="checkbox" ${item.active ? 'checked' : ''}>
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            
-            <div class="card-body">
-                <p class="price-info">${item.value} MRU | $${(item.value / 40).toFixed(2)}</p>
-                
-                <div id="suppliers-container-${productId}-${index}" class="suppliers-list">
-                    ${suppliers.map((s, sIndex) => renderSupplierFields(productId, index, sIndex, s.name, s.url)).join('')}
+    if (!products || products.length === 0) {
+        container.innerHTML = "<p style='text-align:center;'>لا توجد منتجات</p>";
+        return;
+    }
+
+    allProducts = products;
+    container.innerHTML = products.map(p => `
+        <div class="product-row-item">
+            <div class="product-main-info" onclick="toggleDetails('${p.id}')">
+                <div class="p-identity">
+                    <img src="${p.image || ''}" class="p-img-thumb" onerror="this.style.display='none'">
+                    <span class="p-name">${p.name}</span>
+                    <span style="color:#94a3b8; font-size:13px;">${p.country || ''}</span>
                 </div>
-
-                <button class="add-new-sup-field" onclick="addNewSupplierField('${productId}', ${index})">
-                    <i class="fas fa-plus-circle"></i> إضافة مورد جديد لهذه الفئة
+                <div class="p-meta">
+                    <span>${p.prices?.length || 0} فئات</span>
+                    <i class="fas fa-chevron-down" id="arrow-${p.id}" style="transition:0.3s;"></i>
+                </div>
+                <button class="delete-p-btn" onclick="event.stopPropagation(); deleteProduct('${p.id}')">
+                    <i class="fas fa-trash"></i>
                 </button>
-
-                <button class="save-all-btn" onclick="saveAllProductData('${productId}')">
-                    <i class="fas fa-save"></i> حفظ جميع التغييرات
-                </button>
+            </div>
+            <div id="details-${p.id}" class="product-details-area" style="display:none;">
+                <div class="cards-sub-grid">
+                    ${generatePriceCards(p)}
+                </div>
             </div>
         </div>
-        `;
+    `).join('');
+};
+
+function generatePriceCards(product) {
+    if (!product.prices || product.prices.length === 0) return "<p>لا توجد فئات سعرية</p>";
+
+    return product.prices.map((item, index) => {
+        const suppliers = item.suppliers || [];
+        const usdValue = item.value ? (item.value / 40).toFixed(2) : '0';
+
+        return `
+        <div class="sub-card-item" style="display:flex; align-items:center; gap:15px; padding:12px 18px; border-radius:10px; background:#0f172a; margin-bottom:10px;">
+            
+            <label class="toggle-switch" style="flex-shrink:0;">
+                <input type="checkbox" ${item.active !== false ? 'checked' : ''} 
+                       onchange="togglePriceActive('${product.id}', ${index}, this.checked)">
+                <span class="slider"></span>
+            </label>
+
+            <strong style="min-width:80px;">${item.label || 'فئة'}</strong>
+
+            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <input type="number" 
+                       id="price-input-${product.id}-${index}"
+                       value="${item.value}" 
+                       style="width:90px; padding:5px 8px; background:#1e293b; border:1px solid #f97316; border-radius:6px; color:#f97316; font-weight:bold; text-align:center;">
+                <span style="color:#94a3b8; font-size:12px;">MRU</span>
+                <span class="price-usd" id="usd-${product.id}-${index}">${usdValue} $</span>
+            </div>
+
+            <div style="flex:1; display:flex; flex-direction:column; gap:6px;" id="sup-container-${product.id}-${index}">
+                ${suppliers.map((s, si) => renderSupplier(product.id, index, si, s.name, s.url)).join('')}
+            </div>
+
+            <button class="add-sup-btn" style="width:auto; padding:7px 14px; white-space:nowrap;" onclick="addSupplier('${product.id}', ${index})">
+                <i class="fas fa-plus"></i> مورد
+            </button>
+
+            <button class="save-btn-sm" style="width:auto; padding:8px 14px; white-space:nowrap; margin-top:0;" onclick="savePriceData('${product.id}')">
+                <i class="fas fa-save"></i> حفظ
+            </button>
+        </div>`;
     }).join('');
 }
 
-// دالة مساعدة لرسم حقول المورد
-function renderSupplierFields(pId, priceIdx, sIdx, name = '', url = '') {
+function renderSupplier(pId, priceIdx, sIdx, name = '', url = '') {
     return `
-        <div class="supplier-entry" data-index="${sIdx}">
-            <div class="input-row">
-                <input type="text" placeholder="اسم المورد" class="sup-name" value="${name}">
-                <input type="url" placeholder="رابط المورد" class="sup-url" value="${url}">
-                <button class="remove-field" onclick="this.parentElement.parentElement.remove()"><i class="fas fa-times"></i></button>
-            </div>
-        </div>
-    `;
+        <div class="supplier-row">
+            <input type="text" placeholder="اسم المورد" class="sup-name" value="${name}">
+            <input type="url" placeholder="رابط المورد" class="sup-url" value="${url}">
+            <button onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>`;
 }
 
-// الوظيفة المطلوبة: إضافة خانة مورد جديدة عند الضغط
-window.addNewSupplierField = (productId, priceIndex) => {
-    const container = document.getElementById(`suppliers-container-${productId}-${priceIndex}`);
-    const newIndex = container.children.length;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = renderSupplierFields(productId, priceIndex, newIndex);
-    container.appendChild(tempDiv.firstElementChild);
+window.addSupplier = (productId, priceIndex) => {
+    const container = document.getElementById(`sup-container-${productId}-${priceIndex}`);
+    const div = document.createElement('div');
+    div.innerHTML = renderSupplier(productId, priceIndex, container.children.length);
+    container.appendChild(div.firstElementChild);
 };
 
-window.saveAllProductData = async (productId) => {
-    // منطق جمع البيانات من الـ DOM وحفظها في الحقل JSON الخاص بـ Supabase
-    const productRows = document.querySelectorAll(`[id^="card-${productId}"]`);
-    let updatedPrices = [];
+window.togglePriceActive = async (productId, priceIndex, isActive) => {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+    const updatedPrices = [...product.prices];
+    updatedPrices[priceIndex] = { ...updatedPrices[priceIndex], active: isActive };
+    await supabase.from('products').update({ prices: updatedPrices }).eq('id', productId);
+    product.prices = updatedPrices;
+};
 
-    productRows.forEach((row, idx) => {
-        const supEntries = row.querySelectorAll('.supplier-entry');
-        let suppliersList = [];
+window.savePriceData = async (productId) => {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const updatedPrices = product.prices.map((item, index) => {
+        const container = document.getElementById(`sup-container-${productId}-${index}`);
+        const priceInput = document.getElementById(`price-input-${productId}-${index}`);
         
-        supEntries.forEach(entry => {
-            suppliersList.push({
-                name: entry.querySelector('.sup-name').value,
-                url: entry.querySelector('.sup-url').value
-            });
-        });
+        const newValue = priceInput ? parseFloat(priceInput.value) : item.value;
+        
+        const suppliers = container ? [...container.querySelectorAll('.supplier-row')].map(row => ({
+            name: row.querySelector('.sup-name').value,
+            url: row.querySelector('.sup-url').value
+        })) : item.suppliers;
 
-        // هنا نفترض أن لديك البيانات الأساسية محفوظة في سمات مخصصة أو متغير عام
-        updatedPrices.push({
-            ...originalPrices[idx], // البيانات القديمة (Label, Value)
-            suppliers: suppliersList // الموردين الجدد
-        });
+        return { ...item, value: newValue, suppliers };
     });
 
-    const { error } = await supabase.from('products').update({ prices: updatedPrices }).eq('id', productId);
-    if (!error) alert("تم تحديث جميع الموردين بنجاح!");
+    const { error } = await supabase
+        .from('products')
+        .update({ prices: updatedPrices })
+        .eq('id', productId);
+
+    if (error) alert('خطأ في الحفظ: ' + error.message);
+    else {
+        product.prices = updatedPrices;
+        alert('✅ تم الحفظ بنجاح!');
+    }
 };
 
 window.toggleDetails = (id) => {
     const area = document.getElementById(`details-${id}`);
-    const icon = area.previousElementSibling.querySelector('.fa-chevron-down');
-    if (area.style.display === "none") {
-        area.style.display = "block";
-        icon.style.transform = "rotate(180deg)";
-    } else {
-        area.style.display = "none";
-        icon.style.transform = "rotate(0deg)";
-    }
+    const arrow = document.getElementById(`arrow-${id}`);
+    const isHidden = area.style.display === 'none';
+    area.style.display = isHidden ? 'block' : 'none';
+    arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
 };
 
 window.deleteProduct = async (id) => {
