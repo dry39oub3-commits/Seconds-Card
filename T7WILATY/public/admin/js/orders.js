@@ -9,7 +9,7 @@ async function loadOrders() {
     const { data: orders, error } = await supabase
     .from('orders')
     .select('*, products(image, prices)')
-    .neq('status', 'مكتمل')  // ← إخفاء المكتملة
+    .not('status', 'in', '("مكتمل","ملغي","مسترد")')
     .order('created_at', { ascending: false });
 
     if (error) {
@@ -59,21 +59,18 @@ window.openOrderModal = (order) => {
     const prices = product.prices || [];
     const priceItem = prices.find(p => p.value == order.price) || prices[0] || {};
     const suppliers = priceItem.suppliers || [];
-    const supplierOptions = suppliers.map(s =>
-        `<option value="${s.url}">${s.name}</option>`
-    ).join('');
 
     const modal = document.createElement('div');
     modal.id = 'order-modal';
     modal.style.cssText = `
         position:fixed; top:0; left:0; width:100%; height:100%;
-        background:rgba(0,0,0,0.7); z-index:9999;
-        display:flex; align-items:center; justify-content:center;
-        overflow-y:auto;
+        background:rgba(0,0,0,0.85); z-index:9999;
+        display:flex; align-items:flex-start; justify-content:center;
+        overflow-y:auto; padding:20px; box-sizing:border-box;
     `;
 
     modal.innerHTML = `
-        <div style="background:#1e293b; border-radius:16px; padding:30px; width:90%; max-width:500px; color:#e2e8f0; position:relative; margin:20px auto;">
+        <div style="background:#1e293b; border-radius:16px; padding:30px; width:100%; max-width:750px; color:#e2e8f0; position:relative; margin:auto;">
             
             <button onclick="document.getElementById('order-modal').remove()" 
                     style="position:absolute; top:15px; left:15px; background:#ef4444; color:white; border:none; border-radius:8px; padding:6px 12px; cursor:pointer;">
@@ -84,23 +81,33 @@ window.openOrderModal = (order) => {
 
             <!-- بطاقة تفاصيل الطلب -->
             <div style="background:#0f172a; border-radius:12px; padding:20px; margin-bottom:20px; display:flex; gap:15px; align-items:center;">
-                <img src="${image}" style="width:80px; height:80px; object-fit:contain; background:white; border-radius:10px; padding:5px;" onerror="this.style.display='none'">
-                <div style="flex:1;">
-                    <h3 style="margin:0 0 8px; font-size:16px;">${order.product_name || 'غير محدد'}</h3>
-                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
-                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
-                    <p style="margin:4px 0; font-size:13px;">💰 <strong style="color:#f97316;">${order.price} MRU</strong></p>
-                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
-                    <p style="margin:4px 0; color:#94a3b8; font-size:13px;">💳 ${order.payment_method || '-'}</p>
+                <img src="${image}" style="width:90px; height:90px; object-fit:contain; background:white; border-radius:10px; padding:5px; flex-shrink:0;" onerror="this.style.display='none'">
+                <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <h3 style="margin:0 0 4px; font-size:17px; grid-column:1/-1;">${order.product_name || 'غير محدد'}</h3>
+                    <p style="margin:0; color:#94a3b8; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
+                    <p style="margin:0; color:#94a3b8; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
+                    <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${order.price} MRU</strong></p>
+                    <p style="margin:0; color:#94a3b8; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
+                    <p style="margin:0; color:#94a3b8; font-size:13px;">💳 ${order.payment_method || '-'}</p>
                 </div>
             </div>
 
-            <!-- سعر التكلفة -->
-            <div style="margin-bottom:15px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)</label>
-                <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
-                    oninput="calcProfit(${order.price})"
-                    style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+            <!-- صفين جنب بعض -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <!-- سعر التكلفة -->
+                <div>
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)</label>
+                    <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
+                        oninput="calcProfit(${order.price})"
+                        style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+                </div>
+
+                <!-- كود البطاقة -->
+                <div>
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔑 كود البطاقة</label>
+                    <input type="text" id="modal-code" placeholder="أدخل الكود هنا..."
+                        style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+                </div>
             </div>
 
             <!-- الربح -->
@@ -108,13 +115,6 @@ window.openOrderModal = (order) => {
                 <span style="color:#94a3b8; font-size:13px;">الربح: </span>
                 <span id="profit-value" style="color:#22c55e; font-size:18px; font-weight:bold;"></span>
                 <span style="color:#94a3b8; font-size:13px;"> MRU</span>
-            </div>
-
-            <!-- كود البطاقة -->
-            <div style="margin-bottom:15px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔑 كود البطاقة</label>
-                <input type="text" id="modal-code" placeholder="أدخل الكود هنا..."
-                    style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
             </div>
 
             <!-- معرف المورد -->
@@ -127,29 +127,30 @@ window.openOrderModal = (order) => {
             <!-- اختر المورد -->
             ${suppliers.length > 0 ? `
             <div style="margin-bottom:20px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔗 اختر المورد</label>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <select id="modal-supplier-select" onchange="onSupplierSelect(this)"
-                        style="flex:1; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px;">
-                        <option value="">-- اختر المورد --</option>
-                        ${supplierOptions}
-                    </select>
-                    <a id="supplier-buy-btn" href="#" target="_blank"
-                        style="display:none; background:#3b82f6; color:white; padding:10px 16px; border-radius:8px; text-decoration:none; font-size:13px; white-space:nowrap;">
-                        <i class="fas fa-external-link-alt"></i> شراء
-                    </a>
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:8px;">🔗 اختر المورد</label>
+                <div id="suppliers-list" style="display:flex; flex-direction:column; gap:8px;">
+                    ${suppliers.map(s => `
+                        <button onclick="selectSupplier('${s.url}', '${s.name}', this)"
+                            style="width:100%; padding:12px 16px; background:#0f172a; border:2px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                            <a href="${s.url}" target="_blank" onclick="event.stopPropagation()"
+                                style="color:#3b82f6; font-size:12px; white-space:nowrap; text-decoration:none;">
+                                <i class="fas fa-external-link-alt"></i> شراء
+                            </a>
+                            <span>${s.name}</span>
+                        </button>
+                    `).join('')}
                 </div>
             </div>` : ''}
 
             <!-- زر الرفض -->
-<div style="margin-bottom:10px;">
-    <input type="text" id="reject-reason" placeholder="سبب الرفض..."
-        style="width:100%; padding:10px; background:#0f172a; border:1px solid #ef4444; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box; margin-bottom:8px;">
-    <button onclick="rejectOrder('${order.id}')"
-        style="width:100%; padding:14px; background:#ef4444; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;">
-        <i class="fas fa-times-circle"></i> رفض الطلب
-    </button>
-</div>
+            <div style="margin-bottom:12px;">
+                <input type="text" id="reject-reason" placeholder="سبب الرفض..."
+                    style="width:100%; padding:10px; background:#0f172a; border:1px solid #ef4444; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box; margin-bottom:8px;">
+                <button onclick="rejectOrder('${order.id}')"
+                    style="width:100%; padding:14px; background:#ef4444; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;">
+                    <i class="fas fa-times-circle"></i> رفض الطلب
+                </button>
+            </div>
 
             <!-- زر القبول -->
             <button onclick="approveOrder('${order.id}')"
@@ -160,6 +161,18 @@ window.openOrderModal = (order) => {
     `;
 
     document.body.appendChild(modal);
+};
+
+window.selectSupplier = (url, name, btn) => {
+    document.querySelectorAll('#suppliers-list button').forEach(b => {
+        b.style.borderColor = '#334155';
+        b.style.background = '#0f172a';
+    });
+    btn.style.borderColor = '#f97316';
+    btn.style.background = 'rgba(249,115,22,0.1)';
+    const supplierInput = document.getElementById('modal-supplier-id');
+    if (supplierInput) supplierInput.value = name;
+    btn.dataset.url = url;
 };
 
 window.calcProfit = (orderPrice) => {
@@ -200,20 +213,21 @@ window.approveOrder = async (orderId) => {
     const code = document.getElementById('modal-code').value.trim();
     const cost = document.getElementById('modal-cost').value;
     const supplierId = document.getElementById('modal-supplier-id').value;
-    const supplierSelect = document.getElementById('modal-supplier-select');
 
     if (!code) {
         alert('⚠️ يرجى إدخال كود البطاقة!');
         return;
     }
 
-    // 1. التحقق من تحديد المورد
-    if (supplierSelect && !supplierSelect.value) {
-        alert('⚠️ يرجى تحديد المورد أولاً!');
-        return;
+    const suppliersList = document.getElementById('suppliers-list');
+    if (suppliersList) {
+        const selected = suppliersList.querySelector('button[style*="f97316"]');
+        if (!selected) {
+            alert('⚠️ يرجى تحديد المورد أولاً!');
+            return;
+        }
     }
 
-    // 2. التحقق من عدم تكرار الكود
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -222,14 +236,18 @@ window.approveOrder = async (orderId) => {
         .select('id')
         .eq('card_code', code)
         .gte('created_at', sixMonthsAgo.toISOString())
-        .single();
+        .maybeSingle();
 
     if (existingCode) {
-        alert('⚠️ هذا الكود مستخدم بالفعل في طلب آخر خلال آخر 6 أشهر!');
+        alert('⚠️ هذا الكود مستخدم بالفعل خلال آخر 6 أشهر!');
         return;
     }
 
-    const { error } = await supabase
+    // تحقق من الـ orderId
+    console.log("Approving order:", orderId);
+    console.log("Update data:", { status: 'مكتمل', card_code: code, cost_price: parseFloat(cost) || 0, supplier_id: supplierId });
+
+    const { data, error } = await supabase
         .from('orders')
         .update({
             status: 'مكتمل',
@@ -237,7 +255,10 @@ window.approveOrder = async (orderId) => {
             cost_price: parseFloat(cost) || 0,
             supplier_id: supplierId
         })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
+
+    console.log("Result:", data, error);
 
     if (error) {
         alert('خطأ: ' + error.message);
