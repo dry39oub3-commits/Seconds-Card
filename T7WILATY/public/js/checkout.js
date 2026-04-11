@@ -10,10 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuthAndLoadData();
     loadPaymentMethods();
 
-    // ربط زر الدفع
     document.getElementById('confirm-payment-btn')?.addEventListener('click', executePayment);
 
-    // مراقبة تغيير الإيصال
     document.getElementById('receipt-input')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -27,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// --- جلب طرق الدفع ---
 async function loadPaymentMethods() {
     const { data: methods, error } = await supabase
         .from('payment_methods')
@@ -71,12 +68,10 @@ window.selectMethod = function(id, account, name) {
         accountElem.textContent = account || 'غير متوفر';
     }
 
-    // إظهار قسم رفع الإيصال
     const receiptSection = document.getElementById('receipt-upload-section');
     if (receiptSection) receiptSection.style.display = 'block';
 };
 
-// --- مراقب حالة تسجيل الدخول ---
 async function checkAuthAndLoadData() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -123,8 +118,7 @@ async function checkAuthAndLoadData() {
     }
 }
 
-// --- تنفيذ الدفع ---
-window.executePayment = async () => {
+async function executePayment() {
     if (!selectedPaymentMethod) {
         alert('⚠️ الرجاء اختيار طريقة الدفع أولاً!');
         return;
@@ -140,14 +134,14 @@ window.executePayment = async () => {
     const user = session?.user;
     const btn = document.getElementById('confirm-payment-btn');
 
-    if (!user || totalAmount <= 0) return;
+    if (totalAmount <= 0) return;
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
     try {
         // رفع الإيصال
-        const filePath = `receipts/${user.id}_${Date.now()}`;
+        const filePath = `receipts/${Date.now()}`;
         const { error: uploadError } = await supabase.storage
             .from('receipts')
             .upload(filePath, receiptFile);
@@ -160,14 +154,15 @@ window.executePayment = async () => {
 
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         const orders = cart.map(item => ({
-            userId: user.id,
-            cardName: item.name,
-            cardImage: item.image || "",
+            customer_name: user?.user_metadata?.full_name || 'مستخدم',
+            customer_phone: user?.email || '',
+            product_id: item.productId || null,
+            product_name: item.name,
             price: item.price,
-            cardCode: "جاري استخراج الكود...",
-            paymentMethod: selectedPaymentMethod.name,
+            quantity: item.quantity || 1,
+            status: 'قيد الانتظار',
             receiptUrl: receiptUrl,
-            timestamp: new Date().toISOString()
+            paymentMethod: selectedPaymentMethod.name
         }));
 
         const { error: insertError } = await supabase
@@ -186,7 +181,7 @@ window.executePayment = async () => {
         btn.disabled = false;
         btn.innerHTML = "تأكيد الدفع الآن";
     }
-};
+}
 
 function initTheme() {
     const themeToggle = document.getElementById('theme-toggle');

@@ -1,6 +1,5 @@
 import { supabase } from '../../js/supabase-config.js';
 
-// 1. جلب وعرض الطلبات
 async function loadOrders() {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
@@ -8,7 +7,7 @@ async function loadOrders() {
     const { data: orders, error } = await supabase
         .from('orders')
         .select('*')
-        .order('timestamp', { ascending: false });
+        .order('created_at', { ascending: false });
 
     if (error) {
         ordersList.innerHTML = '<tr><td colspan="7" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
@@ -21,7 +20,7 @@ async function loadOrders() {
     }
 
     ordersList.innerHTML = orders.map(order => {
-        const date = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-EG') : 'غير محدد';
+        const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : 'غير محدد';
         const status = order.status || 'قيد الانتظار';
         const receiptBtn = order.receiptUrl ? 
             `<a href="${order.receiptUrl}" target="_blank" class="btn-check" title="عرض الإيصال"><i class="fas fa-receipt"></i></a>` : '';
@@ -29,8 +28,8 @@ async function loadOrders() {
         return `
             <tr id="order-row-${order.id}">
                 <td>#${order.id.substring(0, 7)}</td>
-                <td>${order.userId?.substring(0, 8) || 'غير معروف'}</td>
-                <td>${order.cardName}</td>
+                <td>${order.customer_name || 'غير معروف'}</td>
+                <td>${order.product_name || 'غير محدد'}</td>
                 <td><strong>${order.price} MRU</strong></td>
                 <td><small>${date}</small></td>
                 <td>
