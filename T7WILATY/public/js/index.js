@@ -9,13 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkUserIcon();
 });
 
-async function checkUserIcon() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const userMenuContainer = document.querySelector('.user-menu-container');
-    if (userMenuContainer) {
-        userMenuContainer.style.display = session?.user ? 'block' : 'none';
-    }
-}
+
 
 // --- 2. إدارة الوضع الليلي (Dark Mode) ---
 function initTheme() {

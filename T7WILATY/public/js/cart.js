@@ -138,25 +138,8 @@ window.processCheckout = () => {
     window.location.href = "checkout.html";
 };
 
-// --- 5. مراقب حالة تسجيل الدخول ---
-async function checkAuthState() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const userIcon = document.querySelector('#user-icon-btn i');
 
-    if (session?.user) {
-        if (userIcon) userIcon.className = 'fas fa-user-check';
-    } else {
-        if (userIcon) userIcon.className = 'fas fa-user';
-    }
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-            if (userIcon) userIcon.className = 'fas fa-user-check';
-        } else {
-            if (userIcon) userIcon.className = 'fas fa-user';
-        }
-    });
-}
 
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';

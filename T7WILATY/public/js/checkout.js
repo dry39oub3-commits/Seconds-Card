@@ -64,13 +64,8 @@ async function checkAuthAndLoadData() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
 
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
-
     const userIcon = document.querySelector('#user-icon-btn i');
-    if (userIcon) userIcon.className = 'fas fa-user-check';
+    if (userIcon && user) userIcon.className = 'fas fa-user-check';
 
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
@@ -80,6 +75,8 @@ async function checkAuthAndLoadData() {
 
     const totalDisplay = document.getElementById('checkout-total-display');
     if (totalDisplay) totalDisplay.textContent = `${totalAmount} MRU`;
+
+    if (!user) return;
 
     try {
         const { data: userData, error } = await supabase
