@@ -8,7 +8,7 @@ async function loadOrders() {
 
     const { data: orders, error } = await supabase
         .from('orders')
-        .select('*')
+        .select('*, products(image)')
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -24,19 +24,23 @@ async function loadOrders() {
     ordersList.innerHTML = orders.map(order => {
         const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : 'غير محدد';
         const status = order.status || 'قيد الانتظار';
-        const receiptBtn = order.receipt_url ?
-            `<a href="${order.receipt_url}" target="_blank" class="btn-check" title="عرض الإيصال"><i class="fas fa-receipt"></i></a>` : '-';
+        const receiptUrl = order.receiptUrl || order.receipt_url;
+        const receiptBtn = receiptUrl ?
+            `<a href="${receiptUrl}" target="_blank" class="btn-check" title="عرض الإيصال"><i class="fas fa-receipt"></i></a>` : '-';
+        const image = order.products?.image;
+        const imageCell = image ?
+            `<img src="${image}" style="width:40px; height:40px; object-fit:contain; background:white; border-radius:5px; padding:2px;">` : '-';
 
         return `
             <tr id="order-row-${order.id}">
                 <td>#${order.id.substring(0, 7)}</td>
                 <td>${order.customer_name || 'غير معروف'}</td>
-                <td>-</td>
+                <td>${imageCell}</td>
                 <td>${order.product_name || 'غير محدد'}</td>
                 <td><strong>${order.price} MRU</strong></td>
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
-                <td>${order.payment_method || '-'}</td>
+                <td>${order.paymentMethod || order.payment_method || '-'}</td>
                 <td>${receiptBtn}</td>
                 <td>
                     <div class="action-btns">
@@ -51,12 +55,6 @@ async function loadOrders() {
             </tr>
         `;
     }).join('');
-}
-
-function getStatusClass(status) {
-    if (status === 'مكتمل') return 'status-completed';
-    if (status === 'ملغي') return 'status-cancelled';
-    return 'status-pending';
 }
 
 window.updateOrderStatus = async (orderId, newStatus) => {
