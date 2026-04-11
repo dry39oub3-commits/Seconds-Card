@@ -17,7 +17,13 @@ async function checkUserIcon() {
         userMenuContainer.style.display = session?.user ? 'block' : 'none';
     }
 }
-
+async function checkAuthState() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userIcon = document.querySelector('#user-icon-btn i');
+    if (userIcon && session?.user) {
+        userIcon.className = 'fas fa-user-check';
+    }
+}
 
 
 // --- 2. عرض محتويات السلة وتحديث الواجهة ---
