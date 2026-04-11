@@ -5,29 +5,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const googleBtn = document.getElementById('google-login-btn');
 
     // تسجيل الدخول بالهاتف وكلمة المرور
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const phone = document.getElementById('user-phone').value.trim();
-            const pass = document.getElementById('user-pass').value;
-            const loginBtn = document.getElementById('login-btn');
-            const email = `${phone}@storcards.com`;
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('user-phone').value.trim();
+    const pass = document.getElementById('user-pass').value;
+    const loginBtn = document.getElementById('login-btn');
 
-            loginBtn.innerText = "جاري التحقق...";
-            loginBtn.disabled = true;
+    // تحقق إذا كان المدخل إيميل أو رقم هاتف
+    const email = phone.includes('@') ? phone : `${phone}@storcards.com`;
 
-            const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    loginBtn.innerText = "جاري التحقق...";
+    loginBtn.disabled = true;
 
-            if (error) {
-                alert("رقم الهاتف أو كلمة المرور غير صحيحة");
-            } else {
-                window.location.href = "index.html";
-            }
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
 
-            loginBtn.innerText = "دخول آمن";
-            loginBtn.disabled = false;
-        });
+    if (error) {
+        alert("البيانات غير صحيحة: " + error.message);
+    } else {
+        window.location.href = "index.html";
     }
+
+    loginBtn.innerText = "دخول آمن";
+    loginBtn.disabled = false;
+});
 
     // تسجيل الدخول بـ Google
     if (googleBtn) {

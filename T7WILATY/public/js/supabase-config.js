@@ -7,7 +7,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
         persistSession: true,
         autoRefreshToken: true,
-        storage: localStorage
+        storageKey: 'sb-storcards-auth',
+        storage: window.localStorage,
+        detectSessionInUrl: true
     }
 });
 
