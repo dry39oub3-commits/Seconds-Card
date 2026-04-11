@@ -1,61 +1,105 @@
-// استيراد auth من ملف الإعدادات الرئيسي
-import { auth } from './supabase-config.js';
-import { 
-    onAuthStateChanged, 
-    signOut 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { supabase } from './supabase-config.js';
 
-// 1. مراقب حالة تسجيل الدخول في مشروع StorCards
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // عرض رقم التعريف (UID)
-        const userUidElem = document.getElementById('user-uid');
-        if (userUidElem) userUidElem.textContent = user.uid;
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
 
-        // عرض اسم المستخدم (نستخدم "مستخدم StorCards" كاسم افتراضي)
-        const userNameElem = document.getElementById('user-name');
-        if (userNameElem) {
-            userNameElem.textContent = user.displayName || "مستخدم StorCards";
-        }
-
-        // عرض وتنسيق تاريخ الانضمام
-        const userJoinedElem = document.getElementById('user-joined');
-        if (userJoinedElem && user.metadata && user.metadata.creationTime) {
-            const creationDate = new Date(user.metadata.creationTime);
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            userJoinedElem.textContent = creationDate.toLocaleDateString('ar-SA', options);
-        }
-
-        // تحديث حقول الهيدر إذا كانت موجودة (Input أو Text)
-        const loadingHeader = document.getElementById('user-display-name');
-        if (loadingHeader) {
-            loadingHeader.value = user.displayName || "مستخدم StorCards";
-        }
-        
-        const loadingEmail = document.getElementById('user-display-email');
-        if (loadingEmail) {
-            loadingEmail.textContent = user.email;
-        }
-
-    } else {
-        // إذا لم يكن هناك مستخدم مسجل، يتم توجيهه لصفحة الدخول
-        console.log("No user detected, redirecting...");
+    if (!user) {
         window.location.href = "login.html";
+        return;
     }
+
+    // عرض البيانات الأساسية
+    document.getElementById('user-uid').textContent = user.id;
+    document.getElementById('user-display-email').textContent = user.email || '--';
+
+    // تاريخ الانضمام
+    const creationDate = new Date(user.created_at);
+    document.getElementById('user-joined').textContent = creationDate.toLocaleDateString('ar-SA', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // جلب بيانات المستخدم من جدول users
+    const { data: userData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+    const name = userData?.fullName || user.user_metadata?.full_name || 'مستخدم';
+    const photo = userData?.photoURL || user.user_metadata?.avatar_url || '';
+
+    document.getElementById('user-display-name').value = name;
+    document.getElementById('user-name').textContent = name;
+
+    if (photo) {
+        const img = document.getElementById('user-display-photo');
+        img.src = photo;
+        img.style.display = 'block';
+    }
+
+    // إظهار زر الحفظ عند تعديل الاسم
+    document.getElementById('user-display-name').addEventListener('input', () => {
+        document.getElementById('save-profile-btn').style.display = 'block';
+    });
 });
 
-/**
- * 2. دالة تسجيل الخروج (لزر الخروج في الصفحة)
- * قمت بجعلها دالة عالمية ليتمكن زر HTML من الوصول إليها
- */
-window.handleLogout = async () => {
-    try {
-        await signOut(auth);
-        // مسح بيانات التخزين المحلي والتوجه للرئيسية
-        localStorage.clear();
-        window.location.href = "index.html";
-    } catch (error) {
-        console.error("خطأ أثناء تسجيل الخروج:", error);
-        alert("حدث خطأ أثناء محاولة تسجيل الخروج.");
+// حفظ التعديلات
+window.updateProfileData = async function() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) return;
+
+    const newName = document.getElementById('user-display-name').value.trim();
+
+    const { error } = await supabase
+        .from('users')
+        .upsert({ id: user.id, fullName: newName })
+        .eq('id', user.id);
+
+    if (error) {
+        alert('خطأ في الحفظ: ' + error.message);
+    } else {
+        alert('✅ تم حفظ التعديلات!');
+        document.getElementById('save-profile-btn').style.display = 'none';
+        document.getElementById('user-name').textContent = newName;
     }
+};
+
+// رفع الصورة
+window.triggerPhotoUpload = function() {
+    document.getElementById('photo-input').click();
+};
+
+document.getElementById('photo-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) return;
+
+    const filePath = `avatars/${user.id}`;
+    const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+    if (uploadError) { alert('خطأ في رفع الصورة'); return; }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const photoURL = data.publicUrl;
+
+    await supabase.from('users').upsert({ id: user.id, photoURL }).eq('id', user.id);
+
+    const img = document.getElementById('user-display-photo');
+    img.src = photoURL + '?t=' + Date.now();
+    img.style.display = 'block';
+    alert('✅ تم تحديث الصورة!');
+});
+
+// تسجيل الخروج
+window.handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    window.location.href = "index.html";
 };
