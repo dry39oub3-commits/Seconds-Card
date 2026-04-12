@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     displayProducts();
     updateCartBadge();
     checkUserIcon();
+    setupSearch(); // ← أضف هذا
 });
 
 
@@ -114,6 +115,69 @@ async function displayProducts() {
         `;
         cardsGrid.insertAdjacentHTML('beforeend', cardHTML);
     });
+}
+
+
+// ===== البحث =====
+function setupSearch() {
+    const searchInput = document.getElementById('main-search');
+    const searchBtn = document.querySelector('.search-bar button');
+    if (!searchInput) return;
+
+    // بحث عند الكتابة
+    searchInput.addEventListener('input', () => {
+        searchProducts(searchInput.value.trim());
+    });
+
+    // بحث عند الضغط على Enter
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') searchProducts(searchInput.value.trim());
+    });
+
+    // بحث عند الضغط على الزر
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            searchProducts(searchInput.value.trim());
+        });
+    }
+}
+
+function searchProducts(query) {
+    const cardsGrid = document.getElementById('cards-grid');
+    const allCards = cardsGrid.querySelectorAll('.card-item');
+
+    if (!query) {
+        // إظهار كل البطاقات لو البحث فارغ
+        allCards.forEach(card => card.style.display = '');
+        return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    let found = 0;
+
+    allCards.forEach(card => {
+        const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
+        if (name.includes(lowerQuery)) {
+            card.style.display = '';
+            found++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // رسالة لو ما في نتائج
+    const noResult = document.getElementById('no-search-result');
+    if (found === 0) {
+        if (!noResult) {
+            const msg = document.createElement('p');
+            msg.id = 'no-search-result';
+            msg.style.cssText = 'text-align:center; color:#94a3b8; padding:30px; width:100%;';
+            msg.textContent = `لا توجد نتائج لـ "${query}"`;
+            cardsGrid.appendChild(msg);
+        }
+    } else {
+        noResult?.remove();
+    }
 }
 
 function updateCartBadge() {
