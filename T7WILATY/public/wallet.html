@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المحفظة المالية | SecondsCard</title>
+    
+    <link rel="stylesheet" href="./css/style.css"> <link rel="stylesheet" href="./css/wallet.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-container">
+        <a href="index.html" class="logo-link">
+            <div class="logo">Seconds<span>Card</span></div>
+        </a>
+
+        
+
+        <div class="header-actions">
+            <div class="user-menu-container">
+                <button class="action-btn" id="user-icon-btn">
+                    <i class="fas fa-user-circle"></i>
+                </button>
+                <div class="dropdown-menu" id="user-dropdown">
+                    <nav class="dropdown-nav">
+                        <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
+                        <a href="wallet.html" class="active"><i class="fas fa-wallet"></i> المحفظة</a>
+                        <a href="profile.html"><i class="fas fa-user"></i> حسابي</a>
+                        <hr>
+                        <button onclick="handleLogout()" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                        </button>
+                    </nav>
+                </div>
+            </div>
+            <a href="cart.html" class="action-btn">
+                <i class="fas fa-shopping-cart"></i>
+            </a>
+            <button id="theme-toggle" class="action-btn">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+    <main class="wallet-container">
+        <div class="wallet-wrapper">
+            
+            <div class="balance-section">
+                <div class="balance-card mru-card">
+                    <div class="card-inner">
+                        <i class="fas fa-wallet icon-bg"></i>
+                        <span>الرصيد المتوفر</span>
+                        <h2 id="mruBalance">0.00 MRU</h2>
+                    </div>
+                </div>
+                
+                <div class="balance-card usd-card">
+                    <div class="card-inner">
+                        <i class="fas fa-dollar-sign icon-bg"></i>
+                        <span>القيمة التقريبية</span>
+                        <h2 id="usdBalance">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+
+            <button class="add-balance-btn" onclick="openDepositModal()">
+                <i class="fas fa-plus-circle"></i> إضافة رصيد للمحفظة
+            </button>
+
+            <section class="history-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-history"></i> سجل العمليات المالية</h3>
+                </div>
+                
+                <div id="transactions-list" class="transactions-list">
+                    <div class="loading-spinner">جاري تحميل العمليات...</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="depositModal" class="modal">
+        <div class="modal-content">
+            <h4>شحن الرصيد</h4>
+            <p>يرجى اختيار وسيلة الدفع المناسبة لتحويل المبلغ.</p>
+            <button onclick="closeDepositModal()" class="close-modal">إغلاق</button>
+        </div>
+    </div>
+
+    <script type="module" src="./js/wallet.js"></script>
+    <script>
+        // التعامل مع القائمة المنسدلة للمستخدم
+        const userBtn = document.getElementById('user-icon-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+
+        userBtn.onclick = (e) => {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        };
+
+        window.onclick = () => {
+            userDropdown.classList.remove('show');
+        };
+
+        function openDepositModal() {
+            // منطق فتح نافذة الشحن
+            alert("سيتم ربط بوابات الدفع (Bankily / Masrvi) قريباً");
+        }
+    </script>
+</body>
+</html>
