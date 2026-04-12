@@ -73,7 +73,7 @@ function renderRejected(list) {
         const date = new Date(order.created_at).toLocaleString('ar-EG');
         return `
             <tr>
-                <td style="color:#ef4444; font-weight:bold;">#${order.id.slice(-6).toUpperCase()}</td>
+                <td style="color:#f97316; font-weight:bold;">${order.order_number || '#' + order.id.substring(0, 7)}</td>
                 <td>${order.customer_name || '-'}</td>
                 <td>${order.product_name || '-'}</td>
                 <td><b>${order.price} MRU</b></td>
