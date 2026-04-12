@@ -41,6 +41,10 @@ const loadProducts = async () => {
                     style="background:#3b82f6; color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; margin-right:6px;">
                     <i class="fas fa-edit"></i>
                 </button>
+                <button onclick="event.stopPropagation(); addPriceToProduct('${p.id}')" 
+                    style="background:#22c55e; color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; margin-right:6px;">
+                    <i class="fas fa-plus"></i>
+                </button>
             </div>
             <div id="details-${p.id}" class="product-details-area" style="display:none;">
                 <div class="cards-sub-grid">
@@ -240,6 +244,73 @@ window.saveProductEdit = async (productId) => {
         loadProducts();
     }
 };
+
+
+window.addPriceToProduct = (productId) => {
+    document.getElementById('add-price-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'add-price-modal';
+    modal.style.cssText = `
+        position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.7); z-index:9999;
+        display:flex; align-items:center; justify-content:center;
+        padding:20px; box-sizing:border-box;
+    `;
+
+    modal.innerHTML = `
+        <div style="background:#1e293b; border-radius:16px; padding:28px; width:100%; max-width:420px; color:#e2e8f0; position:relative;">
+            <button onclick="document.getElementById('add-price-modal').remove()"
+                style="position:absolute; top:14px; left:14px; background:#ef4444; color:white; border:none; border-radius:8px; padding:5px 12px; cursor:pointer;">
+                ✕ إغلاق
+            </button>
+
+            <h3 style="text-align:center; color:#22c55e; margin-bottom:20px;">إضافة فئة سعرية</h3>
+
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">اسم الفئة</label>
+            <input type="text" id="new-price-label" placeholder="مثال: 10€"
+                style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; margin-bottom:14px; box-sizing:border-box;">
+
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">السعر (MRU)</label>
+            <input type="number" id="new-price-value" placeholder="0"
+                style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; margin-bottom:20px; box-sizing:border-box;">
+
+            <button onclick="saveNewPrice('${productId}')"
+                style="width:100%; padding:13px; background:#22c55e; color:white; border:none; border-radius:10px; font-size:15px; cursor:pointer; font-weight:bold;">
+                <i class="fas fa-plus"></i> إضافة الفئة
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+};
+
+window.saveNewPrice = async (productId) => {
+    const label = document.getElementById('new-price-label').value.trim();
+    const value = parseFloat(document.getElementById('new-price-value').value);
+
+    if (!label) { alert('⚠️ اسم الفئة مطلوب!'); return; }
+    if (!value || value <= 0) { alert('⚠️ أدخل سعراً صحيحاً!'); return; }
+
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const updatedPrices = [...(product.prices || []), { label, value, active: true, suppliers: [] }];
+
+    const { error } = await supabase
+        .from('products')
+        .update({ prices: updatedPrices })
+        .eq('id', productId);
+
+    if (error) {
+        alert('خطأ: ' + error.message);
+    } else {
+        document.getElementById('add-price-modal').remove();
+        alert('✅ تمت إضافة الفئة!');
+        loadProducts();
+    }
+};
+
 
 (function(){
     // تطبيق الثيم المحفوظ فوراً
