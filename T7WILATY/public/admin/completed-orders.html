@@ -6,14 +6,26 @@
     <title>الطلبات المكتملة | AdminPanel</title>
     <link rel="stylesheet" href="./css/dashboard-main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+// تطبيق الثيم فوراً قبل رسم الصفحة
+(function(){
+    const t = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+
 </head>
 <body>
 
-<header class="admin-top-header">
+    <header class="admin-top-header">
     <div class="header-container">
         <div class="logo">
-            <a href="dashboard.html" style="text-decoration: none; color: inherit;">Seconds<span>Card</span></a>
-        </div>
+    <a href="dashboard.html" style="text-decoration: none; color: inherit;">
+        Seconds<span>Card</span>
+    </a>
+</div>
+        
         <nav class="main-nav">
             <ul class="nav-list">
                 <li><a href="dashboard.html" class="nav-link"><i class="fas fa-chart-line"></i> الإحصائيات</a></li>
@@ -32,6 +44,10 @@
         <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
     </button>
 </div>
+
+<button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
+    <i class="fas fa-moon"></i>
+</button>
 
         <div class="user-actions">
             <button class="logout-btn" id="logoutBtn">
