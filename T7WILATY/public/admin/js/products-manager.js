@@ -37,6 +37,10 @@ const loadProducts = async () => {
                 <button class="delete-p-btn" onclick="event.stopPropagation(); deleteProduct('${p.id}')">
                     <i class="fas fa-trash"></i>
                 </button>
+                <button onclick="event.stopPropagation(); editProduct(${JSON.stringify(p).replace(/"/g, '&quot;')})" 
+                    style="background:#3b82f6; color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; margin-right:6px;">
+                    <i class="fas fa-edit"></i>
+                </button>
             </div>
             <div id="details-${p.id}" class="product-details-area" style="display:none;">
                 <div class="cards-sub-grid">
@@ -163,6 +167,79 @@ window.deleteProduct = async (id) => {
 
 document.addEventListener("DOMContentLoaded", loadProducts);
 
+window.editProduct = (product) => {
+    // إزالة modal قديم إن وجد
+    document.getElementById('edit-product-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'edit-product-modal';
+    modal.style.cssText = `
+        position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.7); z-index:9999;
+        display:flex; align-items:center; justify-content:center;
+        padding:20px; box-sizing:border-box;
+    `;
+
+    modal.innerHTML = `
+        <div style="background:#1e293b; border-radius:16px; padding:28px; width:100%; max-width:500px; color:#e2e8f0; position:relative;">
+            <button onclick="document.getElementById('edit-product-modal').remove()"
+                style="position:absolute; top:14px; left:14px; background:#ef4444; color:white; border:none; border-radius:8px; padding:5px 12px; cursor:pointer;">
+                ✕ إغلاق
+            </button>
+
+            <h3 style="text-align:center; color:#f97316; margin-bottom:20px;">تعديل المنتج</h3>
+
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">اسم المنتج</label>
+            <input type="text" id="edit-p-name" value="${product.name || ''}"
+                style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; margin-bottom:14px; box-sizing:border-box;">
+
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">الدولة / المنطقة</label>
+            <input type="text" id="edit-p-country" value="${product.country || ''}"
+                style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; margin-bottom:14px; box-sizing:border-box;">
+
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">رابط الصورة</label>
+            <input type="url" id="edit-p-image" value="${product.image || ''}"
+                style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; margin-bottom:6px; box-sizing:border-box;">
+            <img id="edit-p-preview" src="${product.image || ''}" 
+                style="width:60px; height:60px; object-fit:contain; border-radius:8px; background:white; padding:4px; margin-bottom:14px; ${product.image ? '' : 'display:none;'}">
+
+            <button onclick="saveProductEdit('${product.id}')"
+                style="width:100%; padding:13px; background:#22c55e; color:white; border:none; border-radius:10px; font-size:15px; cursor:pointer; font-weight:bold;">
+                <i class="fas fa-save"></i> حفظ التعديلات
+            </button>
+        </div>
+    `;
+
+    // معاينة الصورة عند الكتابة
+    modal.querySelector('#edit-p-image').addEventListener('input', (e) => {
+        const preview = modal.querySelector('#edit-p-preview');
+        preview.src = e.target.value;
+        preview.style.display = e.target.value ? 'block' : 'none';
+    });
+
+    document.body.appendChild(modal);
+};
+
+window.saveProductEdit = async (productId) => {
+    const name    = document.getElementById('edit-p-name').value.trim();
+    const country = document.getElementById('edit-p-country').value.trim();
+    const image   = document.getElementById('edit-p-image').value.trim();
+
+    if (!name) { alert('⚠️ اسم المنتج مطلوب!'); return; }
+
+    const { error } = await supabase
+        .from('products')
+        .update({ name, country, image })
+        .eq('id', productId);
+
+    if (error) {
+        alert('خطأ: ' + error.message);
+    } else {
+        document.getElementById('edit-product-modal').remove();
+        alert('✅ تم تحديث المنتج!');
+        loadProducts();
+    }
+};
 
 (function(){
     // تطبيق الثيم المحفوظ فوراً
