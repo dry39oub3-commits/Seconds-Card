@@ -124,10 +124,17 @@ window.openOrderModal = (order) => {
                 <span style="color:#94a3b8; font-size:13px;"> MRU</span>
             </div>
 
-            <!-- معرف المورد -->
+            <!-- اسم المورد -->
             <div style="margin-bottom:15px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🏪 معرف المورد</label>
-                <input type="text" id="modal-supplier-id" placeholder="معرف المورد..."
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🏪 اسم المورد</label>
+                <input type="text" id="modal-supplier-id" placeholder="اسم المورد..."
+                    style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+            </div>
+
+            <!-- Order ID المورد -->
+            <div style="margin-bottom:15px;">
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔖 Order ID المورد</label>
+                <input type="text" id="modal-supplier-order-id" placeholder="أدخل Order ID من المورد..."
                     style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
             </div>
 
@@ -220,8 +227,8 @@ window.approveOrder = async (orderId) => {
     const code = document.getElementById('modal-code').value.trim();
     const cost = document.getElementById('modal-cost').value.trim();
     const supplierId = document.getElementById('modal-supplier-id').value.trim();
+    const supplierOrderId = document.getElementById('modal-supplier-order-id')?.value.trim() || '';
 
-    // ✅ التحقق من جميع الحقول الإلزامية
     if (!code) {
         alert('⚠️ يرجى إدخال كود البطاقة!');
         document.getElementById('modal-code').focus();
@@ -233,12 +240,12 @@ window.approveOrder = async (orderId) => {
         return;
     }
     if (!supplierId) {
-        alert('⚠️ يرجى إدخال أو اختيار معرف المورد!');
+        alert('⚠️ يرجى إدخال أو اختيار اسم المورد!');
         document.getElementById('modal-supplier-id').focus();
         return;
     }
 
-    // التحقق من عدم تكرار الكود في جدول used_codes
+    // التحقق من عدم تكرار الكود
     const { data: existingCode } = await supabase
         .from('used_codes')
         .select('id')
@@ -257,7 +264,8 @@ window.approveOrder = async (orderId) => {
             status: 'مكتمل',
             card_code: code,
             cost_price: parseFloat(cost) || 0,
-            supplier_id: supplierId
+            supplier_id: supplierId,
+            supplier_order_id: supplierOrderId
         })
         .eq('id', orderId)
         .select()
@@ -268,7 +276,7 @@ window.approveOrder = async (orderId) => {
         return;
     }
 
-    // تسجيل الكود في جدول used_codes
+    // تسجيل الكود في used_codes
     const { error: codeError } = await supabase
         .from('used_codes')
         .insert({
