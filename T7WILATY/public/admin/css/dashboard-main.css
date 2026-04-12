@@ -1131,3 +1131,224 @@ input:checked + .slider:before { transform: translateX(20px); }
     cursor: pointer;
 }
 
+
+/* ============================================================
+   SECONDSCARD ADMIN — Mobile Responsive
+   ============================================================ */
+
+:root {
+    --header-h: 60px;
+    --sidebar-w: 260px;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.admin-top-header {
+    height: var(--header-h);
+    padding: 0 16px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 100%;
+    max-width: 100%;
+}
+
+.logo { font-size: 1.2rem; flex-shrink: 0; white-space: nowrap; }
+
+.hamburger-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 6px;
+    margin-right: auto;
+    flex-shrink: 0;
+}
+
+.main-nav { flex: 1; overflow: hidden; }
+
+.nav-list {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-list::-webkit-scrollbar { display: none; }
+
+.nav-link { white-space: nowrap; font-size: 0.82rem; padding: 7px 10px; }
+
+.user-actions { flex-shrink: 0; }
+
+/* ============================================================
+   OVERLAY
+   ============================================================ */
+.nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 998;
+    backdrop-filter: blur(2px);
+}
+.nav-overlay.active { display: block; }
+
+/* زر إغلاق الناف — مخفي على الديسك */
+.nav-close-btn { display: none; }
+
+/* ============================================================
+   جوال (≤ 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* هامبرغر */
+    .hamburger-btn { display: flex; align-items: center; justify-content: center; }
+
+    /* الناف → sidebar */
+    .main-nav {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: var(--sidebar-w);
+        height: 100dvh;
+        background: #1e293b;
+        z-index: 999;
+        transition: right 0.3s ease;
+        overflow-y: auto;
+        padding: 70px 12px 20px;
+        box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+    }
+
+    .main-nav.open { right: 0; }
+
+    .nav-list { flex-direction: column; gap: 4px; }
+
+    .nav-link {
+        font-size: 0.95rem;
+        padding: 12px 16px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .nav-link i { width: 20px; text-align: center; }
+
+    /* زر الإغلاق */
+    .nav-close-btn {
+        display: block;
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: white;
+        font-size: 18px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* نص خروج */
+    .logout-btn span { display: none; }
+    .logout-btn { padding: 8px 10px; }
+
+    /* حاويات */
+    .admin-container,
+    .stock-container,
+    .dashboard-main-area { padding: 12px; margin: 0; }
+
+    section,
+    .form-section,
+    .list-section,
+    .stock-form,
+    .content-card {
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+    }
+
+    /* إحصائيات */
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .stat-card { padding: 14px; gap: 10px; }
+    .stat-icon { width: 44px; height: 44px; font-size: 1.3rem; flex-shrink: 0; }
+    .stat-value { font-size: 1.4rem; }
+    .stat-info h3 { font-size: 0.8rem; }
+
+    /* نموذج */
+    .form-row { grid-template-columns: 1fr; gap: 12px; }
+
+    /* جداول */
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    .admin-table th,
+    .admin-table td { padding: 10px 8px; font-size: 0.78rem; white-space: nowrap; }
+
+    /* إخفاء أعمدة التاريخ وطريقة الدفع */
+    .admin-table th:nth-child(7),
+    .admin-table td:nth-child(7),
+    .admin-table th:nth-child(8),
+    .admin-table td:nth-child(8) { display: none; }
+
+    /* بطاقات الدفع */
+    .methods-list { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* كود */
+    .code-area { min-height: 140px; font-size: 0.9rem; }
+
+    /* هيدر القسم */
+    .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .search-box input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.9rem; }
+
+    /* فلتر */
+    .filter-container { flex-direction: column; gap: 10px; }
+    .filter-group { width: 100%; }
+    .filter-group select,
+    .filter-group input { width: 100%; }
+
+    /* page-header */
+    .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .page-header a { width: 100%; text-align: center; padding: 12px; }
+
+    .save-all-btn { font-size: 1rem; padding: 13px; }
+
+    .inventory-table { overflow-x: auto; }
+}
+
+/* ============================================================
+   شاشات صغيرة جداً (< 400px)
+   ============================================================ */
+@media (max-width: 400px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .methods-list { grid-template-columns: 1fr; }
+    .logo { font-size: 1rem; }
+    .stat-value { font-size: 1.2rem; }
+}
+
+/* ============================================================
+   تابلت (769px - 1024px)
+   ============================================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .nav-link { font-size: 0.78rem; padding: 6px 8px; }
+    .nav-link span { display: none; }
+    .nav-link i { font-size: 1.1rem; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+    .admin-table th,
+    .admin-table td { font-size: 0.82rem; padding: 10px; }
+}
