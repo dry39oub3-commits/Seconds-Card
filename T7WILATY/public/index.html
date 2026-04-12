@@ -6,6 +6,10 @@
     <title>Seconds-Card | الرئيسية</title>
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+
+    </style>
 </head>
 <body>
 
@@ -24,14 +28,12 @@
 
             <div class="header-actions">
                 <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
-                
                 <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
 
                 <div class="user-menu-container">
                     <button class="action-btn" id="user-icon-btn">
                         <i class="fas fa-user-circle"></i>
                     </button>
-
                     <div class="dropdown-menu" id="user-dropdown">
                         <nav class="dropdown-nav">
                             <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
@@ -48,48 +50,45 @@
         </div>
     </header>
 
+    <!-- ===== SLIDER ===== -->
+    <div class="hero-slider">
+        <div class="slides-wrapper" id="slidesWrapper">
+
+            <div class="slide slide-1">
+                <h2>🎮 بطاقات ألعاب بأسرع وقت</h2>
+                <p>تسليم فوري لجميع بطاقات الألعاب والترفيه</p>
+                <a href="#cards-grid">تسوق الآن</a>
+            </div>
+
+            <div class="slide slide-2">
+                <h2>🎬 Netflix & Streaming</h2>
+                <p>اشترك في منصات البث المفضلة لديك بسهولة</p>
+                <a href="#cards-grid">اكتشف المزيد</a>
+            </div>
+
+            <div class="slide slide-3">
+                <h2>🍎 Apple & iTunes</h2>
+                <p>بطاقات Apple Gift Card بأفضل الأسعار</p>
+                <a href="#cards-grid">اطلب الآن</a>
+            </div>
+
+        </div>
+
+        <button class="slider-btn slider-prev" id="sliderPrev">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        <button class="slider-btn slider-next" id="sliderNext">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <div class="slider-dots" id="sliderDots"></div>
+    </div>
+
     <main class="container">
         <div id="cards-grid" class="cards-grid"></div>
     </main>
 
     <script type="module" src="js/index.js"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. تفعيل الوضع الليلي
-            const themeBtn = document.getElementById('theme-toggle');
-            if (themeBtn) {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-
-                themeBtn.onclick = (e) => {
-                    e.preventDefault();
-                    const current = document.documentElement.getAttribute('data-theme');
-                    const target = current === 'light' ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', target);
-                    localStorage.setItem('theme', target);
-                    const icon = themeBtn.querySelector('i');
-                    if (icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-                };
-            }
-
-            // 2. تفعيل قائمة المستخدم (Dropdown)
-            const userBtn = document.getElementById('user-icon-btn');
-            const userMenu = document.getElementById('user-dropdown');
-
-            if (userBtn && userMenu) {
-                userBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    userMenu.classList.toggle('show');
-                };
-
-                document.addEventListener('click', (e) => {
-                    if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
-                        userMenu.classList.remove('show');
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>

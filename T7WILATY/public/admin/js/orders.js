@@ -7,10 +7,10 @@ async function loadOrders() {
     ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">جاري التحميل...</td></tr>';
 
     const { data: orders, error } = await supabase
-    .from('orders')
-    .select('*, products(image, prices)')
-    .not('status', 'in', '("مكتمل","ملغي","مسترد")')
-    .order('created_at', { ascending: false });
+        .from('orders')
+        .select('*, products(image, prices)')
+        .not('status', 'in', '("مكتمل","ملغي","مسترد")')
+        .order('created_at', { ascending: false });
 
     if (error) {
         ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
@@ -22,6 +22,9 @@ async function loadOrders() {
         return;
     }
 
+    // 👇 للتشخيص — احذفه بعد ما تتأكد من اسم العمود
+    if (orders.length > 0) console.log("🔍 order keys:", Object.keys(orders[0]));
+
     ordersList.innerHTML = orders.map(order => {
         const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : 'غير محدد';
         const receiptUrl = order.receiptUrl || order.receipt_url;
@@ -31,16 +34,20 @@ async function loadOrders() {
         const imageCell = image ?
             `<img src="${image}" style="width:40px; height:40px; object-fit:contain; background:white; border-radius:5px; padding:2px;">` : '-';
 
+        // جميع الاحتمالات لاسم عمود طريقة الدفع
+        const paymentMethod = order.paymentMethod || order.payment_method || order.payment || order.method || '-';
+        const totalPrice = order.price * (order.quantity || 1);
+
         return `
             <tr id="order-row-${order.id}">
                 <td>#${order.id.substring(0, 7)}</td>
                 <td>${order.customer_name || 'غير معروف'}</td>
                 <td>${imageCell}</td>
                 <td>${order.product_name || 'غير محدد'}</td>
-                <td><strong>${(order.price * (order.quantity || 1))} MRU</strong></td>
+                <td><strong>${totalPrice} MRU</strong></td>
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
-                <td>${order.paymentMethod || order.payment_method || '-'}</td>
+                <td>${paymentMethod}</td>
                 <td>${receiptBtn}</td>
                 <td>
                     <button onclick="openOrderModal(${JSON.stringify(order).replace(/"/g, '&quot;')})" 
@@ -86,9 +93,9 @@ window.openOrderModal = (order) => {
                     <h3 style="margin:0 0 4px; font-size:17px; grid-column:1/-1;">${order.product_name || 'غير محدد'}</h3>
                     <p style="margin:0; color:#94a3b8; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
                     <p style="margin:0; color:#94a3b8; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
-                    <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${order.price} MRU</strong></p>
+                    <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${order.price * (order.quantity || 1)} MRU</strong></p>
                     <p style="margin:0; color:#94a3b8; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
-                    <p style="margin:0; color:#94a3b8; font-size:13px;">💳 ${order.payment_method || '-'}</p>
+                    <p style="margin:0; color:#94a3b8; font-size:13px;">💳 ${order.paymentMethod || order.payment_method || '-'}</p>
                 </div>
             </div>
 
@@ -358,3 +365,13 @@ setInterval(loadOrders, 30000);
         if (icon) icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     };
 })();
+
+window.filterOrders = () => {
+    const search = document.getElementById('orderSearch').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('#admin-orders-list tr');
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+    });
+};

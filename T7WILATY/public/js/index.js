@@ -157,3 +157,123 @@ async function checkUserIcon() {
         userIcon.className = 'fas fa-user-check';
     }
 }
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ===== SLIDER =====
+            const wrapper = document.getElementById('slidesWrapper');
+            const slides = wrapper.querySelectorAll('.slide');
+            const dotsContainer = document.getElementById('sliderDots');
+            let current = 0;
+            let timer;
+
+            // إنشاء النقاط
+            slides.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => goTo(i);
+                dotsContainer.appendChild(dot);
+            });
+
+            function goTo(index) {
+                current = (index + slides.length) % slides.length;
+                wrapper.style.transform = `translateX(${current * 100}%)`;
+                document.querySelectorAll('.dot').forEach((d, i) => {
+                    d.classList.toggle('active', i === current);
+                });
+            }
+
+            function next() { goTo(current + 1); }
+            function prev() { goTo(current - 1); }
+
+            document.getElementById('sliderNext').onclick = () => { clearInterval(timer); next(); startTimer(); };
+            document.getElementById('sliderPrev').onclick = () => { clearInterval(timer); prev(); startTimer(); };
+
+            function startTimer() { timer = setInterval(next, 4000); }
+            startTimer();
+
+            // ===== THEME =====
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+
+                themeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const target = current === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', target);
+                    localStorage.setItem('theme', target);
+                    const icon = themeBtn.querySelector('i');
+                    if (icon) icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+                };
+            }
+
+            // ===== USER MENU =====
+            const userBtn = document.getElementById('user-icon-btn');
+            const userMenu = document.getElementById('user-dropdown');
+            if (userBtn && userMenu) {
+                userBtn.onclick = (e) => { e.stopPropagation(); userMenu.classList.toggle('show'); };
+                document.addEventListener('click', (e) => {
+                    if (!userMenu.contains(e.target) && !userBtn.contains(e.target)) {
+                        userMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+
+
+        // ===== SLIDER من Supabase =====
+async function initSlider() {
+    const { data: slides, error } = await supabase
+        .from('sliders')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+    if (error || !slides || slides.length === 0) return;
+
+    const wrapper = document.getElementById('slidesWrapper');
+    const dotsContainer = document.getElementById('sliderDots');
+
+    // رسم الشرائح
+    wrapper.innerHTML = slides.map(s => `
+        <div class="slide" style="background:${s.gradient || '#1e293b'}">
+            <h2>${s.title}</h2>
+            ${s.subtitle ? `<p>${s.subtitle}</p>` : ''}
+            <a href="${s.btn_link || '#cards-grid'}">${s.btn_text || 'تسوق الآن'}</a>
+        </div>
+    `).join('');
+
+    // رسم النقاط
+    dotsContainer.innerHTML = '';
+    slides.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goTo(i);
+        dotsContainer.appendChild(dot);
+    });
+
+    // تشغيل الـ slider
+    let current = 0;
+    let timer;
+
+    function goTo(index) {
+        current = (index + slides.length) % slides.length;
+        wrapper.style.transform = `translateX(${current * 100}%)`;
+        document.querySelectorAll('.dot').forEach((d, i) => {
+            d.classList.toggle('active', i === current);
+        });
+    }
+
+    function next() { goTo(current + 1); }
+    function prev() { goTo(current - 1); }
+
+    document.getElementById('sliderNext').onclick = () => { clearInterval(timer); next(); startTimer(); };
+    document.getElementById('sliderPrev').onclick = () => { clearInterval(timer); prev(); startTimer(); };
+
+    function startTimer() { timer = setInterval(next, 4000); }
+    startTimer();
+}
+
+initSlider();
