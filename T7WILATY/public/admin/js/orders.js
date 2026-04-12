@@ -40,7 +40,7 @@ async function loadOrders() {
 
         return `
             <tr id="order-row-${order.id}">
-                <td>#${order.id.substring(0, 7)}</td>
+                <td style="color:#f97316; font-weight:bold;">${order.order_number || '#' + order.id.substring(0, 7)}</td>
                 <td>${order.customer_name || 'غير معروف'}</td>
                 <td>${imageCell}</td>
                 <td>${order.product_name || 'غير محدد'}</td>

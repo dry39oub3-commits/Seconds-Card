@@ -75,7 +75,7 @@ async function fetchUserOrders() {
 
     ordersList.innerHTML = orders.map(order => {
         const date = order.created_at
-            ? new Date(order.created_at).toLocaleDateString('ar-SA')
+            ? new Date(order.created_at).toLocaleDateString('fr-FR')
             : 'تاريخ غير معروف';
         const image = order.products?.image || '';
         const isCompleted = order.status === 'مكتمل';
@@ -88,6 +88,7 @@ async function fetchUserOrders() {
                 <span>${date}</span>
             </div>
             <div class="order-body">
+            <span>${order.order_number || '#' + order.id.toString().substring(0, 8)}</span>
                 ${image ? `<img src="${image}" alt="${order.product_name}" style="width:60px; height:60px; object-fit:contain; background:white; border-radius:8px; padding:4px;">` : ''}
                 <div class="card-details">
                     <h4>${order.product_name || 'غير محدد'}</h4>

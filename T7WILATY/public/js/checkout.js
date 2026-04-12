@@ -152,9 +152,14 @@ async function executePayment() {
             receiptUrl = data.publicUrl;
         }
 
-        const cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const orders = cart.map(item => ({
-            customer_name: user?.user_metadata?.full_name || 'مستخدم',
+        const generateOrderNumber = () => {
+        const num = Math.floor(100000 + Math.random() * 900000);
+        return `S${num}`;
+    };
+
+    const orders = cart.map(item => ({
+        order_number: generateOrderNumber(),
+        customer_name: user?.user_metadata?.full_name || 'مستخدم',
             customer_phone: user?.email || '',
             product_id: item.productId || null,
             product_name: item.name,
@@ -165,6 +170,22 @@ async function executePayment() {
             receiptUrl: receiptUrl,
             paymentMethod: selectedPaymentMethod.name
         }));
+
+        const generateUniqueOrderNumber = async () => {
+    let unique = false;
+    let number = '';
+    
+    while (!unique) {
+        number = `S${Math.floor(100000 + Math.random() * 900000)}`;
+        const { data } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('order_number', number)
+            .maybeSingle();
+        if (!data) unique = true;
+    }
+    return number;
+};
 
         const { error: insertError } = await supabase
             .from("orders")
