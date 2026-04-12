@@ -237,7 +237,7 @@ async function initSlider() {
     const dotsContainer = document.getElementById('sliderDots');
 
     // رسم الشرائح
-    wrapper.innerHTML = slides.map(s => {
+wrapper.innerHTML = slides.map(s => {
     const bgStyle = s.image_url
         ? `background-image: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('${s.image_url}'); background-size:cover; background-position:center;`
         : `background: ${s.gradient || '#1e293b'};`;
