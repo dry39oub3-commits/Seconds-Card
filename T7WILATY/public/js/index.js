@@ -277,3 +277,10 @@ async function initSlider() {
 }
 
 initSlider();
+
+// في دالة عرض السلايدر
+slide.style.backgroundImage = slide.image_url 
+    ? `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${slide.image_url}')`
+    : slide.gradient;
+slide.style.backgroundSize = 'cover';
+slide.style.backgroundPosition = 'center';

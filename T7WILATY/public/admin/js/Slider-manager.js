@@ -127,11 +127,16 @@ window.saveSlide = async () => {
     const btnText  = document.getElementById('slide-btn-text').value.trim();
     const btnLink  = document.getElementById('slide-btn-link').value.trim();
     const gradient = document.getElementById('slide-gradient').value.trim();
+    const image    = document.getElementById('slide-image').value.trim();
     const order    = parseInt(document.getElementById('slide-order').value) || 0;
 
     if (!title) { alert('⚠️ العنوان مطلوب!'); return; }
 
-    const payload = { title, subtitle, btn_text: btnText, btn_link: btnLink, gradient, sort_order: order };
+    const payload = { 
+        title, subtitle, btn_text: btnText, btn_link: btnLink, 
+        gradient, sort_order: order,
+        image_url: image || null  // ← أضف هذا
+    };
 
     let error;
     if (id) {
@@ -141,7 +146,6 @@ window.saveSlide = async () => {
     }
 
     if (error) { alert('❌ خطأ: ' + error.message); return; }
-
     alert(id ? '✅ تم تحديث الشريحة!' : '✅ تمت إضافة الشريحة!');
     resetForm();
     loadSlides();
