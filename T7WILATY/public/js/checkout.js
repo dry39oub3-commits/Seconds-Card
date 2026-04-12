@@ -158,6 +158,7 @@ async function executePayment() {
             customer_phone: user?.email || '',
             product_id: item.productId || null,
             product_name: item.name,
+            label: item.label || null,
             price: item.price,
             quantity: item.quantity || 1,
             status: 'قيد الانتظار',

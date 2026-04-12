@@ -44,6 +44,7 @@ async function loadOrders() {
                 <td>${order.customer_name || 'غير معروف'}</td>
                 <td>${imageCell}</td>
                 <td>${order.product_name || 'غير محدد'}</td>
+                <td>${order.label || '-'}</td>
                 <td><strong>${totalPrice} MRU</strong></td>
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
