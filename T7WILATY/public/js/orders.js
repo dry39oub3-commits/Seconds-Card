@@ -208,7 +208,7 @@ window.toggleCode = (orderId, cardCode) => {
                 🔑 أكواد البطاقة
             </h3>
 
-            <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto; padding-left:4px;">
                 ${codes.length > 0 ? codes.map((code, i) => `
                     <div style="background:#0f172a; border-radius:10px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
                         <span style="color:#94a3b8; font-size:13px; min-width:24px;">${i + 1})</span>
