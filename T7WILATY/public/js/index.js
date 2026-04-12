@@ -237,22 +237,19 @@ async function initSlider() {
     const dotsContainer = document.getElementById('sliderDots');
 
     // رسم الشرائح
-    wrapper.innerHTML = slides.map(s => `
-        <div class="slide" style="background:${s.gradient || '#1e293b'}">
+    wrapper.innerHTML = slides.map(s => {
+    const bgStyle = s.image_url
+        ? `background-image: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('${s.image_url}'); background-size:cover; background-position:center;`
+        : `background: ${s.gradient || '#1e293b'};`;
+
+    return `
+        <div class="slide" style="${bgStyle}">
             <h2>${s.title}</h2>
             ${s.subtitle ? `<p>${s.subtitle}</p>` : ''}
-            <a href="${s.btn_link || '#cards-grid'}">${s.btn_text || 'تسوق الآن'}</a>
+            <a href="${s.btn_link || '#cards-grid'}" class="slide-btn">${s.btn_text || 'تسوق الآن'}</a>
         </div>
-    `).join('');
-
-    // رسم النقاط
-    dotsContainer.innerHTML = '';
-    slides.forEach((_, i) => {
-        const dot = document.createElement('div');
-        dot.className = 'dot' + (i === 0 ? ' active' : '');
-        dot.onclick = () => goTo(i);
-        dotsContainer.appendChild(dot);
-    });
+    `;
+}).join('');
 
     // تشغيل الـ slider
     let current = 0;
@@ -278,9 +275,3 @@ async function initSlider() {
 
 initSlider();
 
-// في دالة عرض السلايدر
-slide.style.backgroundImage = slide.image_url 
-    ? `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${slide.image_url}')`
-    : slide.gradient;
-slide.style.backgroundSize = 'cover';
-slide.style.backgroundPosition = 'center';

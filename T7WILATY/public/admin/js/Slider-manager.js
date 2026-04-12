@@ -44,13 +44,11 @@ window.updatePreview = () => {
     const preview = document.getElementById('slide-preview');
 
     if (image) {
-        // الصورة تملأ الخلفية + gradient فوقها كطبقة شفافة
         preview.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${image}')`;
         preview.style.backgroundSize = 'cover';
         preview.style.backgroundPosition = 'center';
         preview.style.backgroundBlendMode = 'normal';
     } else {
-        // بدون صورة — يستخدم الـ gradient العادي
         preview.style.backgroundImage = gradient;
         preview.style.backgroundSize = '';
         preview.style.backgroundPosition = '';
@@ -59,8 +57,8 @@ window.updatePreview = () => {
 };
 
 // ربط المدخلات بالمعاينة
-['slide-title','slide-subtitle','slide-btn-text'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updatePreview);
+['slide-title','slide-subtitle','slide-btn-text','slide-image'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updatePreview);
 });
 
 // ===== جلب الشرائح =====
@@ -83,15 +81,23 @@ async function loadSlides() {
         return;
     }
 
-    list.innerHTML = slides.map(s => `
+    list.innerHTML = slides.map(s => {
+        const bgStyle = s.image_url
+            ? `background-image: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('${s.image_url}'); background-size:cover; background-position:center;`
+            : `background: ${s.gradient || '#334155'};`;
+
+        return `
         <div class="slide-card" id="card-${s.id}">
-            <div class="slide-color-bar" style="background:${s.gradient || '#334155'}"></div>
+            <div class="slide-color-bar" style="${bgStyle}">
+                ${s.image_url ? `<img src="${s.image_url}" style="display:none;">` : ''}
+            </div>
             <div class="slide-info">
                 <h4>${s.title}</h4>
                 <p>${s.subtitle || 'بدون عنوان فرعي'}</p>
                 <div class="slide-meta">
                     <span class="meta-tag"><i class="fas fa-link"></i> ${s.btn_link || '#'}</span>
                     <span class="meta-tag"><i class="fas fa-sort"></i> ترتيب: ${s.sort_order}</span>
+                    ${s.image_url ? `<span class="meta-tag"><i class="fas fa-image"></i> صورة</span>` : ''}
                     <span class="status-badge ${s.is_active ? 'badge-active' : 'badge-inactive'}">
                         ${s.is_active ? '✅ مفعّل' : '❌ معطّل'}
                     </span>
@@ -115,8 +121,8 @@ async function loadSlides() {
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // ===== حفظ/تعديل =====
@@ -132,10 +138,14 @@ window.saveSlide = async () => {
 
     if (!title) { alert('⚠️ العنوان مطلوب!'); return; }
 
-    const payload = { 
-        title, subtitle, btn_text: btnText, btn_link: btnLink, 
-        gradient, sort_order: order,
-        image_url: image || null  // ← أضف هذا
+    const payload = {
+        title,
+        subtitle,
+        btn_text: btnText,
+        btn_link: btnLink,
+        gradient,
+        sort_order: order,
+        image_url: image || null
     };
 
     let error;
@@ -160,10 +170,10 @@ window.editSlide = (slide) => {
     document.getElementById('slide-btn-link').value   = slide.btn_link || '#cards-grid';
     document.getElementById('slide-gradient').value   = slide.gradient || '';
     document.getElementById('slide-order').value      = slide.sort_order || 0;
+    document.getElementById('slide-image').value      = slide.image_url || '';
     document.getElementById('form-title-text').textContent = 'تعديل الشريحة';
     updatePreview();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.getElementById('slide-image').value = slide.image_url || '';
 };
 
 // ===== حذف =====
@@ -203,14 +213,15 @@ window.resetForm = () => {
     document.getElementById('slide-btn-link').value = '#cards-grid';
     document.getElementById('slide-gradient').value = '';
     document.getElementById('slide-order').value    = '0';
+    document.getElementById('slide-image').value    = '';
     document.getElementById('form-title-text').textContent = 'إضافة شريحة جديدة';
     document.getElementById('gradient-preview').style.background = '';
     document.getElementById('slide-preview').style.background = '#1e293b';
+    document.getElementById('slide-preview').style.backgroundImage = '';
     document.getElementById('prev-title').textContent = 'العنوان هنا';
     document.getElementById('prev-subtitle').textContent = 'العنوان الفرعي هنا';
     document.getElementById('prev-btn-text').textContent = 'تسوق الآن';
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('slide-image').value = '';
 };
 
 // ===== خروج =====
@@ -219,13 +230,8 @@ document.getElementById('logoutBtn').onclick = async () => {
     window.location.href = 'login.html';
 };
 
-// تحميل عند البداية
-loadSlides();
-
-
-
-(function(){
-    // تطبيق الثيم المحفوظ فوراً
+// ===== الثيم =====
+(function() {
     const saved = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', saved);
     const icon = document.querySelector('#theme-toggle i');
@@ -240,3 +246,6 @@ loadSlides();
         if (icon) icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     };
 })();
+
+// تحميل عند البداية
+loadSlides();
