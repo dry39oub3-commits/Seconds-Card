@@ -90,31 +90,20 @@ async function displayProducts() {
         return;
     }
 
-    products.forEach((product) => {
-        let minPrice = "غير متوفر";
-        if (product.prices && Array.isArray(product.prices) && product.prices.length > 0) {
-            const pricesArray = product.prices
-                .map(p => parseFloat(p.value))
-                .filter(v => !isNaN(v));
-            if (pricesArray.length > 0) {
-                minPrice = Math.min(...pricesArray);
-            }
-        }
-
-        const cardHTML = `
-            <div class="card-item" onclick="window.location.href='product-details.html?id=${product.id}'" style="cursor: pointer;">
-                <div class="card-image">
-                    <img src="${product.image || 'assets/placeholder.png'}" alt="${product.name}" onerror="this.src='assets/placeholder.png'">
-                </div>
-                <div class="card-info">
-                    <h3>${product.name || 'منتج بدون اسم'}</h3>
-                    <p class="price-start">يبدأ من: <span>${minPrice} MRU</span></p>
-                    <button class="view-btn">عرض الفئات <i class="fas fa-chevron-left"></i></button>
-                </div>
+products.forEach((product) => {
+    const cardHTML = `
+        <div class="card-item" onclick="window.location.href='product-details.html?id=${product.id}'" style="cursor: pointer;">
+            <div class="card-image">
+                <img src="${product.image || 'assets/placeholder.png'}" alt="${product.name}" onerror="this.src='assets/placeholder.png'">
             </div>
-        `;
-        cardsGrid.insertAdjacentHTML('beforeend', cardHTML);
-    });
+            <div class="card-info">
+                <h3>${product.name || 'منتج بدون اسم'}</h3>
+                <button class="view-btn">عرض الفئات <i class="fas fa-chevron-left"></i></button>
+            </div>
+        </div>
+    `;
+    cardsGrid.insertAdjacentHTML('beforeend', cardHTML);
+});
 }
 
 
