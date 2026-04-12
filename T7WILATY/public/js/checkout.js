@@ -3,6 +3,7 @@ import { supabase } from './supabase-config.js';
 let totalAmount = 0;
 let userBalance = 0;
 let selectedPaymentMethod = null;
+let cart = []; // ← متغير عام
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
@@ -79,7 +80,7 @@ async function checkAuthAndLoadData() {
     const userIcon = document.querySelector('#user-icon-btn i');
     if (userIcon && user) userIcon.className = 'fas fa-user-check';
 
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    cart = JSON.parse(localStorage.getItem('cart')) || []; // ← تحديث المتغير العام
     totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
 
     const totalElem = document.getElementById('checkout-total');
@@ -140,7 +141,6 @@ async function executePayment() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
     try {
-        // رفع الإيصال
         const filePath = `receipts/${Date.now()}`;
         const { error: uploadError } = await supabase.storage
             .from('receipts')
@@ -152,14 +152,11 @@ async function executePayment() {
             receiptUrl = data.publicUrl;
         }
 
-        const generateOrderNumber = () => {
-        const num = Math.floor(100000 + Math.random() * 900000);
-        return `S${num}`;
-    };
+        const generateOrderNumber = () => `S${Math.floor(100000 + Math.random() * 900000)}`;
 
-    const orders = cart.map(item => ({
-        order_number: generateOrderNumber(),
-        customer_name: user?.user_metadata?.full_name || 'مستخدم',
+        const orders = cart.map(item => ({
+            order_number: generateOrderNumber(),
+            customer_name: user?.user_metadata?.full_name || 'مستخدم',
             customer_phone: user?.email || '',
             product_id: item.productId || null,
             product_name: item.name,
@@ -170,22 +167,6 @@ async function executePayment() {
             receiptUrl: receiptUrl,
             paymentMethod: selectedPaymentMethod.name
         }));
-
-        const generateUniqueOrderNumber = async () => {
-    let unique = false;
-    let number = '';
-    
-    while (!unique) {
-        number = `S${Math.floor(100000 + Math.random() * 900000)}`;
-        const { data } = await supabase
-            .from('orders')
-            .select('id')
-            .eq('order_number', number)
-            .maybeSingle();
-        if (!data) unique = true;
-    }
-    return number;
-};
 
         const { error: insertError } = await supabase
             .from("orders")
