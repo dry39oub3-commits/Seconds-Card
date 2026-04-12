@@ -150,7 +150,7 @@ window.savePriceData = async (productId) => {
     if (error) alert('خطأ في الحفظ: ' + error.message);
     else {
         product.prices = updatedPrices;
-        alert('✅ تم الحفظ بنجاح!');
+        showToast('✅ تم الحفظ بنجاح!');
     }
 };
 
@@ -240,7 +240,7 @@ window.saveProductEdit = async (productId) => {
         alert('خطأ: ' + error.message);
     } else {
         document.getElementById('edit-product-modal').remove();
-        alert('✅ تم تحديث المنتج!');
+        showToast('✅ تم تحديث المنتج!');
         loadProducts();
     }
 };
@@ -306,7 +306,7 @@ window.saveNewPrice = async (productId) => {
         alert('خطأ: ' + error.message);
     } else {
         document.getElementById('add-price-modal').remove();
-        alert('✅ تمت إضافة الفئة!');
+        showToast('✅ تمت إضافة الفئة!');
         loadProducts();
     }
 };
@@ -328,3 +328,29 @@ window.saveNewPrice = async (productId) => {
         if (icon) icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     };
 })();
+
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #22c55e;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 15px;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        transition: opacity 0.5s;
+        font-weight: bold;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 2000);
+}
