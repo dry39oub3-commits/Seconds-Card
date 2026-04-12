@@ -111,10 +111,15 @@ window.openOrderModal = (order) => {
                 </div>
 
                 <!-- كود البطاقة -->
+
                 <div>
-                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔑 كود البطاقة</label>
-                    <input type="text" id="modal-code" placeholder="أدخل الكود هنا..."
-                        style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+                        🔑 أكواد البطاقة (${order.quantity || 1} كود مطلوب) — كود في كل سطر
+                    </label>
+                    <textarea id="modal-code" placeholder="كود 1&#10;كود 2&#10;كود 3..."
+                        rows="${Math.max(3, order.quantity || 1)}"
+                        style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box; resize:vertical; font-family:monospace; line-height:1.8;"></textarea>
+                    <p style="font-size:11px; color:#64748b; margin-top:4px;">أدخل كل كود في سطر منفصل</p>
                 </div>
             </div>
 
@@ -168,7 +173,7 @@ window.openOrderModal = (order) => {
             </div>
 
             <!-- زر القبول -->
-            <button onclick="approveOrder('${order.id}')"
+            <button onclick="approveOrder('${order.id}', ${order.quantity || 1})"
                 style="width:100%; padding:14px; background:#22c55e; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;">
                 <i class="fas fa-check-circle"></i> تأكيد القبول
             </button>
@@ -224,16 +229,20 @@ window.onSupplierSelect = (select) => {
     }
 };
 
-window.approveOrder = async (orderId) => {
-    const code = document.getElementById('modal-code').value.trim();
+window.approveOrder = async (orderId, quantity) => {
+    const codesRaw = document.getElementById('modal-code').value.trim();
+    const codes = codesRaw.split('\n').map(c => c.trim()).filter(c => c !== '');
     const cost = document.getElementById('modal-cost').value.trim();
     const supplierId = document.getElementById('modal-supplier-id').value.trim();
     const supplierOrderId = document.getElementById('modal-supplier-order-id')?.value.trim() || '';
 
-    if (!code) {
+    if (codes.length === 0) {
         alert('⚠️ يرجى إدخال كود البطاقة!');
         document.getElementById('modal-code').focus();
         return;
+    }
+    if (codes.length < quantity) {
+        if (!confirm(`⚠️ أدخلت ${codes.length} كود من أصل ${quantity}. هل تريد المتابعة؟`)) return;
     }
     if (!cost || parseFloat(cost) <= 0) {
         alert('⚠️ يرجى إدخال سعر التكلفة!');
@@ -246,17 +255,21 @@ window.approveOrder = async (orderId) => {
         return;
     }
 
-    // التحقق من عدم تكرار الكود
-    const { data: existingCode } = await supabase
-        .from('used_codes')
-        .select('id')
-        .eq('code', code)
-        .maybeSingle();
+    // التحقق من تكرار كل كود
+    for (const c of codes) {
+        const { data: existingCode } = await supabase
+            .from('used_codes')
+            .select('id')
+            .eq('code', c)
+            .maybeSingle();
 
-    if (existingCode) {
-        alert('⚠️ هذا الكود مستخدم بالفعل ومسجل كمباع!');
-        return;
+        if (existingCode) {
+            alert(`⚠️ الكود "${c}" مستخدم بالفعل ومسجل كمباع!`);
+            return;
+        }
     }
+
+    const code = codes.join('\n');
 
     // تحديث الطلب
     const { data: orderData, error } = await supabase
@@ -277,21 +290,17 @@ window.approveOrder = async (orderId) => {
         return;
     }
 
-    // تسجيل الكود في used_codes
-    const { error: codeError } = await supabase
-        .from('used_codes')
-        .insert({
-            code: code,
+    // تسجيل كل كود في used_codes
+    for (const c of codes) {
+        await supabase.from('used_codes').insert({
+            code: c,
             order_id: orderId,
             product_name: orderData.product_name
         });
-
-    if (codeError) {
-        console.error('خطأ في تسجيل الكود:', codeError);
     }
 
     document.getElementById('order-modal').remove();
-    alert('✅ تم قبول الطلب وتسجيل الكود بنجاح!');
+    alert('✅ تم قبول الطلب وتسجيل الأكواد بنجاح!');
     loadOrders();
 };
 
