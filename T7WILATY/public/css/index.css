@@ -373,9 +373,6 @@ body {
     box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
-.slide-1 { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
-.slide-2 { background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #e63946 100%); }
-.slide-3 { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #f39c12 100%); }
 
 .slide::before {
     content: '';
@@ -452,4 +449,11 @@ body {
     .slide { height: 250px; }
     .slide h2 { font-size: 1.3rem; }
     .slide p { font-size: 0.85rem; }
+}
+
+.slide img {
+    width: 100%;
+    height: 200px; /* يمكنك تعديل الارتفاع حسب الرغبة */
+    object-fit: cover; /* لضمان ملء الصورة للمساحة دون تمطيط */
+    display: block;
 }
