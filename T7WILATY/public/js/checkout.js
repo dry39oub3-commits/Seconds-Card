@@ -87,7 +87,9 @@ window.selectMethod = function(id, account, name) {
 
         const statusMsg = document.getElementById('payment-status-msg');
         if (userBalance >= totalAmount) {
-        } else {
+            if (statusMsg) statusMsg.innerHTML 
+        }
+         else {
             if (statusMsg) statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ (${userBalance} MRU) — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
         }
     } else {
