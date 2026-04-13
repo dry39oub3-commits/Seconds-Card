@@ -167,6 +167,9 @@ window.filterOrders = () => {
     });
 };
 
+// ==================== فلتر الحالة ====================
+window.filterByStatus = () => filterOrders();
+
 // ==================== إعادة تعيين الفلتر ====================
 window.resetFilter = () => {
     const from = document.getElementById('date-from');

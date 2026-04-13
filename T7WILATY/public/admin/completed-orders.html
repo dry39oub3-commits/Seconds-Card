@@ -96,6 +96,13 @@
                 style="padding:8px 18px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;cursor:pointer;">
                 <i class="fas fa-redo"></i> إعادة تعيين
             </button>
+            <select id="status-filter" onchange="filterByStatus()"
+                style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;">
+                <option value="">كل الحالات</option>
+                <option value="مكتمل">✅ مكتمل</option>
+                <option value="ملغي">❌ مرفوض</option>
+                <option value="مسترد">↩️ مسترد</option>
+            </select>
             <input type="text" id="orderSearch" placeholder="بحث برقم الطلب أو البريد..."
                 onkeyup="filterOrders()"
                 style="padding:8px 14px;border:1px solid #ddd;border-radius:8px;flex:1;min-width:200px;">
