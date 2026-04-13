@@ -84,10 +84,18 @@
                 </div>
             </div>
 
-            <div id="supplierArea" class="supplier-links-area">
-                <span style="font-weight: bold; margin-bottom: 5px; display: block;">روابط الموردين لهذا المنتج:</span>
-                <div id="supplierLinks"></div>
-            </div>
+<div class="supplier-section">
+    <label>3. اختر المورد لشراء الأكواد:</label>
+    <select id="supplierSelect" onchange="toggleBuyButton()" class="form-select">
+        <option value="">-- اختر المورد --</option>
+    </select>
+    
+    <div id="buyButtonContainer" style="display: none; margin-top: 15px;">
+        <button id="buyBtn" onclick="openSupplierLink()" class="btn-buy">
+            <i class="fas fa-external-link-alt"></i> شراء الأكواد الآن
+        </button>
+    </div>
+</div>
 
             <div class="input-group">
                 <label>4. أدخل الأكواد (كود واحد في كل سطر):</label>

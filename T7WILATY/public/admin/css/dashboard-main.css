@@ -1560,3 +1560,53 @@ body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif;
             .form-grid { grid-template-columns: 1fr; }
             .slide-card { flex-wrap: wrap; }
         }
+
+
+
+        /* تنسيق قسم الموردين */
+.supplier-section {
+    background: var(--bg-secondary, #1e293b); /* خلفية داكنة متناسقة */
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #f9731633; /* حدود برتقالية شفافة */
+    margin: 15px 0;
+}
+
+.supplier-section label {
+    display: block;
+    margin-bottom: 8px;
+    color: #f97316; /* لون برتقالي للعناوين */
+    font-weight: bold;
+}
+
+.btn-buy {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+}
+
+.btn-buy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(249, 115, 22, 0.4);
+    filter: brightness(1.1);
+}
+
+.form-select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    background: #0f172a;
+    color: white;
+    border: 1px solid #334155;
+}

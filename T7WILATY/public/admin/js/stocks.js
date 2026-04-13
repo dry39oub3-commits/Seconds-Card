@@ -27,14 +27,57 @@ async function initializeStockPage() {
 window.updatePriceOptions = function() {
     const productId = document.getElementById('productSelect').value;
     const priceSelect = document.getElementById('priceSelect');
-    if (!priceSelect) return;
+    const supplierSelect = document.getElementById('supplierSelect');
+    const buyButtonContainer = document.getElementById('buyButtonContainer');
 
+    if (!priceSelect || !supplierSelect) return;
+
+    // 1. إعادة تعيين الخيارات
     priceSelect.innerHTML = '<option value="">-- اختر الفئة السعرية --</option>';
+    supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
+    buyButtonContainer.style.display = 'none';
+
     const product = allProducts.find(p => p.id === productId);
-    if (product?.prices) {
+    
+    if (product && product.prices) {
+        // 2. تعبئة الفئات السعرية
         product.prices.forEach((price, index) => {
             priceSelect.innerHTML += `<option value="${index}">${price.label} - ${price.value} MRU</option>`;
         });
+
+        // 3. إضافة مراقب لحدث تغيير الفئة السعرية لجلب مورديها
+        priceSelect.onchange = function() {
+            const selectedIndex = this.value;
+            supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
+            
+            if (selectedIndex !== "" && product.prices[selectedIndex].links) {
+                const links = product.prices[selectedIndex].links;
+                links.forEach(linkObj => {
+                    supplierSelect.innerHTML += `<option value="${linkObj.url}">${linkObj.name}</option>`;
+                });
+            }
+            toggleBuyButton(); // تحديث حالة زر الشراء
+        };
+    }
+};
+
+// إظهار زر الشراء عند تحديد مورد
+window.toggleBuyButton = function() {
+    const supplierSelect = document.getElementById('supplierSelect');
+    const buyButtonContainer = document.getElementById('buyButtonContainer');
+    
+    if (supplierSelect.value !== "") {
+        buyButtonContainer.style.display = 'block';
+    } else {
+        buyButtonContainer.style.display = 'none';
+    }
+};
+
+// فتح رابط المورد في علامة تبويب جديدة
+window.openSupplierLink = function() {
+    const url = document.getElementById('supplierSelect').value;
+    if (url) {
+        window.open(url, '_blank');
     }
 };
 
