@@ -42,8 +42,14 @@ async function loadCompletedOrders() {
         const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : '-';
         const image = order.products?.image;
         const imageCell = image
-            ? `<img src="${image}" style="width:38px;height:38px;object-fit:contain;background:white;border-radius:5px;padding:2px;">`
-            : '-';
+    ? `<img src="${image}" 
+            style="width:38px;height:38px;object-fit:contain;background:white;border-radius:5px;padding:2px;cursor:pointer;"
+            onclick="showCodePopup('${order.id}', \`${(order.card_code || '').replace(/`/g, '')}\`, '${order.supplier_order_id || ''}')"
+            title="اضغط لعرض الكود">`
+    : `<span style="cursor:pointer; font-size:20px;" 
+            onclick="showCodePopup('${order.id}', \`${(order.card_code || '').replace(/`/g, '')}\`, '${order.supplier_order_id || ''}')">
+            🎴
+       </span>`;
         const totalPrice = order.price * (order.quantity || 1);
         const paymentMethod = order.paymentMethod || order.payment_method || '-';
         const status = order.status || '-';
@@ -89,11 +95,6 @@ async function loadCompletedOrders() {
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
                 <td>${paymentMethod}</td>
-                <td>
-                    ${order.supplier_id ? `<div style="font-weight:bold;font-size:13px;">${order.supplier_id}</div>` : ''}
-                    ${order.supplier_order_id ? `<div style="font-size:11px;color:#94a3b8;margin-top:3px;font-family:monospace;">ID: ${order.supplier_order_id}</div>` : ''}
-                    ${!order.supplier_id && !order.supplier_order_id ? '<span style="color:#64748b;">—</span>' : ''}
-                </td>
                 <td>${receiptBtn}</td>
                 <td>
                     <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;${style}">
@@ -103,7 +104,7 @@ async function loadCompletedOrders() {
                         ? `<div style="font-size:11px;color:#ef4444;margin-top:4px;">السبب: ${order.reject_reason}</div>`
                         : ''}
                 </td>
-                <td>${codesHtml}</td>
+               
                 ${status === 'مكتمل' ? `
                 <td>
                     <button onclick="refundOrder('${order.id}')"
@@ -133,6 +134,61 @@ window.toggleCode = (orderId) => {
         btn.innerHTML = '<i class="fas fa-key"></i> عرض الكود';
         btn.style.background = '#1e40af';
     }
+};
+
+window.showCodePopup = (orderId, cardCode, supplierOrderId) => {
+    document.getElementById('code-popup')?.remove();
+
+    const codes = cardCode ? cardCode.split('\n').filter(c => c.trim()) : [];
+
+    const popup = document.createElement('div');
+    popup.id = 'code-popup';
+    popup.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.8);
+        z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;
+    `;
+
+    popup.innerHTML = `
+        <div style="background:#0f172a; border-radius:8px; padding:12px; overflow-y:auto; max-height:400px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="margin:0; color:#f97316;">🔑 بيانات الطلب</h3>
+                <button onclick="document.getElementById('code-popup').remove()"
+                    style="background:#ef4444;color:white;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;">
+                    ✕
+                </button>
+            </div>
+
+            ${supplierOrderId ? `
+            <div style="background:#0f172a; border-radius:8px; padding:12px; margin-bottom:12px;">
+                <div style="font-size:12px; color:#94a3b8; margin-bottom:4px;">🏪 Order ID المورد</div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-family:monospace; font-size:14px; color:#60a5fa; flex:1;">${supplierOrderId}</span>
+                    <button onclick="copyText('${supplierOrderId}')"
+                        style="background:#334155;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;">
+                        <i class="fas fa-copy"></i> نسخ
+                    </button>
+                </div>
+            </div>` : ''}
+
+            <div style="background:#0f172a; border-radius:8px; padding:12px;">
+                <div style="font-size:12px; color:#94a3b8; margin-bottom:8px;">🔑 الأكواد (${codes.length})</div>
+                ${codes.length > 0 ? codes.map(c => `
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <span style="font-family:monospace; font-size:13px; color:#22c55e; flex:1; background:#1e293b; padding:6px 10px; border-radius:6px;">
+                            ${c.trim()}
+                        </span>
+                        <button onclick="copyText('${c.trim().replace(/'/g, "\\'")}')"
+                            style="background:#334155;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                `).join('') : '<span style="color:#64748b;">لا يوجد كود</span>'}
+            </div>
+        </div>
+    `;
+
+    popup.onclick = (e) => { if (e.target === popup) popup.remove(); };
+    document.body.appendChild(popup);
 };
 
 // ==================== ملخص الإجماليات ====================
