@@ -68,10 +68,11 @@ async function fetchUserOrders() {
     }
 
     const { data: orders, error } = await supabase
-        .from("orders")
-        .select("*, products(image)")
-       .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+    .from("orders")
+    .select("*")
+    .limit(1);
+
+console.log("columns:", Object.keys(orders?.[0] || {}));
 
     if (error) {
         ordersList.innerHTML = '<p style="color:red; text-align:center;">حدث خطأ أثناء تحميل الطلبات.</p>';
