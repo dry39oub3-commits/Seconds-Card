@@ -109,6 +109,8 @@ async function loadCompletedOrders() {
             </tr>
         `;
     }).join('');
+    
+    window.loadCompletedOrders = loadCompletedOrders;
 }
 
 // ===== toggle الكود =====
