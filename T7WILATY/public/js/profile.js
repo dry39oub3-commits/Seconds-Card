@@ -3,11 +3,10 @@ import { supabase } from './supabase-config.js';
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
-
-   
+    if (!user) return;
 
     // عرض البيانات الأساسية
-   document.getElementById('user-uid').textContent = generateSCId(user.id);
+    document.getElementById('user-uid').textContent = generateSCId(user.id);
     document.getElementById('user-display-email').textContent = user.email || '--';
 
     // تاريخ الانضمام
@@ -23,8 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         .eq('id', user.id)
         .single();
 
-    const name = userData?.fullName || user.user_metadata?.full_name || 'مستخدم';
-    const photo = userData?.photoURL || user.user_metadata?.avatar_url || '';
+    const name = userData?.full_name || user.user_metadata?.full_name || 'مستخدم';
+const photo = user.user_metadata?.avatar_url || '';
 
     document.getElementById('user-display-name').value = name;
     document.getElementById('user-name').textContent = name;
@@ -51,7 +50,7 @@ window.updateProfileData = async function() {
 
     const { error } = await supabase
         .from('users')
-        .upsert({ id: user.id, fullName: newName })
+       .update({ full_name: newName })
         .eq('id', user.id);
 
     if (error) {
@@ -86,17 +85,24 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
     const photoURL = data.publicUrl;
 
-    await supabase.from('users').upsert({ id: user.id, photoURL }).eq('id', user.id);
-
+await supabase.auth.updateUser({ data: { avatar_url: photoURL } });
     const img = document.getElementById('user-display-photo');
     img.src = photoURL + '?t=' + Date.now();
     img.style.display = 'block';
     alert('✅ تم تحديث الصورة!');
 });
 
+// تسجيل الخروج
+window.handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+        localStorage.clear();
+        window.location.href = "index.html";
+    }
+};
+
 // دالة تحول الـ UUID إلى SC-XXXXXX
 function generateSCId(uuid) {
-    // نأخذ أجزاء من الـ UUID ونحولها لأرقام
     const hash = uuid.replace(/-/g, '');
     let num = 0;
     for (let i = 0; i < hash.length; i++) {
@@ -104,4 +110,20 @@ function generateSCId(uuid) {
     }
     const scNumber = String(num + 100000).padStart(6, '0');
     return `SC-${scNumber}`;
+}
+
+
+// وظيفة تحديث الصورة في الواجهة
+function displayUserPhoto(photoUrl) {
+    const imgElement = document.getElementById('user-display-photo');
+    const iconElement = document.getElementById('default-avatar-icon');
+
+    if (photoUrl) {
+        imgElement.src = photoUrl;
+        imgElement.style.display = 'block'; // إظهار الصورة
+        iconElement.style.display = 'none'; // إخفاء الأيقونة تماماً
+    } else {
+        imgElement.style.display = 'none';
+        iconElement.style.display = 'block';
+    }
 }

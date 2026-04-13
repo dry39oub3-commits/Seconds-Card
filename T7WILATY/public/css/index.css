@@ -304,15 +304,15 @@ body {
 
 .slider-container {
     width: 100%;
-    height: 350px;
-    overflow: hidden;
+    overflow: hidden; /* لمنع ظهور الصور المجاورة خارج الإطار */
     position: relative;
+    border-radius: 12px;
 }
 
 #slidesWrapper {
     display: flex;
-    height: 100%;
-    transition: transform 0.5s ease;
+    transition: transform 0.5s ease-in-out;
+    width: 100%;
 }
 
 .slide {
@@ -330,6 +330,7 @@ body {
     background-size: cover !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
+    box-sizing: border-box;
 }
 
 .slide h2 {
