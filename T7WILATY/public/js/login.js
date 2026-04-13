@@ -2,7 +2,6 @@ import { supabase } from './supabase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
-    const googleBtn = document.getElementById('google-login-btn');
 
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -11,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const pass = document.getElementById('user-pass').value;
             const loginBtn = document.getElementById('login-btn');
 
-            const email = phone.includes('@') ? phone : `${phone}@secondscard.com`;
+            const email = `${phone}@secondscard.com`;
 
             loginBtn.innerText = "جاري التحقق...";
             loginBtn.disabled = true;
@@ -26,16 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loginBtn.innerText = "دخول آمن";
             loginBtn.disabled = false;
-        });
-    }
-
-    if (googleBtn) {
-        googleBtn.addEventListener('click', async () => {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin + '/index.html' }
-            });
-            if (error) alert("خطأ في تسجيل الدخول بـ Google: " + error.message);
         });
     }
 });
