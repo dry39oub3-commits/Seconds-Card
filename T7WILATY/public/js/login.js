@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('user-phone').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
             const pass = document.getElementById('user-pass').value;
             const loginBtn = document.getElementById('login-btn');
 
