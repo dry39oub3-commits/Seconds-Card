@@ -17,12 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (error) {
                 alert("البريد الإلكتروني أو كلمة المرور غير صحيحة");
-            } else {
-                window.location.href = "index.html";
+                loginBtn.innerText = "دخول آمن";
+                loginBtn.disabled = false;
+                return; // ✅ وقف هنا إذا في خطأ
             }
 
-            loginBtn.innerText = "دخول آمن";
-            loginBtn.disabled = false;
+            // ✅ التحويل فقط بعد نجاح تسجيل الدخول
+            const redirectTo = localStorage.getItem('redirectAfterLogin') || 'index.html';
+            localStorage.removeItem('redirectAfterLogin');
+            window.location.href = redirectTo;
         });
     }
 });
