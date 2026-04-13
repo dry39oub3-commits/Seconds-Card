@@ -1,180 +1,187 @@
 import { supabase } from '../../js/supabase-config.js';
 
-let allCompleted = [];
-let allRejected = [];
-let allRefunded = [];
+// ==================== تحميل الطلبات المكتملة ====================
+async function loadCompletedOrders() {
+    const ordersList = document.getElementById('completed-orders-list');
+    if (!ordersList) return;
 
-async function fetchAllOrders() {
-    const { data: orders, error } = await supabase
+    ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">جاري التحميل...</td></tr>';
+
+    let query = supabase
         .from('orders')
-        .select('*')
+        .select('*, products(image)')
         .in('status', ['مكتمل', 'ملغي', 'مسترد'])
         .order('created_at', { ascending: false });
 
-    if (error) { console.error(error); return; }
+    const from = document.getElementById('date-from')?.value;
+    const to   = document.getElementById('date-to')?.value;
+    if (from) query = query.gte('created_at', from);
+    if (to)   query = query.lte('created_at', to + 'T23:59:59');
 
-    allCompleted = orders.filter(o => o.status === 'مكتمل');
-    allRejected  = orders.filter(o => o.status === 'ملغي');
-    allRefunded  = orders.filter(o => o.status === 'مسترد');
+    const { data: orders, error } = await query;
 
-    renderCompleted(allCompleted);
-    renderRejected(allRejected);
-    renderRefunded(allRefunded);
-}
-
-function renderCompleted(list) {
-    const tbody = document.getElementById('completed-orders-body');
-    const count = document.getElementById('completed-count');
-    if (count) count.textContent = list.length;
-    if (!tbody) return;
-
-    if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">لا توجد طلبات مكتملة</td></tr>';
+    if (error) {
+        ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
         return;
     }
 
-    tbody.innerHTML = list.map(order => {
-        const date = new Date(order.created_at).toLocaleString('ar-EG');
-        const receiptBtn = order.receipt_url ?
-            `<a href="${order.receipt_url}" target="_blank" style="color:#3b82f6;"><i class="fas fa-receipt"></i></a>` : '-';
+    if (!orders || orders.length === 0) {
+        ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">📭 لا توجد طلبات</td></tr>';
+        return;
+    }
+
+    updateSummary(orders);
+
+    const statusStyle = {
+        'مكتمل': 'background:#dcfce7; color:#16a34a;',
+        'ملغي':  'background:#fee2e2; color:#dc2626;',
+        'مسترد': 'background:#fef9c3; color:#ca8a04;',
+    };
+
+    const receiptUrl = order.receiptUrl || order.receipt_url;
+const receiptBtn = receiptUrl
+    ? `<a href="${receiptUrl}" target="_blank" 
+          style="background:#3b82f6;color:white;padding:5px 10px;border-radius:6px;font-size:12px;text-decoration:none;">
+           <i class="fas fa-receipt"></i> عرض
+       </a>`
+    : '<span style="color:#64748b;">—</span>';
+
+
+    ordersList.innerHTML = orders.map(order => {
+        const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : '-';
+        const image = order.products?.image;
+        const imageCell = image
+            ? `<img src="${image}" style="width:38px;height:38px;object-fit:contain;background:white;border-radius:5px;padding:2px;">`
+            : '-';
+        const totalPrice = order.price * (order.quantity || 1);
+        const paymentMethod = order.paymentMethod || order.payment_method || '-';
+        const status = order.status || '-';
+        const style = statusStyle[status] || 'background:#e2e8f0; color:#334155;';
+
+        // ===== الأكواد — مخفية بزر =====
+        const codesHtml = order.card_code
+            ? `
+                <button onclick="toggleCode('${order.id}')"
+                    id="btn-${order.id}"
+                    style="background:#1e40af;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;white-space:nowrap;">
+                    <i class="fas fa-key"></i> عرض الكود
+                </button>
+                <div id="codes-${order.id}" style="display:none; margin-top:8px;">
+                    ${order.card_code.split('\n').filter(c => c.trim()).map(c => `
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                            <span style="background:#0f172a;padding:4px 10px;border-radius:4px;font-family:monospace;font-size:12px;color:#22c55e;">
+                                ${c.trim()}
+                            </span>
+                            <button onclick="copyText('${c.trim().replace(/'/g, "\\'")}')"
+                                style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;" title="نسخ">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>`
+            : '<span style="color:#64748b;">—</span>';
+
         return `
             <tr>
-                <td style="color:#3b82f6; font-weight:bold;">#${order.id.slice(-6).toUpperCase()}</td>
-                <td>${order.customer_name || '-'}</td>
+                <td style="color:#f97316;font-weight:bold;">${order.order_number || '#' + order.id.substring(0,7)}</td>
+                <td>${order.customer_name || 'غير معروف'}</td>
+                <td>${imageCell}</td>
                 <td>${order.product_name || '-'}</td>
-                <td><b style="color:#22c55e;">${order.price} MRU</b></td>
+                <td><strong>${totalPrice} MRU</strong></td>
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
-                <td>${order.payment_method || '-'}</td>
+                <td>${paymentMethod}</td>
                 <td>${receiptBtn}</td>
-                <td>${order.supplier_id || '-'}</td>
                 <td>
-                    <button onclick="markRefunded('${order.id}')" 
-                        style="background:#f97316; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;">
+                    <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;${style}">
+                        ${status}
+                    </span>
+                    ${status === 'ملغي' && order.reject_reason
+                        ? `<div style="font-size:11px;color:#ef4444;margin-top:4px;">السبب: ${order.reject_reason}</div>`
+                        : ''}
+                </td>
+                <td>${codesHtml}</td>
+                ${status === 'مكتمل' ? `
+                <td>
+                    <button onclick="refundOrder('${order.id}')"
+                        style="background:#f59e0b;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">
                         <i class="fas fa-undo"></i> استرداد
                     </button>
-                </td>
-            </tr>`;
+                </td>` : '<td>—</td>'}
+            </tr>
+        `;
     }).join('');
 }
 
-function renderRejected(list) {
-    const tbody = document.getElementById('rejected-orders-body');
-    const count = document.getElementById('rejected-count');
-    if (count) count.textContent = list.length;
-    if (!tbody) return;
+// ===== toggle الكود =====
+window.toggleCode = (orderId) => {
+    const div = document.getElementById(`codes-${orderId}`);
+    const btn = div.previousElementSibling;
+    if (!div) return;
 
-    if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">لا توجد طلبات مرفوضة</td></tr>';
-        return;
+    if (div.style.display === 'none' || div.style.display === '') {
+        div.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i> إخفاء الكود';
+        btn.style.background = '#374151';
+    } else {
+        div.style.display = 'none';
+        btn.innerHTML = '<i class="fas fa-key"></i> عرض الكود';
+        btn.style.background = '#1e40af';
     }
+};
 
-    tbody.innerHTML = list.map(order => {
-        const date = new Date(order.created_at).toLocaleString('ar-EG');
-        return `
-            <tr>
-                <td style="color:#f97316; font-weight:bold;">${order.order_number || '#' + order.id.substring(0, 7)}</td>
-                <td>${order.customer_name || '-'}</td>
-                <td>${order.product_name || '-'}</td>
-                <td><b>${order.price} MRU</b></td>
-                <td><small>${date}</small></td>
-                <td style="color:#ef4444;">${order.reject_reason || '-'}</td>
-                <td>
-                    <button onclick="deleteOrder('${order.id}')"
-                        style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;">
-                        <i class="fas fa-trash"></i> حذف
-                    </button>
-                </td>
-            </tr>`;
-    }).join('');
+// ==================== ملخص الإجماليات ====================
+function updateSummary(orders) {
+    const completed = orders.filter(o => o.status === 'مكتمل');
+    const rejected  = orders.filter(o => o.status === 'ملغي');
+    const refunded  = orders.filter(o => o.status === 'مسترد');
+    const revenue   = completed.reduce((s, o) => s + (o.price * (o.quantity || 1)), 0);
+
+    const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    el('summary-completed', completed.length);
+    el('summary-rejected',  rejected.length);
+    el('summary-refunded',  refunded.length);
+    el('summary-revenue',   revenue + ' MRU');
 }
 
-function renderRefunded(list) {
-    const tbody = document.getElementById('refunded-orders-body');
-    const count = document.getElementById('refunded-count');
-    if (count) count.textContent = list.length;
-    if (!tbody) return;
-
-    if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">لا توجد طلبات مستردة</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = list.map(order => {
-        const date = new Date(order.created_at).toLocaleString('ar-EG');
-        return `
-            <tr>
-                <td style="color:#f97316; font-weight:bold;">#${order.id.slice(-6).toUpperCase()}</td>
-                <td>${order.customer_name || '-'}</td>
-                <td>${order.product_name || '-'}</td>
-                <td><b style="color:#f97316;">${order.price} MRU</b></td>
-                <td><small>${date}</small></td>
-                <td>${order.reject_reason || '-'}</td>
-                <td>
-                    <button onclick="deleteOrder('${order.id}')"
-                        style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;">
-                        <i class="fas fa-trash"></i> حذف
-                    </button>
-                </td>
-            </tr>`;
-    }).join('');
-}
-
-window.markRefunded = async (orderId) => {
-    const note = prompt('أدخل ملاحظة الاسترداد (اختياري):') || '';
-    if (!confirm('هل تريد تحويل هذا الطلب إلى مسترد؟')) return;
-
+// ==================== استرداد ====================
+window.refundOrder = async (orderId) => {
+    if (!confirm('هل تريد تحديد هذا الطلب كمسترد؟')) return;
     const { error } = await supabase
         .from('orders')
-        .update({ status: 'مسترد', reject_reason: note })
+        .update({ status: 'مسترد' })
         .eq('id', orderId);
-
-    if (error) alert('خطأ: ' + error.message);
-    else fetchAllOrders();
+    if (error) { alert('خطأ: ' + error.message); return; }
+    alert('✅ تم تحديث الطلب كمسترد.');
+    loadCompletedOrders();
 };
 
-window.deleteOrder = async (orderId) => {
-    if (!confirm('هل تريد حذف هذا الطلب نهائياً؟')) return;
-    const { error } = await supabase.from('orders').delete().eq('id', orderId);
-    if (error) alert('خطأ: ' + error.message);
-    else fetchAllOrders();
+// ==================== نسخ الكود ====================
+window.copyText = (text) => {
+    navigator.clipboard.writeText(text).then(() => alert('✅ تم نسخ الكود!'));
 };
 
-function applyFilters() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const fromDate = document.getElementById('dateFrom').value;
-    const toDate = document.getElementById('dateTo').value;
-
-    const filter = (list) => list.filter(order => {
-        const matchSearch =
-            order.id.toLowerCase().includes(search) ||
-            (order.product_name || '').toLowerCase().includes(search) ||
-            (order.customer_name || '').toLowerCase().includes(search);
-        const orderDate = new Date(order.created_at).toLocaleDateString('en-CA');
-        const matchFrom = !fromDate || orderDate >= fromDate;
-        const matchTo = !toDate || orderDate <= toDate;
-        return matchSearch && matchFrom && matchTo;
+// ==================== فلتر البحث ====================
+window.filterOrders = () => {
+    const search = document.getElementById('orderSearch')?.value.trim().toLowerCase() || '';
+    document.querySelectorAll('#completed-orders-list tr').forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(search) ? '' : 'none';
     });
+};
 
-    renderCompleted(filter(allCompleted));
-    renderRejected(filter(allRejected));
-    renderRefunded(filter(allRefunded));
-}
+// ==================== إعادة تعيين الفلتر ====================
+window.resetFilter = () => {
+    const from = document.getElementById('date-from');
+    const to   = document.getElementById('date-to');
+    if (from) from.value = '';
+    if (to)   to.value = '';
+    loadCompletedOrders();
+};
 
+// ==================== تشغيل ====================
 document.addEventListener('DOMContentLoaded', () => {
-    fetchAllOrders();
-
-    document.getElementById('searchInput')?.addEventListener('input', applyFilters);
-    document.getElementById('dateFrom')?.addEventListener('change', applyFilters);
-    document.getElementById('dateTo')?.addEventListener('change', applyFilters);
-    document.getElementById('clearFilters')?.addEventListener('click', () => {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('dateFrom').value = '';
-        document.getElementById('dateTo').value = '';
-        renderCompleted(allCompleted);
-        renderRejected(allRejected);
-        renderRefunded(allRefunded);
-    });
+    loadCompletedOrders();
+    setInterval(loadCompletedOrders, 60000);
 });
 
 

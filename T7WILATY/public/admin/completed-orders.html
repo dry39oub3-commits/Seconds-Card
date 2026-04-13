@@ -3,19 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seconds-Card | AdminPanel</title>
-    <link rel="icon" type="image/png" href="../assets/logo.png">
+    <title>الطلبات المكتملة | SecondsCard</title>
     <link rel="stylesheet" href="./css/dashboard-main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <script>
-// تطبيق الثيم فوراً قبل رسم الصفحة
-(function(){
-    const t = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', t);
-})();
-</script>
-
 </head>
 <body>
 
@@ -65,105 +55,78 @@
     </div>
 </header>
 
-<div class="admin-container">
+<main class="dashboard-main-area">
+    <section class="content-card">
 
-    <!-- فلتر البحث -->
-    <div class="filter-bar" style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; background:#f8fafc; padding:15px; border-radius:8px;">
-        <div style="flex:1; min-width:200px;">
-            <label style="display:block; font-size:0.8rem; margin-bottom:5px;">البحث (رقم الطلب أو الهاتف):</label>
-            <input type="text" id="searchInput" placeholder="ابحث هنا..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+        <!-- ملخص -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+            <div style="background:#dcfce7;border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:1.8rem;font-weight:800;color:#16a34a;" id="summary-completed">0</div>
+                <div style="color:#166534;font-size:0.85rem;margin-top:4px;">✅ مكتمل</div>
+            </div>
+            <div style="background:#fee2e2;border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:1.8rem;font-weight:800;color:#dc2626;" id="summary-rejected">0</div>
+                <div style="color:#991b1b;font-size:0.85rem;margin-top:4px;">❌ مرفوض</div>
+            </div>
+            <div style="background:#fef9c3;border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:1.8rem;font-weight:800;color:#ca8a04;" id="summary-refunded">0</div>
+                <div style="color:#854d0e;font-size:0.85rem;margin-top:4px;">↩️ مسترد</div>
+            </div>
+            <div style="background:#dbeafe;border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:1.4rem;font-weight:800;color:#1d4ed8;" id="summary-revenue">0 MRU</div>
+                <div style="color:#1e3a8a;font-size:0.85rem;margin-top:4px;">💰 إجمالي الإيرادات</div>
+            </div>
         </div>
-        <div style="flex:1; min-width:150px;">
-            <label style="display:block; font-size:0.8rem; margin-bottom:5px;">من تاريخ:</label>
-            <input type="date" id="dateFrom" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-        </div>
-        <div style="flex:1; min-width:150px;">
-            <label style="display:block; font-size:0.8rem; margin-bottom:5px;">إلى تاريخ:</label>
-            <input type="date" id="dateTo" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-            <button id="clearFilters" style="padding:10px 15px; background:#95a5a6; color:white; border:none; border-radius:6px; cursor:pointer;">
-                <i class="fas fa-undo"></i> إعادة تعيين
+
+        <!-- فلاتر -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;">
+            <div>
+                <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">من تاريخ</label>
+                <input type="date" id="date-from" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;">
+            </div>
+            <div>
+                <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">إلى تاريخ</label>
+                <input type="date" id="date-to" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;">
+            </div>
+            <button onclick="loadCompletedOrders()"
+                style="padding:8px 18px;background:#f97316;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">
+                <i class="fas fa-filter"></i> تطبيق
             </button>
+            <button onclick="resetFilter()"
+                style="padding:8px 18px;background:#e2e8f0;color:#334155;border:none;border-radius:8px;cursor:pointer;">
+                <i class="fas fa-redo"></i> إعادة تعيين
+            </button>
+            <input type="text" id="orderSearch" placeholder="بحث برقم الطلب أو البريد..."
+                onkeyup="filterOrders()"
+                style="padding:8px 14px;border:1px solid #ddd;border-radius:8px;flex:1;min-width:200px;">
         </div>
-    </div>
 
-    <!-- ✅ جدول الطلبات المكتملة -->
-    <section class="completed-section" style="margin-bottom:40px;">
-        <h2 class="section-title" style="color:#22c55e;">
-            <i class="fas fa-check-double"></i> سجل الطلبات المكتملة
-            <span id="completed-count" style="background:#22c55e; color:white; padding:2px 10px; border-radius:20px; font-size:14px; margin-right:10px;">0</span>
-        </h2>
-        <div class="table-container" style="overflow-x:auto;">
-            <table class="admin-table" style="width:100%; min-width:1200px; border-collapse:collapse;">
+        <!-- الجدول -->
+        <div class="table-container">
+            <table class="admin-table">
                 <thead>
-                    <tr style="background:#f0fdf4; border-bottom:2px solid #86efac;">
+                    <tr>
                         <th>رقم الطلب</th>
                         <th>المستخدم</th>
-                        <th>البطاقة</th>
+                        <th>صورة البطاقة</th>
+                        <th>نوع البطاقة</th>
                         <th>المبلغ</th>
                         <th>الكمية</th>
                         <th>التاريخ</th>
-                        <th>الدفع</th>
+                        <th>طريقة الدفع</th>
                         <th>الإيصال</th>
-                        <th>المورد</th>
-                        <th>إجراءات</th>
+                        <th>الحالة</th>
+                        <th>الأكواد</th>
+                        <th>إجراء</th>
                     </tr>
                 </thead>
-                <tbody id="completed-orders-body"></tbody>
+                <tbody id="completed-orders-list"></tbody>
             </table>
         </div>
-    </section>
 
-    <!-- ❌ جدول الطلبات المرفوضة -->
-    <section class="rejected-section" style="margin-bottom:40px;">
-        <h2 class="section-title" style="color:#ef4444;">
-            <i class="fas fa-times-circle"></i> الطلبات المرفوضة
-            <span id="rejected-count" style="background:#ef4444; color:white; padding:2px 10px; border-radius:20px; font-size:14px; margin-right:10px;">0</span>
-        </h2>
-        <div class="table-container" style="overflow-x:auto;">
-            <table class="admin-table" style="width:100%; min-width:900px; border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#fef2f2; border-bottom:2px solid #fca5a5;">
-                        <th>رقم الطلب</th>
-                        <th>المستخدم</th>
-                        <th>البطاقة</th>
-                        <th>المبلغ</th>
-                        <th>التاريخ</th>
-                        <th>سبب الرفض</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="rejected-orders-body"></tbody>
-            </table>
-        </div>
     </section>
+</main>
 
-    <!-- 🔄 جدول Remboursé -->
-    <section class="refunded-section" style="margin-bottom:40px;">
-        <h2 class="section-title" style="color:#f97316;">
-            <i class="fas fa-undo-alt"></i> الطلبات المستردة (Remboursé)
-            <span id="refunded-count" style="background:#f97316; color:white; padding:2px 10px; border-radius:20px; font-size:14px; margin-right:10px;">0</span>
-        </h2>
-        <div class="table-container" style="overflow-x:auto;">
-            <table class="admin-table" style="width:100%; min-width:900px; border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#fff7ed; border-bottom:2px solid #fdba74;">
-                        <th>رقم الطلب</th>
-                        <th>المستخدم</th>
-                        <th>البطاقة</th>
-                        <th>المبلغ المسترد</th>
-                        <th>التاريخ</th>
-                        <th>ملاحظة</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="refunded-orders-body"></tbody>
-            </table>
-        </div>
-    </section>
-
-</div>
 <script type="module" src="./js/bell.js"></script>
 <script type="module" src="./js/completed-orders.js"></script>
 </body>
