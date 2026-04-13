@@ -109,7 +109,7 @@ async function loadCompletedOrders() {
             </tr>
         `;
     }).join('');
-    
+
     window.loadCompletedOrders = loadCompletedOrders;
 }
 
@@ -187,7 +187,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(loadCompletedOrders, 60000);
 });
 
+window.filterOrders = () => {
+    const search = document.getElementById('orderSearch')?.value.trim().toLowerCase() || '';
+    const statusFilter = document.getElementById('status-filter')?.value || '';
 
+    document.querySelectorAll('#completed-orders-list tr').forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const matchSearch = text.includes(search);
+        const matchStatus = statusFilter === '' || row.innerText.includes(statusFilter);
+        row.style.display = matchSearch && matchStatus ? '' : 'none';
+    });
+};
+
+window.filterByStatus = () => filterOrders();
 
 (function(){
     // تطبيق الثيم المحفوظ فوراً
