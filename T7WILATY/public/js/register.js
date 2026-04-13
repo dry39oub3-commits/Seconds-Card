@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
+            if (!email.includes('@') || !email.includes('.')) {
+    alert('⚠️ يرجى إدخال بريد إلكتروني صحيح مثال: example@gmail.com');
+    return;
+}
             const pass = document.getElementById('reg-pass').value;
             const regBtn = document.getElementById('register-btn');
 
