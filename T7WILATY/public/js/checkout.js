@@ -86,13 +86,11 @@ window.selectMethod = function(id, account, name) {
     if (id === 'wallet') {
         if (infoDiv) infoDiv.style.display = 'none';
         if (receiptSection) receiptSection.style.display = 'none';
-        if (statusMsg) {
-            if (userBalance >= totalAmount) {
-                statusMsg.innerHTML = `<p style="color:#22c55e;">✅ رصيدك كافٍ — سيتم الخصم فوراً (${userBalance} MRU)</p>`;
-            } else {
-                statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ (${userBalance} MRU) — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
-            }
-        }
+if (userBalance < totalAmount) {
+    statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ  اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
+} else {
+    statusMsg.innerHTML = '';
+}
     } else {
         if (infoDiv && accountElem) {
             infoDiv.style.display = 'block';
