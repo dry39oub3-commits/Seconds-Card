@@ -104,6 +104,7 @@ const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
                 <span>${date}</span>
                 <span style="font-size:11px; color:${statusColor};">${t.status}</span>
             </div>
+            ${t.note ? `<span style="font-size:11px; color:#94a3b8;">${t.note}</span>` : ''}
         </div>
         <div class="t-amount ${isCharge ? 'plus' : 'minus'}">
             ${isCharge ? '+' : '-'}${t.amount.toLocaleString()} MRU

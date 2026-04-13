@@ -217,10 +217,33 @@ window.closeEditModal = () => {
 
 window.saveBalance = async () => {
     const newBalance = parseFloat(document.getElementById('edit-balance-input').value);
+    const note = document.getElementById('edit-note-input').value.trim() || 'تعديل يدوي من الأدمن';
     if (isNaN(newBalance) || newBalance < 0) { alert('⚠️ أدخل رصيداً صحيحاً'); return; }
-    const { error } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentEditUserId);
-    if (error) alert('خطأ: ' + error.message);
-    else { closeEditModal(); alert('✅ تم تحديث الرصيد!'); loadAll(); }
+
+    // جلب الرصيد القديم
+    const { data: userData } = await supabase
+        .from('users').select('balance').eq('id', currentEditUserId).single();
+    const oldBalance = userData?.balance || 0;
+    const diff = newBalance - oldBalance;
+
+    // تحديث الرصيد
+    const { error } = await supabase.from('users')
+        .update({ balance: newBalance }).eq('id', currentEditUserId);
+    if (error) { alert('خطأ: ' + error.message); return; }
+
+    // تسجيل العملية في السجل
+    await supabase.from('wallet_transactions').insert({
+        user_id: currentEditUserId,
+        type: diff >= 0 ? 'charge' : 'withdraw',
+        amount: Math.abs(diff),
+        payment_method: 'تعديل أدمن',
+        status: 'مكتمل',
+        note: note
+    });
+
+    closeEditModal();
+    alert('✅ تم تحديث الرصيد!');
+    loadAll();
 };
 
 window.viewReceipt = (url) => {
