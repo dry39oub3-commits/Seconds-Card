@@ -203,9 +203,23 @@ function updateCartBadge() {
 }
 async function checkUserIcon() {
     const { data: { session } } = await supabase.auth.getSession();
-    const userIcon = document.querySelector('#user-icon-btn i');
-    if (userIcon && session?.user) {
-        userIcon.className = 'fas fa-user-check';
+    const userBtn = document.getElementById('user-icon-btn');
+    if (!userBtn) return;
+
+    if (session?.user) {
+        // مسجل دخول — أيقونة عادية مع dropdown
+        userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
+        userBtn.onclick = (e) => {
+            e.stopPropagation();
+            document.getElementById('user-dropdown').classList.toggle('show');
+        };
+    } else {
+        // غير مسجل — زر تسجيل الدخول
+        userBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i>';
+        userBtn.title = 'تسجيل الدخول';
+        userBtn.onclick = () => {
+            window.location.href = 'login.html';
+        };
     }
 }
 
