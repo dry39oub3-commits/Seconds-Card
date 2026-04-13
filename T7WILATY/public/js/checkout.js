@@ -205,12 +205,12 @@ async function executePayment() {
             if (insertError) throw insertError;
 
             await supabase.from('wallet_transactions').insert({
-                user_id: user.id,
-                type: 'purchase',
-                amount: totalAmount,
-                payment_method: 'المحفظة',
-                status: 'مكتمل'
-            });
+    user_id: user.id,
+    type: 'withdraw',        // ✅ نوع جديد للسحب
+    amount: totalAmount,
+    payment_method: 'المحفظة - ' + (cart[0]?.name || 'شراء بطاقة'),
+    status: 'مكتمل'
+});
 
             localStorage.removeItem('cart');
             alert("✅ تم الدفع من محفظتك بنجاح!");

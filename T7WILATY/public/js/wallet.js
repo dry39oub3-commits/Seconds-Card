@@ -88,8 +88,8 @@ async function loadTransactions(userId) {
     }
 
     list.innerHTML = transactions.map(t => {
-        const isCharge = t.type === 'charge' || t.type === 'deposit';
-const isPurchase = t.type === 'purchase';
+       const isCharge = t.type === 'charge' || t.type === 'deposit';
+const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
         const date = new Date(t.created_at).toLocaleDateString('ar-EG');
         const statusColor = t.status === 'مكتمل' ? '#22c55e' : t.status === 'مرفوض' ? '#ef4444' : '#f97316';
 
