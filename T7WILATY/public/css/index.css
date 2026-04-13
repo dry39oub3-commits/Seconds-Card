@@ -303,16 +303,21 @@ body {
 }
 
 .slider-container {
-    width: 100%;
+    width: 100vw;
     overflow: hidden; /* لمنع ظهور الصور المجاورة خارج الإطار */
     position: relative;
     border-radius: 12px;
+    margin: 0;
+    padding: 0;
 }
 
 #slidesWrapper {
     display: flex;
     transition: transform 0.5s ease-in-out;
     width: 100%;
+
+    /* منع وجود أي مسافات بين الشرائح */
+    gap: 0 !important;
 }
 
 .slide {
@@ -331,6 +336,12 @@ body {
     background-position: center !important;
     background-repeat: no-repeat !important;
     box-sizing: border-box;
+
+
+    
+    /* التعديل الأهم: منع الشريحة من التقلص وإجبارها على أخذ 100% من عرض الأب */
+    flex: 0 0 100%; 
+    width: 100%;
 }
 
 .slide h2 {
@@ -456,4 +467,11 @@ body {
     height: 200px; /* يمكنك تعديل الارتفاع حسب الرغبة */
     object-fit: cover; /* لضمان ملء الصورة للمساحة دون تمطيط */
     display: block;
+
+
+
+max-width: 100%;
+    height: auto;
+
 }
+
