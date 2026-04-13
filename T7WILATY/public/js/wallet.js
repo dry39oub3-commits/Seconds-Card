@@ -88,27 +88,28 @@ async function loadTransactions(userId) {
     }
 
     list.innerHTML = transactions.map(t => {
-        const isCharge = t.type === 'charge';
+        const isCharge = t.type === 'charge' || t.type === 'deposit';
+const isPurchase = t.type === 'purchase';
         const date = new Date(t.created_at).toLocaleDateString('ar-EG');
         const statusColor = t.status === 'مكتمل' ? '#22c55e' : t.status === 'مرفوض' ? '#ef4444' : '#f97316';
 
         return `
-            <div class="transaction-item">
-                <div class="t-info">
-                    <div class="t-icon ${isCharge ? 'plus' : 'minus'}">
-                        <i class="fas ${isCharge ? 'fa-arrow-down' : 'fa-shopping-bag'}"></i>
-                    </div>
-                    <div class="t-details">
-                        <strong>${isCharge ? 'شحن رصيد' : 'شراء بطاقة'} ${t.payment_method ? '(' + t.payment_method + ')' : ''}</strong>
-                        <span>${date}</span>
-                        <span style="font-size:11px; color:${statusColor};">${t.status}</span>
-                    </div>
-                </div>
-                <div class="t-amount ${isCharge ? 'plus' : 'minus'}">
-                    ${isCharge ? '+' : '-'}${t.amount.toLocaleString()} MRU
-                </div>
+    <div class="transaction-item">
+        <div class="t-info">
+            <div class="t-icon ${isCharge ? 'plus' : 'minus'}">
+                <i class="fas ${isCharge ? 'fa-arrow-down' : isPurchase ? 'fa-shopping-bag' : 'fa-arrow-up'}"></i>
             </div>
-        `;
+            <div class="t-details">
+                <strong>${isCharge ? 'شحن رصيد' : 'سحب - ' + (t.payment_method || 'شراء بطاقة')}</strong>
+                <span>${date}</span>
+                <span style="font-size:11px; color:${statusColor};">${t.status}</span>
+            </div>
+        </div>
+        <div class="t-amount ${isCharge ? 'plus' : 'minus'}">
+            ${isCharge ? '+' : '-'}${t.amount.toLocaleString()} MRU
+        </div>
+    </div>
+`;
     }).join('');
 }
 
