@@ -5,7 +5,7 @@ async function loadCompletedOrders() {
     const ordersList = document.getElementById('completed-orders-list');
     if (!ordersList) return;
 
-    ordersList.innerHTML = '<tr><td colspan="12" style="text-align:center;">جاري التحميل...</td></tr>';
+    ordersList.innerHTML = '<tr><td colspan="13" style="text-align:center;">جاري التحميل...</td></tr>';
 
     let query = supabase
         .from('orders')
@@ -21,12 +21,12 @@ async function loadCompletedOrders() {
     const { data: orders, error } = await query;
 
     if (error) {
-        ordersList.innerHTML = '<tr><td colspan="12" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
+        ordersList.innerHTML = '<tr><td colspan="13" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
         return;
     }
 
     if (!orders || orders.length === 0) {
-        ordersList.innerHTML = '<tr><td colspan="12" style="text-align:center;">📭 لا توجد طلبات</td></tr>';
+        ordersList.innerHTML = '<tr><td colspan="13" style="text-align:center;">📭 لا توجد طلبات</td></tr>';
         return;
     }
 
@@ -89,6 +89,11 @@ async function loadCompletedOrders() {
                 <td>${order.quantity || 1}</td>
                 <td><small>${date}</small></td>
                 <td>${paymentMethod}</td>
+                <td>
+                    ${order.supplier_id ? `<div style="font-weight:bold;font-size:13px;">${order.supplier_id}</div>` : ''}
+                    ${order.supplier_order_id ? `<div style="font-size:11px;color:#94a3b8;margin-top:3px;font-family:monospace;">ID: ${order.supplier_order_id}</div>` : ''}
+                    ${!order.supplier_id && !order.supplier_order_id ? '<span style="color:#64748b;">—</span>' : ''}
+                </td>
                 <td>${receiptBtn}</td>
                 <td>
                     <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;${style}">
