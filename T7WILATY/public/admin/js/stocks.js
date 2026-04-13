@@ -24,7 +24,6 @@ async function initializeStockPage() {
 }
 
 // --- 2. تحديث خيارات الأسعار ---
-// تأكد أن الدالة معرفة على window لتصل إليها صفحة الـ HTML
 window.updatePriceOptions = function() {
     const productId = document.getElementById('productSelect').value;
     const priceSelect = document.getElementById('priceSelect');
@@ -33,37 +32,47 @@ window.updatePriceOptions = function() {
 
     if (!priceSelect || !supplierSelect) return;
 
-    // إعادة تعيين الخيارات
+    // إعادة تعيين القوائم
     priceSelect.innerHTML = '<option value="">-- اختر الفئة السعرية --</option>';
     supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
-    if(buyButtonContainer) buyButtonContainer.style.display = 'none';
+    if (buyButtonContainer) buyButtonContainer.style.display = 'none';
 
     const product = allProducts.find(p => p.id === productId);
-    
-    if (product && product.prices) {
-        // تعبئة الفئات السعرية
-        product.prices.forEach((price, index) => {
-            priceSelect.innerHTML += `<option value="${index}">${price.label} - ${price.value} MRU</option>`;
-        });
+    if (!product) return;
 
-        // هذا هو الجزء الأهم: جلب الموردين عند تغيير الفئة السعرية
-        priceSelect.onchange = function() {
-            const selectedIndex = this.value;
-            supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
-            
-            if (selectedIndex !== "" && product.prices[selectedIndex].links) {
-                const links = product.prices[selectedIndex].links;
-                links.forEach(linkObj => {
-                    supplierSelect.innerHTML += `<option value="${linkObj.url}">${linkObj.name}</option>`;
-                });
-            }
-            
-            // استدعاء وظيفة إظهار زر الشراء
-            if (typeof window.toggleBuyButton === 'function') {
-                window.toggleBuyButton();
-            }
-        };
+    // 1. تعبئة الفئات السعرية
+    if (product.prices && Array.isArray(product.prices)) {
+        product.prices.forEach((p, index) => {
+            priceSelect.innerHTML += `<option value="${index}">${p.label} - ${p.value} MRU</option>`;
+        });
     }
+
+    // 2. معالجة تغيير الفئة السعرية لجلب الموردين
+    priceSelect.onchange = function() {
+        const idx = this.value;
+        supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
+        
+        let targetLinks = [];
+
+        // التحقق من وجود روابط داخل الفئة السعرية (كما في صورتك لإدارة المنتجات)
+        if (idx !== "" && product.prices[idx] && product.prices[idx].links) {
+            targetLinks = product.prices[idx].links;
+        } 
+        // التحقق من وجود روابط عامة للمنتج ككل (كخيار احتياطي)
+        else if (product.links) {
+            targetLinks = product.links;
+        }
+
+        if (Array.isArray(targetLinks) && targetLinks.length > 0) {
+            targetLinks.forEach(link => {
+                if (link.name && link.url) {
+                    supplierSelect.innerHTML += `<option value="${link.url}">${link.name}</option>`;
+                }
+            });
+        }
+        
+        if (typeof window.toggleBuyButton === 'function') window.toggleBuyButton();
+    };
 };
 
 // إظهار زر الشراء عند تحديد مورد
