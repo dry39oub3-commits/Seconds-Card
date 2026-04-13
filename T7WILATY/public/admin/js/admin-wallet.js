@@ -121,9 +121,10 @@ function renderUsers(list) {
                 <i class="fas fa-user"></i>
             </div>
             <div class="tx-info">
-                <h4>${user.full_name || user.email || 'مستخدم'}</h4>
+                <h4>${user.fullName || user.email || 'مستخدم'}</h4>
                 <p style="font-size:11px;">${user.id?.substring(0, 16)}...</p>
             </div>
+            
             <div class="tx-amount" style="color:#f97316;">
                 ${user.balance || 0} MRU
             </div>
@@ -138,7 +139,7 @@ function renderUsers(list) {
 async function loadPaymentMethods() {
     const { data, error } = await supabase
         .from('payment_methods')
-        .select('*')
+        .select('id, email, balance, fullName')
         .order('created_at', { ascending: false });
 
     const list = document.getElementById('methods-list');
