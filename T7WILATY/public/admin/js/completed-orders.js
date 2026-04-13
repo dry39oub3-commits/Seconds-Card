@@ -5,7 +5,7 @@ async function loadCompletedOrders() {
     const ordersList = document.getElementById('completed-orders-list');
     if (!ordersList) return;
 
-    ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">جاري التحميل...</td></tr>';
+    ordersList.innerHTML = '<tr><td colspan="12" style="text-align:center;">جاري التحميل...</td></tr>';
 
     let query = supabase
         .from('orders')
@@ -21,12 +21,12 @@ async function loadCompletedOrders() {
     const { data: orders, error } = await query;
 
     if (error) {
-        ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
+        ordersList.innerHTML = '<tr><td colspan="12" style="text-align:center;">❌ خطأ في جلب الطلبات</td></tr>';
         return;
     }
 
     if (!orders || orders.length === 0) {
-        ordersList.innerHTML = '<tr><td colspan="10" style="text-align:center;">📭 لا توجد طلبات</td></tr>';
+        ordersList.innerHTML = '<tr><td colspan="12" style="text-align:center;">📭 لا توجد طلبات</td></tr>';
         return;
     }
 
@@ -37,15 +37,6 @@ async function loadCompletedOrders() {
         'ملغي':  'background:#fee2e2; color:#dc2626;',
         'مسترد': 'background:#fef9c3; color:#ca8a04;',
     };
-
-    const receiptUrl = order.receiptUrl || order.receipt_url;
-const receiptBtn = receiptUrl
-    ? `<a href="${receiptUrl}" target="_blank" 
-          style="background:#3b82f6;color:white;padding:5px 10px;border-radius:6px;font-size:12px;text-decoration:none;">
-           <i class="fas fa-receipt"></i> عرض
-       </a>`
-    : '<span style="color:#64748b;">—</span>';
-
 
     ordersList.innerHTML = orders.map(order => {
         const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : '-';
@@ -58,27 +49,34 @@ const receiptBtn = receiptUrl
         const status = order.status || '-';
         const style = statusStyle[status] || 'background:#e2e8f0; color:#334155;';
 
-        // ===== الأكواد — مخفية بزر =====
+        // ✅ داخل الـ map
+        const receiptUrl = order.receiptUrl || order.receipt_url;
+        const receiptBtn = receiptUrl
+            ? `<a href="${receiptUrl}" target="_blank"
+                  style="background:#3b82f6;color:white;padding:5px 10px;border-radius:6px;font-size:12px;text-decoration:none;">
+                   <i class="fas fa-receipt"></i> عرض
+               </a>`
+            : '<span style="color:#64748b;">—</span>';
+
         const codesHtml = order.card_code
-            ? `
-                <button onclick="toggleCode('${order.id}')"
-                    id="btn-${order.id}"
-                    style="background:#1e40af;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;white-space:nowrap;">
-                    <i class="fas fa-key"></i> عرض الكود
-                </button>
-                <div id="codes-${order.id}" style="display:none; margin-top:8px;">
-                    ${order.card_code.split('\n').filter(c => c.trim()).map(c => `
-                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                            <span style="background:#0f172a;padding:4px 10px;border-radius:4px;font-family:monospace;font-size:12px;color:#22c55e;">
-                                ${c.trim()}
-                            </span>
-                            <button onclick="copyText('${c.trim().replace(/'/g, "\\'")}')"
-                                style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;" title="نسخ">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>`
+            ? `<button onclick="toggleCode('${order.id}')"
+                   id="btn-${order.id}"
+                   style="background:#1e40af;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;white-space:nowrap;">
+                   <i class="fas fa-key"></i> عرض الكود
+               </button>
+               <div id="codes-${order.id}" style="display:none; margin-top:8px;">
+                   ${order.card_code.split('\n').filter(c => c.trim()).map(c => `
+                       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                           <span style="background:#0f172a;padding:4px 10px;border-radius:4px;font-family:monospace;font-size:12px;color:#22c55e;">
+                               ${c.trim()}
+                           </span>
+                           <button onclick="copyText('${c.trim().replace(/'/g, "\\'")}')"
+                               style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;" title="نسخ">
+                               <i class="fas fa-copy"></i>
+                           </button>
+                       </div>
+                   `).join('')}
+               </div>`
             : '<span style="color:#64748b;">—</span>';
 
         return `
@@ -116,10 +114,10 @@ const receiptBtn = receiptUrl
 // ===== toggle الكود =====
 window.toggleCode = (orderId) => {
     const div = document.getElementById(`codes-${orderId}`);
-    const btn = div.previousElementSibling;
-    if (!div) return;
+    const btn = document.getElementById(`btn-${orderId}`);
+    if (!div || !btn) return;
 
-    if (div.style.display === 'none' || div.style.display === '') {
+    if (div.style.display === 'none') {
         div.style.display = 'block';
         btn.innerHTML = '<i class="fas fa-eye-slash"></i> إخفاء الكود';
         btn.style.background = '#374151';
@@ -183,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCompletedOrders();
     setInterval(loadCompletedOrders, 60000);
 });
+
 
 
 (function(){
