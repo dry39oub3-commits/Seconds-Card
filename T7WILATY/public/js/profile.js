@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
    
 
     // عرض البيانات الأساسية
-    document.getElementById('user-uid').textContent = user.id;
+   document.getElementById('user-uid').textContent = generateSCId(user.id);
     document.getElementById('user-display-email').textContent = user.email || '--';
 
     // تاريخ الانضمام
@@ -94,3 +94,14 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
     alert('✅ تم تحديث الصورة!');
 });
 
+// دالة تحول الـ UUID إلى SC-XXXXXX
+function generateSCId(uuid) {
+    // نأخذ أجزاء من الـ UUID ونحولها لأرقام
+    const hash = uuid.replace(/-/g, '');
+    let num = 0;
+    for (let i = 0; i < hash.length; i++) {
+        num = (num * 31 + hash.charCodeAt(i)) % 900000;
+    }
+    const scNumber = String(num + 100000).padStart(6, '0');
+    return `SC-${scNumber}`;
+}
