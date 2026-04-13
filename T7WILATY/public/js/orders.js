@@ -57,9 +57,20 @@ async function fetchUserOrders() {
     const noOrders = document.getElementById('no-orders');
     if (!ordersList) return;
 
+    // ✅ جلب المستخدم الحالي
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+
+    if (!user) {
+        ordersList.style.display = 'none';
+        if (noOrders) noOrders.style.display = 'block';
+        return;
+    }
+
     const { data: orders, error } = await supabase
         .from("orders")
         .select("*, products(image)")
+       .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
     if (error) {
