@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
             const pass = document.getElementById('reg-pass').value;
             const regBtn = document.getElementById('register-btn');
 
@@ -16,8 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const email = `${phone}@secondscard.com`;
-
             regBtn.innerText = "جاري إنشاء الحساب...";
             regBtn.disabled = true;
 
@@ -25,13 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 email, 
                 password: pass,
                 options: {
-                    data: { full_name: name, phone }
+                    data: { full_name: name }
                 }
             });
 
             if (error) {
                 if (error.message.includes('already')) {
-                    alert("هذا الرقم مسجل مسبقاً، يرجى تسجيل الدخول.");
+                    alert("هذا البريد مسجل مسبقاً، يرجى تسجيل الدخول.");
                 } else {
                     alert("خطأ: " + error.message);
                 }
@@ -40,12 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // إنشاء بيانات المستخدم في جدول users
             if (data.user) {
                 await supabase.from('users').upsert({
                     id: data.user.id,
                     fullName: name,
-                    phone: phone,
                     balance: 0,
                     role: 'user'
                 });
