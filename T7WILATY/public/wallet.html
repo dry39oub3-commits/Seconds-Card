@@ -3,25 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecondsCard</title>
+    <title>SecondsCard | المحفظة</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="stylesheet" href="css/index.css">
-     <link rel="stylesheet" href="css/wallet.css"> 
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/wallet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
 <header class="main-header">
     <div class="header-container">
         <a href="index.html" class="logo-link">
-    <div class="logo">
-        <img src="assets/logo.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain; border-radius:8px; margin-right:8px; vertical-align:middle;">
-        Seconds<span>Card</span>
-    </div>
-</a>
-
-        
-
+            <div class="logo">
+                <img src="assets/logo.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain; border-radius:8px; margin-right:8px; vertical-align:middle;">
+                Seconds<span>Card</span>
+            </div>
+        </a>
         <div class="header-actions">
             <div class="user-menu-container">
                 <button class="action-btn" id="user-icon-btn">
@@ -49,70 +46,128 @@
     </div>
 </header>
 
-    <main class="wallet-container">
-        <div class="wallet-wrapper">
-            
-            <div class="balance-section">
-                <div class="balance-card mru-card">
-                    <div class="card-inner">
-                        <i class="fas fa-wallet icon-bg"></i>
-                        <span>الرصيد المتوفر</span>
-                        <h2 id="mruBalance">0.00 MRU</h2>
-                    </div>
-                </div>
-                
-                <div class="balance-card usd-card">
-                    <div class="card-inner">
-                        <i class="fas fa-dollar-sign icon-bg"></i>
-                        <span>القيمة التقريبية</span>
-                        <h2 id="usdBalance">$0.00</h2>
-                    </div>
+<main class="wallet-container">
+    <div class="wallet-wrapper">
+
+        <!-- بطاقات الرصيد -->
+        <div class="balance-section">
+            <div class="balance-card mru-card">
+                <div class="card-inner">
+                    <i class="fas fa-wallet icon-bg"></i>
+                    <span>الرصيد المتوفر</span>
+                    <h2 id="mruBalance">0.00 MRU</h2>
                 </div>
             </div>
-
-            <button class="add-balance-btn" onclick="openDepositModal()">
-                <i class="fas fa-plus-circle"></i> إضافة رصيد للمحفظة
-            </button>
-
-            <section class="history-section">
-                <div class="section-header">
-                    <h3><i class="fas fa-history"></i> سجل العمليات المالية</h3>
+            <div class="balance-card usd-card">
+                <div class="card-inner">
+                    <i class="fas fa-dollar-sign icon-bg"></i>
+                    <span>القيمة التقريبية</span>
+                    <h2 id="usdBalance">$0.00</h2>
                 </div>
-                
-                <div id="transactions-list" class="transactions-list">
-                    <div class="loading-spinner">جاري تحميل العمليات...</div>
-                </div>
-            </section>
+            </div>
         </div>
-    </main>
 
-    <div id="depositModal" class="modal">
-        <div class="modal-content">
-            <h4>شحن الرصيد</h4>
-            <p>يرجى اختيار وسيلة الدفع المناسبة لتحويل المبلغ.</p>
-            <button onclick="closeDepositModal()" class="close-modal">إغلاق</button>
-        </div>
+        <!-- زر الشحن -->
+        <button class="add-balance-btn" onclick="openDepositModal()">
+            <i class="fas fa-plus-circle"></i> إضافة رصيد للمحفظة
+        </button>
+
+        <!-- سجل العمليات -->
+        <section class="history-section">
+            <div class="section-header">
+                <h3><i class="fas fa-history"></i> سجل العمليات المالية</h3>
+            </div>
+            <div id="transactions-list" class="transactions-list">
+                <div class="loading-spinner">جاري تحميل العمليات...</div>
+            </div>
+        </section>
+
     </div>
-<input type="hidden" id="charge-method-selected">
-    <script type="module" src="./js/wallet.js"></script>
-    <script>
-        // التعامل مع القائمة المنسدلة للمستخدم
-        const userBtn = document.getElementById('user-icon-btn');
-        const userDropdown = document.getElementById('user-dropdown');
+</main>
 
-        userBtn.onclick = (e) => {
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-        };
+<!-- ===== Modal الشحن ===== -->
+<div id="depositModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+     z-index:9999; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+    <div style="background:#1e293b; border-radius:16px; padding:28px; width:100%; max-width:480px;
+                color:#e2e8f0; position:relative; max-height:90vh; overflow-y:auto;">
 
-        window.onclick = () => {
-            userDropdown.classList.remove('show');
-        };
+        <button onclick="closeDepositModal()"
+            style="position:absolute; top:14px; left:14px; background:#ef4444; color:white;
+                   border:none; border-radius:8px; padding:5px 12px; cursor:pointer; font-size:14px;">
+            ✕ إغلاق
+        </button>
 
-        function openDepositModal() {
-            // منطق فتح نافذة الشحن
-            alert("سيتم ربط بوابات الدفع (Bankily / Masrvi) قريباً");
-        }
-    </script>
+        <h3 style="text-align:center; color:#f97316; margin-bottom:24px; font-size:1.2rem;">
+            💳 شحن الرصيد
+        </h3>
+
+        <!-- المبلغ -->
+        <div style="margin-bottom:16px;">
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+                💵 المبلغ (MRU)
+            </label>
+            <input type="number" id="charge-amount" placeholder="أدخل المبلغ..."
+                style="width:100%; padding:12px; background:#0f172a; border:1px solid #334155;
+                       border-radius:8px; color:#e2e8f0; font-size:15px; box-sizing:border-box; outline:none;">
+        </div>
+
+        <!-- بوابات الدفع -->
+        <div style="margin-bottom:16px;">
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:10px;">
+                🏦 اختر طريقة الدفع
+            </label>
+            <div id="payment-methods-container" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="text-align:center; color:#64748b; padding:20px; grid-column:1/-1;">
+                    <i class="fas fa-spinner fa-spin"></i> جاري تحميل البوابات...
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات البوابة المختارة -->
+        <div id="method-info" style="display:none; background:#0f172a; border-radius:10px;
+             padding:14px; margin-bottom:16px; border:1px solid #334155;">
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:8px;">
+                📤 أرسل المبلغ إلى الرقم التالي:
+            </p>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="method-account-display"
+                    style="font-family:monospace; font-size:16px; color:#22c55e;
+                           font-weight:bold; flex:1; word-break:break-all;"></span>
+                <button onclick="copyMethodAccount()"
+                    style="background:#334155; color:white; border:none; padding:6px 12px;
+                           border-radius:6px; cursor:pointer; font-size:12px; flex-shrink:0;">
+                    <i class="fas fa-copy"></i> نسخ
+                </button>
+            </div>
+        </div>
+
+        <!-- رفع الإيصال -->
+        <div style="margin-bottom:20px;">
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+                🧾 رفع إيصال التحويل
+            </label>
+            <input type="file" id="charge-receipt" accept="image/*"
+                style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155;
+                       border-radius:8px; color:#e2e8f0; font-size:13px; box-sizing:border-box; cursor:pointer;">
+        </div>
+
+        <input type="hidden" id="charge-method-selected">
+
+        <!-- زر الإرسال -->
+        <button onclick="submitCharge()"
+            style="width:100%; padding:14px; background:#22c55e; color:white; border:none;
+                   border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;
+                   transition:background 0.2s;">
+            <i class="fas fa-paper-plane"></i> إرسال طلب الشحن
+        </button>
+
+        <p style="text-align:center; font-size:12px; color:#64748b; margin-top:12px;">
+            🔒 سيتم مراجعة طلبك وإضافة الرصيد خلال دقائق
+        </p>
+    </div>
+</div>
+
+<script type="module" src="./js/wallet.js"></script>
+
 </body>
 </html>
