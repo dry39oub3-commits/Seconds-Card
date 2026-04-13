@@ -224,7 +224,7 @@ async function requireAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         localStorage.setItem('redirectAfterLogin', window.location.href);
-        window.location.href = 'login.html';
+        window.location.replace('login.html'); // ✅ replace بدل href — يمسح الـ history
     }
 }
 

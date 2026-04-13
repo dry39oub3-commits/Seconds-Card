@@ -58,14 +58,12 @@ function setupUserMenu() {
 // دالة تسجيل الخروج العامة
 window.handleLogout = async function() {
     if (confirm("هل تريد تسجيل الخروج؟")) {
-        const { error } = await supabase.auth.signOut();
-        if (!error) {
-            window.location.href = 'login.html';
-        } else {
-            console.error("Logout Error:", error);
-        }
+        await supabase.auth.signOut();
+        localStorage.clear();
+        // ✅ يبقى في نفس الصفحة بدل ما يحول لـ login
+        window.location.reload();
     }
-};
+}
 
 // --- 4. جلب وعرض المنتجات من Supabase ---
 async function displayProducts() {

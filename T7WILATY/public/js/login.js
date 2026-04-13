@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ✅ التحويل فقط بعد نجاح تسجيل الدخول
             const redirectTo = localStorage.getItem('redirectAfterLogin') || 'index.html';
             localStorage.removeItem('redirectAfterLogin');
-            window.location.href = redirectTo;
+            window.location.replace(redirectTo);
         });
     }
 });
