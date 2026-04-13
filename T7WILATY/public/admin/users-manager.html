@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة العملاء | SecondsCard</title>
+    <link rel="stylesheet" href="./css/dashboard-main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-orange: #f97316;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-gray: #94a3b8;
+        }
+
+        .users-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        
+        /* شريط البحث والفلاتر */
+        .controls-row {
+            display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .search-box {
+            flex: 1; min-width: 300px; position: relative;
+        }
+        .search-box input {
+            width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px;
+            background: var(--card-bg); border: 1px solid #334155; color: white;
+        }
+        .search-box i { position: absolute; right: 15px; top: 15px; color: var(--text-gray); }
+
+        /* حالة المستخدم */
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; }
+        .status-active { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .status-blocked { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        /* المودال (النافذة المنبثقة) */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            background: var(--card-bg); margin: 5% auto; padding: 25px;
+            width: 90%; max-width: 500px; border-radius: 15px; border: 1px solid #334155;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--text-gray); }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; border-radius: 8px; background: var(--dark-bg);
+            border: 1px solid #334155; color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="users-container">
+    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2><i class="fas fa-users" style="color: var(--primary-orange);"></i> إدارة حسابات العملاء</h2>
+        <div class="stats-mini">
+            <span>إجمالي العملاء: <b id="user-count">0</b></span>
+        </div>
+    </header>
+
+    <div class="controls-row">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="userSearch" placeholder="البحث عن طريق الاسم، البريد، أو الـ UID..." onkeyup="filterUsers()">
+        </div>
+        <select id="statusFilter" onchange="filterUsers()" class="form-select" style="width: auto;">
+            <option value="all">جميع الحالات</option>
+            <option value="active">نشط</option>
+            <option value="blocked">محظور</option>
+        </select>
+    </div>
+
+    <div class="inventory-table">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>العميل</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>رقم الهاتف</th>
+                    <th>الحالة</th>
+                    <th>تاريخ الانضمام</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="users-list-body">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3><i class="fas fa-user-edit"></i> تعديل بيانات العميل</h3>
+        <hr style="border: 0.5px solid #334155; margin: 15px 0;">
+        <input type="hidden" id="edit-user-id">
+        
+        <div class="form-group">
+            <label>الاسم الكامل:</label>
+            <input type="text" id="edit-name">
+        </div>
+        <div class="form-group">
+            <label>البريد الإلكتروني:</label>
+            <input type="email" id="edit-email">
+        </div>
+        <div class="form-group">
+            <label>كلمة مرور جديدة (اتركها فارغة لعدم التغيير):</label>
+            <input type="password" id="edit-password" placeholder="******">
+        </div>
+        <div class="form-group">
+            <label>حالة الحساب:</label>
+            <select id="edit-status">
+                <option value="active">نشط (مسموح له بالشراء)</option>
+                <option value="blocked">محظور (ممنوع من الدخول)</option>
+            </select>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="saveUserChanges()" class="save-all-btn" style="flex: 2;">حفظ التغييرات</button>
+            <button onclick="closeModal()" class="btn-remove" style="flex: 1; background: #334155;">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="./js/users-manager.js"></script>
+</body>
+</html>

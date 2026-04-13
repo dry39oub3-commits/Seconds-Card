@@ -117,21 +117,78 @@ async function addCodesToStock() {
     }
 }
 
-// --- 4. عرض جدول المخزون ---
+// --- تعبئة فلاتر الجدول ---
+function populateTableFilters() {
+    const filterProduct = document.getElementById('filterProduct');
+    if (!filterProduct) return;
+
+    const current = filterProduct.value;
+    filterProduct.innerHTML = '<option value="">-- كل المنتجات --</option>';
+
+    allProducts.forEach(p => {
+        const hasStock = p.prices?.some(pr => (pr.codes || []).length > 0);
+        if (hasStock) {
+            filterProduct.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        }
+    });
+
+    if (current) filterProduct.value = current;
+}
+
+// --- تحديث فلتر الفئات عند اختيار منتج ---
+window.filterInventoryTable = function() {
+    const productId = document.getElementById('filterProduct').value;
+    const filterPriceWrapper = document.getElementById('filterPriceWrapper');
+    const filterPrice = document.getElementById('filterPrice');
+
+    // تعبئة فئات المنتج المختار
+    if (productId) {
+        const product = allProducts.find(p => p.id === productId);
+        filterPrice.innerHTML = '<option value="">-- كل الفئات --</option>';
+
+        if (product?.prices) {
+            product.prices.forEach((pr, idx) => {
+                const count = (pr.codes || []).length;
+                if (count > 0) {
+                    filterPrice.innerHTML += `<option value="${idx}">${pr.label} (${count} كود)</option>`;
+                }
+            });
+        }
+        filterPriceWrapper.style.display = 'block';
+    } else {
+        filterPriceWrapper.style.display = 'none';
+        filterPrice.innerHTML = '<option value="">-- كل الفئات --</option>';
+    }
+
+    renderInventoryTable();
+};
+
 // --- 4. عرض جدول المخزون ---
 function renderInventoryTable() {
     const tbody = document.getElementById('inventory-list-body');
     if (!tbody) return;
     tbody.innerHTML = '';
 
+    const filterProductId = document.getElementById('filterProduct')?.value || '';
+    const filterPriceIdx = document.getElementById('filterPrice')?.value;
+
+    let hasRows = false;
+
     allProducts.forEach(product => {
+        // فلتر المنتج
+        if (filterProductId && product.id !== filterProductId) return;
+
         if (product.prices) {
             product.prices.forEach((price, index) => {
                 const count = (price.codes || []).length;
-                
-                // ✅ تخطي الفئات الفارغة
+
+                // إخفاء الفارغة
                 if (count === 0) return;
 
+                // فلتر الفئة
+                if (filterPriceIdx !== "" && filterPriceIdx !== undefined && parseInt(filterPriceIdx) !== index) return;
+
+                hasRows = true;
                 const lastUpdate = price.lastUpdate
                     ? new Date(price.lastUpdate).toLocaleString('ar-EG')
                     : 'غير محدد';
@@ -170,13 +227,12 @@ function renderInventoryTable() {
         }
     });
 
-    // إذا لم يكن هناك أي صفوف
-    if (tbody.innerHTML === '') {
+    if (!hasRows) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="empty-state">
                     <i class="fas fa-inbox"></i>
-                    <p>لا توجد بطاقات في المخزون حالياً</p>
+                    <p>لا توجد بطاقات تطابق الفلتر</p>
                 </td>
             </tr>`;
     }
