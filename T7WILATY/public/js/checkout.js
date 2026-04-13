@@ -34,14 +34,28 @@ async function loadPaymentMethods() {
         .order('created_at', { ascending: true });
 
     const list = document.getElementById('payment-methods-list');
+    if (!list) return;
+
+    // ✅ بطاقة المحفظة دائماً في الأول
+    let walletCard = `
+        <div class="payment-method-card" id="pm-wallet" onclick="selectMethod('wallet', '', 'المحفظة')"
+            style="cursor:pointer; border:2px solid #334155; border-radius:12px; padding:12px 18px;
+                   display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; transition:0.3s;">
+            <i class="fas fa-wallet" style="font-size:36px; color:#22c55e;"></i>
+            <span style="font-size:14px; font-weight:bold;">محفظتي</span>
+            <span style="font-size:12px; color:#94a3b8;">رصيد: ${userBalance} MRU</span>
+        </div>
+    `;
+
     if (error || !methods || methods.length === 0) {
-        list.innerHTML = '<p style="color:#888;">لا توجد طرق دفع متاحة حالياً.</p>';
+        list.innerHTML = walletCard;
         return;
     }
 
-    list.innerHTML = methods.map(m => `
+    list.innerHTML = walletCard + methods.map(m => `
         <div class="payment-method-card" id="pm-${m.id}" onclick="selectMethod('${m.id}', '${m.account_number}', '${m.name}')"
-            style="cursor:pointer; border:2px solid #334155; border-radius:12px; padding:12px 18px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; transition:0.3s;">
+            style="cursor:pointer; border:2px solid #334155; border-radius:12px; padding:12px 18px;
+                   display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; transition:0.3s;">
             <img src="${m.logo_url || ''}" alt="${m.name}" style="width:50px; height:50px; object-fit:contain;" onerror="this.style.display='none'">
             <span style="font-size:14px; font-weight:bold;">${m.name}</span>
         </div>
@@ -64,13 +78,29 @@ window.selectMethod = function(id, account, name) {
 
     const infoDiv = document.getElementById('selected-method-info');
     const accountElem = document.getElementById('selected-account');
-    if (infoDiv && accountElem) {
-        infoDiv.style.display = 'block';
-        accountElem.textContent = account || 'غير متوفر';
-    }
-
     const receiptSection = document.getElementById('receipt-upload-section');
-    if (receiptSection) receiptSection.style.display = 'block';
+
+    if (id === 'wallet') {
+        // ✅ دفع بالمحفظة — بدون إيصال
+        if (infoDiv) infoDiv.style.display = 'none';
+        if (receiptSection) receiptSection.style.display = 'none';
+
+        const statusMsg = document.getElementById('payment-status-msg');
+        if (userBalance >= totalAmount) {
+            if (statusMsg) statusMsg.innerHTML = `<p style="color:#22c55e;">✅ رصيدك كافٍ — سيتم الخصم فوراً (${userBalance} MRU)</p>`;
+        } else {
+            if (statusMsg) statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ (${userBalance} MRU) — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
+        }
+    } else {
+        // دفع عادي — يظهر الإيصال
+        if (infoDiv && accountElem) {
+            infoDiv.style.display = 'block';
+            accountElem.textContent = account || 'غير متوفر';
+        }
+        if (receiptSection) receiptSection.style.display = 'block';
+        const statusMsg = document.getElementById('payment-status-msg');
+        if (statusMsg) statusMsg.innerHTML = '';
+    }
 };
 
 async function checkAuthAndLoadData() {
@@ -125,17 +155,79 @@ async function executePayment() {
         return;
     }
 
-    const receiptFile = document.getElementById('receipt-input')?.files[0];
-    if (!receiptFile) {
-        alert('⚠️ الرجاء رفع إيصال الدفع!');
-        return;
-    }
-
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     const btn = document.getElementById('confirm-payment-btn');
 
     if (totalAmount <= 0) return;
+
+    // ===== دفع بالمحفظة =====
+    if (selectedPaymentMethod.id === 'wallet') {
+        if (userBalance < totalAmount) {
+            alert('⚠️ رصيدك غير كافٍ! اشحن محفظتك أولاً.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
+
+        try {
+            // خصم الرصيد
+            const newBalance = userBalance - totalAmount;
+            const { error: balanceError } = await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('id', user.id);
+
+            if (balanceError) throw balanceError;
+
+            // إنشاء الطلبات
+            const generateOrderNumber = () => `S${Math.floor(100000 + Math.random() * 900000)}`;
+            const orders = cart.map(item => ({
+                order_number: generateOrderNumber(),
+                customer_name: user?.user_metadata?.full_name || 'مستخدم',
+                customer_phone: user?.email || '',
+                product_id: item.productId || null,
+                product_name: item.name,
+                label: item.label || null,
+                price: item.price,
+                quantity: item.quantity || 1,
+                status: 'قيد الانتظار',
+                paymentMethod: 'المحفظة',
+                userId: user.id
+            }));
+
+            const { error: insertError } = await supabase.from("orders").insert(orders);
+            if (insertError) throw insertError;
+
+            // تسجيل العملية في wallet_transactions
+            await supabase.from('wallet_transactions').insert({
+                user_id: user.id,
+                type: 'purchase',
+                amount: totalAmount,
+                payment_method: 'المحفظة',
+                status: 'مكتمل'
+            });
+
+            localStorage.removeItem('cart');
+            alert("✅ تم الدفع من محفظتك بنجاح!");
+            window.location.href = "orders.html";
+
+        } catch (error) {
+            console.error("Payment Error:", error);
+            alert("❌ حدث خطأ: " + error.message);
+            btn.disabled = false;
+            btn.innerHTML = "تأكيد الدفع الآن";
+        }
+        return;
+    }
+
+    // ===== دفع عادي بالإيصال =====
+    const receiptFile = document.getElementById('receipt-input')?.files[0];
+    if (!receiptFile) {
+        alert('⚠️ الرجاء رفع إيصال الدفع!');
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
@@ -143,8 +235,7 @@ async function executePayment() {
     try {
         const filePath = `receipts/${Date.now()}`;
         const { error: uploadError } = await supabase.storage
-            .from('receipts')
-            .upload(filePath, receiptFile);
+            .from('receipts').upload(filePath, receiptFile);
 
         let receiptUrl = '';
         if (!uploadError) {
@@ -153,7 +244,6 @@ async function executePayment() {
         }
 
         const generateOrderNumber = () => `S${Math.floor(100000 + Math.random() * 900000)}`;
-
         const orders = cart.map(item => ({
             order_number: generateOrderNumber(),
             customer_name: user?.user_metadata?.full_name || 'مستخدم',
@@ -165,13 +255,11 @@ async function executePayment() {
             quantity: item.quantity || 1,
             status: 'قيد الانتظار',
             receiptUrl: receiptUrl,
-            paymentMethod: selectedPaymentMethod.name
+            paymentMethod: selectedPaymentMethod.name,
+            userId: user.id
         }));
 
-        const { error: insertError } = await supabase
-            .from("orders")
-            .insert(orders);
-
+        const { error: insertError } = await supabase.from("orders").insert(orders);
         if (insertError) throw insertError;
 
         localStorage.removeItem('cart');
