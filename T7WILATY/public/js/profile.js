@@ -4,10 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
 
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+   
 
     // عرض البيانات الأساسية
     document.getElementById('user-uid').textContent = user.id;
@@ -97,9 +94,3 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
     alert('✅ تم تحديث الصورة!');
 });
 
-// تسجيل الخروج
-window.handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    window.location.href = "index.html";
-};

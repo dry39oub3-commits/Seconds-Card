@@ -53,19 +53,7 @@ async function updateDashboardStats() {
     }
 }
 
-// --- إدارة تسجيل الخروج ---
-window.handleAdminLogout = async () => {
-    if (confirm("هل أنت متأكد من تسجيل الخروج من لوحة الإدارة؟")) {
-        try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-            localStorage.clear();
-            window.location.href = "../login.html";
-        } catch (error) {
-            console.error("Logout Error:", error);
-        }
-    }
-};
+
 
 // تشغيل الدالة عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', () => {

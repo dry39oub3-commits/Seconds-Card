@@ -63,6 +63,7 @@ function renderAll() {
 
 function renderList(containerId, list) {
     const container = document.getElementById(containerId);
+    if (!container) return;
     if (!list || list.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">لا توجد بيانات</p>';
         return;
@@ -70,7 +71,7 @@ function renderList(containerId, list) {
 
     container.innerHTML = list.map(tx => {
         const isCharge = tx.type === 'charge';
-        const date = new Date(tx.created_at).toLocaleString('ar-EG');
+        const date = new Date(tx.created_at).toLocaleString('fr-FR');
         const isPending = tx.status === 'قيد المراجعة';
 
         return `
@@ -108,6 +109,7 @@ function renderList(containerId, list) {
 
 function renderUsers(list) {
     const container = document.getElementById('users-list');
+    if (!container) return;
     if (!list || list.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">لا توجد بيانات</p>';
         return;
@@ -133,38 +135,62 @@ function renderUsers(list) {
     `).join('');
 }
 
+async function loadPaymentMethods() {
+    const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    const list = document.getElementById('methods-list');
+    if (!list) return;
+
+    if (error || !data || data.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا توجد بوابات دفع.</p>';
+        return;
+    }
+
+    list.innerHTML = data.map(m => `
+        <div class="tx-card" style="align-items:center;">
+            <img src="${m.logo_url || ''}" 
+                 style="width:50px;height:50px;object-fit:contain;background:white;border-radius:8px;padding:4px;"
+                 onerror="this.style.display='none'">
+            <div class="tx-info">
+                <h4>${m.name}</h4>
+                <p><i class="fas fa-hashtag"></i> ${m.account_number || 'لا يوجد رقم حساب'}</p>
+            </div>
+            <div style="display:flex; gap:8px; margin-right:auto;">
+                <button onclick="toggleMethod('${m.id}', ${m.is_active})"
+                    style="padding:7px 14px; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold;
+                           background:${m.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'};
+                           color:${m.is_active ? '#22c55e' : '#ef4444'};">
+                    ${m.is_active ? '✅ مفعّل' : '❌ معطّل'}
+                </button>
+                <button onclick="deleteMethod('${m.id}')"
+                    style="padding:7px 12px; background:rgba(239,68,68,0.15); color:#ef4444; border:none; border-radius:8px; cursor:pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
 window.approveTransaction = async (txId, userId, amount, type) => {
     if (!confirm(`هل تريد ${type === 'charge' ? 'إضافة' : 'خصم'} ${amount} MRU ${type === 'charge' ? 'لرصيد' : 'من رصيد'} المستخدم؟`)) return;
 
     try {
-        // جلب الرصيد الحالي
         const { data: userData } = await supabase
-            .from('users')
-            .select('balance')
-            .eq('id', userId)
-            .single();
+            .from('users').select('balance').eq('id', userId).single();
 
         const currentBalance = userData?.balance || 0;
-        const newBalance = type === 'charge'
-            ? currentBalance + amount
-            : currentBalance - amount;
+        const newBalance = type === 'charge' ? currentBalance + amount : currentBalance - amount;
 
-        if (newBalance < 0) {
-            alert('⚠️ رصيد المستخدم غير كافٍ للسحب!');
-            return;
-        }
+        if (newBalance < 0) { alert('⚠️ رصيد المستخدم غير كافٍ للسحب!'); return; }
 
-        // تحديث الرصيد
         await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
-
-        // تحديث حالة المعاملة
-        await supabase.from('wallet_transactions')
-            .update({ status: 'مكتمل' })
-            .eq('id', txId);
+        await supabase.from('wallet_transactions').update({ status: 'مكتمل' }).eq('id', txId);
 
         alert('✅ تمت الموافقة وتحديث الرصيد!');
         loadAll();
-
     } catch (err) {
         alert('خطأ: ' + err.message);
     }
@@ -172,12 +198,7 @@ window.approveTransaction = async (txId, userId, amount, type) => {
 
 window.rejectTransaction = async (txId) => {
     if (!confirm('هل تريد رفض هذا الطلب؟')) return;
-
-    const { error } = await supabase
-        .from('wallet_transactions')
-        .update({ status: 'مرفوض' })
-        .eq('id', txId);
-
+    const { error } = await supabase.from('wallet_transactions').update({ status: 'مرفوض' }).eq('id', txId);
     if (error) alert('خطأ: ' + error.message);
     else { alert('تم رفض الطلب.'); loadAll(); }
 };
@@ -197,18 +218,9 @@ window.closeEditModal = () => {
 window.saveBalance = async () => {
     const newBalance = parseFloat(document.getElementById('edit-balance-input').value);
     if (isNaN(newBalance) || newBalance < 0) { alert('⚠️ أدخل رصيداً صحيحاً'); return; }
-
-    const { error } = await supabase
-        .from('users')
-        .update({ balance: newBalance })
-        .eq('id', currentEditUserId);
-
+    const { error } = await supabase.from('users').update({ balance: newBalance }).eq('id', currentEditUserId);
     if (error) alert('خطأ: ' + error.message);
-    else {
-        closeEditModal();
-        alert('✅ تم تحديث الرصيد!');
-        loadAll();
-    }
+    else { closeEditModal(); alert('✅ تم تحديث الرصيد!'); loadAll(); }
 };
 
 window.viewReceipt = (url) => {
@@ -216,17 +228,29 @@ window.viewReceipt = (url) => {
     document.getElementById('receipt-modal').classList.add('active');
 };
 
+window.toggleMethod = async (id, current) => {
+    await supabase.from('payment_methods').update({ is_active: !current }).eq('id', id);
+    loadPaymentMethods();
+};
+
+window.deleteMethod = async (id) => {
+    if (!confirm('هل تريد حذف هذه البوابة؟')) return;
+    await supabase.from('payment_methods').delete().eq('id', id);
+    loadPaymentMethods();
+};
+
 window.switchTab = (tab) => {
     activeTab = tab;
+    const tabs = ['pending', 'charge', 'withdraw', 'users', 'methods'];
     document.querySelectorAll('.tab-btn').forEach((b, i) => {
-        b.classList.toggle('active', ['pending','charge','withdraw','users'][i] === tab);
+        b.classList.toggle('active', tabs[i] === tab);
     });
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.getElementById(`tab-${tab}`)?.classList.add('active');
+    if (tab === 'methods') loadPaymentMethods();
 };
 
 window.applyFilter = () => renderAll();
 
-// تحديث كل 30 ثانية
 loadAll();
 setInterval(loadAll, 30000);
