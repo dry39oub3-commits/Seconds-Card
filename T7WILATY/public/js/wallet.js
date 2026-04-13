@@ -137,9 +137,10 @@ async function loadPaymentMethods() {
     const container = document.getElementById('payment-methods-container');
 
     const { data: methods, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('is_active', true);
+    .from('payment_methods')
+    .select('*')
+    .eq('is_active', true)
+    .eq('show_in_wallet', true)
 
     if (error || !methods || methods.length === 0) {
         container.innerHTML = '<p style="color:#64748b; text-align:center; grid-column:1/-1;">لا توجد بوابات دفع متاحة حالياً</p>';

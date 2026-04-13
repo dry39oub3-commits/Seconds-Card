@@ -30,10 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== جلب بوابات الدفع =====
 async function loadPaymentMethods() {
     const { data: methods, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: true });
+    .from('payment_methods')
+    .select('*')
+    .eq('is_active', true)
+    .eq('show_in_checkout', true)
+    .order('created_at', { ascending: true });
 
     const list = document.getElementById('payment-methods-list');
     if (!list) return;
@@ -44,7 +45,7 @@ async function loadPaymentMethods() {
                    display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; transition:0.3s;">
             <i class="fas fa-wallet" style="font-size:36px; color:#22c55e;"></i>
             <span style="font-size:14px; font-weight:bold;">محفظتي</span>
-            <span style="font-size:12px; color:#94a3b8;">رصيد: ${userBalance} MRU</span>
+            <span style="font-size:12px; color:#94a3b8;">رصيدك: ${userBalance} MRU</span>
         </div>
     `;
 
