@@ -69,7 +69,7 @@ async function fetchUserOrders() {
 
     const { data: orders, error } = await supabase
     .from("orders")
-    .select("*")
+    .select("*, products(image, name)")
     .eq("user_id", user.id)   // ✅ فلترة بالمستخدم
     .order("created_at", { ascending: false }); // ✅ الأحدث أولاً
 
