@@ -70,7 +70,8 @@ async function fetchUserOrders() {
     const { data: orders, error } = await supabase
     .from("orders")
     .select("*")
-    .limit(1);
+    .eq("user_id", user.id)   // ✅ فلترة بالمستخدم
+    .order("created_at", { ascending: false }); // ✅ الأحدث أولاً
 
 console.log("columns:", Object.keys(orders?.[0] || {}));
 
@@ -89,7 +90,7 @@ console.log("columns:", Object.keys(orders?.[0] || {}));
         const date = order.created_at
             ? new Date(order.created_at).toLocaleDateString('fr-FR')
             : 'تاريخ غير معروف';
-        const image = order.products?.image || '';
+        const image = order.products?.image || order.card_image || order.product_image || '';
         const isCompleted = order.status === 'مكتمل';
         const orderNum = order.order_number || '#' + order.id.toString().substring(0, 8);
         const safeCode = (order.card_code || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
