@@ -87,7 +87,6 @@ window.selectMethod = function(id, account, name) {
 
         const statusMsg = document.getElementById('payment-status-msg');
         if (userBalance >= totalAmount) {
-            if (statusMsg) statusMsg.innerHTML = `<p style="color:#22c55e;">✅ رصيدك كافٍ — سيتم الخصم فوراً (${userBalance} MRU)</p>`;
         } else {
             if (statusMsg) statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ (${userBalance} MRU) — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
         }
