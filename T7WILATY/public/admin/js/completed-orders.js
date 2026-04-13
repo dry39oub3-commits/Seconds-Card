@@ -208,12 +208,36 @@ function updateSummary(orders) {
 // ==================== استرداد ====================
 window.refundOrder = async (orderId) => {
     if (!confirm('هل تريد تحديد هذا الطلب كمسترد؟')) return;
+
+    // جلب بيانات الطلب أولاً
+    const { data: order, error: fetchError } = await supabase
+        .from('orders')
+        .select('card_code')
+        .eq('id', orderId)
+        .single();
+
+    if (fetchError) { alert('خطأ: ' + fetchError.message); return; }
+
+    // تحديث الحالة
     const { error } = await supabase
         .from('orders')
         .update({ status: 'مسترد' })
         .eq('id', orderId);
+
     if (error) { alert('خطأ: ' + error.message); return; }
-    alert('✅ تم تحديث الطلب كمسترد.');
+
+    // حذف الأكواد من used_codes عشان تصير قابلة للاستخدام مرة ثانية
+    if (order?.card_code) {
+        const codes = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
+        for (const code of codes) {
+            await supabase
+                .from('used_codes')
+                .delete()
+                .eq('code', code);
+        }
+    }
+
+    alert('✅ تم تحديث الطلب كمسترد وتحرير الأكواد.');
     loadCompletedOrders();
 };
 
