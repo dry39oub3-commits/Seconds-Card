@@ -215,9 +215,12 @@ window.approveOrder = async (orderId, quantity) => {
     const supplierOrderId = document.getElementById('modal-supplier-order-id')?.value.trim() || '';
 
     if (codes.length === 0) { alert('⚠️ يرجى إدخال كود البطاقة!'); return; }
-    if (codes.length < quantity) {
-        if (!confirm(`⚠️ أدخلت ${codes.length} كود من أصل ${quantity}. هل تريد المتابعة؟`)) return;
+    
+    if (codes.length !== quantity) {
+        alert(`⚠️ عدد الأكواد (${codes.length}) لا يطابق الكمية المطلوبة (${quantity})!\n\nيجب إدخال ${quantity} كود بالضبط.`);
+        return;
     }
+    
     if (!cost || parseFloat(cost) <= 0) { alert('⚠️ يرجى إدخال سعر التكلفة!'); return; }
     if (!supplierId) { alert('⚠️ يرجى إدخال أو اختيار اسم المورد!'); return; }
 
