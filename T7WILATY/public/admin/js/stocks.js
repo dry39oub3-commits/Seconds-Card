@@ -217,6 +217,25 @@ function renderInventoryTable() {
                                 ${count} كود
                             </span>
                         </td>
+                        <td>
+                            ${price.costPrice > 0 ? (() => {
+                                const costPerCode = (price.costPrice / count);
+                                const salePriceMRU = parseFloat(price.value) || 0;
+                                const costInMRU = costPerCode * 40;
+                                const profitPerCode = salePriceMRU - costInMRU;
+                                return `
+                                    <div style="font-size:12px; line-height:1.8;">
+                                        <span style="color:#94a3b8;">تكلفة/كود: </span>
+                                        <span style="color:#f97316; font-weight:bold;">$${costPerCode.toFixed(3)}</span>
+                                        <br>
+                                        <span style="color:#94a3b8;">ربح/كود: </span>
+                                        <span style="color:${profitPerCode >= 0 ? '#22c55e' : '#ef4444'}; font-weight:bold;">
+                                            ${profitPerCode.toFixed(0)} MRU
+                                        </span>
+                                    </div>
+                                `;
+                            })() : '<span style="color:#475569;">—</span>'}
+                        </td>
                         <td style="font-size:12px; color:var(--text-muted);">${lastUpdate}</td>
                         <td>
                             <button class="btn-view" onclick="openCodesModal('${product.id}', ${index})">
