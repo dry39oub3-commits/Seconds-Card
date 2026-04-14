@@ -44,6 +44,7 @@ async function checkAuthState() {
     const userIcon = document.querySelector('#user-icon-btn i');
     if (user && userIcon) userIcon.className = 'fas fa-user-check';
     fetchUserOrders();
+    watchOrders(); // ← أضف هذا السطر فقط
 }
 
 window.handleLogout = async () => {
@@ -183,3 +184,110 @@ window.copyCode = (code) => {
     }
     navigator.clipboard.writeText(code).then(() => alert("✅ تم نسخ الكود بنجاح!"));
 };
+
+
+
+// ==================== إشعار صوتي ====================
+function playNotificationSound() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    const notes = [523, 659, 784, 1047]; // Do Mi Sol Do
+    notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+        osc.start(ctx.currentTime + i * 0.15);
+        osc.stop(ctx.currentTime + i * 0.15 + 0.3);
+    });
+}
+
+// ==================== مراقبة حالة الطلبات ====================
+async function watchOrders() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) return;
+
+    // جلب الطلبات المكتملة الحالية لتجنب إشعار القديمة
+    const { data: existing } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'مكتمل');
+
+    const notifiedIds = new Set((existing || []).map(o => o.id));
+
+    // الاشتراك في التغييرات
+    supabase
+        .channel('orders-watch')
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+            filter: `user_id=eq.${user.id}`
+        }, (payload) => {
+            const updated = payload.new;
+
+            // إشعار فقط للطلبات المكتملة الجديدة
+            if (updated.status === 'مكتمل' && !notifiedIds.has(updated.id)) {
+                notifiedIds.add(updated.id);
+                playNotificationSound();
+                showToast(`✅ طلبك "${updated.product_name}" تم بنجاح! اضغط لعرض الكود`);
+                fetchUserOrders(); // تحديث القائمة
+            }
+
+            // إشعار الرفض
+            if (updated.status === 'ملغي' && !notifiedIds.has('cancelled_' + updated.id)) {
+                notifiedIds.add('cancelled_' + updated.id);
+                showToast(`❌ تم رفض طلب "${updated.product_name}"`, '#ef4444');
+                fetchUserOrders();
+            }
+        })
+        .subscribe();
+}
+
+// ==================== Toast إشعار ====================
+function showToast(message, color = '#22c55e') {
+    document.getElementById('order-toast')?.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'order-toast';
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        border-right: 4px solid ${color};
+        font-size: 15px;
+        font-family: 'Cairo', sans-serif;
+        z-index: 99999;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        cursor: pointer;
+        max-width: 90vw;
+        text-align: center;
+        animation: slideUp 0.3s ease;
+    `;
+    toast.textContent = message;
+    toast.onclick = () => toast.remove();
+
+    // CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+    `;
+    document.head.appendChild(style);
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 6000);
+}
