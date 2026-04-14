@@ -96,13 +96,25 @@ window.openOrderModal = (order) => {
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+           <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
                     <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)</label>
                     <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
                         oninput="calcProfit(${order.price})"
                         style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+
+                    <!-- زر السحب من المخزون -->
+                    <button onclick="loadFromStock('${order.product_id}', '${order.label}', ${order.quantity || 1})"
+                        style="width:100%; margin-top:10px; padding:10px; background:rgba(59,130,246,0.15);
+                            color:#3b82f6; border:1px solid #3b82f6; border-radius:8px;
+                            cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s;"
+                        onmouseover="this.style.background='rgba(59,130,246,0.3)'"
+                        onmouseout="this.style.background='rgba(59,130,246,0.15)'">
+                        <i class="fas fa-box-open"></i> سحب من المخزون
+                    </button>
+                    <p id="stock-status" style="font-size:11px; color:#94a3b8; margin-top:5px; text-align:center;"></p>
                 </div>
+
                 <div>
                     <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
                         🔑 أكواد البطاقة (${order.quantity || 1} كود) — كود في كل سطر
@@ -287,3 +299,52 @@ document.addEventListener('DOMContentLoaded', () => {
     checkNewOrders();
     setInterval(() => { loadOrders(); checkNewOrders(); }, 30000);
 });
+
+// ==================== سحب من المخزون ====================
+window.loadFromStock = async (productId, label, quantity) => {
+    const statusEl = document.getElementById('stock-status');
+    if (!productId) {
+        statusEl.textContent = '⚠️ لا يوجد منتج مرتبط';
+        statusEl.style.color = '#ef4444';
+        return;
+    }
+
+    statusEl.textContent = '⏳ جاري البحث في المخزون...';
+    statusEl.style.color = '#94a3b8';
+
+    // جلب أكواد من المخزون حسب المنتج والفئة
+    let query = supabase
+        .from('stock')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('is_used', false)
+        .limit(quantity);
+
+    if (label) query = query.eq('label', label);
+
+    const { data: stockItems, error } = await query;
+
+    if (error || !stockItems || stockItems.length === 0) {
+        statusEl.textContent = '❌ لا توجد أكواد في المخزون لهذا المنتج';
+        statusEl.style.color = '#ef4444';
+        return;
+    }
+
+    if (stockItems.length < quantity) {
+        statusEl.textContent = `⚠️ يوجد ${stockItems.length} كود فقط من أصل ${quantity} مطلوب`;
+        statusEl.style.color = '#f97316';
+    } else {
+        statusEl.textContent = `✅ تم سحب ${stockItems.length} كود من المخزون`;
+        statusEl.style.color = '#22c55e';
+    }
+
+    // وضع الأكواد في حقل النص
+    const codesTextarea = document.getElementById('modal-code');
+    codesTextarea.value = stockItems.map(s => s.code).join('\n');
+
+    // وضع سعر التكلفة إذا موجود
+    if (stockItems[0]?.cost_price) {
+        document.getElementById('modal-cost').value = stockItems[0].cost_price;
+        calcProfit(parseFloat(document.getElementById('modal-cost').closest('[id]')?.dataset?.price || 0));
+    }
+};
