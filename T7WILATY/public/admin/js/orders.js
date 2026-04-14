@@ -272,28 +272,29 @@ window.approveOrder = async (orderId, quantity) => {
     }
 
     // ===== حذف الأكواد المستخدمة من المخزون =====
-    const { data: productData } = await supabase
+    // ===== حذف الأكواد المستخدمة من المخزون =====
+const { data: productData } = await supabase
+    .from('products')
+    .select('prices')
+    .eq('id', orderData.product_id)
+    .single();
+
+if (productData?.prices) {
+    const updatedPrices = productData.prices.map(p => {
+        if (p.label === orderData.label) {
+            const remainingCodes = (p.codes || []).filter(
+                c => !codes.includes(c.code.trim())
+            );
+            return { ...p, codes: remainingCodes };
+        }
+        return p;
+    });
+
+    await supabase
         .from('products')
-        .select('prices')
-        .eq('id', orderData.product_id)
-        .single();
-
-    if (productData?.prices) {
-        const updatedPrices = productData.prices.map(p => {
-            if (p.label === orderData.label) {
-                return {
-                    ...p,
-                    codes: (p.codes || []).filter(c => !codes.includes(c.code))
-                };
-            }
-            return p;
-        });
-
-        await supabase
-            .from('products')
-            .update({ prices: updatedPrices })
-            .eq('id', orderData.product_id);
-    }
+        .update({ prices: updatedPrices })
+        .eq('id', orderData.product_id);
+}
 
     document.getElementById('order-modal').remove();
     alert('✅ تم قبول الطلب بنجاح!');
