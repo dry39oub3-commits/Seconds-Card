@@ -283,7 +283,9 @@ if (productData?.prices) {
     const updatedPrices = productData.prices.map(p => {
         if (p.label === orderData.label) {
             const remainingCodes = (p.codes || []).filter(
-                c => !codes.includes(c.code.trim())
+                stockItem => !codes.includes(
+                    (typeof stockItem === 'string' ? stockItem : stockItem.code).trim()
+                )
             );
             return { ...p, codes: remainingCodes };
         }
