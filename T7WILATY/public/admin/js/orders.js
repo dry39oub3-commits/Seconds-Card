@@ -303,7 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==================== سحب من المخزون ====================
 window.loadFromStock = async (productId, label, quantity) => {
     const statusEl = document.getElementById('stock-status');
-    if (!productId) {
+
+    if (!productId || productId === 'null' || productId === 'undefined') {
         statusEl.textContent = '⚠️ لا يوجد منتج مرتبط';
         statusEl.style.color = '#ef4444';
         return;
@@ -312,39 +313,61 @@ window.loadFromStock = async (productId, label, quantity) => {
     statusEl.textContent = '⏳ جاري البحث في المخزون...';
     statusEl.style.color = '#94a3b8';
 
-    // جلب أكواد من المخزون حسب المنتج والفئة
-    let query = supabase
-        .from('stock')
-        .select('*')
-        .eq('product_id', productId)
-        .eq('is_used', false)
-        .limit(quantity);
+    // جلب المنتج من products
+    const { data: product, error } = await supabase
+        .from('products')
+        .select('prices, name')
+        .eq('id', productId)
+        .single();
 
-    if (label) query = query.eq('label', label);
-
-    const { data: stockItems, error } = await query;
-
-    if (error || !stockItems || stockItems.length === 0) {
-        statusEl.textContent = '❌ لا توجد أكواد في المخزون لهذا المنتج';
+    if (error || !product) {
+        statusEl.textContent = '❌ تعذر جلب بيانات المنتج';
         statusEl.style.color = '#ef4444';
         return;
     }
 
-    if (stockItems.length < quantity) {
-        statusEl.textContent = `⚠️ يوجد ${stockItems.length} كود فقط من أصل ${quantity} مطلوب`;
+    // إيجاد الفئة الصحيحة
+    const prices = product.prices || [];
+    const priceObj = label
+        ? prices.find(p => p.label === label)
+        : prices[0];
+
+    if (!priceObj) {
+        statusEl.textContent = `❌ لم يتم إيجاد الفئة "${label}" في المنتج`;
+        statusEl.style.color = '#ef4444';
+        return;
+    }
+
+    const codes = priceObj.codes || [];
+
+    if (codes.length === 0) {
+        statusEl.textContent = '❌ لا توجد أكواد في المخزون لهذه الفئة';
+        statusEl.style.color = '#ef4444';
+        return;
+    }
+
+    // سحب الأكواد المطلوبة
+    const selectedCodes = codes.slice(0, quantity);
+
+    if (selectedCodes.length < quantity) {
+        statusEl.textContent = `⚠️ يوجد ${selectedCodes.length} كود فقط من أصل ${quantity} مطلوب`;
         statusEl.style.color = '#f97316';
     } else {
-        statusEl.textContent = `✅ تم سحب ${stockItems.length} كود من المخزون`;
+        statusEl.textContent = `✅ تم سحب ${selectedCodes.length} كود من المخزون`;
         statusEl.style.color = '#22c55e';
     }
 
     // وضع الأكواد في حقل النص
-    const codesTextarea = document.getElementById('modal-code');
-    codesTextarea.value = stockItems.map(s => s.code).join('\n');
+    document.getElementById('modal-code').value = selectedCodes.join('\n');
 
     // وضع سعر التكلفة إذا موجود
-    if (stockItems[0]?.cost_price) {
-        document.getElementById('modal-cost').value = stockItems[0].cost_price;
-        calcProfit(parseFloat(document.getElementById('modal-cost').closest('[id]')?.dataset?.price || 0));
+    if (priceObj.costPrice || priceObj.cost_price) {
+        document.getElementById('modal-cost').value = priceObj.costPrice || priceObj.cost_price;
+    }
+
+    // وضع اسم المورد إذا موجود
+    if (priceObj.supplierName) {
+        const supplierInput = document.getElementById('modal-supplier-id');
+        if (supplierInput) supplierInput.value = priceObj.supplierName;
     }
 };
