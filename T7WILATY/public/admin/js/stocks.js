@@ -1,7 +1,5 @@
 import { supabase } from '../../js/supabase-config.js';
 
-const USD_TO_MRU = 43; // سعر الدولار بالأوقية
-
 let allProducts = [];
 let _modalProductId = null;
 let _modalPriceIndex = null;
@@ -25,34 +23,6 @@ async function initializeStockPage() {
     });
 
     renderInventoryTable();
-    populateTableFilters();
-    updateStats();
-}
-
-// --- إحصائيات ---
-function updateStats() {
-    let totalCodes = 0;
-    let totalCost = 0;
-
-    allProducts.forEach(p => {
-        (p.prices || []).forEach(pr => {
-            const codes = pr.codes || [];
-            totalCodes += codes.length;
-            codes.forEach(c => {
-                if (typeof c === 'object' && c.costPrice) {
-                    totalCost += parseFloat(c.costPrice) || 0;
-                }
-            });
-        });
-    });
-
-    const totalAdded = document.getElementById('total-added-cards');
-    const totalCostEl = document.getElementById('total-cost');
-    const totalInv = document.getElementById('total-inventory');
-
-    if (totalAdded) totalAdded.textContent = totalCodes;
-    if (totalCostEl) totalCostEl.textContent = `$${totalCost.toFixed(2)}`;
-    if (totalInv) totalInv.textContent = totalCodes;
 }
 
 // --- 2. تحديث خيارات الأسعار ---
@@ -123,12 +93,12 @@ async function addCodesToStock() {
         const updatedPrices = [...product.prices];
         if (!updatedPrices[priceIndex].codes) updatedPrices[priceIndex].codes = [];
 
-        // ✅ كل كود يحمل تكلفته الخاصة (سعر كود واحد)
+        // ===== كل كود يحمل بياناته الخاصة =====
         const newCodeObjects = newCodes.map(code => ({
             code: code,
             supplierOrderId: supplierOrderId,
             supplierName: supplierName,
-            costPrice: costPrice, // سعر الكود الواحد بالدولار
+            costPrice: costPrice,
             addedAt: new Date().toISOString()
         }));
 
@@ -227,6 +197,7 @@ function renderInventoryTable() {
                     ? new Date(price.lastUpdate).toLocaleString('ar-EG')
                     : 'غير محدد';
 
+                // جمع الموردين الفريدين من الأكواد
                 const suppliersSet = new Set(
                     (price.codes || [])
                         .map(c => typeof c === 'object' ? c.supplierName : null)
@@ -236,6 +207,7 @@ function renderInventoryTable() {
                     ? [...suppliersSet].map(s => `<span class="supplier-chip"><i class="fas fa-store"></i> ${s}</span>`).join(' ')
                     : '<span style="color:#475569;">—</span>';
 
+                // جمع Order IDs الفريدة
                 const orderIdsSet = new Set(
                     (price.codes || [])
                         .map(c => typeof c === 'object' ? c.supplierOrderId : null)
@@ -244,14 +216,6 @@ function renderInventoryTable() {
                 const orderIdsText = orderIdsSet.size > 0
                     ? [...orderIdsSet].map(id => `<span class="order-chip">${id}</span>`).join(' ')
                     : '<span style="color:#475569;">—</span>';
-
-                // ✅ حساب إحصائيات المخزون
-                const codes = price.codes || [];
-                const salePriceMRU = parseFloat(price.value) || 0;
-                const firstCode = codes.find(c => typeof c === 'object' && c.costPrice);
-                const costPerCode = firstCode ? parseFloat(firstCode.costPrice) : 0;
-                const costPerCodeMRU = costPerCode * USD_TO_MRU;
-                const profitPerCode = salePriceMRU - costPerCodeMRU;
 
                 tbody.innerHTML += `
                     <tr>
@@ -264,12 +228,6 @@ function renderInventoryTable() {
                                 <i class="fas fa-check-circle"></i>
                                 ${count} كود
                             </span>
-                            ${costPerCode > 0 ? `
-                            <div style="font-size:11px; color:#94a3b8; margin-top:4px; display:flex; gap:10px; flex-wrap:wrap;">
-                                <span>تكلفة/كود: <strong style="color:#f97316;">$${costPerCode}</strong></span>
-                                <span>سعر البيع: <strong style="color:#e2e8f0;">${salePriceMRU} MRU</strong></span>
-                                <span>ربح/كود: <strong style="color:${profitPerCode >= 0 ? '#22c55e' : '#ef4444'};">${profitPerCode.toFixed(0)} MRU</strong></span>
-                            </div>` : ''}
                         </td>
                         <td style="font-size:12px; color:var(--text-muted);">${lastUpdate}</td>
                         <td>
@@ -326,6 +284,7 @@ function renderCodesList(codes) {
     }
 
     container.innerHTML = codes.map((item, i) => {
+        // دعم الصيغتين: string قديم أو object جديد
         const code = typeof item === 'string' ? item : item.code;
         const orderId = typeof item === 'object' ? item.supplierOrderId : null;
         const supplier = typeof item === 'object' ? item.supplierName : null;
@@ -338,7 +297,7 @@ function renderCodesList(codes) {
                 <div style="font-size:11px; color:#64748b; margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;">
                     ${orderId ? `<span><i class="fas fa-hashtag" style="color:#3b82f6;"></i> ${orderId}</span>` : ''}
                     ${supplier && supplier !== '-- اختر المورد --' ? `<span><i class="fas fa-store" style="color:#22c55e;"></i> ${supplier}</span>` : ''}
-                    ${cost ? `<span><i class="fas fa-dollar-sign" style="color:#f97316;"></i> ${cost}$ (${(cost * USD_TO_MRU).toFixed(0)} MRU)</span>` : ''}
+                    ${cost ? `<span><i class="fas fa-dollar-sign" style="color:#f97316;"></i> ${cost}$</span>` : ''}
                 </div>
             </div>
             <button class="btn-del-single" onclick="deleteSingleCode(${i})" title="حذف">
@@ -454,13 +413,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ربط أحداث حساب الربح
     document.getElementById('costPriceInput')?.addEventListener('input', calcStockProfit);
     document.getElementById('codesInput')?.addEventListener('input', calcStockProfit);
 });
 
-// ✅ حساب الربح: سعر كود واحد بالدولار × 43 = تكلفة بالأوقية
+// ===== حساب الربح الفوري =====
 function calcStockProfit() {
-    const costPerCode = parseFloat(document.getElementById('costPriceInput')?.value) || 0;
+    const costPrice = parseFloat(document.getElementById('costPriceInput')?.value) || 0;
     const codesInput = document.getElementById('codesInput')?.value.trim() || '';
     const priceIndex = document.getElementById('priceSelect')?.value;
     const productId = document.getElementById('productSelect')?.value;
@@ -468,7 +428,7 @@ function calcStockProfit() {
     const profitBox = document.getElementById('stock-profit-preview');
     if (!profitBox) return;
 
-    if (!costPerCode || !codesInput || priceIndex === '' || !productId) {
+    if (!costPrice || !codesInput || priceIndex === '' || !productId) {
         profitBox.style.display = 'none';
         return;
     }
@@ -482,10 +442,9 @@ function calcStockProfit() {
     const priceObj = product.prices[parseInt(priceIndex)];
     const salePriceMRU = parseFloat(priceObj?.value) || 0;
 
-    // ✅ التكلفة = سعر كود واحد × 43
-    const costPerCodeMRU = costPerCode * USD_TO_MRU;
+    const costPerCode = costPrice / codesCount;
+    const costPerCodeMRU = costPerCode * 40;
     const profitPerCode = salePriceMRU - costPerCodeMRU;
-    const totalCost = costPerCode * codesCount;
 
     profitBox.style.display = 'block';
     profitBox.innerHTML = `
@@ -496,11 +455,7 @@ function calcStockProfit() {
             </div>
             <div>
                 <span style="color:#94a3b8; font-size:12px;">تكلفة/كود</span>
-                <div style="color:#f97316; font-weight:bold;">$${costPerCode} = ${costPerCodeMRU.toFixed(0)} MRU</div>
-            </div>
-            <div>
-                <span style="color:#94a3b8; font-size:12px;">إجمالي التكلفة</span>
-                <div style="color:#f97316; font-weight:bold;">$${totalCost.toFixed(2)}</div>
+                <div style="color:#f97316; font-weight:bold;">$${costPerCode.toFixed(3)}</div>
             </div>
             <div>
                 <span style="color:#94a3b8; font-size:12px;">سعر البيع</span>
