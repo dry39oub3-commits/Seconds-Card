@@ -103,9 +103,9 @@ window.openOrderModal = (order) => {
            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
                     // بعد
-                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
-                        💵 سعر التكلفة ($) — لكود واحد (الإجمالي = السعر × الكمية × ${USD_TO_MRU})
-                    </label>
+        <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+            💵سعر التكلفة ($) ${USD_TO_MRU})
+        </label>
                     <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
                         oninput="calcProfit(${totalPrice})"
                         style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
