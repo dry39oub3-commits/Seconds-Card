@@ -55,6 +55,7 @@ function renderCart() {
                 <img src="${item.image || 'assets/placeholder.png'}" alt="${item.name}">
                 <div class="item-info">
                     <h4>${item.name}</h4>
+                    ${item.label ? `<span style="font-size:12px; color:#f97316; background:rgba(249,115,22,0.1); padding:2px 8px; border-radius:20px; display:inline-block; margin-bottom:4px;">${item.label}</span>` : ''}
                     <p>${itemPrice} MRU</p>
                 </div>
                 <div class="quantity-control">
