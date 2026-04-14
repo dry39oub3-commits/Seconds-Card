@@ -93,12 +93,14 @@ async function addCodesToStock() {
         const updatedPrices = [...product.prices];
         if (!updatedPrices[priceIndex].codes) updatedPrices[priceIndex].codes = [];
 
-        // ===== كل كود يحمل بياناته الخاصة =====
+        // ✅ تقسيم التكلفة الإجمالية على عدد الأكواد
+        const costPerCode = newCodes.length > 0 ? costPrice / newCodes.length : costPrice;
+
         const newCodeObjects = newCodes.map(code => ({
             code: code,
             supplierOrderId: supplierOrderId,
             supplierName: supplierName,
-            costPrice: costPrice,
+            costPrice: parseFloat(costPerCode.toFixed(4)),
             addedAt: new Date().toISOString()
         }));
 
@@ -443,7 +445,7 @@ function calcStockProfit() {
     const salePriceMRU = parseFloat(priceObj?.value) || 0;
 
     const costPerCode = costPrice / codesCount;
-    const costPerCodeMRU = costPerCode * 40;
+    const costPerCodeMRU = costPerCode * 43;
     const profitPerCode = salePriceMRU - costPerCodeMRU;
 
     profitBox.style.display = 'block';
