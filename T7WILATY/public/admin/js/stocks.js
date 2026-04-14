@@ -1,14 +1,16 @@
 import { supabase } from '../../js/supabase-config.js';
 
 let allProducts = [];
+let allStocks = [];
 let _modalProductId = null;
-let _modalPriceIndex = null;
+let _modalPriceLabel = null;
 
 // --- 1. تهيئة صفحة المخزون ---
 async function initializeStockPage() {
     const productSelect = document.getElementById('productSelect');
     if (!productSelect) return;
 
+    // جلب المنتجات
     const { data: products, error } = await supabase
         .from('products')
         .select('*')
@@ -22,11 +24,22 @@ async function initializeStockPage() {
         productSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
     });
 
+    // جلب المخزون من جدول stocks
+    const { data: stocksData, error: stocksError } = await supabase
+        .from('stocks')
+        .select('*')
+        .eq('is_used', false);
+
+    if (stocksError) { console.error(stocksError); return; }
+
+    allStocks = stocksData || [];
+
+    populateTableFilters();
     renderInventoryTable();
 }
 
 // --- 2. تحديث خيارات الأسعار ---
-window.updatePriceOptions = function() {
+window.updatePriceOptions = function () {
     const productId = document.getElementById('productSelect').value;
     const priceSelect = document.getElementById('priceSelect');
     const supplierSelect = document.getElementById('supplierSelect');
@@ -49,7 +62,7 @@ window.updatePriceOptions = function() {
 };
 
 // --- إظهار زر الشراء ---
-window.toggleBuyButton = function() {
+window.toggleBuyButton = function () {
     const supplierSelect = document.getElementById('supplierSelect');
     const buyButtonContainer = document.getElementById('buyButtonContainer');
     if (supplierSelect.value !== "") {
@@ -60,7 +73,7 @@ window.toggleBuyButton = function() {
 };
 
 // --- فتح رابط المورد ---
-window.openSupplierLink = function() {
+window.openSupplierLink = function () {
     const url = document.getElementById('supplierSelect').value;
     if (url) window.open(url, '_blank');
 };
@@ -82,65 +95,75 @@ async function addCodesToStock() {
     }
 
     const newCodes = codesInput.split('\n').map(c => c.trim()).filter(c => c !== "");
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const priceObj = product.prices[parseInt(priceIndex)];
 
     try {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
 
-        const product = allProducts.find(p => p.id === productId);
-        if (!product) return;
+        // ✅ تحقق من تكرار الأكواد في جدول stocks
+        const { data: existingCodes, error: checkError } = await supabase
+            .from('stocks')
+            .select('code')
+            .eq('product_id', productId)
+            .eq('price_label', priceObj.label)
+            .in('code', newCodes);
 
-        const updatedPrices = [...product.prices];
-        if (!updatedPrices[priceIndex].codes) updatedPrices[priceIndex].codes = [];
+        if (checkError) throw checkError;
 
-        const existingCodes = updatedPrices[priceIndex].codes.map(c => 
-            typeof c === 'string' ? c : c.code
-        );
-
-        // ✅ تحقق من تكرار الأكواد
-        const duplicateCodes = newCodes.filter(c => existingCodes.includes(c));
-        if (duplicateCodes.length > 0) {
-            alert(`⚠️ الأكواد التالية موجودة بالفعل في المخزون:\n${duplicateCodes.join('\n')}`);
+        if (existingCodes && existingCodes.length > 0) {
+            const duplicates = existingCodes.map(c => c.code);
+            alert(`⚠️ الأكواد التالية موجودة بالفعل:\n${duplicates.join('\n')}`);
             return;
         }
 
         // ✅ تحقق من تكرار Order ID
-        const existingOrderIds = [...new Set(
-            updatedPrices[priceIndex].codes
-                .map(c => typeof c === 'object' ? c.supplierOrderId : null)
-                .filter(id => id)
-        )];
+        if (supplierOrderId) {
+            const { data: existingOrder } = await supabase
+                .from('stocks')
+                .select('id')
+                .eq('product_id', productId)
+                .eq('supplier_order_id', supplierOrderId)
+                .limit(1);
 
-        if (supplierOrderId && existingOrderIds.includes(supplierOrderId)) {
-            const confirm_ = confirm(`⚠️ Order ID "${supplierOrderId}" مستخدم بالفعل!\n\nهل تريد المتابعة على أي حال؟`);
-            if (!confirm_) return;
+            if (existingOrder && existingOrder.length > 0) {
+                const confirm_ = confirm(`⚠️ Order ID "${supplierOrderId}" مستخدم بالفعل!\n\nهل تريد المتابعة على أي حال؟`);
+                if (!confirm_) return;
+            }
         }
 
         const costPerCode = newCodes.length > 0 ? costPrice / newCodes.length : costPrice;
 
-        const newCodeObjects = newCodes.map(code => ({
+        // ✅ بناء الصفوف للإدخال
+        const rows = newCodes.map(code => ({
+            product_id: productId,
+            product_name: product.name,
+            price_label: priceObj.label,
+            price_index: parseInt(priceIndex),
             code: code,
-            supplierOrderId: supplierOrderId,
-            supplierName: supplierName,
-            costPrice: parseFloat(costPerCode.toFixed(4)),
-            addedAt: new Date().toISOString()
+            supplier_name: supplierName !== '-- اختر المورد --' ? supplierName : null,
+            supplier_order_id: supplierOrderId || null,
+            cost_price: parseFloat(costPerCode.toFixed(4)),
+            is_used: false,
+            created_at: new Date().toISOString()
         }));
 
-        updatedPrices[priceIndex].codes = [...updatedPrices[priceIndex].codes, ...newCodeObjects];
-        updatedPrices[priceIndex].lastUpdate = new Date().toISOString();
+        const { error: insertError } = await supabase
+            .from('stocks')
+            .insert(rows);
 
-        const { error } = await supabase
-            .from('products')
-            .update({ prices: updatedPrices })
-            .eq('id', productId);
-
-        if (error) throw error;
+        if (insertError) throw insertError;
 
         alert(`✅ تم إضافة ${newCodes.length} كود بنجاح!`);
         document.getElementById('codesInput').value = '';
         document.getElementById('supplierOrderId').value = '';
-        if (document.getElementById('costPriceInput')) document.getElementById('costPriceInput').value = '';
-        initializeStockPage();
+        if (document.getElementById('costPriceInput'))
+            document.getElementById('costPriceInput').value = '';
+
+        await initializeStockPage();
 
     } catch (error) {
         console.error(error);
@@ -159,34 +182,44 @@ function populateTableFilters() {
     const current = filterProduct.value;
     filterProduct.innerHTML = '<option value="">-- كل المنتجات --</option>';
 
-    allProducts.forEach(p => {
-        const hasStock = p.prices?.some(pr => (pr.codes || []).length > 0);
-        if (hasStock) {
-            filterProduct.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+    // استخرج المنتجات الفريدة من allStocks
+    const productsInStock = new Map();
+    allStocks.forEach(s => {
+        if (!productsInStock.has(s.product_id)) {
+            productsInStock.set(s.product_id, s.product_name);
         }
+    });
+
+    productsInStock.forEach((name, id) => {
+        filterProduct.innerHTML += `<option value="${id}">${name}</option>`;
     });
 
     if (current) filterProduct.value = current;
 }
 
 // --- تحديث فلتر الفئات عند اختيار منتج ---
-window.filterInventoryTable = function() {
+window.filterInventoryTable = function () {
     const productId = document.getElementById('filterProduct').value;
     const filterPriceWrapper = document.getElementById('filterPriceWrapper');
     const filterPrice = document.getElementById('filterPrice');
 
     if (productId) {
-        const product = allProducts.find(p => p.id === productId);
-        filterPrice.innerHTML = '<option value="">-- كل الفئات --</option>';
-
-        if (product?.prices) {
-            product.prices.forEach((pr, idx) => {
-                const count = (pr.codes || []).length;
-                if (count > 0) {
-                    filterPrice.innerHTML += `<option value="${idx}">${pr.label} (${count} كود)</option>`;
+        // استخرج الفئات الفريدة لهذا المنتج من allStocks
+        const labelsInStock = new Map();
+        allStocks.forEach(s => {
+            if (s.product_id === productId) {
+                if (!labelsInStock.has(s.price_label)) {
+                    labelsInStock.set(s.price_label, 0);
                 }
-            });
-        }
+                labelsInStock.set(s.price_label, labelsInStock.get(s.price_label) + 1);
+            }
+        });
+
+        filterPrice.innerHTML = '<option value="">-- كل الفئات --</option>';
+        labelsInStock.forEach((count, label) => {
+            filterPrice.innerHTML += `<option value="${label}">${label} (${count} كود)</option>`;
+        });
+
         filterPriceWrapper.style.display = 'block';
     } else {
         filterPriceWrapper.style.display = 'none';
@@ -203,69 +236,38 @@ function renderInventoryTable() {
     tbody.innerHTML = '';
 
     const filterProductId = document.getElementById('filterProduct')?.value || '';
-    const filterPriceIdx = document.getElementById('filterPrice')?.value;
+    const filterPriceLabel = document.getElementById('filterPrice')?.value || '';
 
-    let hasRows = false;
+    // تجميع الأكواد حسب المنتج + الفئة
+    const grouped = {};
 
-    allProducts.forEach(product => {
-        if (filterProductId && product.id !== filterProductId) return;
+    allStocks.forEach(stock => {
+        if (filterProductId && stock.product_id !== filterProductId) return;
+        if (filterPriceLabel && stock.price_label !== filterPriceLabel) return;
 
-        if (product.prices) {
-            product.prices.forEach((price, index) => {
-                const count = (price.codes || []).length;
-                if (count === 0) return;
-                if (filterPriceIdx !== "" && filterPriceIdx !== undefined && parseInt(filterPriceIdx) !== index) return;
-
-                hasRows = true;
-                const lastUpdate = price.lastUpdate
-                    ? new Date(price.lastUpdate).toLocaleString('ar-EG')
-                    : 'غير محدد';
-
-                // جمع الموردين الفريدين من الأكواد
-                const suppliersSet = new Set(
-                    (price.codes || [])
-                        .map(c => typeof c === 'object' ? c.supplierName : null)
-                        .filter(s => s && s !== '-- اختر المورد --')
-                );
-                const suppliersText = suppliersSet.size > 0
-                    ? [...suppliersSet].map(s => `<span class="supplier-chip"><i class="fas fa-store"></i> ${s}</span>`).join(' ')
-                    : '<span style="color:#475569;">—</span>';
-
-                // جمع Order IDs الفريدة
-                const orderIdsSet = new Set(
-                    (price.codes || [])
-                        .map(c => typeof c === 'object' ? c.supplierOrderId : null)
-                        .filter(id => id)
-                );
-                const orderIdsText = orderIdsSet.size > 0
-                    ? [...orderIdsSet].map(id => `<span class="order-chip">${id}</span>`).join(' ')
-                    : '<span style="color:#475569;">—</span>';
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span class="product-name">${product.name}</span></td>
-                        <td><span class="price-badge">${price.label}</span></td>
-                        <td>${suppliersText}</td>
-                        <td>${orderIdsText}</td>
-                        <td>
-                            <span class="stock-badge good">
-                                <i class="fas fa-check-circle"></i>
-                                ${count} كود
-                            </span>
-                        </td>
-                        <td style="font-size:12px; color:var(--text-muted);">${lastUpdate}</td>
-                        <td>
-                            <button class="btn-view" onclick="openCodesModal('${product.id}', ${index})">
-                                <i class="fas fa-eye"></i> عرض
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
+        const key = `${stock.product_id}_${stock.price_label}`;
+        if (!grouped[key]) {
+            grouped[key] = {
+                product_id: stock.product_id,
+                product_name: stock.product_name,
+                price_label: stock.price_label,
+                codes: [],
+                suppliers: new Set(),
+                orderIds: new Set(),
+                lastUpdate: stock.created_at
+            };
         }
+
+        grouped[key].codes.push(stock);
+        if (stock.supplier_name) grouped[key].suppliers.add(stock.supplier_name);
+        if (stock.supplier_order_id) grouped[key].orderIds.add(stock.supplier_order_id);
+        if (stock.created_at > grouped[key].lastUpdate)
+            grouped[key].lastUpdate = stock.created_at;
     });
 
-    if (!hasRows) {
+    const rows = Object.values(grouped);
+
+    if (rows.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="empty-state">
@@ -273,22 +275,61 @@ function renderInventoryTable() {
                     <p>لا توجد بطاقات تطابق الفلتر</p>
                 </td>
             </tr>`;
+        return;
     }
+
+    rows.forEach(row => {
+        const lastUpdate = row.lastUpdate
+            ? new Date(row.lastUpdate).toLocaleString('ar-EG')
+            : 'غير محدد';
+
+        const suppliersText = row.suppliers.size > 0
+            ? [...row.suppliers].map(s =>
+                `<span class="supplier-chip"><i class="fas fa-store"></i> ${s}</span>`).join(' ')
+            : '<span style="color:#475569;">—</span>';
+
+        const orderIdsText = row.orderIds.size > 0
+            ? [...row.orderIds].map(id =>
+                `<span class="order-chip">${id}</span>`).join(' ')
+            : '<span style="color:#475569;">—</span>';
+
+        tbody.innerHTML += `
+            <tr>
+                <td><span class="product-name">${row.product_name}</span></td>
+                <td><span class="price-badge">${row.price_label}</span></td>
+                <td>${suppliersText}</td>
+                <td>${orderIdsText}</td>
+                <td>
+                    <span class="stock-badge good">
+                        <i class="fas fa-check-circle"></i>
+                        ${row.codes.length} كود
+                    </span>
+                </td>
+                <td style="font-size:12px; color:var(--text-muted);">${lastUpdate}</td>
+                <td>
+                    <button class="btn-view"
+                        onclick="openCodesModal('${row.product_id}', '${row.price_label}')">
+                        <i class="fas fa-eye"></i> عرض
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
 }
 
 // --- 5. فتح مودال الأكواد ---
-window.openCodesModal = function(productId, priceIndex) {
+window.openCodesModal = function (productId, priceLabel) {
     _modalProductId = productId;
-    _modalPriceIndex = priceIndex;
+    _modalPriceLabel = priceLabel;
 
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) return;
+    const codes = allStocks.filter(
+        s => s.product_id === productId && s.price_label === priceLabel
+    );
 
-    const price = product.prices[priceIndex];
-    const codes = price.codes || [];
+    const productName = codes.length > 0 ? codes[0].product_name : '';
 
     document.getElementById('modalTitle').textContent =
-        `${product.name} — ${price.label} (${codes.length} كود)`;
+        `${productName} — ${priceLabel} (${codes.length} كود)`;
 
     renderCodesList(codes);
     document.getElementById('codesModal').style.display = 'flex';
@@ -307,86 +348,81 @@ function renderCodesList(codes) {
         return;
     }
 
-    container.innerHTML = codes.map((item, i) => {
-        // دعم الصيغتين: string قديم أو object جديد
-        const code = typeof item === 'string' ? item : item.code;
-        const orderId = typeof item === 'object' ? item.supplierOrderId : null;
-        const supplier = typeof item === 'object' ? item.supplierName : null;
-        const cost = typeof item === 'object' ? item.costPrice : null;
-
+    container.innerHTML = codes.map((item) => {
         return `
-        <div class="code-item">
+        <div class="code-item" data-id="${item.id}">
             <div class="code-item-content">
-                <span class="code-text">${code}</span>
+                <span class="code-text">${item.code}</span>
                 <div style="font-size:11px; color:#64748b; margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;">
-                    ${orderId ? `<span><i class="fas fa-hashtag" style="color:#3b82f6;"></i> ${orderId}</span>` : ''}
-                    ${supplier && supplier !== '-- اختر المورد --' ? `<span><i class="fas fa-store" style="color:#22c55e;"></i> ${supplier}</span>` : ''}
-                    ${cost ? `<span><i class="fas fa-dollar-sign" style="color:#f97316;"></i> ${cost}$</span>` : ''}
+                    ${item.supplier_order_id ? `<span><i class="fas fa-hashtag" style="color:#3b82f6;"></i> ${item.supplier_order_id}</span>` : ''}
+                    ${item.supplier_name ? `<span><i class="fas fa-store" style="color:#22c55e;"></i> ${item.supplier_name}</span>` : ''}
+                    ${item.cost_price ? `<span><i class="fas fa-dollar-sign" style="color:#f97316;"></i> ${item.cost_price}$</span>` : ''}
                 </div>
             </div>
-            <button class="btn-del-single" onclick="deleteSingleCode(${i})" title="حذف">
+            <button class="btn-del-single" onclick="deleteSingleCode('${item.id}')" title="حذف">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-    `}).join('');
+    `;
+    }).join('');
 }
 
 // --- حذف كود واحد ---
-window.deleteSingleCode = async function(codeIndex) {
+window.deleteSingleCode = async function (stockId) {
     if (!confirm("هل تريد حذف هذا الكود؟")) return;
 
-    const product = allProducts.find(p => p.id === _modalProductId);
-    if (!product) return;
-
-    const updatedPrices = [...product.prices];
-    updatedPrices[_modalPriceIndex].codes.splice(codeIndex, 1);
-    updatedPrices[_modalPriceIndex].lastUpdate = new Date().toISOString();
-
     const { error } = await supabase
-        .from('products')
-        .update({ prices: updatedPrices })
-        .eq('id', _modalProductId);
+        .from('stocks')
+        .delete()
+        .eq('id', stockId);
 
     if (error) { alert("خطأ: " + error.message); return; }
 
-    product.prices = updatedPrices;
-    const codes = updatedPrices[_modalPriceIndex].codes;
+    // تحديث allStocks محلياً
+    allStocks = allStocks.filter(s => s.id !== stockId);
+
+    const codes = allStocks.filter(
+        s => s.product_id === _modalProductId && s.price_label === _modalPriceLabel
+    );
+
+    const productName = codes.length > 0 ? codes[0].product_name : '';
     document.getElementById('modalTitle').textContent =
-        `${product.name} — ${product.prices[_modalPriceIndex].label} (${codes.length} كود)`;
+        `${productName} — ${_modalPriceLabel} (${codes.length} كود)`;
+
     renderCodesList(codes);
     renderInventoryTable();
 };
 
 // --- حذف جميع الأكواد ---
-window.deleteAllCodes = async function() {
+window.deleteAllCodes = async function () {
     if (!confirm("هل أنت متأكد من حذف جميع الأكواد؟")) return;
 
-    const product = allProducts.find(p => p.id === _modalProductId);
-    if (!product) return;
-
-    const updatedPrices = [...product.prices];
-    updatedPrices[_modalPriceIndex].codes = [];
-    updatedPrices[_modalPriceIndex].lastUpdate = new Date().toISOString();
-
     const { error } = await supabase
-        .from('products')
-        .update({ prices: updatedPrices })
-        .eq('id', _modalProductId);
+        .from('stocks')
+        .delete()
+        .eq('product_id', _modalProductId)
+        .eq('price_label', _modalPriceLabel);
 
     if (error) { alert("خطأ: " + error.message); return; }
 
-    product.prices = updatedPrices;
+    // تحديث allStocks محلياً
+    allStocks = allStocks.filter(
+        s => !(s.product_id === _modalProductId && s.price_label === _modalPriceLabel)
+    );
+
+    const productName = allProducts.find(p => p.id === _modalProductId)?.name || '';
     document.getElementById('modalTitle').textContent =
-        `${product.name} — ${product.prices[_modalPriceIndex].label} (0 كود)`;
+        `${productName} — ${_modalPriceLabel} (0 كود)`;
+
     renderCodesList([]);
     renderInventoryTable();
 };
 
 // --- إغلاق المودال ---
-window.closeCodesModal = function() {
+window.closeCodesModal = function () {
     document.getElementById('codesModal').style.display = 'none';
     _modalProductId = null;
-    _modalPriceIndex = null;
+    _modalPriceLabel = null;
 };
 
 // --- DOMContentLoaded ---
@@ -397,13 +433,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addBtn) addBtn.addEventListener('click', addCodesToStock);
 
     const modal = document.getElementById('codesModal');
-    if (modal) modal.addEventListener('click', function(e) {
+    if (modal) modal.addEventListener('click', function (e) {
         if (e.target === this) closeCodesModal();
     });
 
     const priceSelect = document.getElementById('priceSelect');
     if (priceSelect) {
-        priceSelect.addEventListener('change', function() {
+        priceSelect.addEventListener('change', function () {
             const productId = document.getElementById('productSelect').value;
             const supplierSelect = document.getElementById('supplierSelect');
             const buyButtonContainer = document.getElementById('buyButtonContainer');
@@ -496,7 +532,7 @@ function calcStockProfit() {
 }
 
 // --- الثيم ---
-(function(){
+(function () {
     const saved = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', saved);
     const icon = document.querySelector('#theme-toggle i');
