@@ -1,5 +1,7 @@
 import { supabase } from '../../js/supabase-config.js';
 
+const USD_TO_MRU = 43; // سعر الدولار بالأوقية
+
 // ==================== تحميل الطلبات ====================
 async function loadOrders() {
     const ordersList = document.getElementById('admin-orders-list');
@@ -100,12 +102,11 @@ window.openOrderModal = (order) => {
 
            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
-                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)</label>
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
                     <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
                         oninput="calcProfit(${totalPrice})"
                         style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
 
-                    <!-- زر السحب من المخزون -->
                     <button onclick="loadFromStock('${order.product_id}', '${order.label}', ${order.quantity || 1}, ${totalPrice})"
                         style="width:100%; margin-top:10px; padding:10px; background:rgba(59,130,246,0.15);
                             color:#3b82f6; border:1px solid #3b82f6; border-radius:8px;
@@ -194,12 +195,15 @@ window.selectSupplier = (url, name, btn) => {
     if (supplierInput) supplierInput.value = name;
 };
 
+// ✅ الربح = السعر الكلي - (تكلفة كود × عدد الأكواد × 43)
 window.calcProfit = (orderPrice) => {
     const cost = parseFloat(document.getElementById('modal-cost').value) || 0;
+    const codesText = document.getElementById('modal-code').value.trim();
+    const quantity = codesText ? codesText.split('\n').filter(c => c.trim() !== '').length : 1;
     const profitDisplay = document.getElementById('profit-display');
     const profitValue = document.getElementById('profit-value');
     if (cost > 0) {
-        const profit = orderPrice - (cost * 40);
+        const profit = orderPrice - (cost * USD_TO_MRU * quantity);
         profitValue.textContent = profit.toFixed(0);
         profitValue.style.color = profit >= 0 ? '#22c55e' : '#ef4444';
         profitDisplay.style.display = 'block';
@@ -384,15 +388,13 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     // ✅ وضع الأكواد
     document.getElementById('modal-code').value = selectedCodes.map(c => c.code).join('\n');
 
-    // ✅ تعبئة سعر التكلفة + حساب الربح فوراً
+    // ✅ تعبئة تكلفة كود واحد + حساب الربح تلقائياً بالكمية
     const firstCode = selectedCodes[0];
-   const costField = document.getElementById('modal-cost');
-if (costField && firstCode?.costPrice) {
-    // ✅ حساب إجمالي التكلفة = تكلفة كود واحد × الكمية
-    const totalCost = (firstCode.costPrice * selectedCodes.length).toFixed(2);
-    costField.value = totalCost;
-    calcProfit(orderPrice);
-}
+    const costField = document.getElementById('modal-cost');
+    if (costField && firstCode?.costPrice) {
+        costField.value = firstCode.costPrice;
+        calcProfit(orderPrice);
+    }
 
     // ✅ تعبئة اسم المورد
     const supplierInput = document.getElementById('modal-supplier-id');
