@@ -102,7 +102,7 @@ window.openOrderModal = (order) => {
 
            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
-                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)  </label>
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
                     <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
                         oninput="calcProfit(${totalPrice})"
                         style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
@@ -348,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==================== سحب من المخزون ====================
-// ==================== سحب من المخزون ====================
 window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     const statusEl = document.getElementById('stock-status');
 
@@ -400,27 +399,26 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
         statusEl.style.color = '#22c55e';
     }
 
-    // ✅ الأكواد محفوظة كـ strings مباشرة (وليس objects)
-    document.getElementById('modal-code').value = selectedCodes.join('\n');
+    // ✅ وضع الأكواد
+    document.getElementById('modal-code').value = selectedCodes.map(c => c.code).join('\n');
 
-    // ✅ تعبئة التكلفة من priceObj مباشرة (تكلفة كود واحد بالدولار)
+    // ✅ تعبئة تكلفة كود واحد + حساب الربح تلقائياً بالكمية
+    const firstCode = selectedCodes[0];
     const costField = document.getElementById('modal-cost');
-    if (costField && priceObj.costPrice) {
-        costField.value = priceObj.costPrice;
+    if (costField && firstCode?.costPrice) {
+        costField.value = firstCode.costPrice;
+        calcProfit(orderPrice);
     }
 
-    // ✅ تعبئة اسم المورد من priceObj
+    // ✅ تعبئة اسم المورد
     const supplierInput = document.getElementById('modal-supplier-id');
-    if (supplierInput && priceObj.supplierName) {
-        supplierInput.value = priceObj.supplierName;
+    if (supplierInput && firstCode?.supplierName) {
+        supplierInput.value = firstCode.supplierName;
     }
 
-    // ✅ تعبئة Order ID من priceObj
+    // ✅ تعبئة Order ID
     const supplierOrderInput = document.getElementById('modal-supplier-order-id');
-    if (supplierOrderInput && priceObj.supplierOrderId) {
-        supplierOrderInput.value = priceObj.supplierOrderId;
+    if (supplierOrderInput && firstCode?.supplierOrderId) {
+        supplierOrderInput.value = firstCode.supplierOrderId;
     }
-
-    // ✅ حساب الربح بعد تعبئة كل البيانات
-    calcProfit(orderPrice);
 };
