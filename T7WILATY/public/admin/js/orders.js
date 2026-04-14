@@ -248,9 +248,33 @@ window.approveOrder = async (orderId, quantity) => {
         });
     }
 
-    document.getElementById('order-modal').remove();
-    alert('✅ تم قبول الطلب بنجاح!');
-    loadOrders();
+// ===== حذف الأكواد المستخدمة من المخزون =====
+const { data: productData } = await supabase
+    .from('products')
+    .select('prices')
+    .eq('id', orderData.product_id)
+    .single();
+
+if (productData?.prices) {
+    const updatedPrices = productData.prices.map(p => {
+        if (p.label === orderData.label) {
+            return {
+                ...p,
+                codes: (p.codes || []).filter(c => !codes.includes(c))
+            };
+        }
+        return p;
+    });
+
+    await supabase
+        .from('products')
+        .update({ prices: updatedPrices })
+        .eq('id', orderData.product_id);
+}
+
+document.getElementById('order-modal').remove();
+alert('✅ تم قبول الطلب بنجاح!');
+loadOrders();
 };
 
 // ==================== رفض الطلب ====================
