@@ -102,7 +102,10 @@ window.openOrderModal = (order) => {
 
            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
-                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
+                    // بعد
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+                        💵 سعر التكلفة ($) — لكود واحد (الإجمالي = السعر × الكمية × ${USD_TO_MRU})
+                    </label>
                     <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
                         oninput="calcProfit(${totalPrice})"
                         style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
@@ -196,17 +199,31 @@ window.selectSupplier = (url, name, btn) => {
 };
 
 // ✅ الربح = السعر الكلي - (تكلفة كود × عدد الأكواد × 43)
+// ✅ الربح = السعر الكلي - (تكلفة كود واحد × الكمية × 43)
 window.calcProfit = (orderPrice) => {
     const cost = parseFloat(document.getElementById('modal-cost').value) || 0;
     const codesText = document.getElementById('modal-code').value.trim();
     const quantity = codesText ? codesText.split('\n').filter(c => c.trim() !== '').length : 1;
     const profitDisplay = document.getElementById('profit-display');
     const profitValue = document.getElementById('profit-value');
+
     if (cost > 0) {
-        const profit = orderPrice - (cost * USD_TO_MRU * quantity);
+        const totalCost = cost * USD_TO_MRU * quantity; // ✅ ضرب الكمية
+        const profit = orderPrice - totalCost;
+
         profitValue.textContent = profit.toFixed(0);
         profitValue.style.color = profit >= 0 ? '#22c55e' : '#ef4444';
         profitDisplay.style.display = 'block';
+
+        // ✅ عرض تفاصيل التكلفة
+        profitDisplay.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748b; margin-bottom:6px;">
+                <span>التكلفة: $${cost} × ${quantity} كود × ${USD_TO_MRU} = ${totalCost.toFixed(0)} MRU</span>
+            </div>
+            <span style="color:#94a3b8; font-size:13px;">الربح: </span>
+            <span id="profit-value" style="color:${profit >= 0 ? '#22c55e' : '#ef4444'}; font-size:18px; font-weight:bold;">${profit.toFixed(0)}</span>
+            <span style="color:#94a3b8; font-size:13px;"> MRU</span>
+        `;
     } else {
         profitDisplay.style.display = 'none';
     }
@@ -334,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==================== سحب من المخزون ====================
+// ==================== سحب من المخزون ====================
 window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     const statusEl = document.getElementById('stock-status');
 
@@ -385,26 +403,27 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
         statusEl.style.color = '#22c55e';
     }
 
-    // ✅ وضع الأكواد
-    document.getElementById('modal-code').value = selectedCodes.map(c => c.code).join('\n');
+    // ✅ الأكواد محفوظة كـ strings مباشرة (وليس objects)
+    document.getElementById('modal-code').value = selectedCodes.join('\n');
 
-    // ✅ تعبئة تكلفة كود واحد + حساب الربح تلقائياً بالكمية
-    const firstCode = selectedCodes[0];
+    // ✅ تعبئة التكلفة من priceObj مباشرة (تكلفة كود واحد بالدولار)
     const costField = document.getElementById('modal-cost');
-    if (costField && firstCode?.costPrice) {
-        costField.value = firstCode.costPrice;
-        calcProfit(orderPrice);
+    if (costField && priceObj.costPrice) {
+        costField.value = priceObj.costPrice;
     }
 
-    // ✅ تعبئة اسم المورد
+    // ✅ تعبئة اسم المورد من priceObj
     const supplierInput = document.getElementById('modal-supplier-id');
-    if (supplierInput && firstCode?.supplierName) {
-        supplierInput.value = firstCode.supplierName;
+    if (supplierInput && priceObj.supplierName) {
+        supplierInput.value = priceObj.supplierName;
     }
 
-    // ✅ تعبئة Order ID
+    // ✅ تعبئة Order ID من priceObj
     const supplierOrderInput = document.getElementById('modal-supplier-order-id');
-    if (supplierOrderInput && firstCode?.supplierOrderId) {
-        supplierOrderInput.value = firstCode.supplierOrderId;
+    if (supplierOrderInput && priceObj.supplierOrderId) {
+        supplierOrderInput.value = priceObj.supplierOrderId;
     }
+
+    // ✅ حساب الربح بعد تعبئة كل البيانات
+    calcProfit(orderPrice);
 };
