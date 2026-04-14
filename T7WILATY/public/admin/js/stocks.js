@@ -92,11 +92,18 @@ async function addCodesToStock() {
 
         const updatedPrices = [...product.prices];
         if (!updatedPrices[priceIndex].codes) updatedPrices[priceIndex].codes = [];
-        updatedPrices[priceIndex].codes = [...updatedPrices[priceIndex].codes, ...newCodes];
+
+        // ===== كل كود يحمل بياناته الخاصة =====
+        const newCodeObjects = newCodes.map(code => ({
+            code: code,
+            supplierOrderId: supplierOrderId,
+            supplierName: supplierName,
+            costPrice: costPrice,
+            addedAt: new Date().toISOString()
+        }));
+
+        updatedPrices[priceIndex].codes = [...updatedPrices[priceIndex].codes, ...newCodeObjects];
         updatedPrices[priceIndex].lastUpdate = new Date().toISOString();
-        updatedPrices[priceIndex].supplierOrderId = supplierOrderId;
-        updatedPrices[priceIndex].supplierName = supplierName;
-        updatedPrices[priceIndex].costPrice = costPrice;
 
         const { error } = await supabase
             .from('products')
@@ -108,6 +115,7 @@ async function addCodesToStock() {
         alert(`✅ تم إضافة ${newCodes.length} كود بنجاح!`);
         document.getElementById('codesInput').value = '';
         document.getElementById('supplierOrderId').value = '';
+        if (document.getElementById('costPriceInput')) document.getElementById('costPriceInput').value = '';
         initializeStockPage();
 
     } catch (error) {
@@ -143,7 +151,6 @@ window.filterInventoryTable = function() {
     const filterPriceWrapper = document.getElementById('filterPriceWrapper');
     const filterPrice = document.getElementById('filterPrice');
 
-    // تعبئة فئات المنتج المختار
     if (productId) {
         const product = allProducts.find(p => p.id === productId);
         filterPrice.innerHTML = '<option value="">-- كل الفئات --</option>';
@@ -177,17 +184,12 @@ function renderInventoryTable() {
     let hasRows = false;
 
     allProducts.forEach(product => {
-        // فلتر المنتج
         if (filterProductId && product.id !== filterProductId) return;
 
         if (product.prices) {
             product.prices.forEach((price, index) => {
                 const count = (price.codes || []).length;
-
-                // إخفاء الفارغة
                 if (count === 0) return;
-
-                // فلتر الفئة
                 if (filterPriceIdx !== "" && filterPriceIdx !== undefined && parseInt(filterPriceIdx) !== index) return;
 
                 hasRows = true;
@@ -195,46 +197,37 @@ function renderInventoryTable() {
                     ? new Date(price.lastUpdate).toLocaleString('ar-EG')
                     : 'غير محدد';
 
+                // جمع الموردين الفريدين من الأكواد
+                const suppliersSet = new Set(
+                    (price.codes || [])
+                        .map(c => typeof c === 'object' ? c.supplierName : null)
+                        .filter(s => s && s !== '-- اختر المورد --')
+                );
+                const suppliersText = suppliersSet.size > 0
+                    ? [...suppliersSet].map(s => `<span class="supplier-chip"><i class="fas fa-store"></i> ${s}</span>`).join(' ')
+                    : '<span style="color:#475569;">—</span>';
+
+                // جمع Order IDs الفريدة
+                const orderIdsSet = new Set(
+                    (price.codes || [])
+                        .map(c => typeof c === 'object' ? c.supplierOrderId : null)
+                        .filter(id => id)
+                );
+                const orderIdsText = orderIdsSet.size > 0
+                    ? [...orderIdsSet].map(id => `<span class="order-chip">${id}</span>`).join(' ')
+                    : '<span style="color:#475569;">—</span>';
+
                 tbody.innerHTML += `
                     <tr>
                         <td><span class="product-name">${product.name}</span></td>
                         <td><span class="price-badge">${price.label}</span></td>
-                        <td>
-                            ${price.supplierName && price.supplierName !== '-- اختر المورد --'
-                                ? `<span class="supplier-chip"><i class="fas fa-store"></i> ${price.supplierName}</span>`
-                                : '<span style="color:#475569;">—</span>'
-                            }
-                        </td>
-                        <td>
-                            ${price.supplierOrderId
-                                ? `<span class="order-chip">${price.supplierOrderId}</span>`
-                                : '<span style="color:#475569;">—</span>'
-                            }
-                        </td>
+                        <td>${suppliersText}</td>
+                        <td>${orderIdsText}</td>
                         <td>
                             <span class="stock-badge good">
                                 <i class="fas fa-check-circle"></i>
                                 ${count} كود
                             </span>
-                        </td>
-                        <td>
-                            ${price.costPrice > 0 ? (() => {
-                                const costPerCode = (price.costPrice / count);
-                                const salePriceMRU = parseFloat(price.value) || 0;
-                                const costInMRU = costPerCode * 40;
-                                const profitPerCode = salePriceMRU - costInMRU;
-                                return `
-                                    <div style="font-size:12px; line-height:1.8;">
-                                        <span style="color:#94a3b8;">تكلفة/كود: </span>
-                                        <span style="color:#f97316; font-weight:bold;">$${costPerCode.toFixed(3)}</span>
-                                        <br>
-                                        <span style="color:#94a3b8;">ربح/كود: </span>
-                                        <span style="color:${profitPerCode >= 0 ? '#22c55e' : '#ef4444'}; font-weight:bold;">
-                                            ${profitPerCode.toFixed(0)} MRU
-                                        </span>
-                                    </div>
-                                `;
-                            })() : '<span style="color:#475569;">—</span>'}
                         </td>
                         <td style="font-size:12px; color:var(--text-muted);">${lastUpdate}</td>
                         <td>
@@ -280,8 +273,6 @@ window.openCodesModal = function(productId, priceIndex) {
 // --- عرض قائمة الأكواد ---
 function renderCodesList(codes) {
     const container = document.getElementById('codesListContainer');
-    const product = allProducts.find(p => p.id === _modalProductId);
-    const orderId = product?.prices[_modalPriceIndex]?.supplierOrderId || null;
 
     if (codes.length === 0) {
         container.innerHTML = `
@@ -292,22 +283,28 @@ function renderCodesList(codes) {
         return;
     }
 
-    container.innerHTML = codes.map((code, i) => `
+    container.innerHTML = codes.map((item, i) => {
+        // دعم الصيغتين: string قديم أو object جديد
+        const code = typeof item === 'string' ? item : item.code;
+        const orderId = typeof item === 'object' ? item.supplierOrderId : null;
+        const supplier = typeof item === 'object' ? item.supplierName : null;
+        const cost = typeof item === 'object' ? item.costPrice : null;
+
+        return `
         <div class="code-item">
             <div class="code-item-content">
                 <span class="code-text">${code}</span>
-                ${orderId
-                    ? `<span class="code-order">
-                           <i class="fas fa-hashtag"></i> Order ID: ${orderId}
-                       </span>`
-                    : ''
-                }
+                <div style="font-size:11px; color:#64748b; margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;">
+                    ${orderId ? `<span><i class="fas fa-hashtag" style="color:#3b82f6;"></i> ${orderId}</span>` : ''}
+                    ${supplier && supplier !== '-- اختر المورد --' ? `<span><i class="fas fa-store" style="color:#22c55e;"></i> ${supplier}</span>` : ''}
+                    ${cost ? `<span><i class="fas fa-dollar-sign" style="color:#f97316;"></i> ${cost}$</span>` : ''}
+                </div>
             </div>
             <button class="btn-del-single" onclick="deleteSingleCode(${i})" title="حذف">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // --- حذف كود واحد ---
@@ -375,13 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const addBtn = document.getElementById('addCodesBtn');
     if (addBtn) addBtn.addEventListener('click', addCodesToStock);
 
-    // إغلاق المودال بالضغط خارجه
     const modal = document.getElementById('codesModal');
     if (modal) modal.addEventListener('click', function(e) {
         if (e.target === this) closeCodesModal();
     });
 
-    // استدعاء الموردين عند تغيير الفئة السعرية
     const priceSelect = document.getElementById('priceSelect');
     if (priceSelect) {
         priceSelect.addEventListener('change', function() {
@@ -414,9 +409,67 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             window.toggleBuyButton();
+            calcStockProfit();
         });
     }
+
+    // ربط أحداث حساب الربح
+    document.getElementById('costPriceInput')?.addEventListener('input', calcStockProfit);
+    document.getElementById('codesInput')?.addEventListener('input', calcStockProfit);
 });
+
+// ===== حساب الربح الفوري =====
+function calcStockProfit() {
+    const costPrice = parseFloat(document.getElementById('costPriceInput')?.value) || 0;
+    const codesInput = document.getElementById('codesInput')?.value.trim() || '';
+    const priceIndex = document.getElementById('priceSelect')?.value;
+    const productId = document.getElementById('productSelect')?.value;
+
+    const profitBox = document.getElementById('stock-profit-preview');
+    if (!profitBox) return;
+
+    if (!costPrice || !codesInput || priceIndex === '' || !productId) {
+        profitBox.style.display = 'none';
+        return;
+    }
+
+    const codesCount = codesInput.split('\n').filter(c => c.trim() !== '').length;
+    if (codesCount === 0) { profitBox.style.display = 'none'; return; }
+
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const priceObj = product.prices[parseInt(priceIndex)];
+    const salePriceMRU = parseFloat(priceObj?.value) || 0;
+
+    const costPerCode = costPrice / codesCount;
+    const costPerCodeMRU = costPerCode * 40;
+    const profitPerCode = salePriceMRU - costPerCodeMRU;
+
+    profitBox.style.display = 'block';
+    profitBox.innerHTML = `
+        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+            <div>
+                <span style="color:#94a3b8; font-size:12px;">عدد الأكواد</span>
+                <div style="color:#e2e8f0; font-weight:bold;">${codesCount} كود</div>
+            </div>
+            <div>
+                <span style="color:#94a3b8; font-size:12px;">تكلفة/كود</span>
+                <div style="color:#f97316; font-weight:bold;">$${costPerCode.toFixed(3)}</div>
+            </div>
+            <div>
+                <span style="color:#94a3b8; font-size:12px;">سعر البيع</span>
+                <div style="color:#e2e8f0; font-weight:bold;">${salePriceMRU} MRU</div>
+            </div>
+            <div>
+                <span style="color:#94a3b8; font-size:12px;">ربح/كود</span>
+                <div style="color:${profitPerCode >= 0 ? '#22c55e' : '#ef4444'}; font-weight:bold; font-size:16px;">
+                    ${profitPerCode.toFixed(0)} MRU
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 // --- الثيم ---
 (function(){

@@ -64,6 +64,7 @@ window.openOrderModal = (order) => {
     const prices = product.prices || [];
     const priceItem = prices.find(p => p.value == order.price) || prices[0] || {};
     const suppliers = priceItem.suppliers || [];
+    const totalPrice = order.price * (order.quantity || 1);
 
     document.getElementById('order-modal')?.remove();
 
@@ -89,8 +90,9 @@ window.openOrderModal = (order) => {
                 <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <h3 style="margin:0 0 4px; font-size:17px; grid-column:1/-1;">${order.product_name || 'غير محدد'}</h3>
                     <p style="margin:0; color:#94a3b8; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
+                    <p style="margin:0; font-size:13px;">🏷️ الفئة: <strong style="color:#f97316;">${order.label || '-'}</strong></p>
                     <p style="margin:0; color:#94a3b8; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
-                    <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${order.price * (order.quantity || 1)} MRU</strong></p>
+                    <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${totalPrice} MRU</strong></p>
                     <p style="margin:0; color:#94a3b8; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
                     <p style="margin:0; color:#94a3b8; font-size:13px;">💳 ${order.paymentMethod || order.payment_method || '-'}</p>
                 </div>
@@ -100,11 +102,11 @@ window.openOrderModal = (order) => {
                 <div>
                     <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($)</label>
                     <input type="number" id="modal-cost" placeholder="0.00" step="0.01"
-                        oninput="calcProfit(${order.price})"
+                        oninput="calcProfit(${totalPrice})"
                         style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
 
                     <!-- زر السحب من المخزون -->
-                    <button onclick="loadFromStock('${order.product_id}', '${order.label}', ${order.quantity || 1})"
+                    <button onclick="loadFromStock('${order.product_id}', '${order.label}', ${order.quantity || 1}, ${totalPrice})"
                         style="width:100%; margin-top:10px; padding:10px; background:rgba(59,130,246,0.15);
                             color:#3b82f6; border:1px solid #3b82f6; border-radius:8px;
                             cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s;"
@@ -220,7 +222,7 @@ window.approveOrder = async (orderId, quantity) => {
         alert(`⚠️ عدد الأكواد (${codes.length}) لا يطابق الكمية المطلوبة (${quantity})!\n\nيجب إدخال ${quantity} كود بالضبط.`);
         return;
     }
-    
+
     if (!cost || parseFloat(cost) <= 0) { alert('⚠️ يرجى إدخال سعر التكلفة!'); return; }
     if (!supplierId) { alert('⚠️ يرجى إدخال أو اختيار اسم المورد!'); return; }
 
@@ -251,33 +253,33 @@ window.approveOrder = async (orderId, quantity) => {
         });
     }
 
-// ===== حذف الأكواد المستخدمة من المخزون =====
-const { data: productData } = await supabase
-    .from('products')
-    .select('prices')
-    .eq('id', orderData.product_id)
-    .single();
-
-if (productData?.prices) {
-    const updatedPrices = productData.prices.map(p => {
-        if (p.label === orderData.label) {
-            return {
-                ...p,
-                codes: (p.codes || []).filter(c => !codes.includes(c))
-            };
-        }
-        return p;
-    });
-
-    await supabase
+    // ===== حذف الأكواد المستخدمة من المخزون =====
+    const { data: productData } = await supabase
         .from('products')
-        .update({ prices: updatedPrices })
-        .eq('id', orderData.product_id);
-}
+        .select('prices')
+        .eq('id', orderData.product_id)
+        .single();
 
-document.getElementById('order-modal').remove();
-alert('✅ تم قبول الطلب بنجاح!');
-loadOrders();
+    if (productData?.prices) {
+        const updatedPrices = productData.prices.map(p => {
+            if (p.label === orderData.label) {
+                return {
+                    ...p,
+                    codes: (p.codes || []).filter(c => !codes.includes(c.code))
+                };
+            }
+            return p;
+        });
+
+        await supabase
+            .from('products')
+            .update({ prices: updatedPrices })
+            .eq('id', orderData.product_id);
+    }
+
+    document.getElementById('order-modal').remove();
+    alert('✅ تم قبول الطلب بنجاح!');
+    loadOrders();
 };
 
 // ==================== رفض الطلب ====================
@@ -328,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==================== سحب من المخزون ====================
-window.loadFromStock = async (productId, label, quantity) => {
+window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     const statusEl = document.getElementById('stock-status');
 
     if (!productId || productId === 'null' || productId === 'undefined') {
@@ -340,7 +342,6 @@ window.loadFromStock = async (productId, label, quantity) => {
     statusEl.textContent = '⏳ جاري البحث في المخزون...';
     statusEl.style.color = '#94a3b8';
 
-    // جلب المنتج من products
     const { data: product, error } = await supabase
         .from('products')
         .select('prices, name')
@@ -353,14 +354,11 @@ window.loadFromStock = async (productId, label, quantity) => {
         return;
     }
 
-    // إيجاد الفئة الصحيحة
     const prices = product.prices || [];
-    const priceObj = label
-        ? prices.find(p => p.label === label)
-        : prices[0];
+    const priceObj = label ? prices.find(p => p.label === label) : prices[0];
 
     if (!priceObj) {
-        statusEl.textContent = `❌ لم يتم إيجاد الفئة "${label}" في المنتج`;
+        statusEl.textContent = `❌ لم يتم إيجاد الفئة "${label}"`;
         statusEl.style.color = '#ef4444';
         return;
     }
@@ -373,7 +371,6 @@ window.loadFromStock = async (productId, label, quantity) => {
         return;
     }
 
-    // سحب الأكواد المطلوبة
     const selectedCodes = codes.slice(0, quantity);
 
     if (selectedCodes.length < quantity) {
@@ -384,27 +381,26 @@ window.loadFromStock = async (productId, label, quantity) => {
         statusEl.style.color = '#22c55e';
     }
 
-    // وضع الأكواد في حقل النص
-    document.getElementById('modal-code').value = selectedCodes.join('\n');
+    // ✅ وضع الأكواد
+    document.getElementById('modal-code').value = selectedCodes.map(c => c.code).join('\n');
 
-   // ===== تعبئة سعر التكلفة =====
+    // ✅ تعبئة سعر التكلفة + حساب الربح فوراً
+    const firstCode = selectedCodes[0];
     const costField = document.getElementById('modal-cost');
-    if (costField && (priceObj.costPrice || priceObj.cost_price)) {
-        costField.value = priceObj.costPrice || priceObj.cost_price;
-        // تحديث حساب الربح
-        const orderPrice = parseFloat(costField.closest('div')?.dataset?.price || 0);
-        calcProfit(orderPrice);
+    if (costField && firstCode?.costPrice) {
+        costField.value = firstCode.costPrice;
+        calcProfit(orderPrice); // ✅ حساب الربح تلقائياً
     }
 
-    // ===== تعبئة اسم المورد =====
+    // ✅ تعبئة اسم المورد
     const supplierInput = document.getElementById('modal-supplier-id');
-    if (supplierInput && priceObj.supplierName && priceObj.supplierName !== '-- اختر المورد --') {
-        supplierInput.value = priceObj.supplierName;
+    if (supplierInput && firstCode?.supplierName) {
+        supplierInput.value = firstCode.supplierName;
     }
 
-    // ===== تعبئة Order ID المورد =====
+    // ✅ تعبئة Order ID
     const supplierOrderInput = document.getElementById('modal-supplier-order-id');
-    if (supplierOrderInput && priceObj.supplierOrderId) {
-        supplierOrderInput.value = priceObj.supplierOrderId;
+    if (supplierOrderInput && firstCode?.supplierOrderId) {
+        supplierOrderInput.value = firstCode.supplierOrderId;
     }
 };
