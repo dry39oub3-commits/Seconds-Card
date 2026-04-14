@@ -386,11 +386,13 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
 
     // ✅ تعبئة سعر التكلفة + حساب الربح فوراً
     const firstCode = selectedCodes[0];
-    const costField = document.getElementById('modal-cost');
-    if (costField && firstCode?.costPrice) {
-        costField.value = firstCode.costPrice;
-        calcProfit(orderPrice); // ✅ حساب الربح تلقائياً
-    }
+   const costField = document.getElementById('modal-cost');
+if (costField && firstCode?.costPrice) {
+    // ✅ حساب إجمالي التكلفة = تكلفة كود واحد × الكمية
+    const totalCost = (firstCode.costPrice * selectedCodes.length).toFixed(2);
+    costField.value = totalCost;
+    calcProfit(orderPrice);
+}
 
     // ✅ تعبئة اسم المورد
     const supplierInput = document.getElementById('modal-supplier-id');
