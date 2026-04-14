@@ -71,6 +71,7 @@ async function addCodesToStock() {
     const priceIndex = document.getElementById('priceSelect').value;
     const codesInput = document.getElementById('codesInput').value.trim();
     const supplierOrderId = document.getElementById('supplierOrderId')?.value.trim() || '';
+    const costPrice = parseFloat(document.getElementById('costPriceInput')?.value) || 0;
     const supplierSelect = document.getElementById('supplierSelect');
     const supplierName = supplierSelect.options[supplierSelect.selectedIndex]?.text || '';
     const btn = document.getElementById('addCodesBtn');
@@ -95,6 +96,7 @@ async function addCodesToStock() {
         updatedPrices[priceIndex].lastUpdate = new Date().toISOString();
         updatedPrices[priceIndex].supplierOrderId = supplierOrderId;
         updatedPrices[priceIndex].supplierName = supplierName;
+        updatedPrices[priceIndex].costPrice = costPrice;
 
         const { error } = await supabase
             .from('products')

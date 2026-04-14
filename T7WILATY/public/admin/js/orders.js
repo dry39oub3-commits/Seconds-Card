@@ -384,14 +384,24 @@ window.loadFromStock = async (productId, label, quantity) => {
     // وضع الأكواد في حقل النص
     document.getElementById('modal-code').value = selectedCodes.join('\n');
 
-    // وضع سعر التكلفة إذا موجود
-    if (priceObj.costPrice || priceObj.cost_price) {
-        document.getElementById('modal-cost').value = priceObj.costPrice || priceObj.cost_price;
+   // ===== تعبئة سعر التكلفة =====
+    const costField = document.getElementById('modal-cost');
+    if (costField && (priceObj.costPrice || priceObj.cost_price)) {
+        costField.value = priceObj.costPrice || priceObj.cost_price;
+        // تحديث حساب الربح
+        const orderPrice = parseFloat(costField.closest('div')?.dataset?.price || 0);
+        calcProfit(orderPrice);
     }
 
-    // وضع اسم المورد إذا موجود
-    if (priceObj.supplierName) {
-        const supplierInput = document.getElementById('modal-supplier-id');
-        if (supplierInput) supplierInput.value = priceObj.supplierName;
+    // ===== تعبئة اسم المورد =====
+    const supplierInput = document.getElementById('modal-supplier-id');
+    if (supplierInput && priceObj.supplierName && priceObj.supplierName !== '-- اختر المورد --') {
+        supplierInput.value = priceObj.supplierName;
+    }
+
+    // ===== تعبئة Order ID المورد =====
+    const supplierOrderInput = document.getElementById('modal-supplier-order-id');
+    if (supplierOrderInput && priceObj.supplierOrderId) {
+        supplierOrderInput.value = priceObj.supplierOrderId;
     }
 };
