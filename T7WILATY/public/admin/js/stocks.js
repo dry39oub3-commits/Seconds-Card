@@ -93,7 +93,29 @@ async function addCodesToStock() {
         const updatedPrices = [...product.prices];
         if (!updatedPrices[priceIndex].codes) updatedPrices[priceIndex].codes = [];
 
-        // ✅ تقسيم التكلفة الإجمالية على عدد الأكواد
+        const existingCodes = updatedPrices[priceIndex].codes.map(c => 
+            typeof c === 'string' ? c : c.code
+        );
+
+        // ✅ تحقق من تكرار الأكواد
+        const duplicateCodes = newCodes.filter(c => existingCodes.includes(c));
+        if (duplicateCodes.length > 0) {
+            alert(`⚠️ الأكواد التالية موجودة بالفعل في المخزون:\n${duplicateCodes.join('\n')}`);
+            return;
+        }
+
+        // ✅ تحقق من تكرار Order ID
+        const existingOrderIds = [...new Set(
+            updatedPrices[priceIndex].codes
+                .map(c => typeof c === 'object' ? c.supplierOrderId : null)
+                .filter(id => id)
+        )];
+
+        if (supplierOrderId && existingOrderIds.includes(supplierOrderId)) {
+            const confirm_ = confirm(`⚠️ Order ID "${supplierOrderId}" مستخدم بالفعل!\n\nهل تريد المتابعة على أي حال؟`);
+            if (!confirm_) return;
+        }
+
         const costPerCode = newCodes.length > 0 ? costPrice / newCodes.length : costPrice;
 
         const newCodeObjects = newCodes.map(code => ({
