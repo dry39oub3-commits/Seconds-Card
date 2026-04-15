@@ -1,552 +1,570 @@
 import { supabase } from '../../js/supabase-config.js';
 
 let allProducts = [];
-let allStocks = [];
-let _modalProductId = null;
-let _modalPriceLabel = null;
-
-// --- 1. تهيئة صفحة المخزون ---
-async function initializeStockPage() {
-    const productSelect = document.getElementById('productSelect');
-    if (!productSelect) return;
-
-    // جلب المنتجات
-    const { data: products, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) { console.error(error); return; }
-
-    allProducts = products || [];
-    productSelect.innerHTML = '<option value="">-- اختر المنتج --</option>';
-    allProducts.forEach(p => {
-        productSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-    });
-
-    // جلب المخزون من جدول stocks
-    const { data: stocksData, error: stocksError } = await supabase
-        .from('stocks')
-        .select('*')
-        .eq('is_used', false);
-
-    if (stocksError) { console.error(stocksError); return; }
-
-    allStocks = stocksData || [];
-
-    populateTableFilters();
-    renderInventoryTable();
-}
-
-// --- 2. تحديث خيارات الأسعار ---
-window.updatePriceOptions = function () {
-    const productId = document.getElementById('productSelect').value;
-    const priceSelect = document.getElementById('priceSelect');
-    const supplierSelect = document.getElementById('supplierSelect');
-    const buyButtonContainer = document.getElementById('buyButtonContainer');
-
-    if (!priceSelect || !supplierSelect) return;
-
-    priceSelect.innerHTML = '<option value="">-- اختر الفئة --</option>';
-    supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
-    if (buyButtonContainer) buyButtonContainer.style.display = 'none';
-
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) return;
-
-    if (product.prices && Array.isArray(product.prices)) {
-        product.prices.forEach((p, index) => {
-            priceSelect.innerHTML += `<option value="${index}">${p.label} — ${p.value} MRU</option>`;
-        });
-    }
-};
-
-// --- إظهار زر الشراء ---
-window.toggleBuyButton = function () {
-    const supplierSelect = document.getElementById('supplierSelect');
-    const buyButtonContainer = document.getElementById('buyButtonContainer');
-    if (supplierSelect.value !== "") {
-        buyButtonContainer.style.display = 'block';
-    } else {
-        buyButtonContainer.style.display = 'none';
-    }
-};
-
-// --- فتح رابط المورد ---
-window.openSupplierLink = function () {
-    const url = document.getElementById('supplierSelect').value;
-    if (url) window.open(url, '_blank');
-};
-
-// --- 3. إضافة أكواد للمخزون ---
-async function addCodesToStock() {
-    const productId = document.getElementById('productSelect').value;
-    const priceIndex = document.getElementById('priceSelect').value;
-    const codesInput = document.getElementById('codesInput').value.trim();
-    const supplierOrderId = document.getElementById('supplierOrderId')?.value.trim() || '';
-    const costPrice = parseFloat(document.getElementById('costPriceInput')?.value) || 0;
-    const supplierSelect = document.getElementById('supplierSelect');
-    const supplierName = supplierSelect.options[supplierSelect.selectedIndex]?.text || '';
-    const btn = document.getElementById('addCodesBtn');
-
-    if (!productId || priceIndex === "" || !codesInput) {
-        alert("يرجى إكمال جميع الحقول.");
-        return;
-    }
-
-    const newCodes = codesInput.split('\n').map(c => c.trim()).filter(c => c !== "");
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) return;
-
-    const priceObj = product.prices[parseInt(priceIndex)];
-
-    try {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
-
-        // ✅ تحقق من تكرار الأكواد في جدول stocks
-        const { data: existingCodes, error: checkError } = await supabase
-            .from('stocks')
-            .select('code')
-            .eq('product_id', productId)
-            .eq('price_label', priceObj.label)
-            .in('code', newCodes);
-
-        if (checkError) throw checkError;
-
-        if (existingCodes && existingCodes.length > 0) {
-            const duplicates = existingCodes.map(c => c.code);
-            alert(`⚠️ الأكواد التالية موجودة بالفعل:\n${duplicates.join('\n')}`);
-            return;
-        }
-
-        // ✅ تحقق من تكرار Order ID
-        if (supplierOrderId) {
-            const { data: existingOrder } = await supabase
-                .from('stocks')
-                .select('id')
-                .eq('product_id', productId)
-                .eq('supplier_order_id', supplierOrderId)
-                .limit(1);
-
-            if (existingOrder && existingOrder.length > 0) {
-                const confirm_ = confirm(`⚠️ Order ID "${supplierOrderId}" مستخدم بالفعل!\n\nهل تريد المتابعة على أي حال؟`);
-                if (!confirm_) return;
-            }
-        }
-
-        const costPerCode = newCodes.length > 0 ? costPrice / newCodes.length : costPrice;
-
-        // ✅ بناء الصفوف للإدخال
-        const rows = newCodes.map(code => ({
-            product_id: productId,
-            product_name: product.name,
-            price_label: priceObj.label,
-            price_index: parseInt(priceIndex),
-            code: code,
-            supplier_name: supplierName !== '-- اختر المورد --' ? supplierName : null,
-            supplier_order_id: supplierOrderId || null,
-            cost_price: parseFloat(costPerCode.toFixed(4)),
-            is_used: false,
-            created_at: new Date().toISOString()
-        }));
-
-        const { error: insertError } = await supabase
-            .from('stocks')
-            .insert(rows);
-
-        if (insertError) throw insertError;
-
-        alert(`✅ تم إضافة ${newCodes.length} كود بنجاح!`);
-        document.getElementById('codesInput').value = '';
-        document.getElementById('supplierOrderId').value = '';
-        if (document.getElementById('costPriceInput'))
-            document.getElementById('costPriceInput').value = '';
-
-        await initializeStockPage();
-
-    } catch (error) {
-        console.error(error);
-        alert("فشل تحديث المخزون: " + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-upload"></i> تحديث المخزون';
-    }
-}
-
-// --- تعبئة فلاتر الجدول ---
-function populateTableFilters() {
-    const filterProduct = document.getElementById('filterProduct');
-    if (!filterProduct) return;
-
-    const current = filterProduct.value;
-    filterProduct.innerHTML = '<option value="">-- كل المنتجات --</option>';
-
-    // استخرج المنتجات الفريدة من allStocks
-    const productsInStock = new Map();
-    allStocks.forEach(s => {
-        if (!productsInStock.has(s.product_id)) {
-            productsInStock.set(s.product_id, s.product_name);
-        }
-    });
-
-    productsInStock.forEach((name, id) => {
-        filterProduct.innerHTML += `<option value="${id}">${name}</option>`;
-    });
-
-    if (current) filterProduct.value = current;
-}
-
-// --- تحديث فلتر الفئات عند اختيار منتج ---
-window.filterInventoryTable = function () {
-    const productId = document.getElementById('filterProduct').value;
-    const filterPriceWrapper = document.getElementById('filterPriceWrapper');
-    const filterPrice = document.getElementById('filterPrice');
-
-    if (productId) {
-        // استخرج الفئات الفريدة لهذا المنتج من allStocks
-        const labelsInStock = new Map();
-        allStocks.forEach(s => {
-            if (s.product_id === productId) {
-                if (!labelsInStock.has(s.price_label)) {
-                    labelsInStock.set(s.price_label, 0);
-                }
-                labelsInStock.set(s.price_label, labelsInStock.get(s.price_label) + 1);
-            }
-        });
-
-        filterPrice.innerHTML = '<option value="">-- كل الفئات --</option>';
-        labelsInStock.forEach((count, label) => {
-            filterPrice.innerHTML += `<option value="${label}">${label} (${count} كود)</option>`;
-        });
-
-        filterPriceWrapper.style.display = 'block';
-    } else {
-        filterPriceWrapper.style.display = 'none';
-        filterPrice.innerHTML = '<option value="">-- كل الفئات --</option>';
-    }
-
-    renderInventoryTable();
-};
-
-// --- 4. عرض جدول المخزون ---
-function renderInventoryTable() {
-    const tbody = document.getElementById('inventory-list-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    const filterProductId = document.getElementById('filterProduct')?.value || '';
-    const filterPriceLabel = document.getElementById('filterPrice')?.value || '';
-
-    // تجميع الأكواد حسب المنتج + الفئة
-    const grouped = {};
-
-    allStocks.forEach(stock => {
-        if (filterProductId && stock.product_id !== filterProductId) return;
-        if (filterPriceLabel && stock.price_label !== filterPriceLabel) return;
-
-        const key = `${stock.product_id}_${stock.price_label}`;
-        if (!grouped[key]) {
-            grouped[key] = {
-                product_id: stock.product_id,
-                product_name: stock.product_name,
-                price_label: stock.price_label,
-                codes: [],
-                suppliers: new Set(),
-                orderIds: new Set(),
-                lastUpdate: stock.created_at
-            };
-        }
-
-        grouped[key].codes.push(stock);
-        if (stock.supplier_name) grouped[key].suppliers.add(stock.supplier_name);
-        if (stock.supplier_order_id) grouped[key].orderIds.add(stock.supplier_order_id);
-        if (stock.created_at > grouped[key].lastUpdate)
-            grouped[key].lastUpdate = stock.created_at;
-    });
-
-    const rows = Object.values(grouped);
-
-    if (rows.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <p>لا توجد بطاقات تطابق الفلتر</p>
-                </td>
-            </tr>`;
-        return;
-    }
-
-    rows.forEach(row => {
-        const lastUpdate = row.lastUpdate
-            ? new Date(row.lastUpdate).toLocaleString('ar-EG')
-            : 'غير محدد';
-
-        const suppliersText = row.suppliers.size > 0
-            ? [...row.suppliers].map(s =>
-                `<span class="supplier-chip"><i class="fas fa-store"></i> ${s}</span>`).join(' ')
-            : '<span style="color:#475569;">—</span>';
-
-        const orderIdsText = row.orderIds.size > 0
-            ? [...row.orderIds].map(id =>
-                `<span class="order-chip">${id}</span>`).join(' ')
-            : '<span style="color:#475569;">—</span>';
-
-        tbody.innerHTML += `
-            <tr>
-                <td><span class="product-name">${row.product_name}</span></td>
-                <td><span class="price-badge">${row.price_label}</span></td>
-                <td>${suppliersText}</td>
-                <td>${orderIdsText}</td>
-                <td>
-                    <span class="stock-badge good">
-                        <i class="fas fa-check-circle"></i>
-                        ${row.codes.length} كود
-                    </span>
-                </td>
-                <td style="font-size:12px; color:var(--text-muted);">${lastUpdate}</td>
-                <td>
-                    <button class="btn-view"
-                        onclick="openCodesModal('${row.product_id}', '${row.price_label}')">
-                        <i class="fas fa-eye"></i> عرض
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-// --- 5. فتح مودال الأكواد ---
-window.openCodesModal = function (productId, priceLabel) {
-    _modalProductId = productId;
-    _modalPriceLabel = priceLabel;
-
-    const codes = allStocks.filter(
-        s => s.product_id === productId && s.price_label === priceLabel
-    );
-
-    const productName = codes.length > 0 ? codes[0].product_name : '';
-
-    document.getElementById('modalTitle').textContent =
-        `${productName} — ${priceLabel} (${codes.length} كود)`;
-
-    renderCodesList(codes);
-    document.getElementById('codesModal').style.display = 'flex';
-};
-
-// --- عرض قائمة الأكواد ---
-function renderCodesList(codes) {
-    const container = document.getElementById('codesListContainer');
-
-    if (codes.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <p>لا توجد أكواد في هذه الفئة</p>
-            </div>`;
-        return;
-    }
-
-    container.innerHTML = codes.map((item) => {
-        return `
-        <div class="code-item" data-id="${item.id}">
-            <div class="code-item-content">
-                <span class="code-text">${item.code}</span>
-                <div style="font-size:11px; color:#64748b; margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;">
-                    ${item.supplier_order_id ? `<span><i class="fas fa-hashtag" style="color:#3b82f6;"></i> ${item.supplier_order_id}</span>` : ''}
-                    ${item.supplier_name ? `<span><i class="fas fa-store" style="color:#22c55e;"></i> ${item.supplier_name}</span>` : ''}
-                    ${item.cost_price ? `<span><i class="fas fa-dollar-sign" style="color:#f97316;"></i> ${item.cost_price}$</span>` : ''}
-                </div>
-            </div>
-            <button class="btn-del-single" onclick="deleteSingleCode('${item.id}')" title="حذف">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    }).join('');
-}
-
-// --- حذف كود واحد ---
-window.deleteSingleCode = async function (stockId) {
-    if (!confirm("هل تريد حذف هذا الكود؟")) return;
-
-    const { error } = await supabase
-        .from('stocks')
-        .delete()
-        .eq('id', stockId);
-
-    if (error) { alert("خطأ: " + error.message); return; }
-
-    // تحديث allStocks محلياً
-    allStocks = allStocks.filter(s => s.id !== stockId);
-
-    const codes = allStocks.filter(
-        s => s.product_id === _modalProductId && s.price_label === _modalPriceLabel
-    );
-
-    const productName = codes.length > 0 ? codes[0].product_name : '';
-    document.getElementById('modalTitle').textContent =
-        `${productName} — ${_modalPriceLabel} (${codes.length} كود)`;
-
-    renderCodesList(codes);
-    renderInventoryTable();
-};
-
-// --- حذف جميع الأكواد ---
-window.deleteAllCodes = async function () {
-    if (!confirm("هل أنت متأكد من حذف جميع الأكواد؟")) return;
-
-    const { error } = await supabase
-        .from('stocks')
-        .delete()
-        .eq('product_id', _modalProductId)
-        .eq('price_label', _modalPriceLabel);
-
-    if (error) { alert("خطأ: " + error.message); return; }
-
-    // تحديث allStocks محلياً
-    allStocks = allStocks.filter(
-        s => !(s.product_id === _modalProductId && s.price_label === _modalPriceLabel)
-    );
-
-    const productName = allProducts.find(p => p.id === _modalProductId)?.name || '';
-    document.getElementById('modalTitle').textContent =
-        `${productName} — ${_modalPriceLabel} (0 كود)`;
-
-    renderCodesList([]);
-    renderInventoryTable();
-};
-
-// --- إغلاق المودال ---
-window.closeCodesModal = function () {
-    document.getElementById('codesModal').style.display = 'none';
-    _modalProductId = null;
-    _modalPriceLabel = null;
-};
-
-// --- DOMContentLoaded ---
-document.addEventListener('DOMContentLoaded', () => {
-    initializeStockPage();
-
-    const addBtn = document.getElementById('addCodesBtn');
-    if (addBtn) addBtn.addEventListener('click', addCodesToStock);
-
-    const modal = document.getElementById('codesModal');
-    if (modal) modal.addEventListener('click', function (e) {
-        if (e.target === this) closeCodesModal();
-    });
-
-    const priceSelect = document.getElementById('priceSelect');
-    if (priceSelect) {
-        priceSelect.addEventListener('change', function () {
-            const productId = document.getElementById('productSelect').value;
-            const supplierSelect = document.getElementById('supplierSelect');
-            const buyButtonContainer = document.getElementById('buyButtonContainer');
-            const idx = parseInt(this.value);
-
-            supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
-            if (buyButtonContainer) buyButtonContainer.style.display = 'none';
-
-            if (isNaN(idx) || !productId) return;
-
-            const product = allProducts.find(p => p.id === productId);
-            if (!product) return;
-
-            const priceObj = product.prices[idx];
-            const targetSuppliers = (priceObj && Array.isArray(priceObj.suppliers) && priceObj.suppliers.length > 0)
-                ? priceObj.suppliers
-                : (Array.isArray(product.suppliers) ? product.suppliers : []);
-
-            if (targetSuppliers.length > 0) {
-                targetSuppliers.forEach(s => {
-                    if (s.name && s.url) {
-                        supplierSelect.innerHTML += `<option value="${s.url}">${s.name}</option>`;
-                    }
-                });
-            } else {
-                supplierSelect.innerHTML += `<option value="" disabled>لا يوجد موردون لهذه الفئة</option>`;
-            }
-
-            window.toggleBuyButton();
-            calcStockProfit();
-        });
-    }
-
-    // ربط أحداث حساب الربح
-    document.getElementById('costPriceInput')?.addEventListener('input', calcStockProfit);
-    document.getElementById('codesInput')?.addEventListener('input', calcStockProfit);
+let allStocks   = [];
+let filteredStocks = [];
+let currentPage = 1;
+const PAGE_SIZE = 30;
+
+// =================== INIT ===================
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadProducts();
+  await loadStocks();
+  updateLastRefresh();
+  updateCodeCounter();
+  document.getElementById('fill-codes').addEventListener('input', updateCodeCounter);
+  scheduleMidnightReset(); // [FIX 3] جدولة إعادة التعيين عند منتصف الليل
 });
 
-// ===== حساب الربح الفوري =====
-function calcStockProfit() {
-    const costPrice = parseFloat(document.getElementById('costPriceInput')?.value) || 0;
-    const codesInput = document.getElementById('codesInput')?.value.trim() || '';
-    const priceIndex = document.getElementById('priceSelect')?.value;
-    const productId = document.getElementById('productSelect')?.value;
+async function refreshAll() {
+  await loadProducts();
+  await loadStocks();
+  updateLastRefresh();
+  showToast('✅ تم التحديث');
+}
+window.refreshAll = refreshAll;
 
-    const profitBox = document.getElementById('stock-profit-preview');
-    if (!profitBox) return;
+// =================== LOAD PRODUCTS ===================
+async function loadProducts() {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('name');
 
-    if (!costPrice || !codesInput || priceIndex === '' || !productId) {
-        profitBox.style.display = 'none';
-        return;
-    }
+  if (error) { showToast('خطأ في تحميل المنتجات', true); return; }
+  allProducts = data || [];
 
-    const codesCount = codesInput.split('\n').filter(c => c.trim() !== '').length;
-    if (codesCount === 0) { profitBox.style.display = 'none'; return; }
-
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) return;
-
-    const priceObj = product.prices[parseInt(priceIndex)];
-    const salePriceMRU = parseFloat(priceObj?.value) || 0;
-
-    const costPerCode = costPrice / codesCount;
-    const costPerCodeMRU = costPerCode * 43;
-    const profitPerCode = salePriceMRU - costPerCodeMRU;
-
-    profitBox.style.display = 'block';
-    profitBox.innerHTML = `
-        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
-            <div>
-                <span style="color:#94a3b8; font-size:12px;">عدد الأكواد</span>
-                <div style="color:#e2e8f0; font-weight:bold;">${codesCount} كود</div>
-            </div>
-            <div>
-                <span style="color:#94a3b8; font-size:12px;">تكلفة/كود</span>
-                <div style="color:#f97316; font-weight:bold;">$${costPerCode.toFixed(3)}</div>
-            </div>
-            <div>
-                <span style="color:#94a3b8; font-size:12px;">سعر البيع</span>
-                <div style="color:#e2e8f0; font-weight:bold;">${salePriceMRU} MRU</div>
-            </div>
-            <div>
-                <span style="color:#94a3b8; font-size:12px;">ربح/كود</span>
-                <div style="color:${profitPerCode >= 0 ? '#22c55e' : '#ef4444'}; font-weight:bold; font-size:16px;">
-                    ${profitPerCode.toFixed(0)} MRU
-                </div>
-            </div>
-        </div>
-    `;
+  // Fill product selects
+  const opts = allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('fill-product').innerHTML = '<option value="">-- اختر منتجاً --</option>' + opts;
+  document.getElementById('inv-product-filter').innerHTML = '<option value="">كل المنتجات</option>' +
+    allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 }
 
-// --- الثيم ---
-(function () {
-    const saved = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-    const icon = document.querySelector('#theme-toggle i');
-    if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+function loadPricesForProduct() {
+  const pid = document.getElementById('fill-product').value;
+  const product = allProducts.find(p => String(p.id) === String(pid));
+  const priceSelect = document.getElementById('fill-price');
+  const supSelect   = document.getElementById('fill-supplier');
 
-    const themeBtn = document.getElementById('theme-toggle');
-    if (themeBtn) {
-        themeBtn.onclick = () => {
-            const current = document.documentElement.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            const icon = document.querySelector('#theme-toggle i');
-            if (icon) icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        };
+  priceSelect.innerHTML = '<option value="">-- اختر الفئة --</option>';
+  supSelect.innerHTML   = '<option value="">-- اختر المورد --</option>';
+
+  // إخفاء بطاقة الربح عند تغيير المنتج
+  document.getElementById('profit-card').style.display = 'none';
+
+  if (!product) return;
+
+  const prices = Array.isArray(product.prices) ? product.prices : Object.values(product.prices || {});
+
+  prices.forEach((pr, i) => {
+    if (pr.active !== false) {
+      priceSelect.innerHTML += `<option value="${i}">${pr.label} – ${pr.value} MRU</option>`;
     }
-})();
+  });
+
+  // remove old listener before adding new one
+  const newPriceSelect = priceSelect.cloneNode(true);
+  priceSelect.parentNode.replaceChild(newPriceSelect, priceSelect);
+
+  // listener واحد فقط بعد الـ clone
+  document.getElementById('fill-price').addEventListener('change', () => {
+    loadSuppliersForPrice();
+    calcProfit();
+  });
+}
+window.loadPricesForProduct = loadPricesForProduct;
+
+function loadSuppliersForPrice() {
+  const pid = document.getElementById('fill-product').value;
+  const product = allProducts.find(p => String(p.id) === String(pid));
+  const priceIdx = document.getElementById('fill-price').value;
+  const supSelect = document.getElementById('fill-supplier');
+
+  // إزالة زر الشراء القديم إن وجد
+  document.getElementById('buy-btn')?.remove();
+
+  supSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
+
+  if (!product || priceIdx === '') return;
+
+  const prices = Array.isArray(product.prices)
+    ? product.prices
+    : Object.values(product.prices || {});
+
+  const selectedPrice = prices[priceIdx];
+  if (!selectedPrice) return;
+
+  const suppliers = selectedPrice.suppliers || [];
+
+  suppliers.forEach((s, i) => {
+    if (s.name && s.url) {
+      supSelect.innerHTML += `<option value="${i}">${s.name}</option>`;
+    }
+  });
+
+  // إضافة listener لظهور زر الشراء عند اختيار مورد
+  const newSupSelect = supSelect.cloneNode(true);
+  supSelect.parentNode.replaceChild(newSupSelect, supSelect);
+
+  document.getElementById('fill-supplier').addEventListener('change', function () {
+    // إزالة زر قديم
+    document.getElementById('buy-btn')?.remove();
+
+    const si = this.value;
+    if (si === '') return;
+
+    const supplier = suppliers[si];
+    if (!supplier?.url) return;
+
+    // إنشاء زر الشراء
+    const btn = document.createElement('a');
+    btn.id = 'buy-btn';
+    btn.href = supplier.url;
+    btn.target = '_blank';
+    btn.rel = 'noopener noreferrer';
+    btn.textContent = '🛒 شراء';
+    btn.style.cssText = `
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 24px;
+      background: #22c55e;
+      color: white;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+    `;
+
+    // أضف الزر بعد select المورد
+    this.parentNode.appendChild(btn);
+  });
+}
+
+// =================== LOAD STOCKS ===================
+async function loadStocks() {
+  const { data, error } = await supabase
+    .from('stocks')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) { showToast('خطأ في تحميل المخزون', true); return; }
+  allStocks = data || [];
+  filteredStocks = [...allStocks];
+  currentPage = 1;
+  renderInventoryTable();
+  renderStats();
+}
+
+// =================== SUBMIT CODES ===================
+async function submitCodes() {
+  const pid      = document.getElementById('fill-product').value;
+  const pidx     = document.getElementById('fill-price').value;
+  const sidx     = document.getElementById('fill-supplier').value;
+  const orderVal = document.getElementById('fill-order-id').value.trim();
+  const costVal  = document.getElementById('fill-cost').value.trim();
+  const qtyVal   = document.getElementById('fill-qty').value.trim();
+  const raw      = document.getElementById('fill-codes').value;
+
+  // [FIX 1] التحقق من جميع الحقول الإلزامية
+  const errors = [];
+
+  if (!pid) {
+    highlightError('fill-product');
+    errors.push('المنتج');
+  }
+  if (pidx === '') {
+    highlightError('fill-price');
+    errors.push('الفئة السعرية');
+  }
+  if (!sidx && sidx !== 0) {
+    highlightError('fill-supplier');
+    errors.push('المورد');
+  }
+  if (!orderVal) {
+    highlightError('fill-order-id');
+    errors.push('Order ID');
+  }
+  if (!costVal || parseFloat(costVal) <= 0) {
+    highlightError('fill-cost');
+    errors.push('تكلفة الشراء');
+  }
+  if (!qtyVal || parseInt(qtyVal) <= 0) {
+    highlightError('fill-qty');
+    errors.push('عدد الكمية');
+  }
+
+  const codes = [...new Set(
+    raw.split('\n').map(c => c.trim()).filter(c => c.length > 0)
+  )];
+
+  if (codes.length === 0) {
+    highlightError('fill-codes');
+    errors.push('الأكواد');
+  }
+
+  if (errors.length > 0) {
+    showToast(`⚠️ يرجى تعبئة: ${errors.join('، ')}`, true);
+    return;
+  }
+
+  const product = allProducts.find(p => String(p.id) === String(pid));
+  if (!product) { showToast('⚠️ المنتج غير موجود', true); return; }
+
+  const prices = Array.isArray(product.prices) ? product.prices : Object.values(product.prices || {});
+  const price  = prices[pidx];
+  if (!price) { showToast('⚠️ الفئة السعرية غير موجودة', true); return; }
+
+  const supplier = sidx !== '' ? (price.suppliers?.[sidx] || null) : null;
+
+  // [FIX 2] حساب تكلفة البطاقة الواحدة بالدولار لحفظها مع كل كود
+  const costPerCardUSD = parseFloat(costVal) / parseInt(qtyVal);
+
+  const rows = codes.map(code => ({
+    product_id:       pid,
+    product_name:     product.name,
+    price_label:      price.label,
+    price_value:      price.value,
+    supplier_name:    supplier ? supplier.name : null,
+    order_id:         orderVal || null,
+    cost_per_card_usd: costPerCardUSD,   // [FIX 2] تكلفة البطاقة الواحدة
+    code:             code,
+    status:           'available',
+    created_at:       new Date().toISOString()
+  }));
+
+  // Progress
+  const bar  = document.getElementById('progress-bar');
+  const fill = document.getElementById('progress-fill');
+  bar.style.display = 'block';
+  fill.style.width  = '10%';
+
+  // Batch insert (chunks of 100)
+  const CHUNK = 100;
+  let inserted = 0;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK);
+    const { error } = await supabase.from('stocks').insert(chunk);
+    if (error) {
+      bar.style.display = 'none';
+      showToast('خطأ في الإدراج: ' + error.message, true);
+      return;
+    }
+    inserted += chunk.length;
+    fill.style.width = Math.round((inserted / rows.length) * 100) + '%';
+  }
+
+  bar.style.display = 'none';
+  fill.style.width  = '0%';
+  document.getElementById('fill-codes').value = '';
+  updateCodeCounter();
+  showToast(`✅ تم رفع ${inserted} كود بنجاح!`);
+  await loadStocks();
+}
+window.submitCodes = submitCodes;
+
+// [FIX 1] دالة مساعدة لإظهار تأثير الخطأ على الحقل
+function highlightError(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  el.classList.add('error-glow');
+  el.focus();
+  setTimeout(() => el.classList.remove('error-glow'), 1500);
+}
+
+// =================== INVENTORY TABLE ===================
+function filterInventory() {
+  const q       = document.getElementById('inv-search').value.toLowerCase();
+  const prodId  = document.getElementById('inv-product-filter').value;
+  const status  = document.getElementById('inv-status-filter').value;
+
+  filteredStocks = allStocks.filter(s => {
+    const matchQ    = !q || (s.code || '').toLowerCase().includes(q) || (s.order_id || '').toLowerCase().includes(q);
+    const matchProd = !prodId || String(s.product_id) === String(prodId);
+    const matchSt   = !status || s.status === status;
+    return matchQ && matchProd && matchSt;
+  });
+
+  currentPage = 1;
+  renderInventoryTable();
+}
+window.filterInventory = filterInventory;
+
+function renderInventoryTable() {
+  const tbody = document.getElementById('inv-tbody');
+  const total = filteredStocks.length;
+
+  if (total === 0) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-box-open"></i>لا توجد أكواد</div></td></tr>`;
+    document.getElementById('inv-pagination').innerHTML = '';
+    return;
+  }
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const paged = filteredStocks.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = paged.map((s, i) => {
+    // [FIX 2] عرض تكلفة البطاقة الواحدة
+    const costDisplay = s.cost_per_card_usd != null
+      ? `<span style="color:var(--warning); font-weight:600;">${parseFloat(s.cost_per_card_usd).toFixed(3)} $</span>`
+      : '<span style="color:var(--text-muted)">—</span>';
+
+    return `
+      <tr>
+        <td style="color:var(--text-muted)">${start + i + 1}</td>
+        <td>${s.product_name || '—'}</td>
+        <td>${s.price_label || '—'}</td>
+        <td>${s.supplier_name || '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>${s.order_id || '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td class="code-cell" title="${s.code}" style="text-align: center; vertical-align: middle;">
+            ${s.code.length > 3 
+              ? s.code[0] + 'x'.repeat(8) + s.code.slice(-2) 
+              : s.code}
+        </td>
+        <td style="text-align:center;">${costDisplay}</td>
+        <td style="color:var(--text-muted); font-size:12px;">${formatDate(s.created_at)}</td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-danger" title="حذف" onclick="deleteStock('${s.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination(total);
+}
+
+function statusBadge(status) {
+  if (status === 'sold')     return '<span class="badge badge-sold">مباع</span>';
+  if (status === 'reserved') return '<span class="badge badge-reserved">محجوز</span>';
+  return '<span class="badge badge-active">متاح</span>';
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+
+  const datePart = d.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).replace(/\//g, '-');
+
+  const timePart = d.toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return `${datePart}<br>${timePart}`;
+}
+
+function renderPagination(total) {
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pg = document.getElementById('inv-pagination');
+  if (pages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = '';
+  if (currentPage > 1) html += `<button class="page-btn" onclick="goPage(${currentPage-1})">‹ السابق</button>`;
+  for (let i = 1; i <= pages; i++) {
+    if (i === 1 || i === pages || Math.abs(i - currentPage) <= 1) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - currentPage) === 2) {
+      html += `<span style="color:var(--text-muted)">…</span>`;
+    }
+  }
+  if (currentPage < pages) html += `<button class="page-btn" onclick="goPage(${currentPage+1})">التالي ›</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(n) { currentPage = n; renderInventoryTable(); window.scrollTo(0,0); }
+window.goPage = goPage;
+
+// =================== DELETE ===================
+async function deleteStock(id) {
+  if (!confirm('حذف هذا الكود نهائياً؟')) return;
+  const { error } = await supabase.from('stocks').delete().eq('id', id);
+  if (error) showToast('خطأ: ' + error.message, true);
+  else { showToast('🗑️ تم الحذف'); await loadStocks(); }
+}
+window.deleteStock = deleteStock;
+
+// =================== STATS ===================
+function renderStats() {
+  const now   = new Date();
+  const ago24 = new Date(now - 24 * 3600 * 1000);
+
+  // بداية اليوم الحالي (00:00:00)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+
+  const total  = allStocks.length;
+  const sold24 = allStocks.filter(s => s.status === 'sold' && s.sold_at && new Date(s.sold_at) >= ago24).length;
+
+  // [FIX 3] حساب "مضاف اليوم" منذ بداية اليوم (00:00:00) وليس آخر 24 ساعة
+  const today = allStocks.filter(s => new Date(s.created_at) >= startOfToday).length;
+
+  // [FIX 3] حساب "التكلفة الإجمالية" للأكواد المضافة اليوم فقط منذ 00:00:00
+  const costToday = allStocks
+    .filter(s => new Date(s.created_at) >= startOfToday)
+    .reduce((acc, s) => acc + (s.price_value || 0), 0);
+
+  document.getElementById('stat-total').textContent  = total.toLocaleString();
+  document.getElementById('stat-sold24').textContent = sold24.toLocaleString();
+  document.getElementById('stat-cost').textContent   = costToday.toLocaleString() + ' MRU';
+  document.getElementById('stat-added').textContent  = today.toLocaleString();
+
+  // Per product
+  const map = {};
+  allStocks.forEach(s => {
+    const key = `${s.product_id}||${s.price_label}`;
+    if (!map[key]) map[key] = { name: s.product_name, label: s.price_label, value: s.price_value || 0, total:0, available:0, sold:0, reserved:0 };
+    map[key].total++;
+    map[key][s.status] = (map[key][s.status] || 0) + 1;
+  });
+
+  const tbody = document.getElementById('stats-tbody');
+  const rows  = Object.values(map);
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-chart-bar"></i>لا توجد بيانات</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.name}</td>
+      <td>${r.label}</td>
+      <td><strong>${r.total}</strong></td>
+      <td style="color:var(--success)">${r.available || 0}</td>
+      <td style="color:var(--danger)">${r.sold || 0}</td>
+      <td style="color:var(--warning)">${r.reserved || 0}</td>
+      <td style="color:var(--warning)">${(r.total * r.value).toLocaleString()} MRU</td>
+    </tr>
+  `).join('');
+}
+window.renderStats = renderStats;
+
+// =================== [FIX 3] جدولة إعادة التعيين التلقائي عند 00:00 ===================
+function scheduleMidnightReset() {
+  const now = new Date();
+  // وقت منتصف الليل القادم
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+  const msUntilMidnight = midnight - now;
+
+  setTimeout(() => {
+    // إعادة رسم الإحصائيات عند منتصف الليل
+    renderStats();
+    showToast('🔄 تم تحديث إحصائيات اليوم الجديد');
+    // جدولة للمرة القادمة (كل 24 ساعة)
+    setInterval(() => {
+      renderStats();
+    }, 24 * 60 * 60 * 1000);
+  }, msUntilMidnight);
+}
+
+// =================== EXPORT CSV ===================
+function exportCSV() {
+  if (filteredStocks.length === 0) { showToast('لا توجد بيانات للتصدير', true); return; }
+  // [FIX 2] إضافة عمود تكلفة البطاقة في التصدير
+  const headers = ['#','المنتج','الفئة','المورد','Order ID','الكود','تكلفة البطاقة ($)','الحالة','التاريخ'];
+  const rows = filteredStocks.map((s,i) => [
+    i+1, s.product_name, s.price_label, s.supplier_name || '', s.order_id || '',
+    s.code,
+    s.cost_per_card_usd != null ? parseFloat(s.cost_per_card_usd).toFixed(3) : '',
+    s.status,
+    s.created_at ? new Date(s.created_at).toLocaleString('ar-SA') : ''
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url; a.download = 'stocks.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+window.exportCSV = exportCSV;
+
+// =================== HELPERS ===================
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'stats') renderStats();
+}
+window.switchTab = switchTab;
+
+function updateCodeCounter() {
+  const raw = document.getElementById('fill-codes').value;
+  const count = raw.split('\n').map(c => c.trim()).filter(c => c.length > 0).length;
+  document.getElementById('fill-count').textContent = count > 0 ? `${count} كود جاهز للرفع` : '';
+}
+
+function updateLastRefresh() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('fr-FR', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+  });
+  document.getElementById('last-refresh').textContent = 'Dernière mise à jour: ' + timeStr;
+}
+
+function showToast(msg, isError = false) {
+  const container = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transition = 'opacity 0.4s';
+    setTimeout(() => t.remove(), 400);
+  }, 2500);
+}
+
+window.calcProfit = function() {
+  const totalCost = parseFloat(document.getElementById('fill-cost')?.value) || 0;
+  const qty       = parseInt(document.getElementById('fill-qty')?.value)    || 0;
+
+  const pid     = document.getElementById('fill-product')?.value;
+  const pidx    = document.getElementById('fill-price')?.value;
+  const product = allProducts.find(p => String(p.id) === String(pid));
+
+  const prices = product
+    ? (Array.isArray(product.prices) ? product.prices : Object.values(product.prices || {}))
+    : [];
+
+  const sellPrice = (pidx !== '' && pidx !== undefined && prices[pidx])
+    ? parseFloat(prices[pidx].value) || 0
+    : 0;
+
+  const card = document.getElementById('profit-card');
+
+  if (totalCost > 0 && qty > 0 && sellPrice > 0) {
+    const costPerCard   = totalCost / qty;
+    const profitPerCard = sellPrice - (costPerCard * 43);
+    const profitTotal   = profitPerCard * qty;
+
+    const isProfit = profitPerCard >= 0;
+    const color    = isProfit ? 'var(--success)' : 'var(--danger)';
+
+    card.style.display     = 'block';
+    card.style.borderColor = color;
+
+    document.getElementById('cost-per-card-usd').textContent = costPerCard.toFixed(2) + ' $';
+    document.getElementById('cost-per-card-mru').textContent = (costPerCard * 43).toFixed(2) + ' MRU';
+
+    document.getElementById('profit-per-card-mru').textContent = profitPerCard.toFixed(2) + ' MRU';
+    document.getElementById('profit-per-card-mru').style.color = color;
+    document.getElementById('profit-per-card-usd').textContent = (profitPerCard / 43).toFixed(2) + ' $';
+    document.getElementById('profit-per-card-usd').style.color = color;
+
+    document.getElementById('profit-total-mru').textContent = profitTotal.toFixed(2) + ' MRU';
+    document.getElementById('profit-total-mru').style.color = profitTotal >= 0 ? 'var(--accent)' : 'var(--danger)';
+    document.getElementById('profit-total-usd').textContent = (profitTotal / 43).toFixed(2) + ' $';
+    document.getElementById('profit-total-usd').style.color = profitTotal >= 0 ? 'var(--accent)' : 'var(--danger)';
+
+    document.getElementById('cost-total').textContent = totalCost.toFixed(2) + ' $';
+  } else {
+    card.style.display = 'none';
+  }
+};

@@ -16,676 +16,364 @@
         })();
     </script>
 
-    <style>
-        :root {
-            --bg-primary: #0a0e1a;
-            --bg-card: #0f1628;
-            --bg-elevated: #151d35;
-            --bg-input: #0d1220;
-            --accent: #f97316;
-            --accent-glow: rgba(249,115,22,0.15);
-            --accent-2: #6366f1;
-            --accent-2-glow: rgba(99,102,241,0.15);
-            --success: #10b981;
-            --danger: #ef4444;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #475569;
-            --border: rgba(255,255,255,0.06);
-            --border-hover: rgba(249,115,22,0.3);
-            --shadow: 0 8px 32px rgba(0,0,0,0.4);
-            --radius: 14px;
-            --radius-sm: 8px;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            background-image:
-                radial-gradient(ellipse 80% 50% at 20% -10%, rgba(249,115,22,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 40% at 80% 110%, rgba(99,102,241,0.06) 0%, transparent 60%);
-        }
-
-        /* ===== STOCK CONTAINER ===== */
-        .stock-wrapper {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 32px 24px;
-        }
-
-        .page-header {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 36px;
-            animation: fadeDown 0.5s ease;
-        }
-
-        .page-header-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--accent-glow);
-            border: 1px solid rgba(249,115,22,0.3);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--accent);
-            font-size: 20px;
-        }
-
-        .page-header h1 {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-
-        .page-header span {
-            font-size: 13px;
-            color: var(--text-muted);
-            display: block;
-            margin-top: 2px;
-        }
-
-        /* ===== GRID LAYOUT ===== */
-        .stock-grid {
-            display: grid;
-            grid-template-columns: 420px 1fr;
-            gap: 24px;
-            align-items: start;
-        }
-
-        @media (max-width: 1024px) {
-            .stock-grid { grid-template-columns: 1fr; }
-        }
-
-        /* ===== CARDS ===== */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            animation: fadeUp 0.5s ease both;
-            transition: border-color 0.3s;
-        }
-
-        .card:hover { border-color: rgba(249,115,22,0.15); }
-
-        .card-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card-header-icon {
-            width: 36px;
-            height: 36px;
-            background: var(--accent-glow);
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--accent);
-            font-size: 15px;
-            flex-shrink: 0;
-        }
-
-        .card-header h2 {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .card-body { padding: 24px; }
-
-        /* ===== FORM ELEMENTS ===== */
-        .form-group { margin-bottom: 18px; }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .form-label .step-badge {
-            width: 20px;
-            height: 20px;
-            background: var(--accent);
-            color: white;
-            border-radius: 50%;
-            font-size: 10px;
-            font-weight: 800;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .form-select,
-        .form-input,
-        .form-textarea {
-            width: 100%;
-            padding: 11px 14px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            font-family: 'Tajawal', sans-serif;
-            font-size: 14px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
-        .form-select:focus,
-        .form-input:focus,
-        .form-textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        .form-select option { background: var(--bg-elevated); }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 120px;
-            line-height: 1.7;
-        }
-
-        .select-wrapper {
-            position: relative;
-        }
-
-        .select-wrapper::after {
-            content: '\f107';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            pointer-events: none;
-            font-size: 13px;
-        }
-
-        /* ===== SUPPLIER SECTION ===== */
-        .supplier-card {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 16px;
-            margin-bottom: 18px;
-        }
-
-        .buy-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-family: 'Tajawal', sans-serif;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 12px;
-            transition: opacity 0.2s, transform 0.1s;
-        }
-
-        .buy-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        /* ===== SUBMIT BUTTON ===== */
-        .submit-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--accent), #ea580c);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-family: 'Tajawal', sans-serif;
-            font-size: 15px;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
-            box-shadow: 0 4px 20px rgba(249,115,22,0.3);
-            margin-top: 6px;
-        }
-
-        .submit-btn:hover {
-            opacity: 0.92;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 28px rgba(249,115,22,0.4);
-        }
-
-        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-        /* ===== STATS STRIP ===== */
-        .stats-strip {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            margin-bottom: 24px;
-            animation: fadeUp 0.5s 0.1s ease both;
-        }
-
-        @media (max-width: 900px) {
-            .stats-strip { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        .stat-tile {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: border-color 0.2s, transform 0.2s;
-        }
-
-        .stat-tile:hover { border-color: var(--border-hover); transform: translateY(-2px); }
-
-        .stat-tile-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .stat-tile-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-
-        .stat-tile-value {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1.2;
-        }
-
-        /* ===== TABLE ===== */
-        .table-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            animation: fadeUp 0.5s 0.15s ease both;
-        }
-
-        .table-header {
-            padding: 18px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .table-header h3 {
-            font-size: 15px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-primary);
-        }
-
-        .table-header h3 i { color: var(--accent); }
-
-        .inventory-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .inventory-table thead th {
-            padding: 12px 16px;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: var(--bg-elevated);
-            border-bottom: 1px solid var(--border);
-            text-align: right;
-        }
-
-        .inventory-table tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s;
-        }
-
-        .inventory-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-        .inventory-table tbody tr:last-child { border-bottom: none; }
-
-        .inventory-table tbody td {
-            padding: 14px 16px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            vertical-align: middle;
-        }
-
-        .product-name {
-            font-weight: 700;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-
-        .price-badge {
-            background: var(--accent-glow);
-            color: var(--accent);
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            border: 1px solid rgba(249,115,22,0.2);
-        }
-
-        .supplier-chip {
-            background: rgba(16,185,129,0.1);
-            color: #10b981;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid rgba(16,185,129,0.2);
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .order-chip {
-            background: var(--accent-2-glow);
-            color: var(--accent-2);
-            padding: 3px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            font-family: monospace;
-            border: 1px solid rgba(99,102,241,0.2);
-        }
-
-        .stock-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .stock-badge.good {
-            background: rgba(16,185,129,0.1);
-            color: #10b981;
-            border: 1px solid rgba(16,185,129,0.2);
-        }
-
-        .stock-badge.empty {
-            background: rgba(239,68,68,0.1);
-            color: #ef4444;
-            border: 1px solid rgba(239,68,68,0.2);
-        }
-
-        .btn-view {
-            padding: 6px 14px;
-            background: var(--accent-2-glow);
-            color: var(--accent-2);
-            border: 1px solid rgba(99,102,241,0.25);
-            border-radius: 7px;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-view:hover {
-            background: rgba(99,102,241,0.25);
-            transform: translateY(-1px);
-        }
-
-        /* ===== MODAL ===== */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(6px);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .modal-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 0;
-            width: 90%;
-            max-width: 580px;
-            max-height: 82vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-            animation: scaleIn 0.25s ease;
-        }
-
-        .modal-head {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-
-        .modal-head h3 {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .modal-close {
-            width: 32px;
-            height: 32px;
-            background: rgba(255,255,255,0.06);
-            border: none;
-            border-radius: 8px;
-            color: var(--text-muted);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .modal-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
-
-        .modal-actions {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-
-        .btn-delete-all {
-            width: 100%;
-            padding: 10px;
-            background: rgba(239,68,68,0.1);
-            color: #ef4444;
-            border: 1px solid rgba(239,68,68,0.25);
-            border-radius: var(--radius-sm);
-            font-family: 'Tajawal', sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            transition: background 0.2s;
-        }
-
-        .btn-delete-all:hover { background: rgba(239,68,68,0.2); }
-
-        .modal-body {
-            padding: 16px 24px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .code-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px 14px;
-            margin-bottom: 8px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            transition: border-color 0.2s;
-        }
-
-        .code-item:hover { border-color: rgba(99,102,241,0.2); }
-
-        .code-item-content { flex: 1; min-width: 0; }
-
-        .code-text {
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: var(--text-primary);
-            word-break: break-all;
-            display: block;
-        }
-
-        .code-order {
-            font-size: 11px;
-            color: var(--accent-2);
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-del-single {
-            width: 28px;
-            height: 28px;
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 7px;
-            color: #ef4444;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            flex-shrink: 0;
-            transition: background 0.2s;
-        }
-
-        .btn-del-single:hover { background: rgba(239,68,68,0.25); }
-
-        /* ===== ANIMATIONS ===== */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeDown {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        /* ===== EMPTY STATE ===== */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-state i { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
-        .empty-state p { font-size: 14px; }
-
-        /* ===== FILTER BAR ===== */
-        .filter-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 24px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-elevated);
-            flex-wrap: wrap;
-        }
-
-        .filter-bar label {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .filter-bar select,
-        .filter-bar input[type="date"] {
-            padding: 7px 12px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 7px;
-            color: var(--text-primary);
-            font-family: 'Tajawal', sans-serif;
-            font-size: 13px;
-        }
-
-        .filter-bar select:focus,
-        .filter-bar input[type="date"]:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-    </style>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+ 
+  :root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --bg-input: #0f172a;
+    --border: #334155;
+    --text-primary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #f97316;
+    --accent2: #3b82f6;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+  }
+ 
+  * { margin:0; padding:0; box-sizing:border-box; }
+ 
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+ 
+  /* ===== HEADER ===== */
+  .page-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .page-header h1 { font-size: 20px; font-weight: 700; color: var(--accent); }
+ 
+  /* ===== TABS ===== */
+  .tabs-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    padding: 12px 24px 0;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(249,115,22,0.06); }
+ 
+  /* ===== CONTENT ===== */
+  .tab-content { display: none; padding: 24px; }
+  .tab-content.active { display: block; }
+ 
+  /* ===== STATS ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat-card .s-label { font-size: 12px; color: var(--text-muted); }
+  .stat-card .s-value { font-size: 26px; font-weight: 700; }
+  .stat-card .s-icon { font-size: 20px; margin-bottom: 4px; }
+  .stat-card.total .s-value { color: var(--accent2); }
+  .stat-card.sold .s-value { color: var(--danger); }
+  .stat-card.cost .s-value { color: var(--warning); }
+  .stat-card.added .s-value { color: var(--success); }
+ 
+  /* ===== FORM SECTION ===== */
+  .section-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .section-card h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+ 
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; color: var(--text-muted); }
+  .form-group select,
+  .form-group input[type="text"],
+  .form-group input[type="number"] {
+    padding: 9px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    transition: border 0.2s;
+  }
+  .form-group select:focus,
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* [FIX 1] تأثير الخطأ على الحقول */
+  .error-glow {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+    animation: errorPulse 0.4s ease;
+  }
+  @keyframes errorPulse {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-4px); }
+    50%  { transform: translateX(4px); }
+    75%  { transform: translateX(-4px); }
+    100% { transform: translateX(0); }
+  }
+ 
+  .codes-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Cairo', monospace;
+    font-size: 13px;
+    resize: vertical;
+    transition: border 0.2s;
+    direction: ltr;
+    text-align: left;
+  }
+  .codes-textarea:focus { outline: none; border-color: var(--accent); }
+  .codes-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+ 
+  .btn-primary {
+    padding: 11px 28px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.97); }
+ 
+  .btn-danger {
+    padding: 7px 12px;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-danger:hover { opacity: 0.8; }
+ 
+  /* ===== INVENTORY TABLE ===== */
+  .table-toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 9px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent2); }
+ 
+  .filter-select {
+    padding: 9px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+  }
+ 
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; min-width: 780px; }
+  thead { background: rgba(249,115,22,0.08); }
+  th {
+    padding: 11px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: right;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-primary);
+    border-bottom: 1px solid rgba(51,65,85,0.5);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.025); }
+ 
+  .code-cell {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--success);
+    direction: ltr;
+    text-align: left;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+ 
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-active { background: rgba(34,197,94,0.15); color: var(--success); }
+  .badge-sold { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .badge-reserved { background: rgba(245,158,11,0.15); color: var(--warning); }
+ 
+  /* ===== PAGINATION ===== */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .page-btn {
+    padding: 7px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .page-btn:hover, .page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+ 
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state i { font-size: 40px; margin-bottom: 12px; opacity: 0.4; display: block; }
+ 
+  /* ===== LOADING ===== */
+  .loading { text-align: center; padding: 32px; color: var(--text-muted); font-size: 14px; }
+ 
+  /* ===== TOAST ===== */
+  #toast-container {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .toast {
+    background: var(--success);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    animation: slideUp 0.3s ease;
+  }
+  .toast.error { background: var(--danger); }
+  @keyframes slideUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+ 
+  /* ===== PROGRESS ===== */
+  #progress-bar {
+    display: none;
+    height: 4px;
+    background: rgba(249,115,22,0.2);
+    border-radius: 2px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  #progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+ 
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .tabs-bar { padding: 8px 12px 0; }
+    .tab-content { padding: 16px 12px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .page-header { padding: 12px 16px; }
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
 </head>
 <body>
 
@@ -733,226 +421,212 @@
     </div>
 </header>
 
-<div class="stock-wrapper">
-
-    <!-- PAGE HEADER -->
-    <div class="page-header">
-        <div class="page-header-icon"><i class="fas fa-warehouse"></i></div>
-        <div>
-            <h1>إدارة المخزون</h1>
-            <span>تعبئة الأكواد ومتابعة حالة المخزون</span>
-        </div>
-    </div>
-
-    <!-- STATS STRIP -->
-    <div class="stats-strip">
-        <div class="stat-tile">
-            <div class="stat-tile-icon" style="background:rgba(249,115,22,0.12); color:#f97316;">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <div>
-                <div class="stat-tile-label">مضاف</div>
-                <div class="stat-tile-value" id="total-added-cards">0</div>
-            </div>
-        </div>
-        <div class="stat-tile">
-            <div class="stat-tile-icon" style="background:rgba(16,185,129,0.12); color:#10b981;">
-                <i class="fas fa-dollar-sign"></i>
-            </div>
-            <div>
-                <div class="stat-tile-label">التكلفة</div>
-                <div class="stat-tile-value" id="total-cost">$0</div>
-            </div>
-        </div>
-        <div class="stat-tile">
-            <div class="stat-tile-icon" style="background:rgba(33,150,243,0.12); color:#2196f3;">
-                <i class="fas fa-history"></i>
-            </div>
-            <div>
-                <div class="stat-tile-label">مباع 24س</div>
-                <div class="stat-tile-value" id="used-24h">0</div>
-            </div>
-        </div>
-        <div class="stat-tile" style="border-color:rgba(249,115,22,0.2);">
-            <div class="stat-tile-icon" style="background:var(--accent-glow); color:var(--accent);">
-                <i class="fas fa-boxes"></i>
-            </div>
-            <div>
-                <div class="stat-tile-label">إجمالي</div>
-                <div class="stat-tile-value" id="total-inventory">0</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN GRID -->
-    <div class="stock-grid">
-
-        <!-- LEFT: FORM -->
-        <div class="card" style="animation-delay:0.05s;">
-            <div class="card-header">
-                <div class="card-header-icon"><i class="fas fa-plus-circle"></i></div>
-                <h2>تعبئة الأكواد</h2>
-            </div>
-            <div class="card-body">
-
-                <!-- 1. المنتج -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <span class="step-badge">1</span> المنتج
-                    </label>
-                    <div class="select-wrapper">
-                        <select id="productSelect" class="form-select" onchange="updatePriceOptions()">
-                            <option value="">-- اختر المنتج --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 2. الفئة السعرية -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <span class="step-badge">2</span> الفئة السعرية
-                    </label>
-                    <div class="select-wrapper">
-                        <select id="priceSelect" class="form-select">
-                            <option value="">-- اختر الفئة --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 3. المورد -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <span class="step-badge">3</span> المورد
-                    </label>
-                    <div class="supplier-card">
-                        <div class="select-wrapper">
-                            <select id="supplierSelect" class="form-select" onchange="toggleBuyButton()" style="background:transparent; border:none; padding:4px 30px 4px 4px;">
-                                <option value="">-- اختر المورد --</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="margin-top:12px; margin-bottom:0;">
-                            <label class="form-label" style="margin-bottom:6px;">
-                                <i class="fas fa-hashtag" style="color:var(--accent-2);"></i> Order ID
-                            </label>
-                            <input type="text" id="supplierOrderId" class="form-input" placeholder="رقم الطلب من المورد...">
-                        </div>
-
-                        <input type="number" id="costPriceInput" placeholder="سعر التكلفة ($)..." step="0.01"
-                            style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155;
-                                border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
-
-
-                        <div id="stock-profit-preview" style="display:none; background:#0f172a; border:1px solid #334155;
-                            border-radius:8px; padding:12px; margin-top:8px;">
-                        </div>
-
-
-                        <div id="buyButtonContainer" style="display:none;">
-                            <button class="buy-btn" onclick="openSupplierLink()">
-                                <i class="fas fa-external-link-alt"></i> شراء الأكواد الآن
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. الأكواد -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <span class="step-badge">4</span> الأكواد
-                        <span style="text-transform:none; font-weight:400; color:var(--text-muted);">(كود في كل سطر)</span>
-                    </label>
-                    <textarea id="codesInput" class="form-textarea" placeholder="أدخل الأكواد هنا...&#10;كود1&#10;كود2&#10;كود3"></textarea>
-                </div>
-
-                <button id="addCodesBtn" class="submit-btn">
-                    <i class="fas fa-upload"></i> تحديث المخزون
-                </button>
-
-            </div>
-        </div>
-
-        <!-- RIGHT: TABLE -->
-        <div>
-            <!-- Filter Bar -->
-            <div class="table-card" style="margin-bottom:16px; overflow:visible;">
-                <div class="filter-bar">
-                    <label><i class="fas fa-history"></i> حركة البطاقات:</label>
-                    <select id="movement-period" onchange="fetchMovementStats()">
-                        <option value="24h">آخر 24 ساعة</option>
-                        <option value="7d">آخر 7 أيام</option>
-                        <option value="custom">تاريخ محدد</option>
-                    </select>
-                    <div id="custom-date-group" style="display:none; display:flex; align-items:center; gap:8px;">
-                        <label><i class="fas fa-calendar-day"></i></label>
-                        <input type="date" id="history-date-filter" onchange="fetchMovementStats()">
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- فلتر المخزون -->
-<div style="padding:14px 24px; border-bottom:1px solid var(--border); background:var(--bg-elevated); display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-    <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
-        <i class="fas fa-filter" style="color:var(--accent);"></i> تصفية:
-    </label>
-    <div class="select-wrapper" style="min-width:180px;">
-        <select id="filterProduct" class="form-select" onchange="filterInventoryTable()" style="padding:7px 30px 7px 12px; font-size:13px;">
-            <option value="">-- كل المنتجات --</option>
+<div class="page-header">
+  <h1><i class="fas fa-boxes" style="margin-left:8px;"></i> إدارة المخزون</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <span id="last-refresh" style="font-size:12px; color:var(--text-muted);"></span>
+    <button class="btn-primary" style="padding:8px 16px; font-size:13px;" onclick="refreshAll()">
+      <i class="fas fa-sync-alt"></i> تحديث
+    </button>
+  </div>
+</div>
+ 
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('fill')"><i class="fas fa-plus-circle" style="margin-left:6px;"></i>تعبئة الأكواد</button>
+  <button class="tab-btn" onclick="switchTab('inventory')"><i class="fas fa-list" style="margin-left:6px;"></i>حالة المخزون</button>
+  <button class="tab-btn" onclick="switchTab('stats')"><i class="fas fa-chart-bar" style="margin-left:6px;"></i>الإحصائيات</button>
+</div>
+ 
+<!-- =================== TAB 1: FILL CODES =================== -->
+<div id="tab-fill" class="tab-content active">
+  <div class="section-card">
+    <h2><i class="fas fa-keyboard"></i> إضافة أكواد جديدة</h2>
+ 
+    <div class="form-grid">
+      <div class="form-group">
+        <label>المنتج <span style="color:var(--danger)">*</span></label>
+        <select id="fill-product" onchange="loadPricesForProduct()">
+          <option value="">-- اختر منتجاً --</option>
         </select>
-    </div>
-    <div class="select-wrapper" id="filterPriceWrapper" style="min-width:160px; display:none;">
-        <select id="filterPrice" class="form-select" onchange="filterInventoryTable()" style="padding:7px 30px 7px 12px; font-size:13px;">
-            <option value="">-- كل الفئات --</option>
+      </div>
+      <div class="form-group">
+        <label>الفئة السعرية <span style="color:var(--danger)">*</span></label>
+        <select id="fill-price">
+          <option value="">-- اختر الفئة --</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label>المورد <span style="color:var(--danger)">*</span></label>
+        <select id="fill-supplier">
+          <option value="">-- اختر المورد --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Order ID <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="fill-order-id" placeholder="أدخل رقم الطلب">
+      </div>
     </div>
-</div>
 
+    <!-- حقلا التكلفة والكمية -->
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>تكلفة الشراء ($) <span style="color:var(--danger)">*</span></label>
+        <input type="number" id="fill-cost" placeholder="0.00" min="0" step="0.01" oninput="calcProfit()">
+      </div>
+      <div class="form-group">
+        <label>عدد الكمية <span style="color:var(--danger)">*</span></label>
+        <input type="number" id="fill-qty" placeholder="0" min="1" step="1" oninput="calcProfit()">
+      </div>
+    </div>
 
-            <!-- Inventory Table -->
-            <div class="table-card">
-                <div class="table-header">
-                    <h3><i class="fas fa-table"></i> حالة المخزون</h3>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table class="inventory-table">
-                        <thead>
-                            <tr>
-                                <th>المنتج</th>
-                                <th>الفئة</th>
-                                <th>المورد</th>
-                                <th>Order ID</th>
-                                <th>الأكواد</th>
-                                <th>آخر تحديث</th>
-                                <th>إجراء</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventory-list-body"></tbody>
-                    </table>
-                </div>
-            </div>
+    <div id="profit-card" style="
+          display:none;
+          margin: 14px 0;
+          padding: 16px 20px;
+          background: var(--bg-input);
+          border: 1px solid var(--success);
+          border-radius: 12px;
+        ">
+      <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:12px; text-align:center;">
+
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">ربح البطاقة الواحدة</div>
+          <div id="profit-per-card-mru" style="font-size:20px; font-weight:700; color:var(--success);">-- MRU</div>
+          <div id="profit-per-card-usd" style="font-size:13px; font-weight:600; color:var(--text-muted); margin-top:2px;">-- $</div>
         </div>
 
-    </div>
-</div>
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">تكلفة البطاقة الواحدة</div>
+          <div id="cost-per-card-mru" style="font-size:20px; font-weight:700; color:var(--warning);">-- MRU</div>
+          <div id="cost-per-card-usd" style="font-size:13px; font-weight:600; color:var(--text-muted); margin-top:2px;">-- $</div>
+        </div>
 
-<!-- MODAL -->
-<div id="codesModal" class="modal-overlay">
-    <div class="modal-box">
-        <div class="modal-head">
-            <h3 id="modalTitle"></h3>
-            <button class="modal-close" onclick="closeCodesModal()">
-                <i class="fas fa-times"></i>
-            </button>
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">إجمالي الربح</div>
+          <div id="profit-total-mru" style="font-size:20px; font-weight:700; color:var(--accent);">-- MRU</div>
+          <div id="profit-total-usd" style="font-size:13px; font-weight:600; color:var(--text-muted); margin-top:2px;">-- $</div>
         </div>
-        <div class="modal-actions">
-            <button class="btn-delete-all" onclick="deleteAllCodes()">
-                <i class="fas fa-trash-alt"></i> حذف جميع الأكواد
-            </button>
+
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">التكلفة الإجمالية</div>
+          <div id="cost-total" style="font-size:20px; font-weight:700; color:var(--warning);">-- $</div>
         </div>
-        <div class="modal-body" id="codesListContainer"></div>
+
+      </div>
     </div>
+
+    <div class="form-group" style="margin-bottom:6px;">
+      <label>الأكواد <span style="color:var(--danger)">*</span> – كود واحد في كل سطر</label>
+      <textarea class="codes-textarea" id="fill-codes" placeholder="CODE001&#10;CODE002&#10;CODE003&#10;..."></textarea>
+      <p class="codes-hint"><i class="fas fa-info-circle" style="margin-left:4px;"></i>أدخل كل كود في سطر مستقل. سيتم تجاهل الأسطر الفارغة والأكواد المكررة.</p>
+    </div>
+ 
+    <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+ 
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button class="btn-primary" onclick="submitCodes()">
+        <i class="fas fa-upload"></i> رفع الأكواد
+      </button>
+      <span id="fill-count" style="font-size:13px; color:var(--text-muted);"></span>
+    </div>
+  </div>
 </div>
+ 
+<!-- =================== TAB 2: INVENTORY =================== -->
+<div id="tab-inventory" class="tab-content">
+  <div class="table-toolbar">
+    <input type="text" class="search-input" id="inv-search" placeholder="بحث بالكود أو الطلب..." oninput="filterInventory()">
+    <select class="filter-select" id="inv-product-filter" onchange="filterInventory()">
+      <option value="">كل المنتجات</option>
+    </select>
+    <select class="filter-select" id="inv-status-filter" onchange="filterInventory()">
+      <option value="">كل الحالات</option>
+      <option value="available">متاح</option>
+      <option value="sold">مباع</option>
+      <option value="reserved">محجوز</option>
+    </select>
+    <button class="btn-primary" style="padding:9px 16px; font-size:13px;" onclick="exportCSV()">
+      <i class="fas fa-file-csv"></i> تصدير
+    </button>
+  </div>
+ 
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المنتج</th>
+          <th>الفئة السعرية</th>
+          <th>المورد</th>
+          <th>Order ID</th>
+          <th>الكود</th>
+          <th style="color:var(--warning);">تكلفة البطاقة ($)</th><!-- [FIX 2] عمود جديد -->
+          <th>التاريخ</th>
+          <th>إجراء</th>
+        </tr>
+      </thead>
+      <tbody id="inv-tbody">
+        <tr><td colspan="10" class="loading"><i class="fas fa-spinner fa-spin" style="margin-left:8px;"></i>جاري التحميل...</td></tr>
+      </tbody>
+    </table>
+  </div>
+ 
+  <div class="pagination" id="inv-pagination"></div>
+</div>
+ 
+<!-- =================== TAB 3: STATS =================== -->
+<div id="tab-stats" class="tab-content">
+  <!-- Summary cards -->
+  <div class="stats-grid" id="stats-cards">
+    <div class="stat-card total">
+      <span class="s-icon"><i class="fas fa-cubes" style="color:var(--accent2);"></i></span>
+      <span class="s-label">إجمالي الأكواد</span>
+      <span class="s-value" id="stat-total">—</span>
+    </div>
+    <div class="stat-card sold">
+      <span class="s-icon"><i class="fas fa-check-circle" style="color:var(--danger);"></i></span>
+      <span class="s-label">مباع آخر 24 ساعة</span>
+      <span class="s-value" id="stat-sold24">—</span>
+    </div>
+    <div class="stat-card cost">
+      <span class="s-icon"><i class="fas fa-coins" style="color:var(--warning);"></i></span>
+      <!-- [FIX 3] تحديث التسمية لتوضيح أنها لليوم الحالي -->
+      <span class="s-label">تكلفة اليوم (MRU) <span style="font-size:10px; display:block; margin-top:2px; color:var(--text-muted);">يُعاد تعيينها عند 00:00</span></span>
+      <span class="s-value" id="stat-cost">—</span>
+    </div>
+    <div class="stat-card added">
+      <span class="s-icon"><i class="fas fa-plus-square" style="color:var(--success);"></i></span>
+      <!-- [FIX 3] تحديث التسمية -->
+      <span class="s-label">مضاف اليوم <span style="font-size:10px; display:block; margin-top:2px; color:var(--text-muted);">يُعاد تعيينه عند 00:00</span></span>
+      <span class="s-value" id="stat-added">—</span>
+    </div>
+  </div>
+ 
+  <!-- Per-product breakdown -->
+  <div class="section-card">
+    <h2><i class="fas fa-table"></i> تفصيل لكل منتج</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>المنتج</th>
+            <th>الفئة</th>
+            <th>إجمالي</th>
+            <th>متاح</th>
+            <th>مباع</th>
+            <th>محجوز</th>
+            <th>تكلفة</th>
+          </tr>
+        </thead>
+        <tbody id="stats-tbody">
+          <tr><td colspan="7" class="loading"><i class="fas fa-spinner fa-spin" style="margin-left:8px;"></i>جاري الحساب...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+ 
+<div id="toast-container"></div>
 
 <script type="module" src="./js/bell.js"></script>
 <script type="module" src="./js/stocks.js"></script>
