@@ -84,6 +84,7 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
 await supabase.auth.updateUser({ data: { avatar_url: photoURL } });
 displayUserPhoto(photoURL + '?t=' + Date.now());
 alert('✅ تم تحديث الصورة!');
+});
 
 // تسجيل الخروج
 window.handleLogout = async () => {
