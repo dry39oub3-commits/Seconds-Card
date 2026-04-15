@@ -2,6 +2,16 @@ import { supabase } from '../../js/supabase-config.js';
 
 let allUsers = [];
 
+// ==================== SC-ID ====================
+function generateSCId(uuid) {
+    const hash = uuid.replace(/-/g, '');
+    let num = 0;
+    for (let i = 0; i < hash.length; i++) {
+        num = (num * 31 + hash.charCodeAt(i)) % 900000;
+    }
+    return `SC-${String(num + 100000).padStart(6, '0')}`;
+}
+
 async function initializeUsersPage() {
     const tbody = document.getElementById('users-list-body');
     if (!tbody) return;
@@ -13,7 +23,7 @@ async function initializeUsersPage() {
 
     if (error) {
         console.error("خطأ في جلب المستخدمين:", error.message);
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">❌ خطأ في جلب البيانات</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">❌ خطأ في جلب البيانات</td></tr>';
         return;
     }
 
@@ -31,7 +41,7 @@ function renderUsersTable(usersList) {
     }
 
     tbody.innerHTML = usersList.map(user => {
-        const scId       = generateSCId(user.id);
+        const scId        = generateSCId(user.id);
         const statusClass = user.is_blocked ? 'status-blocked' : 'status-active';
         const statusText  = user.is_blocked ? 'محظور' : 'نشط';
         const joinDate    = user.created_at ? new Date(user.created_at).toLocaleDateString('ar-EG') : 'غير معروف';
@@ -41,7 +51,9 @@ function renderUsersTable(usersList) {
             <tr>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:35px; height:35px; border-radius:50%; background:#334155; display:flex; align-items:center; justify-content:center; color:#f97316; font-weight:bold;">
+                        <div style="width:35px; height:35px; border-radius:50%; background:#334155;
+                                    display:flex; align-items:center; justify-content:center;
+                                    color:#f97316; font-weight:bold;">
                             ${name.charAt(0).toUpperCase()}
                         </div>
                         <b>${name}</b>
@@ -49,11 +61,18 @@ function renderUsersTable(usersList) {
                 </td>
                 <td>${user.email || '---'}</td>
                 <td>${user.phone || '---'}</td>
-                <td style="color:#f97316; font-family:monospace; font-size:13px;">${scId}</td>
+                <td>
+                    <span style="font-family:monospace; font-size:13px; color:#f97316;
+                                 background:rgba(249,115,22,0.1); padding:3px 8px;
+                                 border-radius:6px; border:1px solid rgba(249,115,22,0.25);">
+                        ${scId}
+                    </span>
+                </td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${joinDate}</td>
                 <td>
-                    <button onclick="openEditModal('${user.id}')" style="background:none; border:none; color:#f97316; cursor:pointer;">
+                    <button onclick="openEditModal('${user.id}')"
+                        style="background:none; border:none; color:#f97316; cursor:pointer;">
                         <i class="fas fa-edit"></i> تعديل
                     </button>
                 </td>
@@ -63,22 +82,23 @@ function renderUsersTable(usersList) {
 }
 
 window.filterUsers = function() {
-    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    const searchTerm  = document.getElementById('userSearch').value.toLowerCase().trim();
     const statusFilter = document.getElementById('statusFilter').value;
 
     const filtered = allUsers.filter(user => {
         const name  = (user.fullName || user.full_name || '').toLowerCase();
         const email = (user.email || '').toLowerCase();
-        const scId  = generateSCId(user.id).toLowerCase();  // ✅ البحث بـ SC-ID
+        const scId  = generateSCId(user.id).toLowerCase();
 
-        const matchesSearch = name.includes(searchTerm) || 
-                              email.includes(searchTerm) || 
-                              scId.includes(searchTerm);    // ✅
+        const matchesSearch = !searchTerm ||
+            name.includes(searchTerm)  ||
+            email.includes(searchTerm) ||
+            scId.includes(searchTerm);
 
         const matchesStatus =
             statusFilter === 'all' ||
             (statusFilter === 'blocked' && user.is_blocked) ||
-            (statusFilter === 'active' && !user.is_blocked);
+            (statusFilter === 'active'  && !user.is_blocked);
 
         return matchesSearch && matchesStatus;
     });
@@ -90,11 +110,11 @@ window.openEditModal = function(userId) {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
 
-    document.getElementById('edit-user-id').value = user.id;
-    document.getElementById('edit-name').value = user.fullName || user.full_name || '';
-    document.getElementById('edit-email').value = user.email || '';
-    document.getElementById('edit-status').value = user.is_blocked ? 'blocked' : 'active';
-    document.getElementById('edit-password').value = '';
+    document.getElementById('edit-user-id').value   = user.id;
+    document.getElementById('edit-name').value       = user.fullName || user.full_name || '';
+    document.getElementById('edit-email').value      = user.email || '';
+    document.getElementById('edit-status').value     = user.is_blocked ? 'blocked' : 'active';
+    document.getElementById('edit-password').value   = '';
     document.getElementById('editModal').style.display = 'block';
 };
 
@@ -103,18 +123,16 @@ window.closeModal = function() {
 };
 
 window.saveUserChanges = async function() {
-    const userId = document.getElementById('edit-user-id').value;
-    const newName = document.getElementById('edit-name').value;
-    const newEmail = document.getElementById('edit-email').value;
-    const newPassword = document.getElementById('edit-password').value;
+    const userId    = document.getElementById('edit-user-id').value;
+    const newName   = document.getElementById('edit-name').value;
+    const newEmail  = document.getElementById('edit-email').value;
     const newStatus = document.getElementById('edit-status').value;
 
-    // 1. تحديث بيانات جدول users العادي
     const { error: dbError } = await supabase
         .from('users')
         .update({
-            full_name: newName,   // جرب full_name بدل fullName
-            email: newEmail,
+            full_name:  newName,
+            email:      newEmail,
             is_blocked: newStatus === 'blocked'
         })
         .eq('id', userId);
