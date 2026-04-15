@@ -14,6 +14,28 @@
             --text-gray: #94a3b8;
         }
 
+        /* تثبيت ألوان الهيدر في كلا الوضعين */
+header, .admin-top-header {
+    background-color: #020617 !important; /* أسود غامق جداً (Navy Black) */
+    color: white !important;
+    padding: 15px 24px;
+    border-bottom: 1px solid #1e293b;
+}
+
+/* ضمان بقاء نصوص الهيدر بيضاء دائماً */
+header h2, 
+header .stats-mini, 
+header #theme-toggle, 
+header .nav-link {
+    color: white !important;
+}
+
+
+/* أيقونة الثيم داخل الهيدر */
+header #theme-toggle i {
+    color: white !important;
+}
+
         .users-container { padding: 20px; max-width: 1300px; margin: 0 auto; }
 
         .controls-row {
