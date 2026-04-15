@@ -28,11 +28,7 @@ const photo = user.user_metadata?.avatar_url || '';
     document.getElementById('user-display-name').value = name;
     document.getElementById('user-name').textContent = name;
 
-    if (photo) {
-        const img = document.getElementById('user-display-photo');
-        img.src = photo;
-        img.style.display = 'block';
-    }
+displayUserPhoto(photo);
 
     // إظهار زر الحفظ عند تعديل الاسم
     document.getElementById('user-display-name').addEventListener('input', () => {
@@ -86,11 +82,8 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
     const photoURL = data.publicUrl;
 
 await supabase.auth.updateUser({ data: { avatar_url: photoURL } });
-    const img = document.getElementById('user-display-photo');
-    img.src = photoURL + '?t=' + Date.now();
-    img.style.display = 'block';
-    alert('✅ تم تحديث الصورة!');
-});
+displayUserPhoto(photoURL + '?t=' + Date.now());
+alert('✅ تم تحديث الصورة!');
 
 // تسجيل الخروج
 window.handleLogout = async () => {
