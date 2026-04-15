@@ -502,5 +502,21 @@ window.filterOrders = () => {
 document.addEventListener('DOMContentLoaded', () => {
     loadOrders();
     checkNewOrders();
-    setInterval(() => { loadOrders(); checkNewOrders(); }, 30000);
+
+    // ✅ تحديث فوري عبر Realtime بدل setInterval
+    const channel = supabase
+        .channel('orders-realtime')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'orders' },
+            (payload) => {
+                console.log('📡 تغيير في الطلبات:', payload.eventType);
+                loadOrders();
+                checkNewOrders();
+            }
+        )
+        .subscribe();
+
+    
+    setInterval(() => { checkNewOrders(); }, 30000);
 });

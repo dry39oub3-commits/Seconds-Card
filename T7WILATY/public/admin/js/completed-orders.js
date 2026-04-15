@@ -331,22 +331,7 @@ window.resetFilter = () => {
 
 window.loadCompletedOrders = loadCompletedOrders;
 
-// ==================== ثيم ====================
-(function(){
-    const saved = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-    const icon = document.querySelector('#theme-toggle i');
-    if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) toggle.onclick = () => {
-        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-        const icon = document.querySelector('#theme-toggle i');
-        if (icon) icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    };
-})();
 
 // ==================== تشغيل ====================
 document.addEventListener('DOMContentLoaded', () => {

@@ -143,17 +143,30 @@ function loadSuppliersForPrice() {
 }
 
 // =================== LOAD STOCKS ===================
+// =================== LOAD STOCKS ===================
 async function loadStocks() {
-  const { data, error } = await supabase
+  // جلب الأكواد المتاحة للجدول
+  const { data: availableData, error: e1 } = await supabase
     .from('stocks')
     .select('*')
     .eq('status', 'available')
     .order('created_at', { ascending: false });
 
-  if (error) { showToast('خطأ في تحميل المخزون', true); return; }
-  allStocks = data || [];
+  if (e1) { showToast('خطأ في تحميل المخزون', true); return; }
+
+  // جلب الأكواد المباعة خلال آخر 24 ساعة للإحصاء فقط
+  const ago24ISO = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const { data: soldData } = await supabase
+    .from('stocks')
+    .select('id, status, sold_at, product_name, price_label, price_value, product_id')
+    .eq('status', 'sold')
+    .gte('sold_at', ago24ISO);
+
+  allStocks      = availableData || [];
+  window._soldLast24 = soldData || [];   // نحفظها منفصلة للإحصاء
+
   filteredStocks = [...allStocks];
-  currentPage = 1;
+  currentPage    = 1;
   renderInventoryTable();
   renderStats();
 }
@@ -262,6 +275,29 @@ async function submitCodes() {
   updateCodeCounter();
   showToast(`✅ تم رفع ${inserted} كود بنجاح!`);
   await loadStocks();
+
+      const today = new Date().toDateString();
+    const saved = JSON.parse(localStorage.getItem('stockStats') || '{}');
+
+    if (saved.date !== today) {
+        // يوم جديد — ابدأ من صفر
+        localStorage.setItem('stockStats', JSON.stringify({
+            date: today,
+            added: inserted,
+            cost: parseFloat(costVal)
+        }));
+    } else {
+        // نفس اليوم — أضف للموجود
+        localStorage.setItem('stockStats', JSON.stringify({
+            date: today,
+            added: (saved.added || 0) + inserted,
+            cost: (saved.cost || 0) + parseFloat(costVal)
+        }));
+    }
+
+    showToast(`✅ تم رفع ${inserted} كود بنجاح!`);
+    await loadStocks();
+
 }
 window.submitCodes = submitCodes;
 
@@ -393,27 +429,27 @@ window.deleteStock = deleteStock;
 
 // =================== STATS ===================
 function renderStats() {
-  const now   = new Date();
-  const ago24 = new Date(now - 24 * 3600 * 1000);
+    const now   = new Date();
+    const today = now.toDateString();
 
-  // بداية اليوم الحالي (00:00:00)
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const total  = allStocks.length;
+    // ✅ الآن من البيانات المجلوبة منفصلاً
+    const sold24 = (window._soldLast24 || []).length;
 
-  const total  = allStocks.length;
-  const sold24 = allStocks.filter(s => s.status === 'sold' && s.sold_at && new Date(s.sold_at) >= ago24).length;
+    // ✅ اقرأ من localStorage بدل حساب من الجدول
+    const saved = JSON.parse(localStorage.getItem('stockStats') || '{}');
+    const isSameDay = saved.date === today;
 
-  // [FIX 3] حساب "مضاف اليوم" منذ بداية اليوم (00:00:00) وليس آخر 24 ساعة
-  const today = allStocks.filter(s => new Date(s.created_at) >= startOfToday).length;
+    const addedToday = isSameDay ? (saved.added || 0) : 0;
+    const costToday  = isSameDay ? (saved.cost || 0) : 0;
 
-  // [FIX 3] حساب "التكلفة الإجمالية" للأكواد المضافة اليوم فقط منذ 00:00:00
-  const costToday = allStocks
-    .filter(s => new Date(s.created_at) >= startOfToday)
-    .reduce((acc, s) => acc + (s.price_value || 0), 0);
+    // تحويل التكلفة من $ إلى MRU
+    const costTodayMRU = (costToday * 43).toFixed(0);
 
-  document.getElementById('stat-total').textContent  = total.toLocaleString();
-  document.getElementById('stat-sold24').textContent = sold24.toLocaleString();
-  document.getElementById('stat-cost').textContent   = costToday.toLocaleString() + ' MRU';
-  document.getElementById('stat-added').textContent  = today.toLocaleString();
+    document.getElementById('stat-total').textContent  = total.toLocaleString();
+    document.getElementById('stat-sold24').textContent = sold24.toLocaleString();
+    document.getElementById('stat-cost').textContent   = Number(costTodayMRU).toLocaleString() + ' MRU';
+    document.getElementById('stat-added').textContent  = addedToday.toLocaleString();
 
   // Per product
   const map = {};
@@ -447,20 +483,21 @@ window.renderStats = renderStats;
 
 // =================== [FIX 3] جدولة إعادة التعيين التلقائي عند 00:00 ===================
 function scheduleMidnightReset() {
-  const now = new Date();
-  // وقت منتصف الليل القادم
-  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-  const msUntilMidnight = midnight - now;
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    const msUntilMidnight = midnight - now;
 
-  setTimeout(() => {
-    // إعادة رسم الإحصائيات عند منتصف الليل
-    renderStats();
-    showToast('🔄 تم تحديث إحصائيات اليوم الجديد');
-    // جدولة للمرة القادمة (كل 24 ساعة)
-    setInterval(() => {
-      renderStats();
-    }, 24 * 60 * 60 * 1000);
-  }, msUntilMidnight);
+    setTimeout(() => {
+        // ✅ مسح إحصائيات اليوم عند منتصف الليل
+        localStorage.removeItem('stockStats');
+        renderStats();
+        showToast('🔄 تم تحديث إحصائيات اليوم الجديد');
+
+        setInterval(() => {
+            localStorage.removeItem('stockStats');
+            renderStats();
+        }, 24 * 60 * 60 * 1000);
+    }, msUntilMidnight);
 }
 
 // =================== EXPORT CSV ===================

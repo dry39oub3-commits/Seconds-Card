@@ -75,7 +75,8 @@ body {
     display: none; /* مخفية افتراضياً وتظهر بـ JS */
     position: absolute;
     top: 45px;
-    left: 0;
+    right: 0;
+left: auto;
     background: var(--dropdown-bg);
     min-width: 180px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -470,8 +471,7 @@ body {
 
 
 
-max-width: 100%;
-    height: auto;
+max-width: calc(100vw - 20px)
 
 }
 

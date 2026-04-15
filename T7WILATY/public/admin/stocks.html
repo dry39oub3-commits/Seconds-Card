@@ -9,30 +9,35 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 
-    <script>
-        (function(){
-            const t = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', t);
-        })();
-    </script>
+
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
  
-  :root {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-card: #1e293b;
-    --bg-input: #0f172a;
-    --border: #334155;
-    --text-primary: #e2e8f0;
-    --text-muted: #94a3b8;
-    --accent: #f97316;
-    --accent2: #3b82f6;
-    --success: #22c55e;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-  }
+:root {
+  --bg-primary: #ffffff;      /* خلفية الصفحة كاملة بيضاء */
+  --bg-secondary: #ffffff;    /* الهيدر أبيض */
+  --bg-card: #ffffff;         /* البطاقات بيضاء */
+  --bg-input: #ffffff;        /* المدخلات بيضاء */
+  --border: #f1f5f9;          /* حدود فاتحة جداً لتمييز العناصر */
+  --text-primary: #1e293b;    /* نصوص غامقة واضحة */
+  --text-muted: #64748b;
+  --accent: #f97316;
+  --accent2: #3b82f6;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+}
+/* وضع الليل - يعود لتنسيقك الأصلي */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-input: #0f172a;
+  --border: #334155;
+  --text-primary: #e2e8f0;
+  --text-muted: #94a3b8;
+}
  
   * { margin:0; padding:0; box-sizing:border-box; }
  

@@ -1158,10 +1158,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 /* بطاقات الإحصائيات */
-[data-theme="dark"] .stat-card {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-}
+[data-theme="dark"] .stat-card { background: var(--card-bg) !important; }
 
 [data-theme="dark"] .stat-card.highlight {
     background: #1d4ed8 !important;
@@ -1216,6 +1213,14 @@ input:checked + .slider:before { transform: translateX(20px); }
 [data-theme="dark"] textarea:focus {
     border-color: #f39c12 !important;
     background: #1e293b !important;
+}
+
+[data-theme="dark"] img {
+    filter: brightness(.8) contrast(1.2);
+}
+
+[data-theme="dark"] .logo img {
+    filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
 }
 
 /* labels */
@@ -1309,12 +1314,99 @@ input:checked + .slider:before { transform: translateX(20px); }
     filter: invert(1);
 }
 
+/* الألوان الافتراضية (الوضع النهاري) */
+:root {
+    --bg-color: #f3f4f6;
+    --header-bg: #111827;
+    --card-bg: #ffffff;
+    --text-color: #1f2937;
+    --accent-color: #f97316; /* اللون البرتقالي الخاص بشعارك */
+}
+
+/* الألوان عند تفعيل الوضع الليلي */
+[data-theme='dark'] {
+    --bg-color: #0f172a;
+    --header-bg: #020617;
+    --card-bg: #1e293b;
+    --text-color: #f3f4f6;
+}
+
+/* تطبيق المتغيرات على العناصر */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.admin-top-header {
+    background-color: var(--header-bg);
+}
+
+.card { /* بطاقات الإحصائيات */
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
 
 
+/* وضع النهار - أبيض بالكامل */
+:root {
+    --bg-color: #ffffff;      /* خلفية الصفحة كاملة بيضاء */
+    --header-bg: #1a1a1a;    /* الهيدر أبيض */
+    --card-bg: #ffffff;      /* البطاقات بيضاء */
+    --text-color: #1a1a1a;   /* نص غامق للوضوح */
+    --border-color: #e5e7eb; /* حدود خفيفة جداً للفصل بين العناصر */
+    --accent-color: #f97316; /* اللون البرتقالي الخاص بك */
+}
 
+/* وضع الليل - طبيعي (كما كان في الكود السابق) */
+[data-theme='dark'] {
+    --bg-color: #0f172a;
+    --header-bg: #020617;
+    --card-bg: #1e293b;
+    --text-color: #f3f4f6;
+    --border-color: #334155;
+}
+/* الجداول والمدخلات */
+table, input, select, textarea {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
 
-body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+/* البطاقات (Stat Cards) */
+.stat-card, .card {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: none !important; /* إزالة الظل لتبدو الصفحة مسطحة وبيضاء بالكامل */
+}
+
+:root, [data-theme='light'] {
+    --bg-primary: #ffffff;      /* الخلفية الأساسية */
+    --bg-secondary: #ffffff;    /* خلفية البطاقات والحاويات */
+    --bg-input: #ffffff;        /* خلفية المدخلات */
+    --text-main: #020305;       /* لون النص الأساسي */
+    --text-muted: #000000;      /* لون النص الفرعي */
+    --border-color: #13161d;    /* لون الحدود خفيف جداً */
+    --bg-input: #f9fafb; 
+--text-main: #111827; 
+--border-color: #272f3d;
+
+}
+
+:root, [data-theme='light'] {
+         /* خلفية الصفحة */
+     /* خلفية البطاقات والحاويات */
+          /* خلفية خفيفة جداً للمدخلات لتمييزها */
+          /* نصوص واضحة */
+    --text-muted: #04060a;
+        /* حدود فاتحة جداً */
+    
+    --card-shadow: none;        /* إلغاء الظلال لزيادة البياض */
+}
+
+body { background: #c7c8c9; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
 
         .page-container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
@@ -1609,4 +1701,43 @@ body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif;
     background: #0f172a;
     color: white;
     border: 1px solid #334155;
+}
+
+/* تطبيق الألوان الأساسية */
+body {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-main) !important;
+}
+
+/* الهيدر والقوائم */
+.admin-top-header {
+    background-color: var(--header-bg) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* الحاوية الكبيرة التي تضم الأرصدة (في صفحة المحافظ) */
+.admin-panel-container, .wallet-section, .stats-wrapper {
+    background-color: var(--bg-primary) !important;
+}
+
+/* البطاقات الفردية (مثل التي تحتوي على الإيميل والرصيد) */
+.stat-card, .wallet-card, .user-balance-item, .product-row {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--card-shadow) !important;
+    border-radius: 12px;
+}
+
+/* أزرار التنقل (أرصدة المستخدمين، طلبات الشحن، إلخ) */
+.nav-tabs .btn {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+/* المدخلات وأدوات البحث */
+.search-box input, .filter-select {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
 }
