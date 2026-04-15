@@ -26,15 +26,16 @@ function renderUsersTable(usersList) {
     const tbody = document.getElementById('users-list-body');
 
     if (!usersList || usersList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا يوجد عملاء</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">لا يوجد عملاء</td></tr>';
         return;
     }
 
     tbody.innerHTML = usersList.map(user => {
+        const scId       = generateSCId(user.id);
         const statusClass = user.is_blocked ? 'status-blocked' : 'status-active';
-        const statusText = user.is_blocked ? 'محظور' : 'نشط';
-        const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('ar-EG') : 'غير معروف';
-        const name = user.fullName || user.full_name || 'بدون اسم';
+        const statusText  = user.is_blocked ? 'محظور' : 'نشط';
+        const joinDate    = user.created_at ? new Date(user.created_at).toLocaleDateString('ar-EG') : 'غير معروف';
+        const name        = user.fullName || user.full_name || 'بدون اسم';
 
         return `
             <tr>
@@ -48,6 +49,7 @@ function renderUsersTable(usersList) {
                 </td>
                 <td>${user.email || '---'}</td>
                 <td>${user.phone || '---'}</td>
+                <td style="color:#f97316; font-family:monospace; font-size:13px;">${scId}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${joinDate}</td>
                 <td>
@@ -65,11 +67,14 @@ window.filterUsers = function() {
     const statusFilter = document.getElementById('statusFilter').value;
 
     const filtered = allUsers.filter(user => {
-        const name = (user.fullName || user.full_name || '').toLowerCase();
+        const name  = (user.fullName || user.full_name || '').toLowerCase();
         const email = (user.email || '').toLowerCase();
-        const id = user.id || '';
+        const scId  = generateSCId(user.id).toLowerCase();  // ✅ البحث بـ SC-ID
 
-        const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || id.includes(searchTerm);
+        const matchesSearch = name.includes(searchTerm) || 
+                              email.includes(searchTerm) || 
+                              scId.includes(searchTerm);    // ✅
+
         const matchesStatus =
             statusFilter === 'all' ||
             (statusFilter === 'blocked' && user.is_blocked) ||

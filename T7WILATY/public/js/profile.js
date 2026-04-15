@@ -102,8 +102,7 @@ function generateSCId(uuid) {
     for (let i = 0; i < hash.length; i++) {
         num = (num * 31 + hash.charCodeAt(i)) % 900000;
     }
-    const scNumber = String(num + 100000).padStart(6, '0');
-    return `SC-${scNumber}`;
+    return `SC-${String(num + 100000).padStart(6, '0')}`;
 }
 
 
