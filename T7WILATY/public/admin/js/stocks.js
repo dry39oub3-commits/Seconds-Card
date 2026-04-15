@@ -147,6 +147,7 @@ async function loadStocks() {
   const { data, error } = await supabase
     .from('stocks')
     .select('*')
+    .eq('status', 'available')
     .order('created_at', { ascending: false });
 
   if (error) { showToast('خطأ في تحميل المخزون', true); return; }

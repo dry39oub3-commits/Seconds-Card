@@ -25,7 +25,28 @@ async function loadOrders() {
         return;
     }
 
-    ordersList.innerHTML = orders.map(order => {
+    // ✅ معالجة طلبات المحفظة تلقائياً
+    for (const order of orders) {
+        const paymentMethod = order.paymentMethod || order.payment_method || '';
+        if (paymentMethod === 'المحفظة' || paymentMethod === 'محفظة') {
+            const autoApproved = await tryAutoApproveFromStock(order);
+            if (autoApproved) continue; // تم القبول التلقائي، تخطَّ عرضه
+        }
+    }
+
+    // إعادة جلب الطلبات بعد المعالجة التلقائية
+    const { data: remainingOrders } = await supabase
+        .from('orders')
+        .select('*, products(image, prices)')
+        .not('status', 'in', '("مكتمل","ملغي","مسترد")')
+        .order('created_at', { ascending: false });
+
+    if (!remainingOrders || remainingOrders.length === 0) {
+        ordersList.innerHTML = '<tr><td colspan="11" style="text-align:center;">📭 لا توجد طلبات حالياً</td></tr>';
+        return;
+    }
+
+    ordersList.innerHTML = remainingOrders.map(order => {
         const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : 'غير محدد';
         const receiptUrl = order.receiptUrl || order.receipt_url;
         const receiptBtn = receiptUrl ?
@@ -59,16 +80,107 @@ async function loadOrders() {
     }).join('');
 }
 
+// ==================== قبول تلقائي من المخزون ====================
+async function tryAutoApproveFromStock(order) {
+    const quantity = order.quantity || 1;
+    const productId = order.product_id;
+    const label = order.label;
+
+    if (!productId || !label) return false;
+
+    // جلب الأكواد المتاحة من المخزون
+    const { data: availableCodes, error } = await supabase
+        .from('stocks')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('price_label', label)
+        .eq('is_used', false)
+        .order('created_at', { ascending: true })
+        .limit(quantity);
+
+    if (error || !availableCodes || availableCodes.length < quantity) {
+        // لا توجد كمية كافية — لا تقبل تلقائياً
+        return false;
+    }
+
+    const codes = availableCodes.map(c => c.code);
+    const stockIds = availableCodes.map(c => c.id);
+
+    // حساب التكلفة
+    const costPerCode = availableCodes[0]?.cost_price || 0;
+    const supplierName = availableCodes[0]?.supplier_name || 'تلقائي';
+    const supplierOrderId = availableCodes[0]?.supplier_order_id || '';
+
+    // بناء تفاصيل الموردين
+    const suppliersMap = {};
+    availableCodes.forEach(c => {
+        const name = c.supplier_name || 'غير محدد';
+        if (!suppliersMap[name]) {
+            suppliersMap[name] = { supplier_name: name, supplier_order_id: c.supplier_order_id || '' };
+        }
+    });
+    const suppliersDetails = Object.values(suppliersMap);
+
+    // التحقق من عدم تكرار الأكواد
+    for (const code of codes) {
+        const { data: existingCode } = await supabase
+            .from('used_codes')
+            .select('id')
+            .eq('code', code)
+            .maybeSingle();
+        if (existingCode) return false;
+    }
+
+    // ✅ تحديث الطلب إلى مكتمل
+    const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+            status: 'مكتمل',
+            card_code: codes.join('\n'),
+            cost_price: costPerCode,
+            supplier_id: supplierName,
+            supplier_order_id: supplierOrderId,
+            suppliers_details: suppliersDetails,
+            auto_approved: true
+        })
+        .eq('id', order.id);
+
+    if (updateError) {
+        console.error('فشل القبول التلقائي:', updateError.message);
+        return false;
+    }
+
+    // ✅ تسجيل الأكواد في used_codes
+    for (const code of codes) {
+        await supabase.from('used_codes').insert({
+            code: code,
+            order_id: order.id,
+            product_name: order.product_name
+        });
+    }
+
+    // ✅ تحديث حالة الأكواد في stocks إلى مستخدمة
+    await supabase
+        .from('stocks')
+        .update({
+            is_used: true,
+            sold_at: new Date().toISOString(),
+            order_id: order.id
+        })
+        .in('id', stockIds);
+
+    console.log(`✅ تم قبول الطلب ${order.order_number || order.id} تلقائياً من المخزون`);
+    return true;
+}
+
 // ==================== فتح Modal الطلب ====================
 window.openOrderModal = (order) => {
     const product = order.products || {};
     const image = product.image || '';
-    const prices = product.prices || [];
-    const priceItem = prices.find(p => p.value == order.price) || prices[0] || {};
-    const suppliers = priceItem.suppliers || [];
     const totalPrice = order.price * (order.quantity || 1);
 
     document.getElementById('order-modal')?.remove();
+    window._reservedStockIds = null;
 
     const modal = document.createElement('div');
     modal.id = 'order-modal';
@@ -87,6 +199,7 @@ window.openOrderModal = (order) => {
             </button>
             <h2 style="text-align:center; margin-bottom:20px; color:#f97316;">تفاصيل الطلب</h2>
 
+            <!-- معلومات الطلب -->
             <div style="background:#0f172a; border-radius:12px; padding:20px; margin-bottom:20px; display:flex; gap:15px; align-items:center;">
                 <img src="${image}" style="width:90px; height:90px; object-fit:contain; background:white; border-radius:10px; padding:5px; flex-shrink:0;" onerror="this.style.display='none'">
                 <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
@@ -100,6 +213,7 @@ window.openOrderModal = (order) => {
                 </div>
             </div>
 
+            <!-- التكلفة والأكواد -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
                     <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
@@ -129,37 +243,34 @@ window.openOrderModal = (order) => {
                 </div>
             </div>
 
+            <!-- الربح -->
             <div id="profit-display" style="display:none; margin-bottom:15px; background:#0f172a; border-radius:8px; padding:12px; text-align:center;"></div>
 
+            <!-- قسم موردو المخزون -->
+            <div id="stock-suppliers-section" style="display:none; margin-bottom:15px;">
+                <div style="background:#0f172a; border:1px solid #1e3a5f; border-radius:12px; padding:16px;">
+                    <p style="font-size:13px; color:#3b82f6; font-weight:700; margin:0 0 12px; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-boxes"></i> موردو هذا الكود في المخزون
+                    </p>
+                    <div id="stock-suppliers-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+            </div>
+
+            <!-- اسم المورد -->
             <div style="margin-bottom:15px;">
                 <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🏪 اسم المورد</label>
                 <input type="text" id="modal-supplier-id" placeholder="اسم المورد..."
                     style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
             </div>
 
-            <div style="margin-bottom:15px;">
+            <!-- Order ID المورد -->
+            <div style="margin-bottom:20px;">
                 <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔖 Order ID المورد</label>
                 <input type="text" id="modal-supplier-order-id" placeholder="أدخل Order ID من المورد..."
                     style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
             </div>
 
-            ${suppliers.length > 0 ? `
-            <div style="margin-bottom:20px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:8px;">🔗 اختر المورد</label>
-                <div id="suppliers-list" style="display:flex; flex-direction:column; gap:8px;">
-                    ${suppliers.map(s => `
-                        <button onclick="selectSupplier('${s.url}', '${s.name}', this)"
-                            style="width:100%; padding:12px 16px; background:#0f172a; border:2px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                            <a href="${s.url}" target="_blank" onclick="event.stopPropagation()"
-                                style="color:#3b82f6; font-size:12px; text-decoration:none;">
-                                <i class="fas fa-external-link-alt"></i> شراء
-                            </a>
-                            <span>${s.name}</span>
-                        </button>
-                    `).join('')}
-                </div>
-            </div>` : ''}
-
+            <!-- رفض -->
             <div style="margin-bottom:12px;">
                 <input type="text" id="reject-reason" placeholder="سبب الرفض..."
                     style="width:100%; padding:10px; background:#0f172a; border:1px solid #ef4444; border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box; margin-bottom:8px;">
@@ -169,6 +280,7 @@ window.openOrderModal = (order) => {
                 </button>
             </div>
 
+            <!-- قبول -->
             <button onclick="approveOrder('${order.id}', ${order.quantity || 1})"
                 style="width:100%; padding:14px; background:#22c55e; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;">
                 <i class="fas fa-check-circle"></i> تأكيد القبول
@@ -177,18 +289,6 @@ window.openOrderModal = (order) => {
     `;
 
     document.body.appendChild(modal);
-};
-
-// ==================== دوال مساعدة ====================
-window.selectSupplier = (url, name, btn) => {
-    document.querySelectorAll('#suppliers-list button').forEach(b => {
-        b.style.borderColor = '#334155';
-        b.style.background = '#0f172a';
-    });
-    btn.style.borderColor = '#f97316';
-    btn.style.background = 'rgba(249,115,22,0.1)';
-    const supplierInput = document.getElementById('modal-supplier-id');
-    if (supplierInput) supplierInput.value = name;
 };
 
 window.calcProfit = (orderPrice) => {
@@ -200,7 +300,6 @@ window.calcProfit = (orderPrice) => {
     if (cost > 0) {
         const totalCost = cost * USD_TO_MRU * quantity;
         const profit = orderPrice - totalCost;
-
         profitDisplay.style.display = 'block';
         profitDisplay.innerHTML = `
             <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748b; margin-bottom:6px;">
@@ -215,7 +314,7 @@ window.calcProfit = (orderPrice) => {
     }
 };
 
-// ==================== سحب من المخزون (stocks table) ====================
+// ==================== سحب من المخزون ====================
 window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     const statusEl = document.getElementById('stock-status');
 
@@ -230,59 +329,89 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
 
     const { data: availableCodes, error } = await supabase
         .from('stocks')
-        .select('id, code, price_value, supplier_name, order_id, cost_per_card_usd')
+        .select('*')
         .eq('product_id', productId)
         .eq('price_label', label)
-        .eq('status', 'available')
+        .eq('is_used', false)
         .order('created_at', { ascending: true })
         .limit(quantity);
 
     if (error) {
         statusEl.textContent = '❌ خطأ في جلب المخزون: ' + error.message;
         statusEl.style.color = '#ef4444';
+        document.getElementById('stock-suppliers-section').style.display = 'none';
         return;
     }
 
     if (!availableCodes || availableCodes.length === 0) {
-        statusEl.textContent = `❌ لا توجد أكواد متاحة في المخزون للفئة "${label}"`;
+        statusEl.textContent = `❌ لا توجد أكواد متاحة للفئة "${label}"`;
         statusEl.style.color = '#ef4444';
+        document.getElementById('stock-suppliers-section').style.display = 'none';
         return;
     }
 
-    if (availableCodes.length < quantity) {
-        statusEl.textContent = `⚠️ يوجد ${availableCodes.length} كود فقط من أصل ${quantity} مطلوب`;
-        statusEl.style.color = '#f97316';
-    } else {
-        statusEl.textContent = `✅ تم سحب ${availableCodes.length} كود من المخزون`;
-        statusEl.style.color = '#22c55e';
-    }
+    statusEl.textContent = availableCodes.length < quantity
+        ? `⚠️ يوجد ${availableCodes.length} كود فقط من أصل ${quantity} مطلوب`
+        : `✅ تم سحب ${availableCodes.length} كود من المخزون`;
+    statusEl.style.color = availableCodes.length < quantity ? '#f97316' : '#22c55e';
 
     document.getElementById('modal-code').value = availableCodes.map(c => c.code).join('\n');
     window._reservedStockIds = availableCodes.map(c => c.id);
 
-    const costField = document.getElementById('modal-cost');
+    window._stockCodesData = availableCodes.map(c => ({
+        id: c.id,
+        code: c.code,
+        supplier_name: c.supplier_name || 'غير محدد',
+        order_id: c.supplier_order_id || '',
+        cost_per_card_usd: c.cost_price || 0
+    }));
+
     const firstCode = availableCodes[0];
-    const costInUSD = firstCode?.cost_per_card_usd > 0 
-    ? parseFloat(firstCode.cost_per_card_usd)
-    : parseFloat(firstCode?.price_value) / USD_TO_MRU;
+    const costInUSD = firstCode?.cost_price > 0
+        ? parseFloat(firstCode.cost_price)
+        : 0;
 
-    console.log('cost_per_card_usd:', firstCode?.cost_per_card_usd);
-    console.log('firstCode:', firstCode);
-
+    const costField = document.getElementById('modal-cost');
     if (costField && !isNaN(costInUSD) && costInUSD > 0) {
         costField.value = costInUSD.toFixed(4);
         calcProfit(orderPrice);
     }
 
-    const supplierInput = document.getElementById('modal-supplier-id');
-    if (supplierInput && firstCode?.supplier_name) {
-        supplierInput.value = firstCode.supplier_name;
-    }
+    // بناء قائمة الموردين
+    const suppliersMap = {};
+    availableCodes.forEach(c => {
+        const name = c.supplier_name || 'غير محدد';
+        if (!suppliersMap[name]) {
+            suppliersMap[name] = { name, order_id: c.supplier_order_id || '', count: 0 };
+        }
+        suppliersMap[name].count++;
+    });
 
-    const supplierOrderInput = document.getElementById('modal-supplier-order-id');
-    if (supplierOrderInput && firstCode?.order_id) {
-        supplierOrderInput.value = firstCode.order_id;
-    }
+    const suppliers = Object.values(suppliersMap);
+    const section = document.getElementById('stock-suppliers-section');
+    const list = document.getElementById('stock-suppliers-list');
+
+    list.innerHTML = suppliers.map(s => `
+        <div style="width:100%; padding:12px 16px;
+               background:rgba(249,115,22,0.08);
+               border:2px solid #f97316;
+               border-radius:8px; color:#e2e8f0; font-size:13px;
+               display:flex; justify-content:space-between; align-items:center;">
+            <span style="display:flex; align-items:center; gap:8px;">
+                ${s.order_id ? `<span style="color:#94a3b8;">🔖 ${s.order_id}</span>` : ''}
+                <span style="color:#22c55e; background:rgba(34,197,94,0.1); padding:2px 8px; border-radius:10px;">${s.count} كود</span>
+            </span>
+            <span style="font-weight:700; font-size:14px;">🏪 ${s.name}</span>
+        </div>
+    `).join('');
+
+    const supplierInput = document.getElementById('modal-supplier-id');
+    if (supplierInput) supplierInput.value = suppliers.map(s => s.name).join(' / ');
+    const orderInput = document.getElementById('modal-supplier-order-id');
+    if (orderInput) orderInput.value = suppliers.map(s => s.order_id).filter(Boolean).join(' / ');
+
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 // ==================== قبول الطلب ====================
@@ -294,23 +423,26 @@ window.approveOrder = async (orderId, quantity) => {
     const supplierOrderId = document.getElementById('modal-supplier-order-id')?.value.trim() || '';
 
     if (codes.length === 0) { alert('⚠️ يرجى إدخال كود البطاقة!'); return; }
-
     if (codes.length !== quantity) {
-        alert(`⚠️ عدد الأكواد (${codes.length}) لا يطابق الكمية المطلوبة (${quantity})!\n\nيجب إدخال ${quantity} كود بالضبط.`);
+        alert(`⚠️ عدد الأكواد (${codes.length}) لا يطابق الكمية المطلوبة (${quantity})!`);
         return;
     }
-
     if (!cost || parseFloat(cost) <= 0) { alert('⚠️ يرجى إدخال سعر التكلفة!'); return; }
     if (!supplierId) { alert('⚠️ يرجى إدخال أو اختيار اسم المورد!'); return; }
 
-    // التحقق من عدم استخدام الأكواد مسبقاً
     for (const c of codes) {
         const { data: existingCode } = await supabase
             .from('used_codes').select('id').eq('code', c).maybeSingle();
         if (existingCode) { alert(`⚠️ الكود "${c}" مستخدم بالفعل!`); return; }
     }
 
-    // تحديث الطلب
+    const stockCodesData = window._stockCodesData || [];
+    const suppliersDetails = stockCodesData.map(c => ({
+        code: c.code,
+        supplier_name: c.supplier_name,
+        supplier_order_id: c.order_id
+    }));
+
     const { data: orderData, error } = await supabase
         .from('orders')
         .update({
@@ -318,7 +450,8 @@ window.approveOrder = async (orderId, quantity) => {
             card_code: codes.join('\n'),
             cost_price: parseFloat(cost) || 0,
             supplier_id: supplierId,
-            supplier_order_id: supplierOrderId
+            supplier_order_id: supplierOrderId,
+            suppliers_details: suppliersDetails
         })
         .eq('id', orderId)
         .select()
@@ -326,50 +459,27 @@ window.approveOrder = async (orderId, quantity) => {
 
     if (error) { alert('خطأ: ' + error.message); return; }
 
-    // إضافة الأكواد لجدول used_codes
     for (const c of codes) {
         await supabase.from('used_codes').insert({
             code: c, order_id: orderId, product_name: orderData.product_name
         });
     }
 
-    // ===== تحديث حالة الأكواد في جدول stocks إلى "sold" =====
-// ===== تحديث حالة الأكواد في جدول stocks إلى "sold" لضمان عدم تكرارها =====
     const reservedIds = window._reservedStockIds;
-
     if (reservedIds && reservedIds.length > 0) {
-        // الحالة 1: إذا تم السحب آلياً عبر زر "سحب من المخزون"
-        const { error: stockError } = await supabase
+        await supabase
             .from('stocks')
-            .update({
-                status: 'sold',
-                sold_at: new Date().toISOString(),
-                order_id: orderId // ربط الكود بالطلب الحالي
-            })
+            .update({ is_used: true, sold_at: new Date().toISOString(), order_id: orderId })
             .in('id', reservedIds);
-
-        if (stockError) {
-            console.error('❌ خطأ في تحديث حالة المخزون بالـ ID:', stockError.message);
-        }
-        
-        // تصفير المصفوفة بعد النجاح
         window._reservedStockIds = null;
+        window._stockCodesData = null;
     } else {
-        // الحالة 2: إذا أُدخلت الأكواد يدوياً (نبحث عنها بالكود نفسه ونحولها لمباعة)
         for (const code of codes) {
-            const { error: manualStockError } = await supabase
+            await supabase
                 .from('stocks')
-                .update({
-                    status: 'sold',
-                    sold_at: new Date().toISOString(),
-                    order_id: orderId
-                })
+                .update({ is_used: true, sold_at: new Date().toISOString(), order_id: orderId })
                 .eq('code', code)
-                .eq('status', 'available'); // التأكد من أنه كان متاحاً قبل تحويله
-
-            if (manualStockError) {
-                console.warn(`⚠️ لم يتم العثور على الكود ${code} في جدول stocks لتحديثه (ربما أُدخل يدوياً بالكامل).`);
-            }
+                .eq('is_used', false);
         }
     }
 
@@ -390,16 +500,13 @@ window.rejectOrder = async (orderId) => {
         .eq('id', orderId);
 
     if (error) { alert('خطأ: ' + error.message); return; }
-
-    // تحرير الأكواد المحجوزة إن وجدت
     window._reservedStockIds = null;
-
     document.getElementById('order-modal').remove();
     alert('تم رفض الطلب.');
     loadOrders();
 };
 
-// ==================== عداد الطلبات الجديدة ====================
+// ==================== عداد الطلبات ====================
 async function checkNewOrders() {
     const { data: orders } = await supabase
         .from('orders').select('id')
@@ -414,7 +521,6 @@ async function checkNewOrders() {
     document.title = count > 0 ? `(${count}) طلب جديد | إدارة الطلبات` : 'إدارة الطلبات | SecondsCard';
 }
 
-// ==================== فلتر البحث ====================
 window.filterOrders = () => {
     const search = document.getElementById('orderSearch').value.trim().toLowerCase();
     document.querySelectorAll('#admin-orders-list tr').forEach(row => {
@@ -422,7 +528,6 @@ window.filterOrders = () => {
     });
 };
 
-// ==================== تشغيل عند التحميل ====================
 document.addEventListener('DOMContentLoaded', () => {
     loadOrders();
     checkNewOrders();
