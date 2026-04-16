@@ -30,11 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== جلب بوابات الدفع =====
 async function loadPaymentMethods() {
     const { data: methods, error } = await supabase
-    .from('payment_methods')
-    .select('*')
-    .eq('is_active', true)
-    .eq('show_in_checkout', true)
-    .order('created_at', { ascending: true });
+        .from('payment_methods')
+        .select('*')
+        .eq('is_active', true)
+        .eq('show_in_checkout', true)
+        .order('created_at', { ascending: true });
 
     const list = document.getElementById('payment-methods-list');
     if (!list) return;
@@ -79,19 +79,19 @@ window.selectMethod = function(id, account, name) {
 
     selectedPaymentMethod = { id, account, name };
 
-    const infoDiv = document.getElementById('selected-method-info');
-    const accountElem = document.getElementById('selected-account');
+    const infoDiv       = document.getElementById('selected-method-info');
+    const accountElem   = document.getElementById('selected-account');
     const receiptSection = document.getElementById('receipt-upload-section');
-    const statusMsg = document.getElementById('payment-status-msg');
+    const statusMsg     = document.getElementById('payment-status-msg');
 
     if (id === 'wallet') {
         if (infoDiv) infoDiv.style.display = 'none';
         if (receiptSection) receiptSection.style.display = 'none';
-if (userBalance < totalAmount) {
-    statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ  اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
-} else {
-    statusMsg.innerHTML = '';
-}
+        if (userBalance < totalAmount) {
+            statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
+        } else {
+            statusMsg.innerHTML = '';
+        }
     } else {
         if (infoDiv && accountElem) {
             infoDiv.style.display = 'block';
@@ -123,46 +123,27 @@ async function checkAuthAndLoadData() {
 
     try {
         const { data: userData, error } = await supabase
-            .from("users")
-            .select("balance, is_blocked")
-            .eq("id", user.id)
+            .from('users')
+            .select('balance, is_blocked')
+            .eq('id', user.id)
             .single();
 
         if (error) throw error;
 
-        // ===== فحص الحظر =====
         if (userData?.is_blocked) {
             document.body.innerHTML = `
-                <div style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    background: #0f172a;
-                    color: white;
-                    font-family: 'Cairo', sans-serif;
-                    text-align: center;
-                    gap: 20px;
-                    padding: 20px;
-                ">
-                    <div style="font-size: 80px;">🚫</div>
-                    <h1 style="color: #ef4444; font-size: 28px;">تم تعليق حسابك</h1>
-                    <p style="color: #94a3b8; font-size: 16px; max-width: 400px; line-height: 2;">
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+                            height:100vh; background:#0f172a; color:white; font-family:'Cairo',sans-serif;
+                            text-align:center; gap:20px; padding:20px;">
+                    <div style="font-size:80px;">🚫</div>
+                    <h1 style="color:#ef4444; font-size:28px;">تم تعليق حسابك</h1>
+                    <p style="color:#94a3b8; font-size:16px; max-width:400px; line-height:2;">
                         حسابك محظور حالياً ولا يمكنك إتمام عمليات الدفع.<br>
                         يرجى التواصل مع الدعم الفني.
                     </p>
-                    <a href="index.html" style="
-                        background: #f97316;
-                        color: white;
-                        padding: 12px 30px;
-                        border-radius: 8px;
-                        text-decoration: none;
-                        font-size: 16px;
-                        font-family: 'Cairo', sans-serif;
-                    ">العودة للرئيسية</a>
-                </div>
-            `;
+                    <a href="index.html" style="background:#f97316; color:white; padding:12px 30px;
+                        border-radius:8px; text-decoration:none; font-size:16px;">العودة للرئيسية</a>
+                </div>`;
             return;
         }
 
@@ -172,7 +153,7 @@ async function checkAuthAndLoadData() {
         if (balanceElem) balanceElem.textContent = `${userBalance} MRU`;
 
         const confirmBtn = document.getElementById('confirm-payment-btn');
-        const statusMsg = document.getElementById('payment-status-msg');
+        const statusMsg  = document.getElementById('payment-status-msg');
 
         if (totalAmount > 0) {
             if (confirmBtn) confirmBtn.disabled = false;
@@ -181,10 +162,85 @@ async function checkAuthAndLoadData() {
             if (confirmBtn) confirmBtn.disabled = true;
         }
     } catch (error) {
-        console.error("Error fetching balance:", error);
+        console.error('Error fetching balance:', error);
     }
 
     await loadPaymentMethods();
+}
+
+// ==================== سحب تلقائي من المخزون ====================
+// تُستدعى لكل عنصر في السلة — تعيد { codes, stockIds, costPerCode, supplierName, supplierOrderId, suppliersDetails }
+// أو null إذا لم يتوفر مخزون كافٍ
+async function pullFromStock(item) {
+    const productId = item.productId || null;
+    const label     = item.label    || null;
+    const quantity  = item.quantity || 1;
+
+    if (!productId || !label) return null;
+
+    const { data: availableCodes, error } = await supabase
+        .from('stocks')
+        .select('id, code, cost_per_card_usd, supplier_name, order_id')
+        .eq('product_id', productId)
+        .eq('price_label', label)
+        .eq('status', 'available')
+        .order('created_at', { ascending: true })
+        .limit(quantity);
+
+    if (error || !availableCodes || availableCodes.length < quantity) return null;
+
+    // تحقق من عدم استخدام أي كود مسبقاً
+    for (const c of availableCodes) {
+        const { data: existing } = await supabase
+            .from('used_codes').select('id').eq('code', c.code).maybeSingle();
+        if (existing) return null;
+    }
+
+    const codes    = availableCodes.map(c => c.code);
+    const stockIds = availableCodes.map(c => c.id);
+
+    const costPerCode     = availableCodes[0]?.cost_per_card_usd || 0;
+    const supplierName    = availableCodes[0]?.supplier_name     || 'تلقائي';
+    const supplierOrderId = availableCodes[0]?.order_id          || '';
+
+    // تجميع الموردين
+    const suppliersMap = {};
+    availableCodes.forEach(c => {
+        const name = c.supplier_name || 'غير محدد';
+        if (!suppliersMap[name]) {
+            suppliersMap[name] = {
+                supplier_name:     name,
+                supplier_order_id: c.order_id || ''
+            };
+        }
+    });
+
+    return {
+        codes,
+        stockIds,
+        costPerCode,
+        supplierName,
+        supplierOrderId,
+        suppliersDetails: Object.values(suppliersMap)
+    };
+}
+
+// ==================== تنفيذ السحب وتحديث المخزون ====================
+async function commitStockPull(stockResult, orderId, productName) {
+    // تسجيل الأكواد المستخدمة
+    for (const code of stockResult.codes) {
+        await supabase.from('used_codes').insert({
+            code,
+            order_id:     orderId,
+            product_name: productName
+        });
+    }
+
+    // تحديث حالة المخزون
+    await supabase
+        .from('stocks')
+        .update({ status: 'sold', sold_at: new Date().toISOString(), order_id: orderId })
+        .in('id', stockResult.stockIds);
 }
 
 // ===== تنفيذ الدفع =====
@@ -196,11 +252,11 @@ async function executePayment() {
 
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
-    const btn = document.getElementById('confirm-payment-btn');
+    const btn  = document.getElementById('confirm-payment-btn');
 
     if (totalAmount <= 0) return;
 
-    // ===== طبقة أمان: فحص الحظر قبل الدفع =====
+    // فحص الحظر قبل الدفع
     const { data: userCheck } = await supabase
         .from('users')
         .select('is_blocked')
@@ -225,6 +281,14 @@ async function executePayment() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
         try {
+            // ===== فحص المخزون لكل عنصر في السلة =====
+            const stockResults = [];
+            for (const item of cart) {
+                const result = await pullFromStock(item);
+                stockResults.push(result); // null = يحتاج معالجة يدوية
+            }
+
+            // خصم الرصيد
             const newBalance = userBalance - totalAmount;
             const { error: balanceError } = await supabase
                 .from('users')
@@ -233,40 +297,79 @@ async function executePayment() {
 
             if (balanceError) throw balanceError;
 
-            const orders = cart.map(item => ({
-                order_number: generateOrderNumber(),
-                customer_name: user?.user_metadata?.full_name || 'مستخدم',
-                customer_phone: user?.email || '',
-                product_id: item.productId || null,
-                product_name: item.name,
-                label: item.label || null,
-                price: item.price,
-                quantity: item.quantity || 1,
-                status: 'قيد الانتظار',
-                paymentMethod: 'المحفظة',
-                user_id: user.id
-            }));
+            // إنشاء الطلبات
+            const ordersToInsert = cart.map((item, i) => {
+                const stockResult = stockResults[i];
+                const hasStock    = stockResult !== null;
 
-            const { error: insertError } = await supabase.from("orders").insert(orders);
+                return {
+                    order_number:      generateOrderNumber(),
+                    customer_name:     user?.user_metadata?.full_name || 'مستخدم',
+                    customer_phone:    user?.email || '',
+                    product_id:        item.productId || null,
+                    product_name:      item.name,
+                    label:             item.label || null,
+                    price:             item.price,
+                    quantity:          item.quantity || 1,
+                    user_id:           user.id,
+                    paymentMethod:     'المحفظة',
+                    // ✅ إذا موجود في المخزون → مكتمل فوراً، وإلا → قيد الانتظار
+                    status:            hasStock ? 'مكتمل' : 'قيد الانتظار',
+                    card_code:         hasStock ? stockResult.codes.join('\n') : null,
+                    cost_price:        hasStock ? stockResult.costPerCode : null,
+                    supplier_id:       hasStock ? stockResult.supplierName : null,
+                    supplier_order_id: hasStock ? stockResult.supplierOrderId : null,
+                    suppliers_details: hasStock ? stockResult.suppliersDetails : null,
+                    auto_approved:     hasStock ? true : false
+                };
+            });
+
+            const { data: insertedOrders, error: insertError } = await supabase
+                .from('orders')
+                .insert(ordersToInsert)
+                .select();
+
             if (insertError) throw insertError;
 
+            // ✅ تحديث المخزون فقط للطلبات التي وُجد لها مخزون
+            for (let i = 0; i < cart.length; i++) {
+                const stockResult = stockResults[i];
+                const order       = insertedOrders[i];
+                if (stockResult && order) {
+                    await commitStockPull(stockResult, order.id, cart[i].name);
+                }
+            }
+
+            // تسجيل عملية السحب من المحفظة
             await supabase.from('wallet_transactions').insert({
-                user_id: user.id,
-                type: 'withdraw',
-                amount: totalAmount,
+                user_id:        user.id,
+                type:           'withdraw',
+                amount:         totalAmount,
                 payment_method: 'المحفظة - ' + (cart[0]?.name || 'شراء بطاقة'),
-                status: 'مكتمل'
+                status:         'مكتمل'
             });
 
             localStorage.removeItem('cart');
-            alert("✅ تم الدفع من محفظتك بنجاح!");
-            window.location.href = "orders.html";
+
+            // رسالة توضح حالة كل طلب
+            const completedCount = stockResults.filter(r => r !== null).length;
+            const pendingCount   = stockResults.filter(r => r === null).length;
+
+            if (completedCount > 0 && pendingCount === 0) {
+                alert('✅ تم الدفع وتسليم بطاقاتك بنجاح!');
+            } else if (completedCount > 0 && pendingCount > 0) {
+                alert(`✅ تم الدفع!\n🎴 ${completedCount} طلب اكتمل فوراً\n⏳ ${pendingCount} طلب قيد المراجعة`);
+            } else {
+                alert('✅ تم الدفع من محفظتك!\n⏳ طلباتك قيد المراجعة.');
+            }
+
+            window.location.href = 'orders.html';
 
         } catch (error) {
-            console.error("Payment Error:", error);
-            alert("❌ حدث خطأ: " + error.message);
+            console.error('Payment Error:', error);
+            alert('❌ حدث خطأ: ' + error.message);
             btn.disabled = false;
-            btn.innerHTML = "تأكيد الدفع الآن";
+            btn.innerHTML = 'تأكيد الدفع الآن';
         }
         return;
     }
@@ -294,32 +397,32 @@ async function executePayment() {
         }
 
         const orders = cart.map(item => ({
-            order_number: generateOrderNumber(),
-            customer_name: user?.user_metadata?.full_name || 'مستخدم',
+            order_number:   generateOrderNumber(),
+            customer_name:  user?.user_metadata?.full_name || 'مستخدم',
             customer_phone: user?.email || '',
-            product_id: item.productId || null,
-            product_name: item.name,
-            label: item.label || null,
-            price: item.price,
-            quantity: item.quantity || 1,
-            status: 'قيد الانتظار',
-            receiptUrl: receiptUrl,
-            paymentMethod: selectedPaymentMethod.name,
-            user_id: user.id
+            product_id:     item.productId || null,
+            product_name:   item.name,
+            label:          item.label || null,
+            price:          item.price,
+            quantity:       item.quantity || 1,
+            status:         'قيد الانتظار',
+            receiptUrl:     receiptUrl,
+            paymentMethod:  selectedPaymentMethod.name,
+            user_id:        user.id
         }));
 
-        const { error: insertError } = await supabase.from("orders").insert(orders);
+        const { error: insertError } = await supabase.from('orders').insert(orders);
         if (insertError) throw insertError;
 
         localStorage.removeItem('cart');
-        alert("✅ تمت عملية الدفع بنجاح!");
-        window.location.href = "orders.html";
+        alert('✅ تمت عملية الدفع بنجاح!');
+        window.location.href = 'orders.html';
 
     } catch (error) {
-        console.error("Payment Error:", error);
-        alert("❌ حدث خطأ: " + error.message);
+        console.error('Payment Error:', error);
+        alert('❌ حدث خطأ: ' + error.message);
         btn.disabled = false;
-        btn.innerHTML = "تأكيد الدفع الآن";
+        btn.innerHTML = 'تأكيد الدفع الآن';
     }
 }
 
@@ -339,7 +442,7 @@ function initTheme() {
 
 // ===== User Menu =====
 function setupUserMenu() {
-    const userBtn = document.getElementById('user-icon-btn');
+    const userBtn      = document.getElementById('user-icon-btn');
     const userDropdown = document.getElementById('user-dropdown');
     if (userBtn && userDropdown) {
         userBtn.addEventListener('click', (e) => {
@@ -355,7 +458,7 @@ window.handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
         localStorage.clear();
-        window.location.href = "index.html";
+        window.location.href = 'index.html';
     }
 };
 
