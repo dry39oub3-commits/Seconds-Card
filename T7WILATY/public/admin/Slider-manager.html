@@ -8,7 +8,43 @@
     <link rel="stylesheet" href="./css/dashboard-main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+<style>
 
+    /* إصلاح السلايدر في وضع النهار */
+[data-theme='light'] .add-form,
+[data-theme='light'] .preview-section,
+[data-theme='light'] .slide-card {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+[data-theme='light'] .slide-info h4 { color: #111827 !important; }
+[data-theme='light'] .slide-info p  { color: #6b7280 !important; }
+[data-theme='light'] .meta-tag {
+    background: #f1f5f9 !important;
+    color: #374151 !important;
+}
+[data-theme='light'] .form-group input,
+[data-theme='light'] .form-group select,
+[data-theme='light'] .form-group textarea {
+    background: #f9fafb !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+}
+[data-theme='light'] .form-group label { color: #374151 !important; }
+[data-theme='light'] .form-title      { color: #f97316 !important; }
+[data-theme='light'] .page-container  { background: transparent !important; }
+
+/* إصلاح شاشة الجوال — عدم قطع المحتوى */
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr !important; }
+    .slide-card { flex-wrap: wrap; }
+    .slide-actions { width: 100%; justify-content: flex-end; }
+    .page-container { padding: 0 12px; }
+}
+
+</style>
 
 </head>
 <body>

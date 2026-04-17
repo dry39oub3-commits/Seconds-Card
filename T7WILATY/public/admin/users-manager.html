@@ -80,6 +80,22 @@ header #theme-toggle i {
             width: 100%; padding: 10px; border-radius: 8px; background: var(--dark-bg);
             border: 1px solid #334155; color: white; box-sizing: border-box;
         }
+
+        /* أضف في نهاية الـ CSS الخاص بصفحة users-manager */
+.table-container, .users-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    min-width: 600px;
+}
+
+@media (max-width: 768px) {
+    table { min-width: 500px; }
+    th, td { padding: 10px 8px; font-size: 12px; white-space: nowrap; }
+}
+
     </style>
 </head>
 <body>

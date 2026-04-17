@@ -1228,8 +1228,141 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 
 /* ============================================================
-   DARK MODE — شامل لكل الصفحات
+   LIGHT MODE — وضع النهار
    ============================================================ */
+
+[data-theme='light'] body {
+    background: #f1f5f9 !important;
+    color: #111827 !important;
+}
+
+[data-theme='light'] .admin-top-header {
+    background: #1e293b !important;
+}
+
+/* البطاقات والأقسام */
+[data-theme='light'] .stat-card,
+[data-theme='light'] .method-card,
+[data-theme='light'] .product-row-item,
+[data-theme='light'] .sub-card-item,
+[data-theme='light'] .slide-card,
+[data-theme='light'] .add-form,
+[data-theme='light'] .preview-section,
+[data-theme='light'] .tx-card,
+[data-theme='light'] .modal-box,
+[data-theme='light'] section,
+[data-theme='light'] .form-section,
+[data-theme='light'] .list-section,
+[data-theme='light'] .payment-methods-form,
+[data-theme='light'] .stock-form,
+[data-theme='light'] .inventory-table {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+/* إدارة المحافظ — البطاقات الإحصائية */
+[data-theme='light'] .stats-grid .stat-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+}
+
+[data-theme='light'] .stat-card .stat-value { color: #f97316 !important; }
+[data-theme='light'] .stat-card .stat-label { color: #6b7280 !important; }
+
+/* التابز */
+[data-theme='light'] .tab-btn {
+    background: #f1f5f9 !important;
+    color: #374151 !important;
+    border: 1px solid #e5e7eb !important;
+}
+[data-theme='light'] .tab-btn.active {
+    background: #f97316 !important;
+    color: #ffffff !important;
+}
+
+/* بطاقة المعاملة tx-card */
+[data-theme='light'] .tx-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+}
+[data-theme='light'] .tx-info h4 { color: #111827 !important; }
+[data-theme='light'] .tx-info p  { color: #6b7280 !important; }
+
+/* المدخلات */
+[data-theme='light'] input,
+[data-theme='light'] input[type="text"],
+[data-theme='light'] input[type="number"],
+[data-theme='light'] input[type="url"],
+[data-theme='light'] input[type="date"],
+[data-theme='light'] select,
+[data-theme='light'] textarea {
+    background: #f9fafb !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+}
+
+[data-theme='light'] input::placeholder,
+[data-theme='light'] textarea::placeholder { color: #9ca3af !important; }
+
+/* العناوين والنصوص */
+[data-theme='light'] h1,
+[data-theme='light'] h2,
+[data-theme='light'] h3,
+[data-theme='light'] h4,
+[data-theme='light'] .p-name,
+[data-theme='light'] .stat-info h3 { color: #111827 !important; }
+
+[data-theme='light'] .text-muted,
+[data-theme='light'] .stat-label,
+[data-theme='light'] .tx-info p { color: #6b7280 !important; }
+
+/* الجداول */
+[data-theme='light'] table  { background: #ffffff !important; }
+[data-theme='light'] thead th {
+    background: #f8fafc !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+}
+[data-theme='light'] tbody td {
+    color: #111827 !important;
+    border-color: #f1f5f9 !important;
+}
+[data-theme='light'] tbody tr:hover { background: #f8fafc !important; }
+
+/* المنتجات */
+[data-theme='light'] .product-details-area { background: #f8fafc !important; }
+[data-theme='light'] .p-meta { color: #6b7280 !important; }
+
+/* فلتر بار */
+[data-theme='light'] .filter-bar input,
+[data-theme='light'] .filter-bar select {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+}
+
+/* شريط التمرير */
+[data-theme='light'] ::-webkit-scrollbar-track { background: #f1f5f9; }
+[data-theme='light'] ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+
+/* labels */
+[data-theme='light'] label,
+[data-theme='light'] .form-group label,
+[data-theme='light'] .input-group label { color: #374151 !important; }
+
+/* input-row */
+[data-theme='light'] .input-row { background: #f1f5f9 !important; }
+
+/* section-header */
+[data-theme='light'] .section-header { background: #ffffff !important; border-color: #e5e7eb !important; }
+[data-theme='light'] .section-header h2 { color: #111827 !important; }
+
+/* التاريخ */
+[data-theme='light'] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+}
 
 [data-theme="dark"] body {
     background: #0f172a !important;
@@ -1476,30 +1609,66 @@ table, input, select, textarea {
     border: 1px solid var(--border-color) !important;
     box-shadow: none !important; /* إزالة الظل لتبدو الصفحة مسطحة وبيضاء بالكامل */
 }
-
-:root, [data-theme='light'] {
-    --bg-primary: #ffffff;      /* الخلفية الأساسية */
-    --bg-secondary: #ffffff;    /* خلفية البطاقات والحاويات */
-    --bg-input: #ffffff;        /* خلفية المدخلات */
-    --text-main: #020305;       /* لون النص الأساسي */
-    --text-muted: #000000;      /* لون النص الفرعي */
-    --border-color: #13161d;    /* لون الحدود خفيف جداً */
-    --bg-input: #f9fafb; 
---text-main: #111827; 
---border-color: #272f3d;
-
+[data-theme='light'] .stat-card,
+[data-theme='light'] .product-row-item,
+[data-theme='light'] .method-card,
+[data-theme='light'] .sub-card-item,
+[data-theme='light'] .slide-card,
+[data-theme='light'] .add-form,
+[data-theme='light'] .preview-section,
+[data-theme='light'] section,
+[data-theme='light'] .form-section,
+[data-theme='light'] .list-section {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #111827 !important;
 }
 
+[data-theme='light'] .product-details-area {
+    background: #f8fafc !important;
+}
+
+[data-theme='light'] .p-name,
+[data-theme='light'] h1,
+[data-theme='light'] h2,
+[data-theme='light'] h3,
+[data-theme='light'] h4 {
+    color: #111827 !important;
+}
+
+[data-theme='light'] .stat-info h3,
+[data-theme='light'] .stat-label,
+[data-theme='light'] .text-muted {
+    color: #6b7280 !important;
+}
+
+[data-theme='light'] .stat-value {
+    color: #111827 !important;
+}
+
+[data-theme='light'] input,
+[data-theme='light'] select,
+[data-theme='light'] textarea {
+    background: #f9fafb !important;
+    color: #111827 !important;
+    border-color: #e5e7eb !important;
+}
 :root, [data-theme='light'] {
-         /* خلفية الصفحة */
-     /* خلفية البطاقات والحاويات */
-          /* خلفية خفيفة جداً للمدخلات لتمييزها */
-          /* نصوص واضحة */
+    --bg-primary:    #f1f5f9;
+    --bg-secondary:  #ffffff;
+    --bg-input:      #f9fafb;
+    --bg-card:       #ffffff;
+    --text-main:     #111827;
+    --text-muted:    #6b7280;
+    --border-color:  #e5e7eb;
+    --header-bg:     #1e293b;
+    --card-bg:       #ffffff;
+    --card-shadow:   0 2px 8px rgba(0,0,0,0.08);
     --text-muted: #04060a;
-        /* حدود فاتحة جداً */
-    
-    --card-shadow: none;        /* إلغاء الظلال لزيادة البياض */
+    --card-shadow: none;
+
 }
+
 
 body { background: #c7c8c9; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
 
