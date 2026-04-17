@@ -500,3 +500,19 @@ max-width: calc(100vw - 20px)
 header {
     position: relative;
 }
+
+/* ===== إصلاح dropdown في وضع النهار ===== */
+[data-theme="light"] #user-dropdown {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="light"] #user-dropdown a,
+[data-theme="light"] #user-dropdown .dropdown-nav > *:not(.logout-btn) {
+    color: white !important;
+}
+
+[data-theme="light"] #user-dropdown a:hover {
+    background: rgba(249,115,22,0.15) !important;
+    color: #f97316 !important;
+}
