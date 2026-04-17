@@ -28,7 +28,8 @@ async function updateDashboardStats() {
 
         const salesElement = document.getElementById('total-sales');
         if (salesElement) {
-            salesElement.innerText = `${new Intl.NumberFormat('ar-MR').format(totalSales)} MRU`;
+            salesElement.innerText = new Intl.NumberFormat('fr-FR').format(totalSales);
+
         }
 
         const ordersElement = document.getElementById('orders-count');

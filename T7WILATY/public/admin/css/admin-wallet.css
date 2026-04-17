@@ -85,3 +85,6 @@
         width: 100%;
     }
 }
+
+.modal-overlay { display: none !important; }
+.modal-overlay.active { display: flex !important; }

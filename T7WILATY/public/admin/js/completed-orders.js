@@ -52,7 +52,6 @@ async function loadCompletedOrders() {
                 receipt_url:    order.receipt_url,
                 items:          [],
                 totalPrice:     0,
-                // حالة المجموعة: مكتمل إذا كلها مكتمل، ملغي إذا كلها ملغي، مختلط غير ذلك
                 statuses:       new Set()
             };
         }
@@ -124,12 +123,11 @@ async function loadCompletedOrders() {
         }
         const style = statusStyle[groupStatus] || '';
 
-        // عدد العناصر
-        const itemCount   = group.items.length;
-        const totalQty    = group.items.reduce((s, o) => s + (o.quantity || 1), 0);
-        const isSingle    = itemCount === 1;
+        const itemCount = group.items.length;
+        const totalQty  = group.items.reduce((s, o) => s + (o.quantity || 1), 0);
+        const isSingle  = itemCount === 1;
 
-        // صور + تفاصيل العناصر
+        // صور
         const imagesCell = group.items.map(item => {
             const img = item.products?.image;
             return img
@@ -164,7 +162,7 @@ async function loadCompletedOrders() {
                </div>`
             : '';
 
-        // auto_approved badge
+        // شارة المخزون/يدوي
         const autoApprovedCount = group.items.filter(i => i.auto_approved).length;
         const manualCount       = group.items.filter(i => i.status === 'مكتمل' && !i.auto_approved).length;
         let approvalBadge = '';
@@ -187,7 +185,7 @@ async function loadCompletedOrders() {
                 </span></div>`;
         }
 
-// زر الاسترداد — زر واحد يشمل جميع العناصر المكتملة
+        // زر الاسترداد — زر واحد يشمل جميع العناصر المكتملة
         const completedItems = group.items.filter(i => i.status === 'مكتمل');
         const completedIds   = JSON.stringify(completedItems.map(i => i.id)).replace(/"/g, '&quot;');
         const refundBtn = completedItems.length > 0
@@ -198,16 +196,6 @@ async function loadCompletedOrders() {
                 <i class="fas fa-undo"></i> استرداد
                </button>`
             : '';
-
-        // زر التفاصيل — زر واحد يفتح أول عنصر أو popup المجموعة
-        const detailBtns = `
-            <button onclick="showOrderPopup('${group.items[0].id}')"
-                style="background:#334155;color:white;border:none;padding:6px 12px;border-radius:6px;
-                       cursor:pointer;font-size:12px;width:100%;margin-bottom:4px;display:flex;
-                       align-items:center;gap:4px;justify-content:center;">
-                <i class="fas fa-eye"></i> تفاصيل
-            </button>
-        `;
 
         return `
             <tr data-status="${groupStatus}" data-order-number="${group.order_number}">
@@ -235,10 +223,7 @@ async function loadCompletedOrders() {
                         ? `<div style="font-size:11px;color:#ef4444;margin-top:4px;">السبب: ${group.items[0].reject_reason}</div>`
                         : ''}
                 </td>
-                <td>
-                    ${detailBtns}
-                    ${refundBtn}
-                </td>
+                <td>${refundBtn}</td>
             </tr>
         `;
     }).join('');
@@ -251,11 +236,10 @@ window.showOrderPopup = (orderId) => {
     const order = (window._completedOrders || []).find(o => o.id === orderId);
     if (!order) return;
 
-    const codes        = order.card_code ? order.card_code.split('\n').filter(c => c.trim()) : [];
+    const codes            = order.card_code ? order.card_code.split('\n').filter(c => c.trim()) : [];
     const suppliersDetails = order.suppliers_details || [];
-    const totalPrice   = order.price * (order.quantity || 1);
+    const totalPrice       = order.price * (order.quantity || 1);
 
-    // موردون
     let suppliersHtml = '';
     if (suppliersDetails.length > 0) {
         const suppliersMap = {};
@@ -304,7 +288,6 @@ window.showOrderPopup = (orderId) => {
             </div>`;
     }
 
-    // ربح
     let profitHtml = '';
     if (order.cost_price && order.cost_price > 0) {
         const totalCost = order.cost_price * 43 * (order.quantity || 1);
@@ -388,39 +371,24 @@ function updateSummary(orders) {
     el('summary-revenue',   revenue + ' MRU');
 }
 
-// ==================== استرداد ====================
-window.refundOrder = async (orderId) => {
-    if (!confirm('هل تريد استرداد هذا الطلب وإرجاع الأكواد للمخزون؟')) return;
-
-    // ✅ جلب الطلب الأصلي للحصول على order_number
-    const { data: mainOrder, error: fetchError } = await supabase
-        .from('orders')
-        .select('order_number')
-        .eq('id', orderId)
-        .single();
-
-    if (fetchError) { alert('خطأ: ' + fetchError.message); return; }
-
-    // ✅ جلب كل الطلبات التي تحمل نفس order_number
-    const { data: allOrders, error: groupError } = await supabase
-        .from('orders')
-        .select('id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, quantity')
-        .eq('order_number', mainOrder.order_number)
-        .eq('status', 'مكتمل');
-
-    if (groupError) { alert('خطأ: ' + groupError.message); return; }
-    if (!allOrders || allOrders.length === 0) { alert('لا توجد طلبات للاسترداد'); return; }
+// ==================== استرداد مجموعة ====================
+window.refundGroupOrders = async (ids) => {
+    if (!confirm(`هل تريد استرداد ${ids.length} طلب وإرجاع الأكواد للمخزون؟`)) return;
 
     let totalCodesReturned = 0;
 
-    for (const order of allOrders) {
-        // تحديث حالة كل طلب
-        await supabase.from('orders').update({ status: 'مسترد' }).eq('id', order.id);
+    for (const orderId of ids) {
+        const { data: order } = await supabase
+            .from('orders')
+            .select('card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price')
+            .eq('id', orderId)
+            .single();
+
+        await supabase.from('orders').update({ status: 'مسترد' }).eq('id', orderId);
 
         if (order?.card_code) {
             const codes = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
             totalCodesReturned += codes.length;
-
             for (const code of codes) {
                 await supabase.from('used_codes').delete().eq('code', code);
                 await supabase.from('stocks').insert({
@@ -430,9 +398,9 @@ window.refundOrder = async (orderId) => {
                     supplier_name:     order.supplier_id || 'غير محدد',
                     order_id:          order.supplier_order_id || null,
                     cost_per_card_usd: order.cost_price || 0,
-                    code:              code,
+                    code,
                     status:            'available',
-                    notes:             '↩️ مسترد من طلب #' + order.id.substring(0, 7),
+                    notes:             '↩️ مسترد من طلب #' + orderId.substring(0, 7),
                     created_at:        new Date().toISOString()
                 });
             }
@@ -440,8 +408,24 @@ window.refundOrder = async (orderId) => {
     }
 
     document.getElementById('order-detail-popup')?.remove();
-    alert(`✅ تم استرداد ${allOrders.length} طلب وإرجاع ${totalCodesReturned} كود للمخزون`);
+    alert(`✅ تم استرداد ${ids.length} طلب وإرجاع ${totalCodesReturned} كود للمخزون`);
     loadCompletedOrders();
+};
+
+// ==================== استرداد طلب واحد (legacy) ====================
+window.refundOrder = async (orderId) => {
+    const { data: mainOrder, error: fetchError } = await supabase
+        .from('orders').select('order_number').eq('id', orderId).single();
+    if (fetchError) { alert('خطأ: ' + fetchError.message); return; }
+
+    const { data: allOrders } = await supabase
+        .from('orders')
+        .select('id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price')
+        .eq('order_number', mainOrder.order_number)
+        .eq('status', 'مكتمل');
+
+    if (!allOrders || allOrders.length === 0) { alert('لا توجد طلبات للاسترداد'); return; }
+    await window.refundGroupOrders(allOrders.map(o => o.id));
 };
 
 // ==================== نسخ ====================
@@ -451,7 +435,7 @@ window.copyText = (text) => {
 
 // ==================== فلاتر ====================
 window.filterOrders = () => {
-    const search      = document.getElementById('orderSearch')?.value.trim().toLowerCase() || '';
+    const search       = document.getElementById('orderSearch')?.value.trim().toLowerCase() || '';
     const statusFilter = document.getElementById('status-filter')?.value || '';
     document.querySelectorAll('#completed-orders-list tr').forEach(row => {
         const matchSearch = row.innerText.toLowerCase().includes(search);

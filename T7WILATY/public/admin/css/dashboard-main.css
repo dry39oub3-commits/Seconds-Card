@@ -224,11 +224,9 @@ input:focus { border-color: var(--accent-orange); }
 }
 
 @media (max-width: 768px) {
-    .admin-top-header { height: 56px; padding: 0; }
-    .header-container { padding: 0 14px; gap: 8px; }
+    .admin-top-header { height: 56px; padding: 0; overflow: visible; }
+    .header-container { padding: 0 14px; height: 56px; }
     .main-nav { display: none; }
-    .logout-btn span { display: none; }
-    .logout-btn { padding: 7px 10px; }
 }
 
 /* الهامبرغر */
@@ -2001,4 +1999,32 @@ body {
     background-color: var(--bg-input) !important;
     color: var(--text-main) !important;
     border: 1px solid var(--border-color) !important;
+}
+
+
+/* إصلاح الـ Modals */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.modal-overlay.active {
+    display: flex !important;
+}
+
+/* إصلاح reject-modal و user-orders-modal تحديداً */
+#reject-modal,
+#user-orders-modal {
+    display: none;
+}
+
+#reject-modal.active,
+#user-orders-modal.active {
+    display: flex !important;
 }
