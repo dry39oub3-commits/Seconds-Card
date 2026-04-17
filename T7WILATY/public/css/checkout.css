@@ -14,11 +14,74 @@
     text-align: center;
 }
 
-.payment-summary {
-    background: rgba(0,0,0,0.05);
+#payment-methods-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.payment-method-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
     border-radius: 12px;
-    padding: 20px;
-    margin: 25px 0;
+    border: 2px solid #334155;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.payment-method-card:hover {
+    border-color: var(--primary);
+}
+
+.payment-method-card.selected {
+    border-color: var(--primary);
+    background: rgba(249, 115, 22, 0.08);
+}
+
+.payment-method-info {
+    flex: 1;
+    text-align: right;
+}
+
+.payment-method-name {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.payment-method-desc {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+
+.payment-method-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #94a3b8;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.payment-method-card.selected .payment-method-radio {
+    border-color: var(--primary);
+    background: var(--primary);
+}
+
+.payment-method-card.selected .payment-method-radio::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: white;
+    display: block;
 }
 
 .summary-line {
@@ -55,3 +118,31 @@
 
 .status-error { color: #ef4444; margin-bottom: 15px; font-weight: bold; }
 .security-note { font-size: 12px; color: #94a3b8; margin-top: 20px; }
+
+
+
+/* إصلاح موضع قائمة البروفيل */
+#user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: auto;
+    left: 0;        /* يظهر لليسار بدل اليمين */
+    min-width: 160px;
+    z-index: 9999;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    padding: 8px 0;
+    display: none;
+}
+
+#user-dropdown.show {
+    display: block;
+}
+
+/* الحاوية تكون relative */
+.user-menu-wrapper,
+.nav-icons,
+header {
+    position: relative;
+}

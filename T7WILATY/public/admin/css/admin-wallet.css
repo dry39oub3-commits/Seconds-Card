@@ -31,3 +31,57 @@
         .modal-input { width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; margin-bottom:12px; box-sizing:border-box; }
         .filter-bar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
         .filter-bar input, .filter-bar select { padding:9px 12px; background:#1e293b; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:13px; }
+
+
+
+        @media (max-width: 768px) {
+    .tabs {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .tab-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+        flex: 1;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 12px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 18px;
+    }
+
+    .tx-card {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .tx-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .tx-amount {
+        min-width: auto;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+        width: 100%;
+    }
+}

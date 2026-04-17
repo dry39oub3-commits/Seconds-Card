@@ -34,7 +34,6 @@ function renderProduct(product) {
     const prices = Array.isArray(product.prices) ? product.prices : [];
 
     const pricesHTML = prices.map((p, i) => {
-        // إذا الفئة غير نشطة - اعرضها بشكل معطل
         if (p.active === false) {
             return `
                 <div class="price-card disabled" style="opacity:0.4; cursor:not-allowed; pointer-events:none; position:relative;">
@@ -44,7 +43,6 @@ function renderProduct(product) {
                 </div>
             `;
         }
-        // فئة نشطة
         return `
             <div class="price-card" onclick="selectPrice(${i}, ${p.value})" id="price-${i}">
                 <div class="label">${p.label}</div>
@@ -63,9 +61,15 @@ function renderProduct(product) {
         </div>
         <h2 class="prices-title">اختر الفئة:</h2>
         <div class="prices-grid">${pricesHTML}</div>
-        <button class="add-to-cart-btn" id="add-btn" onclick="addToCart()" disabled>
-            <i class="fas fa-cart-plus"></i> أضف إلى السلة
-        </button>
+
+        <div class="action-buttons">
+            <button class="add-to-cart-btn" id="add-btn" onclick="addToCart()" disabled>
+                <i class="fas fa-cart-plus"></i> أضف إلى السلة
+            </button>
+            <button class="buy-now-btn" id="buy-btn" onclick="buyNow()" disabled>
+                <i class="fas fa-bolt"></i> اشتر الآن
+            </button>
+        </div>
     `;
 }
 
@@ -74,6 +78,34 @@ window.selectPrice = function(index, value) {
     document.getElementById(`price-${index}`).classList.add('selected');
     selectedPrice = { index, value, label: currentProduct.prices[index].label };
     document.getElementById('add-btn').disabled = false;
+    document.getElementById('buy-btn').disabled = false;
+};
+
+
+window.buyNow = function() {
+    if (!selectedPrice) return;
+
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    const exists = cart.find(
+        item => item.productId === currentProduct.id && item.label === selectedPrice.label
+    );
+
+    if (!exists) {
+        cart.push({
+            productId: currentProduct.id,
+            name: currentProduct.name,
+            image: currentProduct.image,
+            label: selectedPrice.label,
+            price: selectedPrice.value,
+            quantity: 1
+        });
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartBadge();
+    }
+
+    // الانتقال مباشرة إلى صفحة الدفع
+    window.location.href = 'cart.html';
 };
 
 window.addToCart = function() {

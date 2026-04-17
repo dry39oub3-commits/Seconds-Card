@@ -40,12 +40,13 @@ async function loadPaymentMethods() {
     if (!list) return;
 
     const walletCard = `
-        <div class="payment-method-card" id="pm-wallet" onclick="selectMethod('wallet', '', 'المحفظة')"
-            style="cursor:pointer; border:2px solid #334155; border-radius:12px; padding:12px 18px;
-                   display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; transition:0.3s;">
-            <i class="fas fa-wallet" style="font-size:36px; color:#22c55e;"></i>
-            <span style="font-size:14px; font-weight:bold;">محفظتي</span>
-            <span style="font-size:12px; color:#94a3b8;">رصيدك: ${userBalance} MRU</span>
+        <div class="payment-method-card" id="pm-wallet" onclick="selectMethod('wallet', '', 'المحفظة')">
+            <i class="fas fa-wallet" style="font-size:26px; color:#22c55e;"></i>
+            <div class="payment-method-info">
+                <div class="payment-method-name">محفظتي</div>
+                <div class="payment-method-desc">رصيدك: ${userBalance} MRU</div>
+            </div>
+            <div class="payment-method-radio"></div>
         </div>
     `;
 
@@ -55,11 +56,14 @@ async function loadPaymentMethods() {
     }
 
     list.innerHTML = walletCard + methods.map(m => `
-        <div class="payment-method-card" id="pm-${m.id}" onclick="selectMethod('${m.id}', '${m.account_number}', '${m.name}')"
-            style="cursor:pointer; border:2px solid #334155; border-radius:12px; padding:12px 18px;
-                   display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; transition:0.3s;">
-            <img src="${m.logo_url || ''}" alt="${m.name}" style="width:50px; height:50px; object-fit:contain;" onerror="this.style.display='none'">
-            <span style="font-size:14px; font-weight:bold;">${m.name}</span>
+        <div class="payment-method-card" id="pm-${m.id}" onclick="selectMethod('${m.id}', '${m.account_number}', '${m.name}')">
+            <img src="${m.logo_url || ''}" alt="${m.name}" 
+                 style="width:42px; height:42px; object-fit:contain; border-radius:8px;" 
+                 onerror="this.style.display='none'">
+            <div class="payment-method-info">
+                <div class="payment-method-name">${m.name}</div>
+            </div>
+            <div class="payment-method-radio"></div>
         </div>
     `).join('');
 }
@@ -169,7 +173,6 @@ async function checkAuthAndLoadData() {
 }
 
 // ==================== توليد رقم الطلب ====================
-// ✅ رقم واحد فقط لكل عملية دفع — يُستدعى مرة واحدة خارج الـ map
 function generateOrderNumber() {
     return `S${Math.floor(100000 + Math.random() * 900000)}`;
 }
@@ -193,7 +196,6 @@ async function pullFromStock(item) {
 
     if (error || !availableCodes || availableCodes.length < quantity) return null;
 
-    // تحقق من عدم استخدام أي كود مسبقاً
     for (const c of availableCodes) {
         const { data: existing } = await supabase
             .from('used_codes').select('id').eq('code', c.code).maybeSingle();
@@ -229,18 +231,7 @@ async function pullFromStock(item) {
 }
 
 // ==================== تنفيذ السحب وتحديث المخزون ====================
-async function commitStockPull(stockResult, orderId, productName) {
-    // ✅ تحديث المخزون فقط إذا الكل مكتمل
-if (allHaveStock) {
-    for (let i = 0; i < cart.length; i++) {
-        const stockResult = stockResults[i];
-        const order       = insertedOrders[i];
-        if (stockResult && order) {
-            await commitStockPull(stockResult, order.id, cart[i].name);
-        }
-    }
-}
-
+async function commitStockPull(stockResult, orderId) {
     await supabase
         .from('stocks')
         .update({ status: 'sold', sold_at: new Date().toISOString(), order_id: orderId })
@@ -250,7 +241,7 @@ if (allHaveStock) {
 // ===== تنفيذ الدفع =====
 async function executePayment() {
     if (!selectedPaymentMethod) {
-        alert('⚠️ الرجاء اختيار طريقة الدفع أولاً!');
+        showToast('⚠️ الرجاء اختيار طريقة الدفع أولاً!', 'error');
         return;
     }
 
@@ -268,14 +259,14 @@ async function executePayment() {
         .single();
 
     if (userCheck?.is_blocked) {
-        alert('🚫 حسابك محظور، لا يمكنك إتمام الدفع');
+        showToast('🚫 حسابك محظور، لا يمكنك إتمام الدفع', 'error');
         return;
     }
 
     // ===== دفع بالمحفظة =====
     if (selectedPaymentMethod.id === 'wallet') {
         if (userBalance < totalAmount) {
-            alert('⚠️ رصيدك غير كافٍ! اشحن محفظتك أولاً.');
+            showToast('⚠️ رصيدك غير كافٍ! اشحن محفظتك أولاً.', 'error');
             return;
         }
 
@@ -299,37 +290,36 @@ async function executePayment() {
 
             if (balanceError) throw balanceError;
 
-            // ✅ رقم طلب واحد مشترك لكل عناصر السلة
+            // رقم طلب واحد مشترك لكل عناصر السلة
             const sharedOrderNumber = generateOrderNumber();
 
-            // ✅ إذا لم يتوفر مخزون لأي عنصر واحد → جميع الطلبات قيد الانتظار
-const allHaveStock = stockResults.every(r => r !== null);
+            // إذا لم يتوفر مخزون لأي عنصر → جميع الطلبات قيد الانتظار
+            const allHaveStock = stockResults.every(r => r !== null);
 
-        const ordersToInsert = cart.map((item, i) => {
-            const stockResult = stockResults[i];
-            const hasStock    = stockResult !== null;
+            const ordersToInsert = cart.map((item, i) => {
+                const stockResult = stockResults[i];
+                const hasStock    = stockResult !== null;
 
-            return {
-                order_number:      sharedOrderNumber,
-                customer_name:     user?.user_metadata?.full_name || 'مستخدم',
-                customer_phone:    user?.email || '',
-                product_id:        item.productId || null,
-                product_name:      item.name,
-                label:             item.label || null,
-                price:             item.price,
-                quantity:          item.quantity || 1,
-                user_id:           user.id,
-                paymentMethod:     'المحفظة',
-                // ✅ مكتمل فقط إذا الكل متوفر
-                status:            (allHaveStock && hasStock) ? 'مكتمل' : 'قيد الانتظار',
-                card_code:         (allHaveStock && hasStock) ? stockResult.codes.join('\n') : null,
-                cost_price:        (allHaveStock && hasStock) ? stockResult.costPerCode : null,
-                supplier_id:       (allHaveStock && hasStock) ? stockResult.supplierName : null,
-                supplier_order_id: (allHaveStock && hasStock) ? stockResult.supplierOrderId : null,
-                suppliers_details: (allHaveStock && hasStock) ? stockResult.suppliersDetails : null,
-                auto_approved:     (allHaveStock && hasStock) ? true : false
-            };
-        });
+                return {
+                    order_number:      sharedOrderNumber,
+                    customer_name:     user?.user_metadata?.full_name || 'مستخدم',
+                    customer_phone:    user?.email || '',
+                    product_id:        item.productId || null,
+                    product_name:      item.name,
+                    label:             item.label || null,
+                    price:             item.price,
+                    quantity:          item.quantity || 1,
+                    user_id:           user.id,
+                    paymentMethod:     'المحفظة',
+                    status:            (allHaveStock && hasStock) ? 'مكتمل' : 'قيد الانتظار',
+                    card_code:         (allHaveStock && hasStock) ? stockResult.codes.join('\n') : null,
+                    cost_price:        (allHaveStock && hasStock) ? stockResult.costPerCode : null,
+                    supplier_id:       (allHaveStock && hasStock) ? stockResult.supplierName : null,
+                    supplier_order_id: (allHaveStock && hasStock) ? stockResult.supplierOrderId : null,
+                    suppliers_details: (allHaveStock && hasStock) ? stockResult.suppliersDetails : null,
+                    auto_approved:     (allHaveStock && hasStock) ? true : false
+                };
+            });
 
             const { data: insertedOrders, error: insertError } = await supabase
                 .from('orders')
@@ -338,12 +328,14 @@ const allHaveStock = stockResults.every(r => r !== null);
 
             if (insertError) throw insertError;
 
-            // تحديث المخزون فقط للطلبات التي وُجد لها مخزون
-            for (let i = 0; i < cart.length; i++) {
-                const stockResult = stockResults[i];
-                const order       = insertedOrders[i];
-                if (stockResult && order) {
-                    await commitStockPull(stockResult, order.id, cart[i].name);
+            // تحديث المخزون فقط إذا الكل مكتمل
+            if (allHaveStock) {
+                for (let i = 0; i < cart.length; i++) {
+                    const stockResult = stockResults[i];
+                    const order       = insertedOrders[i];
+                    if (stockResult && order) {
+                        await commitStockPull(stockResult, order.id);
+                    }
                 }
             }
 
@@ -358,20 +350,19 @@ const allHaveStock = stockResults.every(r => r !== null);
 
             localStorage.removeItem('cart');
 
-            const completedCount = stockResults.filter(r => r !== null).length;
-            const pendingCount   = stockResults.filter(r => r === null).length;
-
             if (allHaveStock) {
-    alert('✅ تم الدفع وتسليم جميع بطاقاتك بنجاح!');
-} else {
-    alert('✅ تم الدفع من محفظتك!\n⏳ طلباتك قيد المراجعة.');
-}
+                showToast('✅ تم الدفع وتسليم جميع بطاقاتك بنجاح!', 'success');
+            } else {
+                showToast('✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
+            }
 
-            window.location.href = 'orders.html';
+            setTimeout(() => {
+                window.location.href = 'orders.html';
+            }, 1500);
 
         } catch (error) {
             console.error('Payment Error:', error);
-            alert('❌ حدث خطأ: ' + error.message);
+            showToast('❌ حدث خطأ: ' + error.message, 'error');
             btn.disabled = false;
             btn.innerHTML = 'تأكيد الدفع الآن';
         }
@@ -381,7 +372,7 @@ const allHaveStock = stockResults.every(r => r !== null);
     // ===== دفع بالإيصال =====
     const receiptFile = document.getElementById('receipt-input')?.files[0];
     if (!receiptFile) {
-        alert('⚠️ الرجاء رفع إيصال الدفع!');
+        showToast('⚠️ الرجاء رفع إيصال الدفع!', 'error');
         return;
     }
 
@@ -400,11 +391,10 @@ const allHaveStock = stockResults.every(r => r !== null);
             receiptUrl = data.publicUrl;
         }
 
-        // ✅ رقم طلب واحد مشترك لدفع الإيصال أيضاً
         const sharedOrderNumber = generateOrderNumber();
 
         const orders = cart.map(item => ({
-            order_number:   sharedOrderNumber,  // ✅ نفس الرقم لجميع العناصر
+            order_number:   sharedOrderNumber,
             customer_name:  user?.user_metadata?.full_name || 'مستخدم',
             customer_phone: user?.email || '',
             product_id:     item.productId || null,
@@ -422,15 +412,47 @@ const allHaveStock = stockResults.every(r => r !== null);
         if (insertError) throw insertError;
 
         localStorage.removeItem('cart');
-        alert('✅ تمت عملية الدفع بنجاح!');
-        window.location.href = 'orders.html';
+        showToast('✅ تمت عملية الدفع بنجاح!', 'success');
+
+        setTimeout(() => {
+            window.location.href = 'orders.html';
+        }, 1500);
 
     } catch (error) {
         console.error('Payment Error:', error);
-        alert('❌ حدث خطأ: ' + error.message);
+        showToast('❌ حدث خطأ: ' + error.message, 'error');
         btn.disabled = false;
         btn.innerHTML = 'تأكيد الدفع الآن';
     }
+}
+
+// ===== Toast Notification =====
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 16px;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        transition: opacity 0.5s;
+        font-family: 'Cairo', sans-serif;
+        text-align: center;
+        max-width: 320px;
+        width: 90%;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 2000);
 }
 
 // ===== Dark Mode =====

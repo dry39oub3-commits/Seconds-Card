@@ -13,6 +13,10 @@
 
 <header class="admin-top-header">
     <div class="header-container">
+                <!-- زر الهامبرغر - يظهر فقط في الموبايل -->
+<button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+    <span></span><span></span><span></span>
+</button>
         <div class="logo">
             <a href="dashboard.html" style="text-decoration:none; color:inherit;">
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -177,7 +181,7 @@
 <div class="modal-overlay" id="receipt-modal" onclick="this.classList.remove('active')">
     <img id="receipt-full-img" style="max-width:90%; max-height:90%; border-radius:12px;">
 </div>
-
+<script type="module" src="./js/header.js"></script>
 <script type="module" src="./js/bell.js"></script>
 <script type="module" src="./js/admin-wallet.js"></script>
 

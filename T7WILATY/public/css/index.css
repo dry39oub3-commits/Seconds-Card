@@ -475,3 +475,28 @@ max-width: calc(100vw - 20px)
 
 }
 
+/* إصلاح موضع قائمة البروفيل */
+#user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: auto;
+    left: 0;        /* يظهر لليسار بدل اليمين */
+    min-width: 160px;
+    z-index: 9999;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    padding: 8px 0;
+    display: none;
+}
+
+#user-dropdown.show {
+    display: block;
+}
+
+/* الحاوية تكون relative */
+.user-menu-wrapper,
+.nav-icons,
+header {
+    position: relative;
+}

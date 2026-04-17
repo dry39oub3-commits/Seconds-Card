@@ -14,6 +14,12 @@
 <body>
     <header class="admin-top-header">
     <div class="header-container">
+        <!-- زر الهامبرغر - يظهر فقط في الموبايل -->
+<button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+    <span></span><span></span><span></span>
+</button>
+
+
         <div class="logo">
             <a href="dashboard.html" style="text-decoration:none; color:inherit;">
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -55,6 +61,38 @@
         </div>
     </div>
 </header>
+
+<!-- Overlay -->
+<div class="mobile-nav-overlay" id="mobile-overlay"></div>
+
+<!-- Drawer -->
+<div class="mobile-nav-drawer" id="mobile-drawer">
+    <div class="drawer-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <img src="../assets/logo.png" style="height:32px;width:32px;object-fit:contain;">
+            <span style="font-size:16px;font-weight:800;color:white;">Seconds<span style="color:#f97316;">Card</span></span>
+        </div>
+        <button class="drawer-close" id="drawer-close"><i class="fas fa-times"></i></button>
+    </div>
+    <nav class="drawer-nav">
+        <ul class="drawer-nav-list">
+            <li><a href="dashboard.html"        class="nav-link"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+            <li><a href="Slider-manager.html"   class="nav-link"><i class="fas fa-chart-line"></i> السلايدر</a></li>
+            <li><a href="admin-wallet.html"     class="nav-link"><i class="fas fa-wallet"></i> المحافظ</a></li>
+            <li><a href="payment-methods.html"  class="nav-link"><i class="fas fa-credit-card"></i> الدفع</a></li>
+            <li><a href="orders.html"           class="nav-link"><i class="fas fa-shopping-cart"></i> الطلبات</a></li>
+            <li><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i> المنتجات</a></li>
+            <li><a href="stocks.html"           class="nav-link"><i class="fas fa-layer-group"></i> المخزون</a></li>
+            <li><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i> الطلبات المكتملة</a></li>
+            <li><a href="users-manager.html"    class="nav-link"><i class="fas fa-users"></i> المستخدمون</a></li>
+        </ul>
+    </nav>
+    <div class="drawer-footer">
+        <button class="logout-btn" id="logoutBtn-mobile" style="width:100%;justify-content:center;">
+            <i class="fas fa-sign-out-alt"></i> <span>تسجيل الخروج</span>
+        </button>
+    </div>
+</div>
 
 <main class="dashboard-main-area">
     <section class="section-header">
@@ -107,6 +145,7 @@
         </div>
     </div>
 </main>
+<script type="module" src="./js/header.js"></script>
 <script type="module" src="./js/bell.js"></script>
     <script type="module" src="./js/stats.js"></script>
 </body>
