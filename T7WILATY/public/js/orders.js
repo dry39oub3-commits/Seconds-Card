@@ -55,10 +55,9 @@ window.handleLogout = async () => {
 
 async function fetchUserOrders() {
     const ordersList = document.getElementById('orders-list');
-    const noOrders = document.getElementById('no-orders');
+    const noOrders   = document.getElementById('no-orders');
     if (!ordersList) return;
 
-    // ✅ جلب المستخدم الحالي
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
 
@@ -69,12 +68,10 @@ async function fetchUserOrders() {
     }
 
     const { data: orders, error } = await supabase
-    .from("orders")
-    .select("*, products(image, name)")
-    .eq("user_id", user.id)   // ✅ فلترة بالمستخدم
-    .order("created_at", { ascending: false }); // ✅ الأحدث أولاً
-
-console.log("columns:", Object.keys(orders?.[0] || {}));
+        .from('orders')
+        .select('*, products(image, name)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
     if (error) {
         ordersList.innerHTML = '<p style="color:red; text-align:center;">حدث خطأ أثناء تحميل الطلبات.</p>';
@@ -87,40 +84,97 @@ console.log("columns:", Object.keys(orders?.[0] || {}));
         return;
     }
 
-    ordersList.innerHTML = orders.map(order => {
-        const date = order.created_at
-            ? new Date(order.created_at).toLocaleDateString('fr-FR')
+    // ✅ تجميع الطلبات بنفس order_number
+    const groupedMap = {};
+    orders.forEach(order => {
+        const key = order.order_number || order.id;
+        if (!groupedMap[key]) {
+            groupedMap[key] = {
+                ...order,
+                items:      [],
+                totalPrice: 0
+            };
+        }
+        groupedMap[key].items.push(order);
+        groupedMap[key].totalPrice += (order.price || 0) * (order.quantity || 1);
+    });
+
+    const groupedOrders = Object.values(groupedMap);
+
+    ordersList.style.display = 'block';
+    if (noOrders) noOrders.style.display = 'none';
+
+    ordersList.innerHTML = groupedOrders.map(group => {
+        const date     = group.created_at
+            ? new Date(group.created_at).toLocaleDateString('fr-FR')
             : 'تاريخ غير معروف';
-        const image = order.products?.image || order.card_image || order.product_image || '';
-        const isCompleted = order.status === 'مكتمل';
-        const orderNum = order.order_number || '#' + order.id.toString().substring(0, 8);
-        const safeCode = (order.card_code || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+        const orderNum = group.order_number || '#' + group.id.toString().substring(0, 8);
+        const isMulti  = group.items.length > 1;
+
+        // ✅ تحديد الحالة العامة للمجموعة
+        const allCompleted = group.items.every(o => o.status === 'مكتمل');
+        const allCancelled = group.items.every(o => o.status === 'ملغي');
+        const groupStatus  = allCompleted ? 'مكتمل' : allCancelled ? 'ملغي' : 'قيد الانتظار';
+        const groupBadge   = allCompleted ? 'status-completed' : allCancelled ? 'status-cancelled' : 'status-pending';
+
+        const itemsHtml = group.items.map((order, idx) => {
+            const image       = order.products?.image || '';
+            const isCompleted = order.status === 'مكتمل';
+            const safeCode    = (order.card_code || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+            const isLast      = idx === group.items.length - 1;
+
+            return `
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 0;
+                ${!isLast ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
+                ${image ? `<img src="${image}" alt="${order.product_name}"
+                    style="width:52px;height:52px;object-fit:contain;background:white;border-radius:8px;padding:4px;flex-shrink:0;">` : ''}
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:700; font-size:14px;">${order.product_name || 'غير محدد'}</div>
+                    ${order.label ? `<div style="font-size:12px;color:#f97316;">الفئة: ${order.label}</div>` : ''}
+                    <div style="font-size:12px;color:#94a3b8;">
+                        ${order.price * (order.quantity || 1)} MRU &nbsp;•&nbsp; الكمية: ${order.quantity || 1}
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+                    <span class="status-badge ${isCompleted ? 'status-completed' : order.status === 'ملغي' ? 'status-cancelled' : 'status-pending'}"
+                        style="font-size:11px;">
+                        ${order.status || 'قيد الانتظار'}
+                    </span>
+                    ${isCompleted ? `
+                        <button onclick="toggleCode('${order.id}', '${safeCode}')" class="copy-btn"
+                            style="font-size:11px; padding:5px 10px;">
+                            <i class="fas fa-key"></i> الكود
+                        </button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
 
         return `
         <div class="order-card">
             <div class="order-header">
-                <span>${orderNum}</span>
-                <span>${date}</span>
+                <span>
+                    ${orderNum}
+                    ${isMulti ? `<span style="background:rgba(249,115,22,0.15);color:#f97316;
+                        border-radius:10px;padding:2px 8px;font-size:11px;margin-right:6px;">
+                        
+                    </span>` : ''}
+                </span>
+                <span style="display:flex;align-items:center;gap:8px;">
+                    <span class="status-badge ${groupBadge}" style="font-size:11px;">${groupStatus}</span>
+                    ${date}
+                </span>
             </div>
-            <div class="order-body">
-                ${image ? `<img src="${image}" alt="${order.product_name}" style="width:60px; height:60px; object-fit:contain; background:white; border-radius:8px; padding:4px;">` : ''}
-                <div class="card-details">
-                    <h4>${order.product_name || 'غير محدد'}</h4>
-                    ${order.label ? `<p>الفئة: <strong style="color:#f97316;">${order.label}</strong></p>` : ''}
-                    <p>السعر: <strong>${order.price * (order.quantity || 1)} MRU</strong></p>
-                    <p>الكمية: <strong>${order.quantity || 1}</strong></p>
-                    <p>طريقة الدفع: ${order.paymentMethod || order.payment_method || 'غير محدد'}</p>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-right:auto;">
-                    <span class="status-badge ${isCompleted ? 'status-completed' : order.status === 'ملغي' ? 'status-cancelled' : 'status-pending'}">
-                        ${order.status || 'قيد الانتظار'}
-                    </span>
-                    ${isCompleted ? `
-                        <button onclick="toggleCode('${order.id}', '${safeCode}')" class="copy-btn">
-                            <i class="fas fa-key"></i> عرض الكود
-                        </button>
-                    ` : ''}
-                </div>
+            <div style="padding:0 4px;">
+                ${itemsHtml}
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                padding-top:10px;margin-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
+                <span style="font-size:12px;color:#94a3b8;">
+                    💳 ${group.paymentMethod || group.payment_method || 'غير محدد'}
+                </span>
+                <span style="font-weight:700;color:#f97316;font-size:15px;">
+                    ${group.totalPrice} MRU
+                </span>
             </div>
         </div>`;
     }).join('');

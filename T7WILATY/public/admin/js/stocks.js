@@ -362,6 +362,17 @@ function renderInventoryTable() {
         <td style="text-align:center;">${costDisplay}</td>
         <td style="color:var(--text-muted); font-size:12px;">${formatDate(s.created_at)}</td>
         <td>
+            ${s.notes 
+                ? `<span style="display:inline-flex;align-items:center;gap:4px;
+                        background:rgba(245,158,11,0.12);color:#fbbf24;
+                        border:1px solid rgba(245,158,11,0.3);
+                        padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;"
+                        title="${s.notes}">
+                        ↩️ مسترد
+                  </span>`
+                : '<span style="color:#334155;">—</span>'}
+        </td>
+        <td>
           <div style="display:flex; gap:6px;">
             <button class="btn-danger" title="حذف" onclick="deleteStock('${s.id}')"><i class="fas fa-trash"></i></button>
           </div>

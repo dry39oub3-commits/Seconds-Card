@@ -39,7 +39,45 @@ async function loadCompletedOrders() {
     };
 
     ordersList.innerHTML = orders.map(order => {
-        const date = order.created_at ? new Date(order.created_at).toLocaleString('ar-EG') : '-';
+const createdAt  = order.created_at ? new Date(order.created_at) : null;
+const finishedAt = order.updated_at  ? new Date(order.updated_at)  : null;
+
+const formatDate = (d) => d ? d.toLocaleString('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+}) : '-';
+
+let timeDiff = '';
+let timeColor = '#94a3b8';
+if (createdAt && finishedAt && finishedAt > createdAt) {
+    const diffMs  = finishedAt - createdAt;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr  = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffSec < 60)       timeDiff = `${diffSec} ث`;
+    else if (diffMin < 60)  timeDiff = `${diffMin} د`;
+    else if (diffHr < 24)   timeDiff = `${diffHr}س ${diffMin % 60}د`;
+    else                    timeDiff = `${diffDay} يوم`;
+
+    timeColor = diffMin < 2 ? '#22c55e' : diffMin < 30 ? '#f97316' : '#ef4444';
+}
+
+const date = `
+    <div style="font-size:11px;color:#94a3b8;">🕐 ${formatDate(createdAt)}</div>
+    ${timeDiff ? `
+    <div style="text-align:center;margin:3px 0;">
+        <span style="display:inline-flex;align-items:center;gap:3px;
+            background:rgba(0,0,0,0.3);color:${timeColor};
+            border:1px solid ${timeColor}50;
+            padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;">
+            <i class="fas fa-clock"></i> ${timeDiff}
+        </span>
+    </div>` : ''}
+    <div style="font-size:11px;color:#64748b;">✅ ${formatDate(finishedAt)}</div>
+`;
+
         const image = order.products?.image;
         const totalPrice = order.price * (order.quantity || 1);
         const paymentMethod = order.paymentMethod || order.payment_method || '-';
@@ -74,7 +112,7 @@ async function loadCompletedOrders() {
                 </td>
                 <td><strong>${totalPrice} MRU</strong></td>
                 <td style="text-align:center;">${order.quantity || 1}</td>
-                <td><small>${date}</small></td>
+                <td>${date}</td>
                 <td>${paymentMethod}</td>
                 <td>${receiptBtn}</td>
                 <td>
@@ -84,12 +122,27 @@ async function loadCompletedOrders() {
                     ${status === 'ملغي' && order.reject_reason
                         ? `<div style="font-size:11px;color:#ef4444;margin-top:4px;">السبب: ${order.reject_reason}</div>`
                         : ''}
+                    ${status === 'مكتمل'
+                        ? order.auto_approved
+                            ? `<div style="margin-top:5px;">
+                                <span style="display:inline-flex;align-items:center;gap:4px;
+                                    background:rgba(59,130,246,0.12);color:#60a5fa;
+                                    border:1px solid rgba(59,130,246,0.3);
+                                    padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                                    <i class="fas fa-box"></i> المخزون 
+                                </span>
+                               </div>`
+                            : `<div style="margin-top:5px;">
+                                <span style="display:inline-flex;align-items:center;gap:4px;
+                                    background:rgba(168,85,247,0.12);color:#c084fc;
+                                    border:1px solid rgba(168,85,247,0.3);
+                                    padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                                    <i class="fas fa-hand-paper"></i> يدوي
+                                </span>
+                               </div>`
+                        : ''}
                 </td>
                 <td>
-                    <button onclick="showOrderPopup('${order.id}')"
-                        style="background:#1e40af;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:4px;width:100%;">
-                        <i class="fas fa-eye"></i> التفاصيل
-                    </button>
                     ${status === 'مكتمل' ? `
                     <button onclick="refundOrder('${order.id}')"
                         style="background:#f59e0b;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;width:100%;">
@@ -118,7 +171,6 @@ window.showOrderPopup = (orderId) => {
     // بناء قسم الموردين
     let suppliersHtml = '';
     if (suppliersDetails.length > 0) {
-        // تجميع الموردين
         const suppliersMap = {};
         suppliersDetails.forEach(s => {
             const key = s.supplier_name || 'غير محدد';
@@ -152,7 +204,6 @@ window.showOrderPopup = (orderId) => {
                 `).join('')}
             </div>`;
     } else if (order.supplier_id) {
-        // fallback للطلبات القديمة
         suppliersHtml = `
             <div style="margin-bottom:16px;">
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">🏪 المورد</div>
@@ -211,7 +262,6 @@ window.showOrderPopup = (orderId) => {
                 تفاصيل الطلب ${order.order_number || '#' + order.id.substring(0,7)}
             </h3>
 
-            <!-- معلومات الطلب -->
             <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                 <div><span style="color:#94a3b8;font-size:12px;">👤 العميل</span><div style="font-weight:600;">${order.customer_name || '-'}</div></div>
                 <div><span style="color:#94a3b8;font-size:12px;">📱 الهاتف</span><div>${order.customer_phone || '-'}</div></div>
@@ -220,16 +270,12 @@ window.showOrderPopup = (orderId) => {
                 <div><span style="color:#94a3b8;font-size:12px;">💰 المبلغ</span><div style="color:#22c55e;font-weight:700;">${totalPrice} MRU</div></div>
                 <div><span style="color:#94a3b8;font-size:12px;">🔢 الكمية</span><div>${order.quantity || 1}</div></div>
                 <div><span style="color:#94a3b8;font-size:12px;">💳 الدفع</span><div>${paymentMethod(order)}</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">📅 التاريخ</span><div style="font-size:12px;">${new Date(order.created_at).toLocaleString('ar-EG')}</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">📅 التاريخ</span><div style="font-size:12px;">${new Date(order.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div></div>
             </div>
 
-            <!-- الربح -->
             ${profitHtml}
-
-            <!-- الموردون -->
             ${suppliersHtml}
 
-            <!-- الأكواد -->
             <div>
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">
                     🔑 الأكواد (${codes.length})
@@ -281,25 +327,51 @@ function updateSummary(orders) {
 
 // ==================== استرداد ====================
 window.refundOrder = async (orderId) => {
-    if (!confirm('هل تريد تحديد هذا الطلب كمسترد؟')) return;
+    if (!confirm('هل تريد استرداد هذا الطلب وإرجاع الأكواد للمخزون؟')) return;
 
+    // ✅ إصلاح: إزالة supplier_name و order_id (غير موجودين في جدول orders)
     const { data: order, error: fetchError } = await supabase
-        .from('orders').select('card_code').eq('id', orderId).single();
+        .from('orders')
+        .select('card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, quantity')
+        .eq('id', orderId)
+        .single();
+
     if (fetchError) { alert('خطأ: ' + fetchError.message); return; }
 
+    // تحديث حالة الطلب
     const { error } = await supabase
-        .from('orders').update({ status: 'مسترد' }).eq('id', orderId);
+        .from('orders')
+        .update({ status: 'مسترد' })
+        .eq('id', orderId);
+
     if (error) { alert('خطأ: ' + error.message); return; }
 
+    // إرجاع الأكواد للمخزون
     if (order?.card_code) {
         const codes = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
+
         for (const code of codes) {
+            // حذف من used_codes
             await supabase.from('used_codes').delete().eq('code', code);
+
+            // إرجاع للمخزون مع ملاحظة الاسترداد
+            await supabase.from('stocks').insert({
+                product_id:        order.product_id,
+                product_name:      order.product_name,
+                price_label:       order.label,                              // ✅ label بدل price_label
+                supplier_name:     order.supplier_id || 'غير محدد',         // ✅ supplier_id بدل supplier_name
+                order_id:          order.supplier_order_id || null,          // ✅ supplier_order_id فقط
+                cost_per_card_usd: order.cost_price || 0,
+                code:              code,
+                status:            'available',
+                notes:             '↩️ مسترد من طلب #' + orderId.substring(0, 7),
+                created_at:        new Date().toISOString()
+            });
         }
     }
 
     document.getElementById('order-detail-popup')?.remove();
-    alert('✅ تم تحديث الطلب كمسترد وتحرير الأكواد.');
+    alert(`✅ تم الاسترداد وإرجاع ${order?.card_code?.split('\n').filter(c=>c.trim()).length || 0} كود للمخزون`);
     loadCompletedOrders();
 };
 
@@ -330,8 +402,6 @@ window.resetFilter = () => {
 };
 
 window.loadCompletedOrders = loadCompletedOrders;
-
-
 
 // ==================== تشغيل ====================
 document.addEventListener('DOMContentLoaded', () => {
