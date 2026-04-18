@@ -341,12 +341,14 @@ async function executePayment() {
 
             // تسجيل عملية السحب من المحفظة
             await supabase.from('wallet_transactions').insert({
-                user_id:        user.id,
-                type:           'withdraw',
-                amount:         totalAmount,
-                payment_method: 'المحفظة - ' + (cart[0]?.name || 'شراء بطاقة'),
-                status:         'مكتمل'
-            });
+    user_id: user.id,
+    type: 'purchase',
+    amount: totalAmount,
+    payment_method: 'المحفظة',
+    product_name: cart.map(i => i.name).join('، '), // ✅
+    label: cart.map(i => i.label || '').join('، '),  // ✅
+    status: 'مكتمل'
+});
 
             localStorage.removeItem('cart');
 
