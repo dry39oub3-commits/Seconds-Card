@@ -277,7 +277,7 @@ window.selectMethod = (name, account, el) => {
 // ===== نسخ رقم الحساب =====
 window.copyMethodAccount = () => {
     const account = document.getElementById('method-account-display').textContent;
-    navigator.clipboard.writeText(account).then(() => alert('✅ تم نسخ رقم الحساب!'));
+    navigator.clipboard.writeText(account).then(() => showToast('✅ تم نسخ رقم الحساب!'));
 };
 
 // ===== إرسال طلب الشحن =====
@@ -290,9 +290,9 @@ window.submitCharge = async () => {
     const method      = document.getElementById('charge-method-selected').value;
     const receiptFile = document.getElementById('charge-receipt').files[0];
 
-    if (!amount || amount <= 0) { alert('⚠️ أدخل مبلغاً صحيحاً'); return; }
-    if (!method)                { alert('⚠️ اختر طريقة الدفع أولاً'); return; }
-    if (!receiptFile)           { alert('⚠️ يرجى رفع إيصال التحويل'); return; }
+    if (!amount || amount <= 0) { showToast('⚠️ أدخل مبلغاً صحيحاً'); return; }
+    if (!method)                { showToast('⚠️ اختر طريقة الدفع أولاً'); return; }
+    if (!receiptFile)           { showToast('⚠️ يرجى رفع إيصال التحويل'); return; }
 
     let receipt_url = null;
 
@@ -319,9 +319,9 @@ window.submitCharge = async () => {
         status: 'قيد المراجعة'
     });
 
-    if (error) { alert('❌ خطأ: ' + error.message); return; }
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
 
-    alert('✅ تم إرسال طلب الشحن! سيتم مراجعته وإضافة الرصيد خلال دقائق.');
+    showToast('✅ تم إرسال طلب الشحن! سيتم مراجعته وإضافة الرصيد خلال دقائق.');
     closeDepositModal();
     loadWalletData();
 };
@@ -334,3 +334,31 @@ window.handleLogout = async () => {
         window.location.replace('index.html');
     }
 };
+
+function showToast(msg, isError = false) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${isError ? '#ef4444' : '#22c55e'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        animation: slideUp 0.3s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s';
+        setTimeout(() => toast.remove(), 400);
+    }, 2500);
+}

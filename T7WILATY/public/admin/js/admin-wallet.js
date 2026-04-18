@@ -249,14 +249,14 @@ window.closeRejectModal = () => {
 window.confirmReject = async () => {
     if (!rejectTxId) return;
     const reason = document.getElementById('reject-reason-input').value.trim();
-    if (!reason) { alert('⚠️ يرجى كتابة سبب الرفض'); return; }
+    if (!reason) { showToast('⚠️ يرجى كتابة سبب الرفض'); return; }
 
     const { error } = await supabase
         .from('wallet_transactions')
         .update({ status: 'مرفوض', reject_reason: reason })
         .eq('id', rejectTxId);
 
-    if (error) { alert('خطأ: ' + error.message); return; }
+    if (error) { showToast('خطأ: ' + error.message); return; }
     closeRejectModal();
     loadAll();
 };
@@ -406,23 +406,23 @@ window.approveTransaction = async (txId, userId, amount, type) => {
         const currentBalance = userData?.balance || 0;
         const newBalance     = type === 'charge' ? currentBalance + amount : currentBalance - amount;
 
-        if (newBalance < 0) { alert('⚠️ رصيد المستخدم غير كافٍ للسحب!'); return; }
+        if (newBalance < 0) { showToast('⚠️ رصيد المستخدم غير كافٍ للسحب!'); return; }
 
         await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
         await supabase.from('wallet_transactions').update({ status: 'مكتمل' }).eq('id', txId);
 
-        alert('✅ تمت الموافقة وتحديث الرصيد!');
+        showToast('✅ تمت الموافقة وتحديث الرصيد!');
         loadAll();
     } catch (err) {
-        alert('خطأ: ' + err.message);
+        showToast('❌ خطأ: ' + err.message);
     }
 };
 
 window.rejectTransaction = async (txId) => {
     if (!confirm('هل تريد رفض هذا الطلب؟')) return;
     const { error } = await supabase.from('wallet_transactions').update({ status: 'مرفوض' }).eq('id', txId);
-    if (error) alert('خطأ: ' + error.message);
-    else { alert('تم رفض الطلب.'); loadAll(); }
+    if (error) showToast('❌ خطأ: ' + error.message);
+    else { showToast('✅    تم رفض الطلب.'); loadAll(); }
 };
 
 // ==================== EDIT BALANCE MODAL ====================
@@ -443,7 +443,7 @@ window.closeEditModal = () => {
 window.saveBalance = async () => {
     const newBalance = parseFloat(document.getElementById('edit-balance-input').value);
     const note       = document.getElementById('edit-note-input').value.trim() || 'تعديل يدوي من الأدمن';
-    if (isNaN(newBalance) || newBalance < 0) { alert('⚠️ أدخل رصيداً صحيحاً'); return; }
+    if (isNaN(newBalance) || newBalance < 0) { showToast('⚠️ أدخل رصيداً صحيحاً'); return; }
 
     const { data: userData } = await supabase
         .from('users').select('balance').eq('id', currentEditUserId).single();
@@ -452,7 +452,7 @@ window.saveBalance = async () => {
 
     const { error } = await supabase.from('users')
         .update({ balance: newBalance }).eq('id', currentEditUserId);
-    if (error) { alert('خطأ: ' + error.message); return; }
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
 
     await supabase.from('wallet_transactions').insert({
         user_id:        currentEditUserId,
@@ -464,7 +464,7 @@ window.saveBalance = async () => {
     });
 
     closeEditModal();
-    alert('✅ تم تحديث الرصيد!');
+    showToast('✅ تم تحديث الرصيد!');
     loadAll();
 };
 
@@ -515,3 +515,32 @@ window.applyFilter = () => renderAll();
 // ==================== INIT ====================
 loadAll();
 setInterval(loadAll, 30000);
+
+
+function showToast(msg, isError = false) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${isError ? '#ef4444' : '#22c55e'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        animation: slideUp 0.3s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s';
+        setTimeout(() => toast.remove(), 400);
+    }, 2500);
+}
