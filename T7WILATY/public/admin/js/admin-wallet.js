@@ -17,8 +17,12 @@ function generateSCId(uuid) {
 
 // ==================== LOAD ALL ====================
 async function loadAll() {
-    await Promise.all([loadTransactions(), loadUsers()]);
-    updateStats();
+    try {
+        await Promise.all([loadTransactions(), loadUsers()]);
+        updateStats();
+    } catch (err) {
+        console.warn('loadAll error:', err.message);
+    }
 }
 
 async function loadTransactions() {
@@ -515,7 +519,18 @@ window.applyFilter = () => renderAll();
 
 // ==================== INIT ====================
 loadAll();
-setInterval(loadAll, 30000);
+
+// منع التعارض — نتأكد أن الطلب السابق انتهى قبل البدء بطلب جديد
+let isLoading = false;
+setInterval(async () => {
+    if (isLoading) return;
+    isLoading = true;
+    try {
+        await loadAll();
+    } finally {
+        isLoading = false;
+    }
+}, 30000);
 
 
 // ===== Toast =====
