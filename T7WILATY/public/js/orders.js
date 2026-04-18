@@ -104,6 +104,31 @@ async function fetchUserOrders() {
     ordersList.style.display = 'block';
     if (noOrders) noOrders.style.display = 'none';
 
+    // حساب عدد كل حالة
+    const countAll     = groupedOrders.length;
+    const countDone    = groupedOrders.filter(g => g.items.every(o => o.status === 'مكتمل')).length;
+    const countRefund  = groupedOrders.filter(g => g.items.some(o => o.status === 'مسترد')).length;
+    const countCancel  = groupedOrders.filter(g => g.items.every(o => o.status === 'ملغي')).length;
+    const countPending = groupedOrders.filter(g => {
+        const hasRefunded = g.items.some(o => o.status === 'مسترد');
+        const allDone     = g.items.every(o => o.status === 'مكتمل');
+        const allCancel   = g.items.every(o => o.status === 'ملغي');
+        return !allDone && !allCancel && !hasRefunded;
+    }).length;
+
+    // تحديث النصوص على الأزرار
+    const btnAll     = document.querySelector('[onclick="setOrderFilter(\'all\', this)"]');
+    const btnDone    = document.querySelector('[onclick="setOrderFilter(\'مكتمل\', this)"]');
+    const btnRefund  = document.querySelector('[onclick="setOrderFilter(\'مسترد\', this)"]');
+    const btnCancel  = document.querySelector('[onclick="setOrderFilter(\'ملغي\', this)"]');
+    const btnPending = document.querySelector('[onclick="setOrderFilter(\'pending\', this)"]');
+
+    if (btnAll)     btnAll.innerHTML     = `كل الحالات <span style="background:rgba(249,115,22,0.2);padding:1px 7px;border-radius:10px;font-size:11px;">${countAll}</span>`;
+    if (btnDone)    btnDone.innerHTML    = `✅ مكتمل <span style="background:rgba(34,197,94,0.2);padding:1px 7px;border-radius:10px;font-size:11px;">${countDone}</span>`;
+    if (btnRefund)  btnRefund.innerHTML  = `↩️ مسترد <span style="background:rgba(245,158,11,0.2);padding:1px 7px;border-radius:10px;font-size:11px;">${countRefund}</span>`;
+    if (btnCancel)  btnCancel.innerHTML  = `❌ ملغي <span style="background:rgba(239,68,68,0.2);padding:1px 7px;border-radius:10px;font-size:11px;">${countCancel}</span>`;
+    if (btnPending) btnPending.innerHTML = `⏳ قيد الانتظار <span style="background:rgba(148,163,184,0.2);padding:1px 7px;border-radius:10px;font-size:11px;">${countPending}</span>`;
+    
     ordersList.innerHTML = groupedOrders.map(group => {
         const date     = group.created_at
             ? new Date(group.created_at).toLocaleDateString('fr-FR')
