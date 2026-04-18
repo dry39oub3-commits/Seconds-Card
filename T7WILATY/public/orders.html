@@ -55,6 +55,55 @@
     <main class="orders-container">
         <h2 class="page-title"><i class="fas fa-shopping-bag"></i> سجل طلباتي</h2>
         
+        <!-- شريط الفلاتر والبحث -->
+<div id="orders-filters" style="
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;
+    padding:0 4px; align-items:center;">
+
+    <!-- بحث برقم الطلب -->
+    <div style="flex:1; min-width:180px; position:relative;">
+        <input type="text" id="order-search" placeholder="🔍 ابحث برقم الطلب..."
+            oninput="filterOrders()"
+            style="width:100%; padding:9px 14px; background:#1e293b;
+                   border:1px solid #334155; border-radius:8px; color:#e2e8f0;
+                   font-family:inherit; font-size:13px; box-sizing:border-box;">
+    </div>
+
+    <!-- أزرار الفلتر -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button onclick="setOrderFilter('all', this)" class="order-filter-btn active-filter"
+            style="padding:8px 14px; border:none; border-radius:8px; cursor:pointer;
+                   font-size:12px; font-weight:700; font-family:inherit;
+                   background:rgba(249,115,22,0.15); color:#f97316; border:1px solid #f97316;">
+            كل الحالات
+        </button>
+        <button onclick="setOrderFilter('مكتمل', this)" class="order-filter-btn"
+            style="padding:8px 14px; border:none; border-radius:8px; cursor:pointer;
+                   font-size:12px; font-weight:700; font-family:inherit;
+                   background:rgba(34,197,94,0.1); color:#22c55e; border:1px solid rgba(34,197,94,0.3);">
+            ✅ مكتمل
+        </button>
+        <button onclick="setOrderFilter('مسترد', this)" class="order-filter-btn"
+            style="padding:8px 14px; border:none; border-radius:8px; cursor:pointer;
+                   font-size:12px; font-weight:700; font-family:inherit;
+                   background:rgba(245,158,11,0.1); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);">
+            ↩️ مسترد
+        </button>
+        <button onclick="setOrderFilter('ملغي', this)" class="order-filter-btn"
+            style="padding:8px 14px; border:none; border-radius:8px; cursor:pointer;
+                   font-size:12px; font-weight:700; font-family:inherit;
+                   background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3);">
+            ❌ ملغي
+        </button>
+        <button onclick="setOrderFilter('pending', this)" class="order-filter-btn"
+            style="padding:8px 14px; border:none; border-radius:8px; cursor:pointer;
+                   font-size:12px; font-weight:700; font-family:inherit;
+                   background:rgba(148,163,184,0.1); color:#94a3b8; border:1px solid rgba(148,163,184,0.3);">
+            ⏳ قيد الانتظار
+        </button>
+    </div>
+</div>
+
         <div id="orders-list" class="orders-list">
             <div class="loading-spinner">جاري تحميل طلباتك...</div>
         </div>

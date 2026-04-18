@@ -345,3 +345,43 @@ function showToast(message, color = '#22c55e') {
 
     setTimeout(() => toast.remove(), 6000);
 }
+
+
+// ===== فلتر الطلبات =====
+let currentOrderFilter = 'all';
+
+window.setOrderFilter = (filter, btn) => {
+    currentOrderFilter = filter;
+
+    // تحديث الأزرار
+    document.querySelectorAll('.order-filter-btn').forEach(b => {
+        b.style.opacity = '0.5';
+        b.style.fontWeight = '600';
+    });
+    if (btn) {
+        btn.style.opacity = '1';
+        btn.style.fontWeight = '800';
+    }
+
+    filterOrders();
+};
+
+window.filterOrders = () => {
+    const search = (document.getElementById('order-search')?.value || '').toLowerCase().trim();
+    const cards  = document.querySelectorAll('.order-card');
+
+    cards.forEach(card => {
+        const text        = card.innerText.toLowerCase();
+        const orderNum    = card.querySelector('.order-header span')?.innerText?.toLowerCase() || '';
+        const matchSearch = !search || orderNum.includes(search) || text.includes(search);
+
+        let matchFilter = true;
+        if (currentOrderFilter === 'pending') {
+            matchFilter = text.includes('قيد الانتظار') || text.includes('قيد المراجعة');
+        } else if (currentOrderFilter !== 'all') {
+            matchFilter = text.includes(currentOrderFilter);
+        }
+
+        card.style.display = matchSearch && matchFilter ? '' : 'none';
+    });
+};
