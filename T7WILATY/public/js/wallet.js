@@ -77,11 +77,10 @@ async function loadTransactions(userId) {
     if (!list) return;
 
     const { data: transactions, error } = await supabase
-    .from('wallet_transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .in('type', ['charge', 'deposit', 'purchase']) // ✅ فقط شحن وسحب بالمحفظة
-    .order('created_at', { ascending: false });
+        .from('wallet_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
     if (error || !transactions || transactions.length === 0) {
         list.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:30px;">لا توجد عمليات بعد.</p>';
@@ -103,8 +102,8 @@ async function loadTransactions(userId) {
         let extraDetails = '';
 
         if (isPurchase) {
-            const productName = t.product_name || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
-            const label = t.label || '';
+    const productName = t.product_name || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
+    const label = t.label || '';
 
     extraDetails = `
         <div style="margin-top:8px; background:rgba(249,115,22,0.08);
