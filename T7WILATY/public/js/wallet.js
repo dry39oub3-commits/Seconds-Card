@@ -109,17 +109,19 @@ async function loadTransactions(userId) {
 // إزالة التكرار — استبعاد معاملات wallet_transactions من نوع purchase/withdraw المرتبطة بطلب
     const orderIds = new Set((ordersTx || []).map(o => o.id));
 
-    const filteredWalletTx = (walletTx || []).filter(t => {
-        // احتفظ بالمعاملة إذا لم تكن شراء أو كانت شحن/استرداد
-        if (t.type === 'charge' || t.type === 'deposit' || t.type === 'refund') return true;
-        // استبعد أي معاملة withdraw/purchase موجودة بالفعل في orders
-        return !orderIds.has(t.id);
+  const filteredWalletTx = (walletTx || []).filter(t => {
+        // احتفظ فقط بالشحن والاسترداد — استبعد كل withdraw/purchase
+        if (t.type === 'charge' || t.type === 'deposit') return true;
+        if (t.type === 'refund' || t.payment_method === 'استرداد طلب') return true;
+        // استبعد withdraw لأنه مسجل بالفعل في orders
+        if (t.type === 'withdraw' || t.type === 'purchase') return false;
+        return true;
     });
 
     // دمج القائمتين وترتيبها بالتاريخ
     const all = [...filteredWalletTx, ...ordersAsTx]
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        
+
     if (all.length === 0) {
         list.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:30px;">لا توجد عمليات بعد.</p>';
         return;

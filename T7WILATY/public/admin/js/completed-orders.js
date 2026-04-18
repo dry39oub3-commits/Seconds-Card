@@ -413,12 +413,20 @@ window.refundGroupOrders = async (ids) => {
                 .eq('id', order.user_id);
 
             // تسجيل معاملة الاسترداد
-          await supabase.from('wallet_transactions').insert({
+          // جلب order_number من الطلب الأصلي
+            const { data: orderInfo } = await supabase
+                .from('orders')
+                .select('order_number')
+                .eq('id', orderId)
+                .single();
+
+            await supabase.from('wallet_transactions').insert({
                 user_id:        order.user_id,
                 type:           'deposit',
                 amount:         refundAmount,
                 payment_method: 'استرداد طلب',
                 status:         'مكتمل',
+                order_number:   orderInfo?.order_number || null,
                 created_at:     new Date().toISOString()
             });
 
