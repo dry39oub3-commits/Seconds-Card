@@ -376,56 +376,57 @@ window.refundGroupOrders = async (ids) => {
     if (!confirm(`هل تريد استرداد ${ids.length} طلب وإرجاع الأكواد للمخزون؟`)) return;
 
     let totalCodesReturned = 0;
+    let totalRefunded      = 0;
 
     for (const orderId of ids) {
+
+        // ✅ جلب كل الحقول دفعة واحدة بما فيها user_id و price
         const { data: order } = await supabase
             .from('orders')
-            .select('card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price')
+            .select('id, user_id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, price, quantity')
             .eq('id', orderId)
             .single();
 
+        if (!order) continue;
+
+        // تحديث حالة الطلب
         await supabase.from('orders').update({ status: 'مسترد' }).eq('id', orderId);
 
-        // إرجاع المبلغ للمحفظة
-        if (order) {
-            const refundAmount = (order.price || 0) * (order.quantity || 1);
-            if (refundAmount > 0) {
-                // جلب الـ user_id من الطلب
-                const { data: fullOrder } = await supabase
-                    .from('orders')
-                    .select('user_id, price, quantity')
-                    .eq('id', orderId)
-                    .single();
+        // ✅ إرجاع المبلغ للمحفظة إذا كان الدفع بالمحفظة
+        const refundAmount = (order.price || 0) * (order.quantity || 1);
 
-                if (fullOrder?.user_id) {
-                    // زيادة رصيد المستخدم
-                    const { data: userData } = await supabase
-                        .from('users')
-                        .select('balance')
-                        .eq('id', fullOrder.user_id)
-                        .single();
+        if (order.user_id && refundAmount > 0) {
+            // جلب الرصيد الحالي
+            const { data: userData } = await supabase
+                .from('users')
+                .select('balance')
+                .eq('id', order.user_id)
+                .single();
 
-                    const newBalance = (userData?.balance || 0) + refundAmount;
+            const currentBalance = userData?.balance || 0;
+            const newBalance     = currentBalance + refundAmount;
 
-                    await supabase
-                        .from('users')
-                        .update({ balance: newBalance })
-                        .eq('id', fullOrder.user_id);
+            // تحديث الرصيد
+            await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('id', order.user_id);
 
-                    // تسجيل المعاملة في wallet_transactions
-                    await supabase.from('wallet_transactions').insert({
-                        user_id:        fullOrder.user_id,
-                        type:           'refund',
-                        amount:         refundAmount,
-                        payment_method: 'استرداد طلب',
-                        status:         'مكتمل',
-                        created_at:     new Date().toISOString()
-                    });
-                }
-            }
+            // تسجيل معاملة الاسترداد
+            await supabase.from('wallet_transactions').insert({
+                user_id:        order.user_id,
+                type:           'refund',
+                amount:         refundAmount,
+                payment_method: 'استرداد طلب',
+                status:         'مكتمل',
+                created_at:     new Date().toISOString()
+            });
+
+            totalRefunded += refundAmount;
         }
 
-        if (order?.card_code) {
+        // إرجاع الأكواد للمخزون
+        if (order.card_code) {
             const codes = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
             totalCodesReturned += codes.length;
             for (const code of codes) {
@@ -447,7 +448,7 @@ window.refundGroupOrders = async (ids) => {
     }
 
     document.getElementById('order-detail-popup')?.remove();
-    alert(`✅ تم استرداد ${ids.length} طلب وإرجاع ${totalCodesReturned} كود للمخزون`);
+    alert(`✅ تم استرداد ${ids.length} طلب\n💰 تم إرجاع ${totalRefunded.toLocaleString()} MRU للمحفظة\n🔑 تم إرجاع ${totalCodesReturned} كود للمخزون`);
     loadCompletedOrders();
 };
 
