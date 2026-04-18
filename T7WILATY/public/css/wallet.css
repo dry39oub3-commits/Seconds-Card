@@ -266,40 +266,6 @@ body {
 }
 
 
-/* ألوان الوضع الداكن */
-body.dark-mode {
-    background-color: #151a24;
-    color: #b3bfce;
-}
-
-body.dark-mode .main-header {
-    background-color: #2d3748;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-body.dark-mode .balance-card, 
-body.dark-mode .history-section,
-body.dark-mode .dropdown-menu {
-    background-color: #2d3748;
-    color: white;
-}
-
-body.dark-mode .balance-card h2,
-body.dark-mode .dropdown-nav a {
-    color: white;
-}
-
-body.dark-mode .search-bar {
-    background: #4a5568;
-}
-
-body.dark-mode .search-bar input {
-    color: white;
-}
-
-body.dark-mode .transaction-item {
-    border-bottom-color: #4a5568;
-}
 
 /* الهيدر في وضع النهار */
 /* الهيدر ثابت داكن في كلا الوضعين */
@@ -346,34 +312,69 @@ body.dark-mode .history-section h3 {
     color: #ffffff !important;
 }
 
-/* تنسيق العناصر الفردية داخل السجل */
-body.dark-mode .transaction-item {
-    border-bottom: 1px solid #2d3748 !important; /* خط فاصل داكن */
-    background-color: transparent;
+/* ===== DARK MODE — data-theme ===== */
+
+[data-theme="dark"] body {
+    background-color: #0f172a;
+    color: #e2e8f0;
 }
 
-/* نصوص التفاصيل (اسم العملية والتاريخ) */
-body.dark-mode .t-details strong {
-    color: #e2e8f0 !important; /* نص أبيض مائل للرمادي للعنوان */
+[data-theme="dark"] .balance-card,
+[data-theme="dark"] .history-section {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
 }
 
-body.dark-mode .t-details span {
-    color: #a0aec0 !important; /* لون رمادي فاتح للتاريخ */
+[data-theme="dark"] .balance-card h2 { color: #f1f5f9 !important; }
+[data-theme="dark"] .balance-card span { color: #94a3b8 !important; }
+
+[data-theme="dark"] .history-section h3 { color: #f1f5f9 !important; }
+
+[data-theme="dark"] .transaction-item {
+    border-bottom-color: #334155 !important;
 }
 
-/* أيقونات العمليات في الوضع الداكن */
-body.dark-mode .t-icon {
-    background-color: #2d3748 !important; /* خلفية أيقونة أفتح قليلاً من الحاوية */
+[data-theme="dark"] .t-details strong { color: #e2e8f0 !important; }
+[data-theme="dark"] .t-details span { color: #94a3b8 !important; }
+
+[data-theme="dark"] .t-icon {
+    background-color: #0f172a !important;
+    color: #22c55e !important;
 }
 
-body.dark-mode .t-icon.icon-bg-plus {
-    color: #48bb78 !important; /* لون أخضر واضح للإيداع */
+[data-theme="dark"] .t-icon.minus { color: #ef4444 !important; }
+
+[data-theme="dark"] .dropdown-menu {
+    background: #1e293b !important;
+    border-color: #334155 !important;
 }
 
-body.dark-mode .t-icon.icon-bg-minus {
-    color: #f56565 !important; /* لون أحمر واضح للخصم */
+[data-theme="dark"] .dropdown-nav a,
+[data-theme="dark"] .dropdown-nav .logout-btn {
+    color: #e2e8f0 !important;
 }
 
+[data-theme="dark"] .dropdown-nav a:hover {
+    background: rgba(249,115,22,0.1) !important;
+    color: #f97316 !important;
+}
+
+[data-theme="dark"] .search-bar {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .search-bar input {
+    color: #e2e8f0 !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] .search-bar input::placeholder {
+    color: #64748b !important;
+}
+
+/* احذف كل كود body.dark-mode القديم */
 
 /* إصلاح موضع قائمة البروفيل */
 #user-dropdown {
