@@ -1,3 +1,88 @@
+/* ===== CSS Variables — Light & Dark ===== */
+:root {
+    --bg:        #f1f5f9;
+    --card-bg:   #ffffff;
+    --text:      #111827;
+    --text-muted:#6b7280;
+    --border:    #e5e7eb;
+    --primary:   #f97316;
+    --input-bg:  #f9fafb;
+    --shadow:    0 10px 30px rgba(0,0,0,0.08);
+}
+
+[data-theme='dark'] {
+    --bg:        #0f172a;
+    --card-bg:   #1e293b;
+    --text:      #e2e8f0;
+    --text-muted:#94a3b8;
+    --border:    #334155;
+    --primary:   #f97316;
+    --input-bg:  #0f172a;
+    --shadow:    0 10px 30px rgba(0,0,0,0.4);
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s;
+}
+
+/* ===== Profile Card ===== */
+.profile-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.profile-details {
+    background: rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
+}
+
+[data-theme='dark'] .profile-details {
+    background: rgba(255,255,255,0.03);
+}
+
+.detail-item {
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+
+.detail-item span:first-child { color: var(--text-muted); }
+
+/* ===== Name Input ===== */
+.profile-name-input {
+    color: var(--text) !important;
+    background: transparent !important;
+}
+
+.profile-name-input:focus {
+    background: var(--input-bg) !important;
+    border-color: var(--primary) !important;
+}
+
+/* ===== Email ===== */
+#user-display-email { color: var(--text-muted); }
+
+/* ===== Avatar Icon ===== */
+.profile-avatar i { color: var(--primary); }
+
+/* ===== Dropdown ===== */
+#user-dropdown {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+}
+
+#user-dropdown a,
+#user-dropdown button {
+    color: var(--text) !important;
+}
+
+#user-dropdown a:hover { background: rgba(249,115,22,0.08); }
+
+/* ===== UID text ===== */
+#user-uid { color: var(--text-muted); font-size: 12px; }
+
 .profile-container {
     display: flex;
     justify-content: center;

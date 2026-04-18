@@ -1,6 +1,7 @@
 import { supabase } from './supabase-config.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    initTheme();
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) return;
@@ -119,4 +120,26 @@ function displayUserPhoto(photoUrl) {
         imgElement.style.display = 'none';
         iconElement.style.display = 'block';
     }
+}
+
+
+// ===== Theme =====
+function initTheme() {
+    const btn   = document.getElementById('theme-toggle');
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    updateIcon(saved);
+    if (!btn) return;
+    btn.onclick = () => {
+        const cur  = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateIcon(next);
+    };
+}
+
+function updateIcon(theme) {
+    const i = document.querySelector('#theme-toggle i');
+    if (i) i.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 }
