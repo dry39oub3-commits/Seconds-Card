@@ -102,8 +102,9 @@ async function loadTransactions(userId) {
         let extraDetails = '';
 
         if (isPurchase) {
-            const productName = (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
-            extraDetails = `
+    const productName = t.product_name || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
+    const label = t.label || ''; // ✅ أضف هذا السطر
+             `
                 <div style="margin-top:8px; background:rgba(249,115,22,0.08);
                     border:1px solid rgba(249,115,22,0.2); border-radius:8px;
                     padding:8px 12px; font-size:12px; color:#cbd5e1;">
