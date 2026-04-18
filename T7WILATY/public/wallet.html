@@ -12,39 +12,46 @@
 <body>
 
 <header class="main-header">
-    <div class="header-container">
-        <a href="index.html" class="logo-link">
-            <div class="logo">
-                <img src="assets/logo.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain; border-radius:8px; margin-right:8px; vertical-align:middle;">
-                Seconds<span>Card</span>
-            </div>
-        </a>
-        <div class="header-actions">
-            <div class="user-menu-container">
-                <button class="action-btn" id="user-icon-btn">
-                    <i class="fas fa-user-circle"></i>
-                </button>
-                <div class="dropdown-menu" id="user-dropdown">
-                    <nav class="dropdown-nav">
-                        <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
-                        <a href="wallet.html" class="active"><i class="fas fa-wallet"></i> المحفظة</a>
-                        <a href="profile.html"><i class="fas fa-user"></i> حسابي</a>
-                        <hr>
-                        <button onclick="handleLogout()" class="logout-btn">
-                            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-                        </button>
-                    </nav>
+        <div class="header-container">
+            <a href="index.html" class="logo-link">
+    <div class="logo">
+        <img src="assets/logo.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain; border-radius:8px; margin-right:8px; vertical-align:middle;">
+        Seconds<span>Card</span>
+    </div>
+</a>
+            
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
+                    <button><i class="fas fa-search"></i></button>
                 </div>
             </div>
-            <a href="cart.html" class="action-btn">
-                <i class="fas fa-shopping-cart"></i>
-            </a>
-            <button id="theme-toggle" class="action-btn">
-                <i class="fas fa-moon"></i>
-            </button>
+
+            <div class="header-actions">
+                <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
+                
+                <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
+
+                <div class="user-menu-container">
+                    <button class="action-btn" id="user-icon-btn">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+
+                    <div class="dropdown-menu" id="user-dropdown">
+                        <nav class="dropdown-nav">
+                            <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>
+                            <a href="wallet.html"><i class="fas fa-wallet"></i> المحفظة</a>
+                            <a href="profile.html"><i class="fas fa-user"></i> حسابي</a>
+                            <hr>
+                            <button onclick="handleLogout()" class="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</header>
+    </header>
 
 <main class="wallet-container">
     <div class="wallet-wrapper">
