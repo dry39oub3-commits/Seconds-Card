@@ -151,11 +151,13 @@ async function loadTransactions(userId) {
                         <span style="color:#94a3b8;">🏷️ الفئة</span>
                         <span style="color:#f97316; font-weight:600;">${label}</span>
                     </div>` : ''}
+
                     ${t.order_number ? `
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">🔢 رقم الطلب</span>
                         <span style="color:#60a5fa; font-weight:600;">${t.order_number}</span>
                     </div>` : ''}
+
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">📅 التاريخ</span>
                         <span>${date}</span>
@@ -170,9 +172,16 @@ async function loadTransactions(userId) {
                     border:1px solid rgba(34,197,94,0.2); border-radius:8px;
                     padding:8px 12px; font-size:12px; color:#cbd5e1;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🏦 طريقة الدفع</span>
+                        <span style="color:#94a3b8;">🏦  الدفع</span>
                         <span style="color:#22c55e; font-weight:600;">${t.payment_method || '-'}</span>
                     </div>
+
+                    ${t.order_number ? `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#94a3b8;">🔢 رقم الطلب</span>
+                        <span style="color:#60a5fa; font-weight:600;">${t.order_number}</span>
+                    </div>` : ''}
+
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">💰 المبلغ</span>
                         <span style="color:#22c55e; font-weight:600;">+${t.amount.toLocaleString()} MRU</span>
