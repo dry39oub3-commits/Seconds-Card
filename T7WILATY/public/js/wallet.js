@@ -112,8 +112,8 @@ async function loadTransactions(userId) {
                         <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">💰 المبلغ</span>
-                        <span style="color:#ef4444; font-weight:600;">${t.amount.toLocaleString()} MRU</span>
+                        <span style="color:#94a3b8;">🏷️ الفئة</span>
+                        <span style="color:#f97316; font-weight:600;">${label || '-'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">📅 التاريخ</span>
