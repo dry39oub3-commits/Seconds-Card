@@ -102,32 +102,34 @@ async function loadTransactions(userId) {
         let extraDetails = '';
 
         if (isPurchase) {
-            const productName = (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
-            extraDetails = `
-                <div style="margin-top:8px; background:rgba(249,115,22,0.08);
-                    border:1px solid rgba(249,115,22,0.2); border-radius:8px;
-                    padding:8px 12px; font-size:12px; color:#cbd5e1;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🛍️ المنتج</span>
-                        <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🏷️ الفئة</span>
-                        <span style="color:#f97316; font-weight:600;">${label || '-'}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">📅 التاريخ</span>
-                        <span>${date}</span>
-                    </div>
-                    ${t.id ? `
-                    <div style="display:flex; justify-content:space-between; margin-top:4px;">
-                        <span style="color:#94a3b8;">🔖 رقم المعاملة</span>
-                        <span style="font-family:monospace; font-size:11px; color:#60a5fa;">
-                            #${t.id.substring(0, 8)}
-                        </span>
-                    </div>` : ''}
-                </div>`;
-        }
+    const productName = t.product_name || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
+    const label = t.label || '';
+
+    extraDetails = `
+        <div style="margin-top:8px; background:rgba(249,115,22,0.08);
+            border:1px solid rgba(249,115,22,0.2); border-radius:8px;
+            padding:8px 12px; font-size:12px; color:#cbd5e1;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="color:#94a3b8;">🛍️ المنتج</span>
+                <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="color:#94a3b8;">🏷️ الفئة</span>
+                <span style="color:#f97316; font-weight:600;">${label || '-'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="color:#94a3b8;">📅 التاريخ</span>
+                <span>${date}</span>
+            </div>
+            ${t.id ? `
+            <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                <span style="color:#94a3b8;">🔖 رقم المعاملة</span>
+                <span style="font-family:monospace; font-size:11px; color:#60a5fa;">
+                    #${t.id.substring(0, 8)}
+                </span>
+            </div>` : ''}
+        </div>`;
+}
 
         if (isCharge) {
             extraDetails = `
