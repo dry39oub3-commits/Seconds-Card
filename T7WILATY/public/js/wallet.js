@@ -90,8 +90,7 @@ async function loadTransactions(userId) {
 
     list.innerHTML = transactions.map(t => {
         const isCharge   = t.type === 'charge' || t.type === 'deposit';
-        const isPurchase = (t.type === 'purchase' || t.type === 'withdraw') 
-                   && t.payment_method === 'المحفظة'; // ✅
+        const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
 
         const date = new Date(t.created_at).toLocaleString('fr-FR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
