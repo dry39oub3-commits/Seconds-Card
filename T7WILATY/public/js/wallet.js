@@ -109,6 +109,7 @@ async function loadTransactions(userId) {
                     padding:8px 12px; font-size:12px; color:#cbd5e1;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">🛍️ المنتج</span>
+                        <span style="color:#f97316; font-weight:600;">${productName || '-'}${label ? ' — ' + label : ''}</span>
                         <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
@@ -135,7 +136,7 @@ async function loadTransactions(userId) {
                     border:1px solid rgba(34,197,94,0.2); border-radius:8px;
                     padding:8px 12px; font-size:12px; color:#cbd5e1;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🏦 البنك / الطريقة</span>
+                        <span style="color:#94a3b8;">🏦 طرق الدفع</span>
                         <span style="color:#22c55e; font-weight:600;">${t.payment_method || '-'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
