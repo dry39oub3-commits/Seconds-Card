@@ -48,14 +48,16 @@ async function loadUsers() {
 }
 
 function updateStats() {
-    const pending        = allTransactions.filter(t => t.status === 'قيد المراجعة');
-    const charges        = allTransactions.filter(t => t.type === 'charge'   && t.status === 'مكتمل');
-    const withdraws      = allTransactions.filter(t => t.type === 'withdraw' && t.status === 'مكتمل');
+    const pending          = allTransactions.filter(t => t.status === 'قيد المراجعة');
+    const charges          = allTransactions.filter(t => t.type === 'charge'   && t.status === 'مكتمل');
+    const withdraws        = allTransactions.filter(t => t.type === 'withdraw' && t.status === 'مكتمل');
     const usersWithBalance = allUsers.filter(u => u.balance > 0);
 
+    const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n); // ← تنسيق فرنسي مع فواصل
+
     document.getElementById('stat-pending').textContent        = pending.length;
-    document.getElementById('stat-total-charge').textContent   = charges.reduce((s, t) => s + t.amount, 0);
-    document.getElementById('stat-total-withdraw').textContent = withdraws.reduce((s, t) => s + t.amount, 0);
+    document.getElementById('stat-total-charge').textContent   = fmt(charges.reduce((s, t) => s + t.amount, 0));
+    document.getElementById('stat-total-withdraw').textContent = fmt(withdraws.reduce((s, t) => s + t.amount, 0));
     document.getElementById('stat-users').textContent          = usersWithBalance.length;
     document.getElementById('pending-count').textContent       = pending.length;
 }
