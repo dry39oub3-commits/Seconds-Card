@@ -386,6 +386,45 @@ window.refundGroupOrders = async (ids) => {
 
         await supabase.from('orders').update({ status: 'مسترد' }).eq('id', orderId);
 
+        // إرجاع المبلغ للمحفظة
+        if (order) {
+            const refundAmount = (order.price || 0) * (order.quantity || 1);
+            if (refundAmount > 0) {
+                // جلب الـ user_id من الطلب
+                const { data: fullOrder } = await supabase
+                    .from('orders')
+                    .select('user_id, price, quantity')
+                    .eq('id', orderId)
+                    .single();
+
+                if (fullOrder?.user_id) {
+                    // زيادة رصيد المستخدم
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('balance')
+                        .eq('id', fullOrder.user_id)
+                        .single();
+
+                    const newBalance = (userData?.balance || 0) + refundAmount;
+
+                    await supabase
+                        .from('users')
+                        .update({ balance: newBalance })
+                        .eq('id', fullOrder.user_id);
+
+                    // تسجيل المعاملة في wallet_transactions
+                    await supabase.from('wallet_transactions').insert({
+                        user_id:        fullOrder.user_id,
+                        type:           'refund',
+                        amount:         refundAmount,
+                        payment_method: 'استرداد طلب',
+                        status:         'مكتمل',
+                        created_at:     new Date().toISOString()
+                    });
+                }
+            }
+        }
+
         if (order?.card_code) {
             const codes = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
             totalCodesReturned += codes.length;

@@ -160,48 +160,8 @@ async function loadTransactions(userId) {
                         <span style="color:#94a3b8;">📅 التاريخ</span>
                         <span>${date}</span>
                     </div>
-                    ${t.id ? `
-                    <div style="display:flex; justify-content:space-between; margin-top:4px;">
-                        <span style="color:#94a3b8;">🔖 رقم المعاملة</span>
-                        <span style="font-family:monospace; font-size:11px; color:#60a5fa;">
-                            #${t.id.substring(0, 8)}
-                        </span>
-                    </div>` : ''}
                 </div>`;
-
-            // عرض الكود إذا كان الطلب مكتملاً
-            if (isOrder && t.card_code && t.status === 'مكتمل') {
-                const codes = t.card_code.split('\n').filter(c => c.trim());
-                extraDetails += `
-                    <div style="margin-top:6px; background:rgba(34,197,94,0.06);
-                        border:1px solid rgba(34,197,94,0.2); border-radius:8px;
-                        padding:8px 12px; font-size:12px;">
-                        <div style="color:#94a3b8; margin-bottom:6px; font-weight:700;">
-                            🔑 ${codes.length > 1 ? 'الأكواد' : 'الكود'}
-                        </div>
-                        ${codes.map(c => `
-                            <div style="display:flex; align-items:center; justify-content:space-between;
-                                gap:8px; margin-bottom:6px; background:#0f172a;
-                                border-radius:6px; padding:6px 10px;">
-                                <span style="font-family:monospace; color:#22c55e; font-size:12px; word-break:break-all;">
-                                    ${c.trim()}
-                                </span>
-                                <button onclick="navigator.clipboard.writeText('${c.trim().replace(/'/g,"\\'")}').then(()=>alert('✅ تم النسخ!'))"
-                                    style="background:#334155; color:white; border:none; padding:4px 10px;
-                                           border-radius:5px; cursor:pointer; font-size:11px; white-space:nowrap; flex-shrink:0;">
-                                    <i class='fas fa-copy'></i> نسخ
-                                </button>
-                            </div>
-                        `).join('')}
-                        ${codes.length > 1 ? `
-                        <button onclick="navigator.clipboard.writeText('${codes.join('\\n').replace(/'/g,"\\'")}').then(()=>alert('✅ تم نسخ جميع الأكواد!'))"
-                            style="width:100%; margin-top:4px; padding:7px; background:#22c55e;
-                                   color:white; border:none; border-radius:7px; cursor:pointer;
-                                   font-size:12px; font-weight:700;">
-                            <i class='fas fa-copy'></i> نسخ جميع الأكواد
-                        </button>` : ''}
-                    </div>`;
-            }
+            
         }
 
         if (isCharge) {
