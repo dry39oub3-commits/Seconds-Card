@@ -104,7 +104,7 @@ async function loadTransactions(userId) {
         if (isPurchase) {
     const productName = t.product_name || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
     const label = t.label || ''; // ✅ أضف هذا السطر
-             `
+            extraDetails = `
                 <div style="margin-top:8px; background:rgba(249,115,22,0.08);
                     border:1px solid rgba(249,115,22,0.2); border-radius:8px;
                     padding:8px 12px; font-size:12px; color:#cbd5e1;">
@@ -113,9 +113,9 @@ async function loadTransactions(userId) {
                         <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🏷️ الفئة</span>
-                        <span style="color:#f97316; font-weight:600;">${label || '-'}</span>
-                    </div>
+                <span style="color:#94a3b8;">🏷️ الفئة</span>
+                <span style="color:#f97316; font-weight:600;">${label || '-'}</span>
+            </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">📅 التاريخ</span>
                         <span>${date}</span>
