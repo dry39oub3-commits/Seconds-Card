@@ -518,25 +518,17 @@ loadAll();
 setInterval(loadAll, 30000);
 
 
+// ===== Toast =====
 function showToast(msg, isError = false) {
     const toast = document.createElement('div');
     toast.textContent = msg;
     toast.style.cssText = `
-        position: fixed;
-        bottom: 28px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${isError ? '#ef4444' : '#22c55e'};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        z-index: 99999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        animation: slideUp 0.3s ease;
-        pointer-events: none;
-        white-space: nowrap;
+        position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+        background:${isError ? '#ef4444' : '#22c55e'}; color:white;
+        padding:12px 28px; border-radius:10px; font-size:14px; font-weight:700;
+        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+        pointer-events:none; white-space:nowrap;
+        animation:slideUp 0.3s ease;
     `;
     document.body.appendChild(toast);
     setTimeout(() => {
@@ -544,4 +536,46 @@ function showToast(msg, isError = false) {
         toast.style.transition = 'opacity 0.4s';
         setTimeout(() => toast.remove(), 400);
     }, 2500);
+}
+
+// ===== Confirm Modal =====
+function showConfirm(message) {
+    return new Promise(resolve => {
+        document.getElementById('custom-confirm-modal')?.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'custom-confirm-modal';
+        modal.style.cssText = `
+            position:fixed; inset:0; background:rgba(0,0,0,0.7);
+            z-index:99998; display:flex; align-items:center; justify-content:center;
+            padding:20px;
+        `;
+        modal.innerHTML = `
+            <div style="background:#1e293b; border:1px solid #334155; border-radius:16px;
+                        padding:28px; max-width:400px; width:100%; text-align:center; color:#e2e8f0;">
+                <div style="font-size:32px; margin-bottom:14px;">❓</div>
+                <p style="font-size:15px; font-weight:600; margin-bottom:24px; line-height:1.6;">
+                    ${message}
+                </p>
+                <div style="display:flex; gap:12px; justify-content:center;">
+                    <button id="confirm-yes"
+                        style="padding:10px 32px; background:#22c55e; color:white; border:none;
+                               border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;">
+                        تأكيد
+                    </button>
+                    <button id="confirm-no"
+                        style="padding:10px 32px; background:#334155; color:#e2e8f0; border:none;
+                               border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;">
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById('confirm-yes').onclick = () => { modal.remove(); resolve(true); };
+        document.getElementById('confirm-no').onclick  = () => { modal.remove(); resolve(false); };
+        modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(false); } };
+    });
 }
