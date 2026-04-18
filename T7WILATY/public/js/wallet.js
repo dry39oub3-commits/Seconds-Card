@@ -282,15 +282,14 @@ window.submitCharge = async () => {
     }
 
     // إنشاء معاملة شحن
-   await supabase.from('wallet_transactions').insert({
-    user_id: user.id,
-    type: 'purchase',
-    amount: totalAmount,
-    payment_method: 'المحفظة',
-    product_name: cart.map(i => i.name).join('، '), // ✅
-    label: cart.map(i => i.label || '').join('، '),  // ✅
-    status: 'مكتمل'
-});
+    const { error } = await supabase.from('wallet_transactions').insert({
+        user_id: user.id,
+        type: 'charge',
+        amount,
+        payment_method: method,
+        receipt_url,
+        status: 'قيد المراجعة'
+    });
 
     if (error) { alert('❌ خطأ: ' + error.message); return; }
 
