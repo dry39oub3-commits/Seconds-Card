@@ -1668,7 +1668,10 @@ table, input, select, textarea {
 }
 
 
-body { background: #c7c8c9; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+/* إصلاح الخلفية الافتراضية */
+body {
+    background-color: var(--bg-primary, #f1f5f9) !important;
+}
 
         .page-container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
@@ -2027,4 +2030,178 @@ body {
 #reject-modal.active,
 #user-orders-modal.active {
     display: flex !important;
+}
+
+
+/* ============================================================
+   DARK MODE FIX — إصلاح شامل للوضع الليلي
+   ============================================================ */
+
+[data-theme="dark"] body {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+/* الهيدر */
+[data-theme="dark"] .admin-top-header {
+    background: #020617 !important;
+}
+
+/* الحاويات الرئيسية */
+[data-theme="dark"] .admin-container,
+[data-theme="dark"] .dashboard-main-area,
+[data-theme="dark"] .page-container,
+[data-theme="dark"] .stock-container {
+    background: transparent !important;
+}
+
+/* البطاقات — المشكلة الرئيسية */
+[data-theme="dark"] .stat-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .stat-card .stat-value,
+[data-theme="dark"] .stat-value {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .stat-card .stat-label,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .stat-info h3 {
+    color: #94a3b8 !important;
+}
+
+/* الـ section-header */
+[data-theme="dark"] .section-header {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    border-radius: 12px;
+    padding: 16px 20px;
+}
+
+[data-theme="dark"] .section-header h2,
+[data-theme="dark"] .section-header h2 * {
+    color: #f1f5f9 !important;
+}
+
+/* content-card */
+[data-theme="dark"] .content-card,
+[data-theme="dark"] section {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+/* tx-card في صفحة المحافظ */
+[data-theme="dark"] .tx-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* بطاقات الإحصائيات في المحافظ */
+[data-theme="dark"] .stats-grid .stat-card {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+/* modal-box */
+[data-theme="dark"] .modal-box {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+/* الجداول */
+[data-theme="dark"] .admin-table,
+[data-theme="dark"] table {
+    background: #1e293b !important;
+}
+
+[data-theme="dark"] .admin-table th,
+[data-theme="dark"] thead th {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .admin-table td,
+[data-theme="dark"] tbody td {
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] .admin-table tr:hover,
+[data-theme="dark"] tbody tr:hover {
+    background: #263248 !important;
+}
+
+/* المدخلات */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+/* tabs */
+[data-theme="dark"] .tabs {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .tab-btn {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .tab-btn.active {
+    background: #f97316 !important;
+    color: white !important;
+}
+
+/* filter-bar */
+[data-theme="dark"] .filter-bar {
+    background: transparent !important;
+}
+
+/* الصور في الوضع الليلي */
+[data-theme="dark"] .stat-icon img,
+[data-theme="dark"] .p-img-thumb {
+    filter: brightness(0.85) !important;
+}
+
+/* العناوين */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] .section-title {
+    color: #f1f5f9 !important;
+}
+
+/* إزالة الخلفيات البيضاء من tbody tr */
+[data-theme="dark"] tbody tr {
+    background: transparent !important;
+}
+
+[data-theme="dark"] tbody tr:hover {
+    background: #263248 !important;
+}
+
+/* stock cards */
+[data-theme="dark"] .stock-form,
+[data-theme="dark"] .inventory-table {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* إصلاح الخلفية الرمادية الافتراضية للـ body */
+[data-theme="dark"] body {
+    background-color: #0f172a !important;
+    background: #0f172a !important;
 }
