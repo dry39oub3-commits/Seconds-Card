@@ -8,6 +8,21 @@
     <link rel="stylesheet" href="./css/dashboard-main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="./css/admin-wallet.css">
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.active {
+            display: flex !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -17,39 +32,39 @@
 <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
     <span></span><span></span><span></span>
 </button>
-        <div class="logo">
-            <a href="dashboard.html" style="text-decoration:none; color:inherit;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="../assets/logo.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain;">
-                    <div style="display:flex; flex-direction:column; line-height:1.1;">
-                        <span style="font-size:18px; font-weight:800; color:white;">Seconds<span style="color:#f97316;">Card</span></span>
-                    </div>
-                </div>
-            </a>
+<div class="logo">
+    <a href="dashboard.html" style="text-decoration:none; color:inherit;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <img src="../assets/logo.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain;">
+            <div style="display:flex; flex-direction:column; line-height:1.1;">
+                <span style="font-size:18px; font-weight:800; color:white;">Seconds<span style="color:#f97316;">Card</span></span>
+            </div>
         </div>
-
+    </a>
+</div>
+        
         <nav class="main-nav">
             <ul class="nav-list">
                 <li><a href="Slider-manager.html" class="nav-link"><i class="fas fa-chart-line"></i> السلايدر</a></li>
                 <li><a href="admin-wallet.html" class="nav-link"><i class="fas fa-wallet"></i> المحافظ</a></li>
-                <li><a href="payment-methods.html" class="nav-link"><i class="fas fa-credit-card"></i> الدفع</a></li>
+                <li><a href="payment-methods.html" class="nav-link"><i class="fas fa-credit-card"></i>الدفع</a></li>
                 <li><a href="orders.html" class="nav-link"><i class="fas fa-shopping-cart"></i> الطلبات</a></li>
-                <li><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i> المنتجات</a></li>
+                <li><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i>المنتجات</a></li>
                 <li><a href="stocks.html" class="nav-link"><i class="fas fa-layer-group"></i> المخزون</a></li>
                 <li><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i> الطلبات المكتملة</a></li>
             </ul>
         </nav>
 
         <div style="position:relative; display:inline-block; margin-left:15px;">
-            <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
-                <i class="fas fa-bell"></i>
-                <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
-            </button>
-        </div>
+    <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
+        <i class="fas fa-bell"></i>
+        <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+    </button>
+</div>
 
-        <button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
-            <i class="fas fa-moon"></i>
-        </button>
+<button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
+    <i class="fas fa-moon"></i>
+</button>
 
         <div class="user-actions">
             <button class="logout-btn" id="logoutBtn">
@@ -58,6 +73,35 @@
         </div>
     </div>
 </header>
+
+<!-- Mobile Drawer -->
+<div class="mobile-nav-overlay" id="nav-overlay"></div>
+<div class="mobile-nav-drawer" id="nav-drawer">
+    <div class="drawer-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <img src="../assets/logo.png" style="height:30px;">
+            <span style="color:white;font-weight:800;">Seconds<span style="color:#f97316;">Card</span></span>
+        </div>
+        <button class="drawer-close" id="drawer-close"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="drawer-nav">
+        <ul class="drawer-nav-list">
+            <li><a href="Slider-manager.html" class="nav-link"><i class="fas fa-chart-line"></i><span>السلايدر</span></a></li>
+            <li><a href="admin-wallet.html" class="nav-link"><i class="fas fa-wallet"></i><span>المحافظ</span></a></li>
+            <li><a href="payment-methods.html" class="nav-link"><i class="fas fa-credit-card"></i><span>الدفع</span></a></li>
+            <li><a href="orders.html" class="nav-link"><i class="fas fa-shopping-cart"></i><span>الطلبات</span></a></li>
+            <li><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i><span>المنتجات</span></a></li>
+            <li><a href="stocks.html" class="nav-link"><i class="fas fa-layer-group"></i><span>المخزون</span></a></li>
+            <li><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i><span>الطلبات المكتملة</span></a></li>
+            <li><a href="users-manager.html" class="nav-link"><i class="fas fa-users"></i><span>إدارة المستخدمين</span></a></li>
+        </ul>
+    </div>
+    <div class="drawer-footer">
+        <button class="logout-btn" onclick="document.getElementById('logoutBtn').click()" style="width:100%;justify-content:center;">
+            <i class="fas fa-sign-out-alt"></i> خروج
+        </button>
+    </div>
+</div>
 
 <div class="admin-container">
 
@@ -87,7 +131,7 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('pending')">
             <i class="fas fa-clock"></i> قيد المراجعة
-            <span id="pending-count" style="background:#eab308; color:white; border-radius:50%; padding:1px 7px; font-size:11px; margin-right:5px;">0</span>
+            <span id="pending-count" style="background:#eab308;color:white;border-radius:50%;padding:1px 7px;font-size:11px;margin-right:5px;">0</span>
         </button>
         <button class="tab-btn" onclick="switchTab('charge')">
             <i class="fas fa-arrow-up"></i> طلبات الشحن
@@ -114,57 +158,37 @@
         </select>
     </div>
 
-    <!-- فلتر المستخدمين — يظهر فقط في تبويب أرصدة المستخدمين -->
+    <!-- فلتر المستخدمين -->
     <div class="filter-bar" id="users-filter-bar" style="display:none;">
         <input type="text" id="users-search-input"
-            placeholder="بحث بالاسم، البريد، أو SC-ID (مثال: SC-531236)..."
-            oninput="applyUsersFilter()"
-            style="flex:1;">
+            placeholder="بحث بالاسم، البريد، أو SC-ID..."
+            oninput="applyUsersFilter()" style="flex:1;">
     </div>
 
-    <!-- قيد المراجعة -->
-    <div class="tab-content active" id="tab-pending">
-        <div id="pending-list"></div>
-    </div>
-
-    <!-- طلبات الشحن -->
-    <div class="tab-content" id="tab-charge">
-        <div id="charge-list"></div>
-    </div>
-
-    <!-- طلبات السحب -->
-    <div class="tab-content" id="tab-withdraw">
-        <div id="withdraw-list"></div>
-    </div>
-
-    <!-- بوابات الدفع -->
-    <div class="tab-content" id="tab-methods">
-        <div id="methods-list"></div>
-    </div>
-
-    <!-- أرصدة المستخدمين -->
-    <div class="tab-content" id="tab-users">
-        <div id="users-list"></div>
-    </div>
+    <!-- التبويبات -->
+    <div class="tab-content active" id="tab-pending"><div id="pending-list"></div></div>
+    <div class="tab-content" id="tab-charge"><div id="charge-list"></div></div>
+    <div class="tab-content" id="tab-withdraw"><div id="withdraw-list"></div></div>
+    <div class="tab-content" id="tab-methods"><div id="methods-list"></div></div>
+    <div class="tab-content" id="tab-users"><div id="users-list"></div></div>
 
 </div>
 
-<!-- Modal تعديل الرصيد يدوياً -->
-<div class="modal-overlay" id="edit-modal">
+<!-- ===== Modal: تعديل الرصيد ===== -->
+<div class="modal-overlay" id="edit-modal" onclick="if(event.target===this) closeEditModal()">
     <div class="modal-box">
         <h3 style="color:#f97316; text-align:center; margin-bottom:16px;">تعديل رصيد المستخدم</h3>
         <p style="color:#94a3b8; font-size:13px; margin-bottom:4px;">
             المستخدم: <strong id="edit-user-id" style="color:#e2e8f0;"></strong>
         </p>
-        <!-- SC-ID في المودال -->
         <p style="color:#94a3b8; font-size:13px; margin-bottom:12px;">
             SC-ID: <strong id="edit-user-scid" style="color:#f97316; font-family:monospace;"></strong>
         </p>
         <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">الرصيد الجديد (MRU)</label>
         <input type="number" id="edit-balance-input" placeholder="0"
             style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; margin-bottom:14px; box-sizing:border-box; font-size:14px;">
-        <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">ملاحظة (اختياري)</label>
-        <input type="text" id="edit-note-input" placeholder="سبب التعديل..."
+        <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">سبب التعديل</label>
+        <input type="text" id="edit-note-input" placeholder="سبب التعديل يظهر للعميل..."
             style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; margin-bottom:14px; box-sizing:border-box; font-size:14px;">
         <button onclick="saveBalance()"
             style="width:100%; padding:12px; background:#f97316; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:8px;">
@@ -177,14 +201,56 @@
     </div>
 </div>
 
-<!-- Modal عرض الإيصال -->
+<!-- ===== Modal: عرض الإيصال ===== -->
 <div class="modal-overlay" id="receipt-modal" onclick="this.classList.remove('active')">
     <img id="receipt-full-img" style="max-width:90%; max-height:90%; border-radius:12px;">
+</div>
+
+<!-- ===== Modal: سبب الرفض ===== -->
+<div class="modal-overlay" id="reject-modal" onclick="if(event.target===this) closeRejectModal()">
+    <div style="background:#1e293b; border-radius:16px; padding:28px; width:90%; max-width:420px; border:1px solid #334155;">
+        <h3 style="color:#f1f5f9; margin-bottom:16px;">
+            <i class="fas fa-times-circle" style="color:#ef4444;"></i> سبب الرفض
+        </h3>
+        <textarea id="reject-reason-input" rows="3"
+            placeholder="اكتب سبب الرفض — سيظهر للعميل..."
+            style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px;
+                   color:#e2e8f0; padding:12px; font-size:14px; resize:none; outline:none; box-sizing:border-box;"></textarea>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button onclick="confirmReject()"
+                style="flex:1; background:#ef4444; color:white; border:none; padding:11px;
+                       border-radius:8px; font-weight:700; cursor:pointer;">
+                <i class="fas fa-times"></i> تأكيد الرفض
+            </button>
+            <button onclick="closeRejectModal()"
+                style="flex:1; background:#334155; color:#e2e8f0; border:none; padding:11px;
+                       border-radius:8px; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modal: طلبات العميل ===== -->
+<div class="modal-overlay" id="user-orders-modal" onclick="if(event.target===this) closeUserOrdersModal()">
+    <div style="background:#1e293b; border-radius:16px; width:100%; max-width:680px;
+                max-height:85vh; display:flex; flex-direction:column; border:1px solid #334155;">
+        <div style="display:flex; justify-content:space-between; align-items:center;
+                    padding:20px 24px; border-bottom:1px solid #334155; flex-shrink:0;">
+            <h3 id="user-orders-title" style="color:#f1f5f9; margin:0; font-size:16px;"></h3>
+            <button onclick="closeUserOrdersModal()"
+                style="background:rgba(255,255,255,0.05); border:none; color:#94a3b8;
+                       width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:16px;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="user-orders-body" style="overflow-y:auto; padding:16px; flex:1;"></div>
+    </div>
 </div>
 
 <script type="module" src="./js/header.js"></script>
 <script type="module" src="./js/bell.js"></script>
 <script type="module" src="./js/admin-wallet.js"></script>
+
+
 
 </body>
 </html>
