@@ -76,34 +76,68 @@ async function loadTransactions(userId) {
     const list = document.getElementById('transactions-list');
     if (!list) return;
 
-    const { data: transactions, error } = await supabase
+    // جلب معاملات المحفظة (شحن/سحب)
+    const { data: walletTx } = await supabase
         .from('wallet_transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-    if (error || !transactions || transactions.length === 0) {
+    // جلب طلبات الشراء بالمحفظة من جدول orders
+    const { data: ordersTx } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', userId)
+        .or('paymentMethod.eq.المحفظة,payment_method.eq.المحفظة,paymentMethod.eq.محفظة,payment_method.eq.محفظة')
+        .order('created_at', { ascending: false });
+
+    // تحويل الطلبات لنفس شكل wallet_transactions
+    const ordersAsTx = (ordersTx || []).map(o => ({
+        id:             o.id,
+        user_id:        userId,
+        type:           'purchase',
+        amount:         (o.price || 0) * (o.quantity || 1),
+        status:         o.status || 'مكتمل',
+        payment_method: o.paymentMethod || o.payment_method || 'المحفظة',
+        product_name:   o.product_name,
+        label:          o.label,
+        order_number:   o.order_number,
+        card_code:      o.card_code,
+        created_at:     o.created_at
+    }));
+
+    // دمج القائمتين وترتيبها بالتاريخ
+    const all = [...(walletTx || []), ...ordersAsTx]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (all.length === 0) {
         list.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:30px;">لا توجد عمليات بعد.</p>';
         return;
     }
 
-    list.innerHTML = transactions.map(t => {
+    list.innerHTML = all.map(t => {
         const isCharge   = t.type === 'charge' || t.type === 'deposit';
         const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
+        const isOrder    = !!t.order_number;
 
         const date = new Date(t.created_at).toLocaleString('fr-FR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
 
-        const statusColor = t.status === 'مكتمل' ? '#22c55e'
-                          : t.status === 'مرفوض' ? '#ef4444' : '#f97316';
+        const statusColor = t.status === 'مكتمل'        ? '#22c55e'
+                          : t.status === 'مرفوض'        ? '#ef4444'
+                          : t.status === 'ملغي'         ? '#ef4444'
+                          : t.status === 'قيد المراجعة' ? '#f97316'
+                          : '#f97316';
 
         let extraDetails = '';
 
         if (isPurchase) {
-    const productName = t.product_name || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
-    const label = t.label || ''; // ✅ أضف هذا السطر
+            const productName = t.product_name
+                || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
+            const label = t.label || '';
+
             extraDetails = `
                 <div style="margin-top:8px; background:rgba(249,115,22,0.08);
                     border:1px solid rgba(249,115,22,0.2); border-radius:8px;
@@ -112,10 +146,16 @@ async function loadTransactions(userId) {
                         <span style="color:#94a3b8;">🛍️ المنتج</span>
                         <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
                     </div>
+                    ${label ? `
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <span style="color:#94a3b8;">🏷️ الفئة</span>
-                <span style="color:#f97316; font-weight:600;">${label || '-'}</span>
-            </div>
+                        <span style="color:#94a3b8;">🏷️ الفئة</span>
+                        <span style="color:#f97316; font-weight:600;">${label}</span>
+                    </div>` : ''}
+                    ${t.order_number ? `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#94a3b8;">🔢 رقم الطلب</span>
+                        <span style="color:#60a5fa; font-weight:600;">${t.order_number}</span>
+                    </div>` : ''}
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">📅 التاريخ</span>
                         <span>${date}</span>
@@ -128,6 +168,40 @@ async function loadTransactions(userId) {
                         </span>
                     </div>` : ''}
                 </div>`;
+
+            // عرض الكود إذا كان الطلب مكتملاً
+            if (isOrder && t.card_code && t.status === 'مكتمل') {
+                const codes = t.card_code.split('\n').filter(c => c.trim());
+                extraDetails += `
+                    <div style="margin-top:6px; background:rgba(34,197,94,0.06);
+                        border:1px solid rgba(34,197,94,0.2); border-radius:8px;
+                        padding:8px 12px; font-size:12px;">
+                        <div style="color:#94a3b8; margin-bottom:6px; font-weight:700;">
+                            🔑 ${codes.length > 1 ? 'الأكواد' : 'الكود'}
+                        </div>
+                        ${codes.map(c => `
+                            <div style="display:flex; align-items:center; justify-content:space-between;
+                                gap:8px; margin-bottom:6px; background:#0f172a;
+                                border-radius:6px; padding:6px 10px;">
+                                <span style="font-family:monospace; color:#22c55e; font-size:12px; word-break:break-all;">
+                                    ${c.trim()}
+                                </span>
+                                <button onclick="navigator.clipboard.writeText('${c.trim().replace(/'/g,"\\'")}').then(()=>alert('✅ تم النسخ!'))"
+                                    style="background:#334155; color:white; border:none; padding:4px 10px;
+                                           border-radius:5px; cursor:pointer; font-size:11px; white-space:nowrap; flex-shrink:0;">
+                                    <i class='fas fa-copy'></i> نسخ
+                                </button>
+                            </div>
+                        `).join('')}
+                        ${codes.length > 1 ? `
+                        <button onclick="navigator.clipboard.writeText('${codes.join('\\n').replace(/'/g,"\\'")}').then(()=>alert('✅ تم نسخ جميع الأكواد!'))"
+                            style="width:100%; margin-top:4px; padding:7px; background:#22c55e;
+                                   color:white; border:none; border-radius:7px; cursor:pointer;
+                                   font-size:12px; font-weight:700;">
+                            <i class='fas fa-copy'></i> نسخ جميع الأكواد
+                        </button>` : ''}
+                    </div>`;
+            }
         }
 
         if (isCharge) {
@@ -136,7 +210,7 @@ async function loadTransactions(userId) {
                     border:1px solid rgba(34,197,94,0.2); border-radius:8px;
                     padding:8px 12px; font-size:12px; color:#cbd5e1;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🏦 طرق الدفع</span>
+                        <span style="color:#94a3b8;">🏦 طريقة الدفع</span>
                         <span style="color:#22c55e; font-weight:600;">${t.payment_method || '-'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
@@ -168,7 +242,7 @@ async function loadTransactions(userId) {
                         <i class="fas ${isCharge ? 'fa-arrow-down' : 'fa-shopping-bag'}"></i>
                     </div>
                     <div class="t-details">
-                        <strong>${isCharge ? 'شحن رصيد' : 'سحب'}</strong>
+                        <strong>${isCharge ? 'شحن رصيد' : (isOrder ? (t.product_name || 'شراء') : 'سحب')}</strong>
                         <span style="font-size:11px; color:${statusColor};">${t.status}</span>
                     </div>
                 </div>
@@ -204,10 +278,10 @@ async function loadPaymentMethods() {
     const container = document.getElementById('payment-methods-container');
 
     const { data: methods, error } = await supabase
-    .from('payment_methods')
-    .select('*')
-    .eq('is_active', true)
-    .eq('show_in_wallet', true)
+        .from('payment_methods')
+        .select('*')
+        .eq('is_active', true)
+        .eq('show_in_wallet', true);
 
     if (error || !methods || methods.length === 0) {
         container.innerHTML = '<p style="color:#64748b; text-align:center; grid-column:1/-1;">لا توجد بوابات دفع متاحة حالياً</p>';
@@ -252,17 +326,16 @@ window.submitCharge = async () => {
     const user = session?.user;
     if (!user) return;
 
-    const amount = parseFloat(document.getElementById('charge-amount').value);
-    const method = document.getElementById('charge-method-selected').value;
+    const amount      = parseFloat(document.getElementById('charge-amount').value);
+    const method      = document.getElementById('charge-method-selected').value;
     const receiptFile = document.getElementById('charge-receipt').files[0];
 
     if (!amount || amount <= 0) { alert('⚠️ أدخل مبلغاً صحيحاً'); return; }
-    if (!method) { alert('⚠️ اختر طريقة الدفع أولاً'); return; }
-    if (!receiptFile) { alert('⚠️ يرجى رفع إيصال التحويل'); return; }
+    if (!method)                { alert('⚠️ اختر طريقة الدفع أولاً'); return; }
+    if (!receiptFile)           { alert('⚠️ يرجى رفع إيصال التحويل'); return; }
 
     let receipt_url = null;
 
-    // رفع الإيصال
     try {
         const fileName = `receipts/${user.id}_${Date.now()}`;
         const { error: uploadError } = await supabase.storage
@@ -277,7 +350,6 @@ window.submitCharge = async () => {
         console.warn('تعذر رفع الإيصال:', e);
     }
 
-    // إنشاء معاملة شحن
     const { error } = await supabase.from('wallet_transactions').insert({
         user_id: user.id,
         type: 'charge',
