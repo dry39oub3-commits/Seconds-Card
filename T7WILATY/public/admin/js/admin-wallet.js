@@ -397,7 +397,8 @@ async function loadPaymentMethods() {
 
 // ==================== APPROVE / REJECT ====================
 window.approveTransaction = async (txId, userId, amount, type) => {
-    if (!confirm(`هل تريد ${type === 'charge' ? 'إضافة' : 'خصم'} ${amount} MRU ${type === 'charge' ? 'لرصيد' : 'من رصيد'} المستخدم؟`)) return;
+    const confirmed = await showConfirm(`هل تريد ${type === 'charge' ? 'إضافة' : 'خصم'} ${amount} MRU ${type === 'charge' ? 'لرصيد' : 'من رصيد'} المستخدم؟`);
+    if (!confirmed) return;
 
     try {
         const { data: userData } = await supabase
@@ -419,7 +420,7 @@ window.approveTransaction = async (txId, userId, amount, type) => {
 };
 
 window.rejectTransaction = async (txId) => {
-    if (!confirm('هل تريد رفض هذا الطلب؟')) return;
+    if (!await showConfirm('هل تريد رفض هذا الطلب؟')) return;
     const { error } = await supabase.from('wallet_transactions').update({ status: 'مرفوض' }).eq('id', txId);
     if (error) showToast('❌ خطأ: ' + error.message);
     else { showToast('✅    تم رفض الطلب.'); loadAll(); }
@@ -481,7 +482,7 @@ window.toggleMethod = async (id, current) => {
 };
 
 window.deleteMethod = async (id) => {
-    if (!confirm('هل تريد حذف هذه البوابة؟')) return;
+    if (!await showConfirm('هل تريد حذف هذه البوابة؟')) return;
     await supabase.from('payment_methods').delete().eq('id', id);
     loadPaymentMethods();
 };
