@@ -110,7 +110,6 @@ async function loadTransactions(userId) {
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">🛍️ المنتج</span>
                         <span style="color:#f97316; font-weight:600;">${productName || '-'}${label ? ' — ' + label : ''}</span>
-                        <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#94a3b8;">💰 المبلغ</span>
