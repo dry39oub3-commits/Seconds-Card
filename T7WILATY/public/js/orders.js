@@ -114,8 +114,19 @@ async function fetchUserOrders() {
         // ✅ تحديد الحالة العامة للمجموعة
         const allCompleted = group.items.every(o => o.status === 'مكتمل');
         const allCancelled = group.items.every(o => o.status === 'ملغي');
-        const groupStatus  = allCompleted ? 'مكتمل' : allCancelled ? 'ملغي' : 'قيد الانتظار';
-        const groupBadge   = allCompleted ? 'status-completed' : allCancelled ? 'status-cancelled' : 'status-pending';
+        const allRefunded  = group.items.every(o => o.status === 'مسترد');
+        const hasRefunded  = group.items.some(o => o.status === 'مسترد');
+
+        const groupStatus = allCompleted ? 'مكتمل'
+                          : allCancelled ? 'ملغي'
+                          : allRefunded  ? 'مسترد'
+                          : hasRefunded  ? 'مسترد جزئي'
+                          : 'قيد الانتظار';
+
+        const groupBadge  = allCompleted           ? 'status-completed'
+                          : allCancelled           ? 'status-cancelled'
+                          : (allRefunded || hasRefunded) ? 'status-refunded'
+                          : 'status-pending';
 
         const itemsHtml = group.items.map((order, idx) => {
             const image       = order.products?.image || '';
@@ -377,7 +388,10 @@ window.filterOrders = () => {
 
         let matchFilter = true;
         if (currentOrderFilter === 'pending') {
+            // قيد الانتظار = ليس مكتمل ولا ملغي ولا مسترد
             matchFilter = text.includes('قيد الانتظار') || text.includes('قيد المراجعة');
+            // استبعاد المسترد من قيد الانتظار
+            if (text.includes('مسترد')) matchFilter = false;
         } else if (currentOrderFilter !== 'all') {
             matchFilter = text.includes(currentOrderFilter);
         }
