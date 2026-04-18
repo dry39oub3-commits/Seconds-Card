@@ -60,7 +60,7 @@ async function loadWalletData() {
         .single();
 
     const balance = userData?.balance || 0;
-    const balanceUSD = (balance / 40).toFixed(2);
+    const balanceUSD = (balance / 43).toFixed(2);
 
     const mruEl = document.getElementById('mruBalance');
     const usdEl = document.getElementById('usdBalance');
@@ -88,29 +88,90 @@ async function loadTransactions(userId) {
     }
 
     list.innerHTML = transactions.map(t => {
-       const isCharge = t.type === 'charge' || t.type === 'deposit';
-const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
-        const date = new Date(t.created_at).toLocaleDateString('ar-EG');
+        const isCharge   = t.type === 'charge' || t.type === 'deposit';
+        const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
+        const date       = new Date(t.created_at).toLocaleDateString('fr-FR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
         const statusColor = t.status === 'مكتمل' ? '#22c55e' : t.status === 'مرفوض' ? '#ef4444' : '#f97316';
 
+        // ===== تفاصيل إضافية حسب النوع =====
+        let extraDetails = '';
+
+        if (isPurchase && t.payment_method) {
+            // استخراج تفاصيل البطاقة من payment_method
+            // الصيغة: "المحفظة - Apple France"
+            const productName = t.payment_method.replace('المحفظة - ', '').replace('محفظة - ', '');
+            extraDetails = `
+                <div style="margin-top:8px; background:rgba(249,115,22,0.08); border:1px solid rgba(249,115,22,0.2);
+                    border-radius:8px; padding:8px 12px; font-size:12px; color:#cbd5e1;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#94a3b8;">🛍️ المنتج</span>
+                        <span style="color:#f97316; font-weight:600;">${productName}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#94a3b8;">💰 المبلغ</span>
+                        <span style="color:#ef4444; font-weight:600;">${t.amount.toLocaleString()} MRU</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:#94a3b8;">📅 التاريخ</span>
+                        <span>${date}</span>
+                    </div>
+                    ${t.id ? `<div style="display:flex; justify-content:space-between; margin-top:4px;">
+                        <span style="color:#94a3b8;">🔖 رقم المعاملة</span>
+                        <span style="font-family:monospace; font-size:11px; color:#60a5fa;">#${t.id.substring(0,8)}</span>
+                    </div>` : ''}
+                </div>`;
+        }
+
+        if (isCharge) {
+            extraDetails = `
+                <div style="margin-top:8px; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2);
+                    border-radius:8px; padding:8px 12px; font-size:12px; color:#cbd5e1;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#94a3b8;">🏦 البنك / الطريقة</span>
+                        <span style="color:#22c55e; font-weight:600;">${t.payment_method || '-'}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#94a3b8;">💰 المبلغ</span>
+                        <span style="color:#22c55e; font-weight:600;">+${t.amount.toLocaleString()} MRU</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#94a3b8;">📅 التاريخ</span>
+                        <span>${date}</span>
+                    </div>
+                    ${t.receipt_url ? `
+                    <div style="margin-top:6px;">
+                        <a href="${t.receipt_url}" target="_blank"
+                            style="display:inline-flex; align-items:center; gap:6px; background:#1e293b;
+                                color:#60a5fa; padding:5px 10px; border-radius:6px; font-size:11px;
+                                text-decoration:none; border:1px solid #334155;">
+                            <i class="fas fa-receipt"></i> عرض الإيصال
+                        </a>
+                    </div>` : ''}
+                </div>`;
+        }
+
         return `
-    <div class="transaction-item">
-        <div class="t-info">
-            <div class="t-icon ${isCharge ? 'plus' : 'minus'}">
-                <i class="fas ${isCharge ? 'fa-arrow-down' : isPurchase ? 'fa-shopping-bag' : 'fa-arrow-up'}"></i>
+        <div class="transaction-item" style="flex-direction:column; align-items:stretch; gap:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="t-info">
+                    <div class="t-icon ${isCharge ? 'plus' : 'minus'}">
+                        <i class="fas ${isCharge ? 'fa-arrow-down' : isPurchase ? 'fa-shopping-bag' : 'fa-arrow-up'}"></i>
+                    </div>
+                    <div class="t-details">
+                        <strong>${isCharge ? 'شحن رصيد' : 'سحب'}</strong>
+                        <span>${date}</span>
+                        <span style="font-size:11px; color:${statusColor};">${t.status}</span>
+                    </div>
+                </div>
+                <div class="t-amount ${isCharge ? 'plus' : 'minus'}">
+                    ${isCharge ? '+' : '-'}${t.amount.toLocaleString()} MRU
+                </div>
             </div>
-            <div class="t-details">
-                <strong>${isCharge ? 'شحن رصيد' : 'سحب - ' + (t.payment_method || 'شراء بطاقة')}</strong>
-                <span>${date}</span>
-                <span style="font-size:11px; color:${statusColor};">${t.status}</span>
-            </div>
-            ${t.note ? `<span style="font-size:11px; color:#94a3b8;">${t.note}</span>` : ''}
-        </div>
-        <div class="t-amount ${isCharge ? 'plus' : 'minus'}">
-            ${isCharge ? '+' : '-'}${t.amount.toLocaleString()} MRU
-        </div>
-    </div>
-`;
+            ${extraDetails}
+        </div>`;
     }).join('');
 }
 
