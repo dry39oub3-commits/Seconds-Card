@@ -130,9 +130,8 @@
     <!-- تبويبات -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('pending')">
-            <i class="fas fa-clock"></i> قيد المراجعة
-            <span id="pending-count" style="background:#eab308;color:white;border-radius:50%;padding:1px 7px;font-size:11px;margin-right:5px;">0</span>
-        </button>
+    <i class="fas fa-clock"></i> قيد المراجعة
+</button>
         <button class="tab-btn" onclick="switchTab('charge')">
             <i class="fas fa-arrow-up"></i> طلبات الشحن
         </button>
@@ -149,8 +148,10 @@
 
     <!-- فلتر المعاملات -->
     <div class="filter-bar" id="tx-filter-bar">
-        <input type="text" id="search-input" placeholder="بحث بـ ID المستخدم أو طريقة الدفع..." oninput="applyFilter()">
-        <select id="status-filter" onchange="applyFilter()">
+            <input type="text" id="search-input" 
+                placeholder="بحث بـ ID المستخدم، طريقة الدفع، أو رقم المعاملة..." 
+                oninput="applyFilter()">  
+          <select id="status-filter" onchange="applyFilter()">
             <option value="">كل الحالات</option>
             <option value="قيد المراجعة">قيد المراجعة</option>
             <option value="مكتمل">مكتمل</option>

@@ -18,7 +18,9 @@ function generateSCId(uuid) {
 // ==================== LOAD ALL ====================
 async function loadAll() {
     try {
-        await Promise.all([loadTransactions(), loadUsers()]);
+        // ✅ تحميل المستخدمين أولاً، ثم المعاملات
+        await loadUsers();
+        await loadTransactions();
         updateStats();
     } catch (err) {
         console.warn('loadAll error:', err.message);
@@ -52,24 +54,57 @@ function updateStats() {
     const charges          = allTransactions.filter(t => t.type === 'charge'   && t.status === 'مكتمل');
     const withdraws        = allTransactions.filter(t => t.type === 'withdraw' && t.status === 'مكتمل');
     const usersWithBalance = allUsers.filter(u => u.balance > 0);
+    const totalBalances    = allUsers.reduce((s, u) => s + (u.balance || 0), 0);
 
-    const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n); // ← تنسيق فرنسي مع فواصل
+    const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n);
 
     document.getElementById('stat-pending').textContent        = pending.length;
     document.getElementById('stat-total-charge').textContent   = fmt(charges.reduce((s, t) => s + t.amount, 0));
     document.getElementById('stat-total-withdraw').textContent = fmt(withdraws.reduce((s, t) => s + t.amount, 0));
     document.getElementById('stat-users').textContent          = usersWithBalance.length;
     document.getElementById('pending-count').textContent       = pending.length;
+
+    // ===== عداد قيد المراجعة على زر التاب =====
+    const pendingTabBtn = document.querySelector('.tab-btn[onclick*="pending"]');
+    if (pendingTabBtn) {
+        const existingBadge = pendingTabBtn.querySelector('.pending-count-badge');
+        if (existingBadge) existingBadge.remove();
+        if (pending.length > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'pending-count-badge';
+            badge.textContent = pending.length;
+            badge.style.cssText = `
+                background:#ef4444; color:white; border-radius:50%;
+                font-size:10px; font-weight:800; min-width:18px; height:18px;
+                display:inline-flex; align-items:center; justify-content:center;
+                padding:0 4px; margin-right:6px; line-height:1;
+            `;
+            pendingTabBtn.appendChild(badge);
+        }
+    }
+
+    // ===== عداد إجمالي أرصدة المستخدمين =====
+    const totalBalEl = document.getElementById('stat-total-balances');
+    if (totalBalEl) totalBalEl.textContent = fmt(totalBalances) + ' MRU';
+
+    // ===== تحديث عنوان التبويب بعدد الطلبات المعلقة =====
+    document.title = pending.length > 0
+        ? `(${pending.length}) قيد المراجعة | إدارة المحافظ`
+        : 'إدارة المحافظ | SecondsCard';
 }
 
 // ==================== RENDER TRANSACTIONS ====================
 function renderAll() {
-    const search       = document.getElementById('search-input').value.toLowerCase();
-    const statusFilter = document.getElementById('status-filter').value;
+    const search       = document.getElementById('search-input')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('status-filter')?.value || '';
 
     const filtered = allTransactions.filter(t => {
-        const matchSearch = t.user_id?.toLowerCase().includes(search) ||
-            (t.payment_method || '').toLowerCase().includes(search);
+        const matchSearch =
+            t.user_id?.toLowerCase().includes(search) ||
+            (t.payment_method || '').toLowerCase().includes(search) ||
+            (t.id || '').toLowerCase().includes(search) ||           // ← رقم المعاملة
+            (t.withdraw_account || '').toLowerCase().includes(search); // ← رقم الحساب
+
         const matchStatus = !statusFilter || t.status === statusFilter;
         return matchSearch && matchStatus;
     });
@@ -77,6 +112,7 @@ function renderAll() {
     renderList('pending-list',  filtered.filter(t => t.status === 'قيد المراجعة'));
     renderList('charge-list',   filtered.filter(t => t.type === 'charge'));
     renderList('withdraw-list', filtered.filter(t => t.type === 'withdraw'));
+    
 }
 
 function renderList(containerId, list) {
@@ -101,7 +137,19 @@ function renderList(containerId, list) {
         const userAvatar = user?.avatar_url || '';
 
         return `
-        <div class="tx-card">
+        <div class="tx-card" style="
+            border-right: 3px solid ${isCharge ? '#22c55e' : '#f97316'};
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
+           onmouseout="this.style.transform='';this.style.boxShadow=''">
+        ${tx.status === 'قيد المراجعة' ? `
+            <div style="position:absolute; top:10px; left:10px;
+                background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.4);
+                color:#f97316; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;">
+                🔔 بانتظار المراجعة
+            </div>` : ''}
+            
             <!-- صورة البروفيل -->
             <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0;">
                 ${userAvatar
@@ -123,13 +171,21 @@ function renderList(containerId, list) {
 
                 <h4 style="margin:0 0 4px;">${isCharge ? 'شحن رصيد' : 'سحب رصيد'} • ${tx.payment_method || '-'}</h4>
 
-                <p style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span onclick="openUserOrders('${tx.user_id}')" style="font-family:monospace; color:#f97316; font-size:12px;
-                                 background:rgba(249,115,22,0.1); padding:2px 6px; border-radius:5px; cursor:pointer;"
+                <p style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:4px 0;">
+                    <span onclick="openUserOrders('${tx.user_id}')"
+                          style="font-family:monospace; color:#f97316; font-size:12px;
+                                 background:rgba(249,115,22,0.1); padding:2px 6px;
+                                 border-radius:5px; cursor:pointer; border:1px solid rgba(249,115,22,0.2);"
                           title="انقر لعرض طلبات العميل">
                         ${scId}
                     </span>
-                    <span style="color:#64748b; font-size:12px;">• ${date}</span>
+                    ${tx.order_number ? `
+                    <span style="font-family:monospace; color:#60a5fa; font-size:12px;
+                                 background:rgba(96,165,250,0.1); padding:2px 8px;
+                                 border-radius:5px; border:1px solid rgba(96,165,250,0.2);">
+                        🔖 ${tx.order_number}
+                    </span>` : ''}
+                    <span style="color:#64748b; font-size:11px;">${date}</span>
                 </p>
 
                 ${tx.withdraw_account ? `
@@ -185,14 +241,18 @@ function renderUsers(list) {
         const name = user.full_name || user.fullName || user.email || 'مستخدم';
         const userAvatar = user.avatar_url || '';
 
-        // آخر سبب تعديل
         const lastEdit = allTransactions
             .filter(t => t.user_id === user.id && t.payment_method === 'تعديل أدمن')
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
         return `
-        <div class="tx-card">
-            <!-- صورة البروفيل -->
+        <div class="tx-card" style="
+            border-right: 3px solid #f97316;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
+           onmouseout="this.style.transform='';this.style.boxShadow=''">
+
             ${userAvatar
                 ? `<img src="${userAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #334155; flex-shrink:0;">`
                 : `<div style="width:44px;height:44px;border-radius:50%;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:18px;flex-shrink:0;"><i class="fas fa-user"></i></div>`
@@ -206,7 +266,6 @@ function renderUsers(list) {
                 <h4>${name}</h4>
                 <p style="font-size:12px; color:#94a3b8;">${user.email || ''}</p>
 
-                <!-- UID قابل للنقر -->
                 <span onclick="openUserOrders('${user.id}')"
                       style="font-family:monospace; font-size:12px; color:#f97316;
                              background:rgba(249,115,22,0.1); padding:2px 7px;
@@ -216,7 +275,6 @@ function renderUsers(list) {
                     ${scId} <i class="fas fa-external-link-alt" style="font-size:10px;"></i>
                 </span>
 
-                <!-- آخر سبب تعديل -->
                 ${lastEdit?.note ? `
                     <div style="margin-top:6px; font-size:12px; color:#94a3b8;">
                         <i class="fas fa-pen" style="color:#f97316; font-size:10px;"></i>
@@ -415,8 +473,13 @@ window.approveTransaction = async (txId, userId, amount, type) => {
 
         if (newBalance < 0) { showToast('⚠️ رصيد المستخدم غير كافٍ للسحب!'); return; }
 
+        // ✅ توليد رقم مرجعي
+        const refNumber = `S${Math.floor(100000 + Math.random() * 900000)}`;
+
         await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
-        await supabase.from('wallet_transactions').update({ status: 'مكتمل' }).eq('id', txId);
+        await supabase.from('wallet_transactions')
+            .update({ status: 'مكتمل', order_number: refNumber })
+            .eq('id', txId);
 
         showToast('✅ تمت الموافقة وتحديث الرصيد!');
         loadAll();
@@ -594,5 +657,36 @@ function showConfirm(message) {
         document.getElementById('confirm-yes').onclick = () => { modal.remove(); resolve(true); };
         document.getElementById('confirm-no').onclick  = () => { modal.remove(); resolve(false); };
         modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(false); } };
+    });
+}
+
+// ==================== تحديث badge المحافظ في الهيدر ====================
+function updateWalletBadge(count) {
+    // البحث عن رابط المحافظ في كل القوائم
+    document.querySelectorAll('a[href="admin-wallet.html"]').forEach(link => {
+        // احذف القديم إن وجد
+        link.querySelector('.wallet-badge')?.remove();
+
+        if (count > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'wallet-badge';
+            badge.textContent = count;
+            badge.style.cssText = `
+                background: #ef4444;
+                color: white;
+                border-radius: 50%;
+                font-size: 10px;
+                font-weight: 800;
+                min-width: 17px;
+                height: 17px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 4px;
+                margin-right: 4px;
+                line-height: 1;
+            `;
+            link.appendChild(badge);
+        }
     });
 }

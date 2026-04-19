@@ -48,11 +48,9 @@ async function loadWalletData() {
         return;
     }
 
-    // تحديث أيقونة المستخدم
     const userIcon = document.querySelector('#user-icon-btn i');
     if (userIcon) userIcon.className = 'fas fa-user-check';
 
-    // جلب الرصيد
     const { data: userData } = await supabase
         .from('users')
         .select('balance, full_name')
@@ -67,8 +65,20 @@ async function loadWalletData() {
     if (mruEl) mruEl.textContent = `MRU ${balance.toFixed(2)}`;
     if (usdEl) usdEl.textContent = `$${balanceUSD}`;
 
-    // جلب المعاملات
     loadTransactions(user.id);
+}
+
+// ===== مساعد الحالة =====
+function getStatusStyle(status) {
+    const map = {
+        'مكتمل':        { color: '#22c55e', bg: 'rgba(34,197,94,0.1)',    border: 'rgba(34,197,94,0.25)',    icon: 'fa-check-circle' },
+        'مرفوض':        { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',    border: 'rgba(239,68,68,0.25)',    icon: 'fa-times-circle' },
+        'ملغي':         { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',    border: 'rgba(239,68,68,0.25)',    icon: 'fa-ban' },
+        'قيد المراجعة': { color: '#f97316', bg: 'rgba(249,115,22,0.1)',   border: 'rgba(249,115,22,0.25)',   icon: 'fa-clock' },
+        'قيد الانتظار': { color: '#f97316', bg: 'rgba(249,115,22,0.1)',   border: 'rgba(249,115,22,0.25)',   icon: 'fa-hourglass-half' },
+        'مسترد':        { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)',  border: 'rgba(167,139,250,0.25)',  icon: 'fa-undo' },
+    };
+    return map[status] || { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.2)', icon: 'fa-circle' };
 }
 
 // ===== سجل المعاملات =====
@@ -76,14 +86,12 @@ async function loadTransactions(userId) {
     const list = document.getElementById('transactions-list');
     if (!list) return;
 
-    // جلب معاملات المحفظة (شحن/سحب)
     const { data: walletTx } = await supabase
         .from('wallet_transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-    // جلب طلبات الشراء بالمحفظة من جدول orders
     const { data: ordersTx } = await supabase
         .from('orders')
         .select('*')
@@ -91,7 +99,6 @@ async function loadTransactions(userId) {
         .or('paymentMethod.eq.المحفظة,payment_method.eq.المحفظة,paymentMethod.eq.محفظة,payment_method.eq.محفظة')
         .order('created_at', { ascending: false });
 
-    // تحويل الطلبات لنفس شكل wallet_transactions
     const ordersAsTx = (ordersTx || []).map(o => ({
         id:             o.id,
         user_id:        userId,
@@ -102,23 +109,17 @@ async function loadTransactions(userId) {
         product_name:   o.product_name,
         label:          o.label,
         order_number:   o.order_number,
-        card_code:      o.card_code,
+        reject_reason:  o.reject_reason,
         created_at:     o.created_at
     }));
 
-// إزالة التكرار — استبعاد معاملات wallet_transactions من نوع purchase/withdraw المرتبطة بطلب
-    const orderIds = new Set((ordersTx || []).map(o => o.id));
-
-  const filteredWalletTx = (walletTx || []).filter(t => {
-        // احتفظ فقط بالشحن والاسترداد — استبعد كل withdraw/purchase
+    const filteredWalletTx = (walletTx || []).filter(t => {
         if (t.type === 'charge' || t.type === 'deposit') return true;
         if (t.type === 'refund' || t.payment_method === 'استرداد طلب') return true;
-        // استبعد withdraw لأنه مسجل بالفعل في orders
         if (t.type === 'withdraw' || t.type === 'purchase') return false;
         return true;
     });
 
-    // دمج القائمتين وترتيبها بالتاريخ
     const all = [...filteredWalletTx, ...ordersAsTx]
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -131,88 +132,127 @@ async function loadTransactions(userId) {
         const isCharge   = t.type === 'charge' || t.type === 'deposit';
         const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
         const isOrder    = !!t.order_number;
+        const isAdminEdit = t.payment_method === 'تعديل أدمن';
 
         const date = new Date(t.created_at).toLocaleString('fr-FR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
 
-        const statusColor = t.status === 'مكتمل'        ? '#22c55e'
-                          : t.status === 'مرفوض'        ? '#ef4444'
-                          : t.status === 'ملغي'         ? '#ef4444'
-                          : t.status === 'قيد المراجعة' ? '#f97316'
-                          : '#f97316';
+        const { color, bg, border, icon } = getStatusStyle(t.status);
+
+        // شارة الحالة المشتركة
+        const statusBadge = `
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;
+                        padding-bottom:8px; border-bottom:1px solid ${color}22;">
+                <i class="fas ${icon}" style="color:${color};"></i>
+                <span style="color:${color}; font-weight:700; font-size:13px;">${t.status}</span>
+            </div>`;
+
+        // سبب الرفض المشترك
+        const rejectBlock = t.reject_reason ? `
+            <div style="margin-top:8px; background:rgba(239,68,68,0.08);
+                        border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:8px 10px;">
+                <div style="color:#94a3b8; font-size:11px; margin-bottom:4px;">
+                    <i class="fas fa-exclamation-circle" style="color:#ef4444;"></i> سبب الرفض
+                </div>
+                <div style="color:#fca5a5; font-weight:600; font-size:13px;">${t.reject_reason}</div>
+            </div>` : '';
+
+        // ملاحظة التعديل
+        const noteBlock = (t.note && isAdminEdit) ? `
+            <div style="margin-top:8px; background:rgba(96,165,250,0.08);
+                        border:1px solid rgba(96,165,250,0.3); border-radius:6px; padding:8px 10px;">
+                <div style="color:#94a3b8; font-size:11px; margin-bottom:4px;">
+                    <i class="fas fa-pen" style="color:#60a5fa;"></i> ملاحظة
+                </div>
+                <div style="color:#93c5fd; font-weight:600; font-size:13px;">${t.note}</div>
+            </div>` : '';
 
         let extraDetails = '';
 
+        // ===== تفاصيل الشحن =====
+        if (isCharge) {
+    extraDetails = `
+    <div style="margin-top:8px; background:${bg};
+        border:1px solid ${border}; border-radius:8px; padding:8px 12px; font-size:12px; color:#cbd5e1;">
+
+        ${statusBadge}
+
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="color:#94a3b8;">🏦 طريقة الدفع</span>
+            <span style="color:#e2e8f0; font-weight:600;">${t.payment_method || '-'}</span>
+        </div>
+
+        ${t.order_number ? `
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="color:#94a3b8;">🔢 رقم الطلب</span>
+            <span style="color:#60a5fa; font-weight:700; font-family:monospace;">${t.order_number}</span>
+        </div>` : ''}
+
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="color:#94a3b8;">💰 المبلغ</span>
+            <span style="color:${color}; font-weight:600;">+${t.amount.toLocaleString()} MRU</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span style="color:#94a3b8;">📅 التاريخ</span>
+            <span>${date}</span>
+        </div>
+
+        ${rejectBlock}
+        ${noteBlock}
+
+        ${t.receipt_url ? `
+        <div style="margin-top:6px;">
+            <a href="${t.receipt_url}" target="_blank"
+                style="display:inline-flex; align-items:center; gap:6px;
+                    background:#1e293b; color:#60a5fa; padding:5px 10px;
+                    border-radius:6px; font-size:11px; text-decoration:none;
+                    border:1px solid #334155;">
+                <i class="fas fa-receipt"></i> عرض الإيصال
+            </a>
+        </div>` : ''}
+    </div>`;
+}
+
+        // ===== تفاصيل الشراء =====
         if (isPurchase) {
             const productName = t.product_name
                 || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
-            const label = t.label || '';
 
             extraDetails = `
-                <div style="margin-top:8px; background:rgba(249,115,22,0.08);
-                    border:1px solid rgba(249,115,22,0.2); border-radius:8px;
-                    padding:8px 12px; font-size:12px; color:#cbd5e1;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🛍️ المنتج</span>
-                        <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
-                    </div>
-                    ${label ? `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🏷️ الفئة</span>
-                        <span style="color:#f97316; font-weight:600;">${label}</span>
-                    </div>` : ''}
+            <div style="margin-top:8px; background:${bg};
+                border:1px solid ${border}; border-radius:8px; padding:8px 12px; font-size:12px; color:#cbd5e1;">
 
-                    ${t.order_number ? `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🔢 رقم الطلب</span>
-                        <span style="color:#60a5fa; font-weight:600;">${t.order_number}</span>
-                    </div>` : ''}
+                ${statusBadge}
 
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">📅 التاريخ</span>
-                        <span>${date}</span>
-                    </div>
-                </div>`;
-            
-        }
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">🛍️ المنتج</span>
+                    <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
+                </div>
 
-        if (isCharge) {
-            extraDetails = `
-                <div style="margin-top:8px; background:rgba(34,197,94,0.08);
-                    border:1px solid rgba(34,197,94,0.2); border-radius:8px;
-                    padding:8px 12px; font-size:12px; color:#cbd5e1;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🏦  الدفع</span>
-                        <span style="color:#22c55e; font-weight:600;">${t.payment_method || '-'}</span>
-                    </div>
+                ${t.label ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">🏷️ الفئة</span>
+                    <span style="color:#f97316; font-weight:600;">${t.label}</span>
+                </div>` : ''}
 
-                    ${t.order_number ? `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">🔢 رقم الطلب</span>
-                        <span style="color:#60a5fa; font-weight:600;">${t.order_number}</span>
-                    </div>` : ''}
+                ${t.order_number ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">🔢 رقم الطلب</span>
+                    <span style="color:#60a5fa; font-weight:600;">${t.order_number}</span>
+                </div>` : ''}
 
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">💰 المبلغ</span>
-                        <span style="color:#22c55e; font-weight:600;">+${t.amount.toLocaleString()} MRU</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="color:#94a3b8;">📅 التاريخ</span>
-                        <span>${date}</span>
-                    </div>
-                    ${t.receipt_url ? `
-                    <div style="margin-top:6px;">
-                        <a href="${t.receipt_url}" target="_blank"
-                            style="display:inline-flex; align-items:center; gap:6px;
-                                background:#1e293b; color:#60a5fa; padding:5px 10px;
-                                border-radius:6px; font-size:11px; text-decoration:none;
-                                border:1px solid #334155;">
-                            <i class="fas fa-receipt"></i> عرض الإيصال
-                        </a>
-                    </div>` : ''}
-                </div>`;
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">📅 التاريخ</span>
+                    <span>${date}</span>
+                </div>
+
+                ${rejectBlock}
+
+                
+            </div>`;
         }
 
         return `
@@ -223,11 +263,13 @@ async function loadTransactions(userId) {
                         <i class="fas ${isCharge ? 'fa-arrow-down' : 'fa-shopping-bag'}"></i>
                     </div>
                     <div class="t-details">
-                        <strong>${isCharge ? 'شحن رصيد' : (isOrder ? (t.product_name || 'شراء') : 'سحب')}</strong>
-                        <span style="font-size:11px; color:${statusColor};">${t.status}</span>
+                        <strong>${isCharge ? (isAdminEdit ? 'تعديل رصيد' : 'شحن رصيد') : (isOrder ? (t.product_name || 'شراء') : 'سحب')}</strong>
+                        <span style="font-size:11px; color:${color}; display:flex; align-items:center; gap:4px;">
+                            <i class="fas ${icon}" style="font-size:10px;"></i> ${t.status}
+                        </span>
                     </div>
                 </div>
-                <div class="t-amount ${isCharge ? 'plus' : 'minus'}">
+                <div class="t-amount ${isCharge ? 'plus' : 'minus'}" style="color:${color};">
                     ${isCharge ? '+' : '-'}${t.amount.toLocaleString()} MRU
                 </div>
             </div>
@@ -331,13 +373,17 @@ window.submitCharge = async () => {
         console.warn('تعذر رفع الإيصال:', e);
     }
 
+    // توليد رقم طلب فريد يبدأ بـ S
+    const chargeOrderNumber = `S${Math.floor(100000 + Math.random() * 900000)}`;
+
     const { error } = await supabase.from('wallet_transactions').insert({
-        user_id: user.id,
-        type: 'charge',
+        user_id:        user.id,
+        type:           'charge',
         amount,
         payment_method: method,
         receipt_url,
-        status: 'قيد المراجعة'
+        status:         'قيد المراجعة',
+        order_number:   chargeOrderNumber
     });
 
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
@@ -356,6 +402,7 @@ window.handleLogout = async () => {
     }
 };
 
+// ===== Toast =====
 function showToast(msg, isError = false) {
     const toast = document.createElement('div');
     toast.textContent = msg;
@@ -372,7 +419,6 @@ function showToast(msg, isError = false) {
         font-weight: 700;
         z-index: 99999;
         box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        animation: slideUp 0.3s ease;
         pointer-events: none;
         white-space: nowrap;
     `;

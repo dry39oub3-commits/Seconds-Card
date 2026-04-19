@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // منطق الفتح والإغلاق
-    const btn     = document.getElementById('hamburger-btn');
-    const drawer  = document.getElementById('mobile-drawer');
-    const overlay = document.getElementById('mobile-overlay');
+    const btn      = document.getElementById('hamburger-btn');
+    const drawer   = document.getElementById('mobile-drawer');
+    const overlay  = document.getElementById('mobile-overlay');
     const closeBtn = document.getElementById('drawer-close');
 
     if (!btn || !drawer || !overlay) return;
@@ -73,12 +73,93 @@ document.addEventListener('DOMContentLoaded', function () {
     overlay.addEventListener('click', shutDrawer);
     drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', shutDrawer));
 
-    // تحديد الرابط النشط تلقائياً
+    // تحديد الرابط النشط تلقائياً في الـ Drawer
     const currentPage = window.location.pathname.split('/').pop();
     drawer.querySelectorAll('.nav-link').forEach(link => {
-        if (link.getAttribute('href') === currentPage) {
-            link.style.color = '#f97316';
-            link.style.background = 'rgba(249,115,22,0.1)';
+        const href = link.getAttribute('href')?.split('/').pop();
+        if (href === currentPage) {
+            link.classList.add('active');
         }
     });
 });
+
+// ==================== تحديد الصفحة النشطة في الهيدر ====================
+function setActiveNavLink() {
+    const currentPage = window.location.pathname.split('/').pop();
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+        const href = link.getAttribute('href')?.split('/').pop();
+        if (href === currentPage) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', setActiveNavLink);
+
+// ==================== Badge المحافظ — Realtime ====================
+function updateBadgeUI(count) {
+    document.querySelectorAll('a[href="admin-wallet.html"]').forEach(link => {
+        link.querySelector('.wallet-badge')?.remove();
+
+        if (count > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'wallet-badge';
+            badge.textContent = count;
+            badge.style.cssText = `
+                background: #ef4444;
+                color: white;
+                border-radius: 50%;
+                font-size: 10px;
+                font-weight: 800;
+                min-width: 17px;
+                height: 17px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 4px;
+                margin-right: 4px;
+                line-height: 1;
+                flex-shrink: 0;
+            `;
+            link.appendChild(badge);
+        }
+    });
+}
+
+async function loadWalletPendingBadge() {
+    try {
+        const { supabase } = await import('../../js/supabase-config.js');
+
+        // جلب العدد مباشرة بدل جلب البيانات
+        const { count, error } = await supabase
+            .from('wallet_transactions')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'قيد المراجعة');
+
+        if (!error) updateBadgeUI(count || 0);
+
+        supabase
+            .channel('wallet-pending-realtime')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'wallet_transactions'
+            }, async () => {
+                const { count: fresh } = await supabase
+                    .from('wallet_transactions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'قيد المراجعة');
+
+                updateBadgeUI(fresh || 0);
+            })
+            .subscribe();
+
+    } catch (err) {
+        console.warn('wallet badge error:', err.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadWalletPendingBadge);

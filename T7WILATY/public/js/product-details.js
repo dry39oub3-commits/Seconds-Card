@@ -31,9 +31,12 @@ async function loadProduct() {
 }
 
 function renderProduct(product) {
-    const prices = Array.isArray(product.prices) ? product.prices : [];
+    const prices = (Array.isArray(product.prices) ? product.prices : [])
+        .map((p, i) => ({ ...p, _originalIndex: i }))  // ← احفظ الindex الأصلي
+        .sort((a, b) => (a.value || 0) - (b.value || 0)); // ← رتّب من الأصغر للأكبر
 
-    const pricesHTML = prices.map((p, i) => {
+    const pricesHTML = prices.map((p) => {
+        const i = p._originalIndex; // ← استخدم الindex الأصلي لـ selectPrice
         if (p.active === false) {
             return `
                 <div class="price-card disabled" style="opacity:0.4; cursor:not-allowed; pointer-events:none; position:relative;">

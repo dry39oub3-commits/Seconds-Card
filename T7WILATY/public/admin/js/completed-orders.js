@@ -30,12 +30,9 @@ async function loadCompletedOrders() {
         return;
     }
 
-    // حفظ في الذاكرة
     window._completedOrders = orders;
-
     updateSummary(orders);
 
-    // ===== تجميع بنفس order_number =====
     const groupedMap = {};
     orders.forEach(order => {
         const key = order.order_number || order.id;
@@ -114,7 +111,6 @@ async function loadCompletedOrders() {
                 <i class="fas fa-receipt"></i> عرض</a>`
             : '<span style="color:#64748b;">—</span>';
 
-        // تحديد الحالة الإجمالية للمجموعة
         let groupStatus;
         if (group.statuses.size === 1) {
             groupStatus = [...group.statuses][0];
@@ -127,7 +123,6 @@ async function loadCompletedOrders() {
         const totalQty  = group.items.reduce((s, o) => s + (o.quantity || 1), 0);
         const isSingle  = itemCount === 1;
 
-        // صور
         const imagesCell = group.items.map(item => {
             const img = item.products?.image;
             return img
@@ -136,7 +131,6 @@ async function loadCompletedOrders() {
                 : `<span style="cursor:pointer;font-size:18px;" onclick="showOrderPopup('${item.id}')">🎴</span>`;
         }).join('');
 
-        // عرض المنتجات
         const productsCell = isSingle
             ? `<div>${group.items[0].product_name || '-'}</div>
                <div style="font-size:11px;color:#f97316;">${group.items[0].label || ''}</div>`
@@ -151,7 +145,6 @@ async function loadCompletedOrders() {
                 </div>`
             ).join('');
 
-        // شارة المجموعة
         const groupBadge = !isSingle
             ? `<div style="margin-bottom:4px;">
                 <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(59,130,246,0.12);
@@ -162,7 +155,6 @@ async function loadCompletedOrders() {
                </div>`
             : '';
 
-        // شارة المخزون/يدوي
         const autoApprovedCount = group.items.filter(i => i.auto_approved).length;
         const manualCount       = group.items.filter(i => i.status === 'مكتمل' && !i.auto_approved).length;
         let approvalBadge = '';
@@ -185,7 +177,6 @@ async function loadCompletedOrders() {
                 </span></div>`;
         }
 
-        // زر الاسترداد — زر واحد يشمل جميع العناصر المكتملة
         const completedItems = group.items.filter(i => i.status === 'مكتمل');
         const completedIds   = JSON.stringify(completedItems.map(i => i.id)).replace(/"/g, '&quot;');
         const refundBtn = completedItems.length > 0
@@ -241,34 +232,95 @@ window.showOrderPopup = (orderId) => {
     const totalPrice       = order.price * (order.quantity || 1);
 
     let suppliersHtml = '';
+
     if (suppliersDetails.length > 0) {
+        // ==================== إصلاح حساب الأكواد لكل مورد ====================
+        // أولاً: نبني الخريطة بالأكواد الصريحة إن وجدت
         const suppliersMap = {};
+        let hasCodeField = false;
+
         suppliersDetails.forEach(s => {
             const key = s.supplier_name || 'غير محدد';
-            if (!suppliersMap[key]) suppliersMap[key] = { name: key, order_id: s.supplier_order_id || '', codes: [] };
-            suppliersMap[key].codes.push(s.code);
+            if (!suppliersMap[key]) {
+                suppliersMap[key] = {
+                    name:     key,
+                    order_id: s.supplier_order_id || '',
+                    codes:    []
+                };
+            }
+            if (s.code) {
+                suppliersMap[key].codes.push(s.code);
+                hasCodeField = true;
+            }
         });
+
+        // ثانياً: إذا لم يكن هناك حقل code — نوزع الأكواد على الموردين بالتساوي
+        if (!hasCodeField && codes.length > 0) {
+            const supplierKeys   = Object.keys(suppliersMap);
+            const totalSuppliers = supplierKeys.length;
+
+            if (totalSuppliers === 1) {
+                // كل الأكواد لمورد واحد
+                suppliersMap[supplierKeys[0]].codes = [...codes];
+            } else {
+                // توزيع الأكواد بالتساوي — الباقي يذهب للأخير
+                const baseCount = Math.floor(codes.length / totalSuppliers);
+                let   codeIndex = 0;
+                supplierKeys.forEach((key, i) => {
+                    const count = (i === totalSuppliers - 1)
+                        ? codes.length - codeIndex   // الباقي كله للأخير
+                        : baseCount;
+                    suppliersMap[key].codes = codes.slice(codeIndex, codeIndex + count);
+                    codeIndex += count;
+                });
+            }
+        }
+        // =================================================================
+
         suppliersHtml = `
             <div style="margin-bottom:16px;">
-                <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;"><i class="fas fa-boxes"></i> الموردون</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">
+                    <i class="fas fa-boxes"></i> الموردون
+                </div>
                 ${Object.values(suppliersMap).map(s => `
                     <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;margin-bottom:8px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                             <span style="font-weight:700;color:#e2e8f0;">🏪 ${s.name}</span>
-                            <span style="font-size:11px;background:rgba(34,197,94,0.1);color:#22c55e;padding:2px 8px;border-radius:10px;">${s.codes.length} كود</span>
+                            <span style="font-size:11px;background:rgba(34,197,94,0.1);color:#22c55e;
+                                         padding:2px 8px;border-radius:10px;">
+                                ${s.codes.length} كود
+                            </span>
                         </div>
                         ${s.order_id ? `
                         <div style="display:flex;align-items:center;gap:8px;">
                             <span style="font-size:12px;color:#94a3b8;">🔖 Order ID:</span>
                             <span style="font-family:monospace;font-size:12px;color:#60a5fa;">${s.order_id}</span>
                             <button onclick="copyText('${s.order_id}')"
-                                style="background:#334155;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">
+                                style="background:#334155;color:white;border:none;padding:3px 8px;
+                                       border-radius:4px;cursor:pointer;font-size:11px;">
                                 <i class="fas fa-copy"></i>
                             </button>
+                        </div>` : ''}
+                        ${s.codes.length > 0 ? `
+                        <div style="margin-top:8px;">
+                            ${s.codes.map(c => `
+                                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                                    <span style="font-family:monospace;font-size:12px;color:#22c55e;
+                                                 background:#1e293b;padding:4px 8px;border-radius:5px;flex:1;">
+                                        ${c}
+                                    </span>
+                                    <button onclick="copyText('${c.replace(/'/g, "\\'")}')"
+                                        style="background:#334155;color:white;border:none;padding:3px 8px;
+                                               border-radius:4px;cursor:pointer;font-size:11px;">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
                         </div>` : ''}
                     </div>
                 `).join('')}
             </div>`;
+
     } else if (order.supplier_id) {
         suppliersHtml = `
             <div style="margin-bottom:16px;">
@@ -280,7 +332,8 @@ window.showOrderPopup = (orderId) => {
                         <span style="font-size:12px;color:#94a3b8;">🔖 Order ID:</span>
                         <span style="font-family:monospace;font-size:12px;color:#60a5fa;">${order.supplier_order_id}</span>
                         <button onclick="copyText('${order.supplier_order_id}')"
-                            style="background:#334155;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">
+                            style="background:#334155;color:white;border:none;padding:3px 8px;
+                                   border-radius:4px;cursor:pointer;font-size:11px;">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>` : ''}
@@ -298,7 +351,9 @@ window.showOrderPopup = (orderId) => {
                     التكلفة: $${order.cost_price} × ${order.quantity||1} × 43 = ${totalCost.toFixed(0)} MRU
                 </div>
                 <span style="color:#94a3b8;font-size:13px;">الربح: </span>
-                <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:20px;font-weight:bold;">${profit.toFixed(0)} MRU</span>
+                <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:20px;font-weight:bold;">
+                    ${profit.toFixed(0)} MRU
+                </span>
                 <span style="color:#94a3b8;font-size:12px;margin-right:4px;">(${(profit/43).toFixed(2)} $)</span>
             </div>`;
     }
@@ -312,41 +367,62 @@ window.showOrderPopup = (orderId) => {
     `;
 
     popup.innerHTML = `
-        <div style="background:#1e293b;border-radius:16px;padding:28px;width:100%;max-width:600px;color:#e2e8f0;position:relative;margin:auto;">
+        <div style="background:#1e293b;border-radius:16px;padding:28px;width:100%;max-width:600px;
+                    color:#e2e8f0;position:relative;margin:auto;">
             <button onclick="document.getElementById('order-detail-popup').remove()"
-                style="position:absolute;top:14px;left:14px;background:#ef4444;color:white;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;">
+                style="position:absolute;top:14px;left:14px;background:#ef4444;color:white;
+                       border:none;border-radius:8px;padding:5px 12px;cursor:pointer;">
                 ✕ إغلاق
             </button>
             <h3 style="text-align:center;color:#f97316;margin-bottom:20px;">
                 تفاصيل الطلب ${order.order_number || '#' + order.id.substring(0,7)}
             </h3>
-            <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div><span style="color:#94a3b8;font-size:12px;">👤 العميل</span><div style="font-weight:600;">${order.customer_name || '-'}</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">📱 الهاتف</span><div>${order.customer_phone || '-'}</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">🛍️ المنتج</span><div style="color:#f97316;font-weight:600;">${order.product_name || '-'}</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">🏷️ الفئة</span><div>${order.label || '-'}</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">💰 المبلغ</span><div style="color:#22c55e;font-weight:700;">${totalPrice} MRU</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">🔢 الكمية</span><div>${order.quantity || 1}</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">💳 الدفع</span><div>${order.paymentMethod || order.payment_method || '-'}</div></div>
-                <div><span style="color:#94a3b8;font-size:12px;">📅 التاريخ</span><div style="font-size:12px;">${new Date(order.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
+            <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:16px;
+                        display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div><span style="color:#94a3b8;font-size:12px;">👤 العميل</span>
+                     <div style="font-weight:600;">${order.customer_name || '-'}</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">📱 الهاتف</span>
+                     <div>${order.customer_phone || '-'}</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">🛍️ المنتج</span>
+                     <div style="color:#f97316;font-weight:600;">${order.product_name || '-'}</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">🏷️ الفئة</span>
+                     <div>${order.label || '-'}</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">💰 المبلغ</span>
+                     <div style="color:#22c55e;font-weight:700;">${totalPrice} MRU</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">🔢 الكمية</span>
+                     <div>${order.quantity || 1}</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">💳 الدفع</span>
+                     <div>${order.paymentMethod || order.payment_method || '-'}</div></div>
+                <div><span style="color:#94a3b8;font-size:12px;">📅 التاريخ</span>
+                     <div style="font-size:12px;">${new Date(order.created_at).toLocaleString('fr-FR',{
+                         day:'2-digit',month:'2-digit',year:'numeric',
+                         hour:'2-digit',minute:'2-digit'
+                     })}</div></div>
             </div>
             ${profitHtml}
             ${suppliersHtml}
             <div>
-                <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">🔑 الأكواد (${codes.length})</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">
+                    🔑 الأكواد (${codes.length})
+                </div>
                 ${codes.length > 0 ? `
                 <div style="background:#0f172a;border-radius:8px;padding:12px;">
                     ${codes.map(c => `
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <span style="font-family:monospace;font-size:13px;color:#22c55e;flex:1;background:#1e293b;padding:6px 10px;border-radius:6px;">${c.trim()}</span>
+                            <span style="font-family:monospace;font-size:13px;color:#22c55e;flex:1;
+                                         background:#1e293b;padding:6px 10px;border-radius:6px;">
+                                ${c.trim()}
+                            </span>
                             <button onclick="copyText('${c.trim().replace(/'/g,"\\'")}')"
-                                style="background:#334155;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;">
+                                style="background:#334155;color:white;border:none;padding:5px 10px;
+                                       border-radius:6px;cursor:pointer;font-size:12px;">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
                     `).join('')}
                     <button onclick="copyText('${codes.join('\\n').replace(/'/g,"\\'")}')"
-                        style="width:100%;margin-top:4px;padding:8px;background:#22c55e;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;">
+                        style="width:100%;margin-top:4px;padding:8px;background:#22c55e;color:white;
+                               border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;">
                         <i class="fas fa-copy"></i> نسخ جميع الأكواد
                     </button>
                 </div>` : '<span style="color:#64748b;">لا يوجد كود</span>'}
@@ -372,6 +448,7 @@ function updateSummary(orders) {
 }
 
 // ==================== استرداد مجموعة ====================
+// ==================== استرداد مجموعة ====================
 window.refundGroupOrders = async (ids) => {
     if (!confirm(`هل تريد استرداد ${ids.length} طلب وإرجاع الأكواد للمخزون؟`)) return;
 
@@ -379,46 +456,29 @@ window.refundGroupOrders = async (ids) => {
     let totalRefunded      = 0;
 
     for (const orderId of ids) {
-
-        // ✅ جلب كل الحقول دفعة واحدة بما فيها user_id و price
         const { data: order } = await supabase
             .from('orders')
-            .select('id, user_id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, price, quantity')
+            .select('id, user_id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, price, quantity, suppliers_details')
             .eq('id', orderId)
             .single();
 
         if (!order) continue;
 
-        // تحديث حالة الطلب
         await supabase.from('orders').update({ status: 'مسترد' }).eq('id', orderId);
 
-        // ✅ إرجاع المبلغ للمحفظة إذا كان الدفع بالمحفظة
         const refundAmount = (order.price || 0) * (order.quantity || 1);
 
         if (order.user_id && refundAmount > 0) {
-            // جلب الرصيد الحالي
             const { data: userData } = await supabase
-                .from('users')
-                .select('balance')
-                .eq('id', order.user_id)
-                .single();
+                .from('users').select('balance').eq('id', order.user_id).single();
 
             const currentBalance = userData?.balance || 0;
-            const newBalance     = currentBalance + refundAmount;
-
-            // تحديث الرصيد
-            await supabase
-                .from('users')
-                .update({ balance: newBalance })
+            await supabase.from('users')
+                .update({ balance: currentBalance + refundAmount })
                 .eq('id', order.user_id);
 
-            // تسجيل معاملة الاسترداد
-          // جلب order_number من الطلب الأصلي
             const { data: orderInfo } = await supabase
-                .from('orders')
-                .select('order_number')
-                .eq('id', orderId)
-                .single();
+                .from('orders').select('order_number').eq('id', orderId).single();
 
             await supabase.from('wallet_transactions').insert({
                 user_id:        order.user_id,
@@ -433,18 +493,38 @@ window.refundGroupOrders = async (ids) => {
             totalRefunded += refundAmount;
         }
 
-        // إرجاع الأكواد للمخزون
+        // ==================== إرجاع الأكواد مع مورد كل كود ====================
         if (order.card_code) {
-            const codes = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
+            const codes           = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
+            const suppliersDetails = order.suppliers_details || [];
+
+            // بناء خريطة كود → { supplier_name, supplier_order_id }
+            const codeSupplierMap = {};
+            suppliersDetails.forEach(s => {
+                if (s.code) {
+                    codeSupplierMap[s.code] = {
+                        supplier_name:     s.supplier_name     || order.supplier_id    || 'غير محدد',
+                        supplier_order_id: s.supplier_order_id || order.supplier_order_id || null
+                    };
+                }
+            });
+
             totalCodesReturned += codes.length;
+
             for (const code of codes) {
+                // استخدم بيانات المورد الخاصة بهذا الكود إن وجدت، وإلا fallback للطلب
+                const supplierInfo = codeSupplierMap[code] || {
+                    supplier_name:     order.supplier_id    || 'غير محدد',
+                    supplier_order_id: order.supplier_order_id || null
+                };
+
                 await supabase.from('used_codes').delete().eq('code', code);
                 await supabase.from('stocks').insert({
                     product_id:        order.product_id,
                     product_name:      order.product_name,
                     price_label:       order.label,
-                    supplier_name:     order.supplier_id || 'غير محدد',
-                    order_id:          order.supplier_order_id || null,
+                    supplier_name:     supplierInfo.supplier_name,
+                    order_id:          supplierInfo.supplier_order_id,
                     cost_per_card_usd: order.cost_price || 0,
                     code,
                     status:            'available',
@@ -453,10 +533,11 @@ window.refundGroupOrders = async (ids) => {
                 });
             }
         }
+        // =======================================================================
     }
 
     document.getElementById('order-detail-popup')?.remove();
-    alert(`✅ تم استرداد ${ids.length} طلب\n💰 تم إرجاع ${totalRefunded.toLocaleString()} MRU للمحفظة\n🔑 تم إرجاع ${totalCodesReturned} كود للمخزون`);
+    showAlert(` تم استرداد ${ids.length} طلب\n💰 تم إرجاع ${totalRefunded.toLocaleString()} MRU للمحفظة\n🔑 تم إرجاع ${totalCodesReturned} كود للمخزون`);
     loadCompletedOrders();
 };
 
@@ -464,7 +545,7 @@ window.refundGroupOrders = async (ids) => {
 window.refundOrder = async (orderId) => {
     const { data: mainOrder, error: fetchError } = await supabase
         .from('orders').select('order_number').eq('id', orderId).single();
-    if (fetchError) { alert('خطأ: ' + fetchError.message); return; }
+    if (fetchError) { showAlert('خطأ: ' + fetchError.message); return; }
 
     const { data: allOrders } = await supabase
         .from('orders')
@@ -472,13 +553,13 @@ window.refundOrder = async (orderId) => {
         .eq('order_number', mainOrder.order_number)
         .eq('status', 'مكتمل');
 
-    if (!allOrders || allOrders.length === 0) { alert('لا توجد طلبات للاسترداد'); return; }
+    if (!allOrders || allOrders.length === 0) { showAlert('لا توجد طلبات للاسترداد'); return; }
     await window.refundGroupOrders(allOrders.map(o => o.id));
 };
 
 // ==================== نسخ ====================
 window.copyText = (text) => {
-    navigator.clipboard.writeText(text).then(() => alert('✅ تم النسخ!'));
+    navigator.clipboard.writeText(text).then(() => showAlert(' تم النسخ!'));
 };
 
 // ==================== فلاتر ====================
@@ -509,3 +590,62 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCompletedOrders();
     setInterval(loadCompletedOrders, 60000);
 });
+
+// ==================== إشعار عائم يستبدل alert ====================
+window.showAlert = (message, type = 'success') => {
+    // إزالة أي إشعار سابق
+    document.getElementById('floating-alert')?.remove();
+
+    const colors = {
+        success: { bg: '#22c55e', icon: '✅' },
+        error:   { bg: '#ef4444', icon: '❌' },
+        warning: { bg: '#f97316', icon: '⚠️' },
+        info:    { bg: '#3b82f6', icon: 'ℹ️' },
+    };
+
+    const { bg, icon } = colors[type] || colors.success;
+
+    const showAlert = document.createElement('div');
+    showAlert.id = 'floating-showAlert';
+    showAlert.style.cssText = `
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: ${bg};
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        z-index: 999999;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 90vw;
+        text-align: center;
+        white-space: pre-line;
+        opacity: 0;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        pointer-events: none;
+        direction: rtl;
+    `;
+    showAlert.innerHTML = `<span style="font-size:18px;">${icon}</span><span>${message}</span>`;
+    document.body.appendChild(showAlert);
+
+    // ظهور
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            showAlert.style.opacity = '1';
+            showAlert.style.transform = 'translateX(-50%) translateY(0)';
+        });
+    });
+
+    // اختفاء بعد 3 ثواني
+    setTimeout(() => {
+        showAlert.style.opacity = '0';
+        showAlert.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(() => showAlert.remove(), 350);
+    }, 3000);
+};
