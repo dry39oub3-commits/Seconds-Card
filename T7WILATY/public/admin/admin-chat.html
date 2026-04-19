@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الدردشة - SecondsCard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-base:        #0a0f1a;
+            --bg-card:        #111827;
+            --bg-input:       #0d1424;
+            --bg-hover:       #1a2535;
+            --border:         #1e2d42;
+            --text-primary:   #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted:     #475569;
+            --accent:         #f97316;
+            --success:        #22c55e;
+            --radius-sm:      8px;
+            --radius-md:      12px;
+            --radius-lg:      16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+        }
+
+        .admin-chat-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: 100vh;
+            max-width: 1100px;
+            margin: 0 auto;
+            gap: 0;
+        }
+
+        /* ===== قائمة المحادثات ===== */
+        .conversations-panel {
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+        }
+
+        .panel-header i { color: var(--accent); }
+
+        #conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        #conversations-list::-webkit-scrollbar { width: 4px; }
+        #conversations-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .conv-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .conv-item:hover { background: var(--bg-hover); }
+        .conv-item.active { background: rgba(249,115,22,0.08); border-right: 3px solid var(--accent); }
+
+        .conv-email {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .conv-preview {
+            font-size: 12px;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .conv-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .unread-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: 700;
+            float: left;
+            margin-top: 2px;
+        }
+
+        .no-conversations {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ===== لوحة الدردشة ===== */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-panel-header .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(249,115,22,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        #chat-with {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chat-status {
+            font-size: 11px;
+            color: var(--success);
+            margin-top: 2px;
+        }
+
+        #admin-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--bg-base);
+        }
+
+        #admin-chat-messages::-webkit-scrollbar { width: 4px; }
+        #admin-chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .chat-bubble {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .chat-bubble small {
+            font-size: 10px;
+            opacity: 0.6;
+            align-self: flex-end;
+        }
+
+        .bubble-label {
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+
+        /* في لوحة الأدمن: رسائل العميل على اليمين، ورسائل الأدمن على اليسار */
+        .bubble-client {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bubble-admin-sent {
+            background: var(--accent);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .empty-state i { font-size: 48px; opacity: 0.2; }
+
+        .admin-chat-form {
+            display: flex;
+            gap: 8px;
+            padding: 12px 14px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .admin-chat-form input {
+            flex: 1;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            direction: rtl;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .admin-chat-form input:focus { border-color: var(--accent); }
+        .admin-chat-form input::placeholder { color: var(--text-muted); }
+        .admin-chat-form input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .send-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 15px;
+            transition: opacity 0.2s;
+        }
+
+        .send-btn:hover { opacity: 0.85; }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        @media (max-width: 700px) {
+            .admin-chat-layout { grid-template-columns: 1fr; }
+            .conversations-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-chat-layout">
+
+        <!-- قائمة المحادثات -->
+        <div class="conversations-panel">
+            <div class="panel-header">
+                <i class="fas fa-comments"></i>
+                المحادثات
+            </div>
+            <div id="conversations-list">
+                <div class="no-conversations">
+                    <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
+                </div>
+            </div>
+        </div>
+
+        <!-- لوحة الدردشة -->
+        <div class="chat-panel">
+            <div class="chat-panel-header">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <div id="chat-with">اختر محادثة</div>
+                    <div class="chat-status" id="chat-status"></div>
+                </div>
+            </div>
+
+            <div id="admin-chat-messages">
+                <div class="empty-state">
+                    <i class="fas fa-hand-point-right"></i>
+                    <span>اختر محادثة من القائمة للبدء</span>
+                </div>
+            </div>
+
+            <form id="admin-chat-form" class="admin-chat-form">
+                <button type="submit" class="send-btn" id="admin-send-btn" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <input id="admin-chat-input" type="text" placeholder="اكتب ردك..." autocomplete="off" maxlength="500" disabled>
+            </form>
+        </div>
+
+    </div>
+
+    <script type="module" src="../../js/admin-chat.js"></script>
+</body>
+</html>

@@ -70,6 +70,33 @@
 .buy-now-btn:hover:not(:disabled) {
     opacity: 0.85;
 }
+
+.step-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(249,115,22,0.05));
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    margin: 0 4px;
+    transition: all 0.2s;
+    box-shadow: 0 0 8px rgba(249,115,22,0.2);
+}
+
+.step-link:hover {
+    background: var(--accent);
+    color: rgb(39, 196, 65);
+    box-shadow: 0 0 14px rgba(58, 8, 116, 0.4);
+}
+
+.step-link i {
+    font-size: 10px;
+}
     </style>
 </head>
 <body>

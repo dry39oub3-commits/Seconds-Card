@@ -27,16 +27,64 @@ async function loadProduct() {
 
     currentProduct = product;
     renderProduct(product);
+    await loadProductDescription(product.name);
     updateCartBadge();
+}
+
+async function loadProductDescription(productName) {
+    const { data, error } = await supabase
+        .from('product_descriptions')
+        .select('*')
+        .eq('product_name', productName)
+        .single();
+
+    if (error || !data) return;
+
+    let html = '';
+
+    if (data.description) {
+        html += `
+        <div class="product-desc-section">
+            <h3><i class="fas fa-info-circle"></i> وصف البطاقة</h3>
+            <p>${data.description.replace(/\n/g, '<br>')}</p>
+        </div>`;
+    }
+
+    if (data.instructions) {
+    const steps = data.instructions.split('\n').map(s => s.trim()).filter(s => s);
+    
+    // تحويل الروابط إلى نص قابل للضغط
+    const linkify = (text) => {
+        return text.replace(
+            /(https?:\/\/[^\s)]+)/g,
+            '<a href="$1" target="_blank" rel="noopener" class="step-link">  صفحة استرداد الرمز</a>'
+        );
+    };
+
+    html += `
+    <div class="product-desc-section">
+        <h3><i class="fas fa-list-ul"></i> إرشادات الاستخدام</h3>
+        <ul class="steps-list">
+            ${steps.map(s => `<li>${linkify(s)}</li>`).join('')}
+        </ul>
+    </div>`;
+}
+
+    if (html) {
+        const container = document.createElement('div');
+        container.id = 'product-description-block';
+        container.innerHTML = html;
+        document.getElementById('product-content').appendChild(container);
+    }
 }
 
 function renderProduct(product) {
     const prices = (Array.isArray(product.prices) ? product.prices : [])
-        .map((p, i) => ({ ...p, _originalIndex: i }))  // ← احفظ الindex الأصلي
-        .sort((a, b) => (a.value || 0) - (b.value || 0)); // ← رتّب من الأصغر للأكبر
+        .map((p, i) => ({ ...p, _originalIndex: i }))
+        .sort((a, b) => (a.value || 0) - (b.value || 0));
 
     const pricesHTML = prices.map((p) => {
-        const i = p._originalIndex; // ← استخدم الindex الأصلي لـ selectPrice
+        const i = p._originalIndex;
         if (p.active === false) {
             return `
                 <div class="price-card disabled" style="opacity:0.4; cursor:not-allowed; pointer-events:none; position:relative;">
@@ -66,13 +114,13 @@ function renderProduct(product) {
         <div class="prices-grid">${pricesHTML}</div>
 
         <div class="action-buttons">
-            <button class="add-to-cart-btn" id="add-btn" onclick="addToCart()" disabled>
-                <i class="fas fa-cart-plus"></i> أضف إلى السلة
-            </button>
-            <button class="buy-now-btn" id="buy-btn" onclick="buyNow()" disabled>
-                <i class="fas fa-bolt"></i> اشتر الآن
-            </button>
-        </div>
+    <button class="add-to-cart-btn" id="buy-btn" onclick="buyNow()" disabled>
+        <i class="fas fa-bolt"></i> اشتر الآن
+    </button>
+    <button class="add-to-cart-btn" id="add-btn" onclick="addToCart()" disabled>
+        <i class="fas fa-cart-plus"></i> أضف إلى السلة
+    </button>
+</div>
     `;
 }
 
@@ -83,7 +131,6 @@ window.selectPrice = function(index, value) {
     document.getElementById('add-btn').disabled = false;
     document.getElementById('buy-btn').disabled = false;
 };
-
 
 window.buyNow = function() {
     if (!selectedPrice) return;
@@ -107,23 +154,22 @@ window.buyNow = function() {
         updateCartBadge();
     }
 
-    // الانتقال مباشرة إلى صفحة الدفع
     window.location.href = 'cart.html';
 };
 
 window.addToCart = function() {
     if (!selectedPrice) return;
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
+
     const exists = cart.find(
         item => item.productId === currentProduct.id && item.label === selectedPrice.label
     );
-    
+
     if (exists) {
         showToast('⚠️ هذه البطاقة بنفس الفئة موجودة مسبقاً في سلتك!', 'warning');
         return;
     }
-    
+
     cart.push({
         productId: currentProduct.id,
         name: currentProduct.name,
@@ -132,10 +178,10 @@ window.addToCart = function() {
         price: selectedPrice.value,
         quantity: 1
     });
-    
+
     localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartBadge();
     showToast('✅ تمت الإضافة إلى السلة!', 'success');
-    
 };
 
 function showToast(message, type = 'success') {
@@ -190,16 +236,15 @@ function setupUserMenu() {
     });
 }
 
-
 function updateCartBadge() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    
+
     let badge = document.querySelector('.cart-badge');
     const cartIcon = document.querySelector('a[href="cart.html"]');
-    
+
     if (!cartIcon) return;
-    
+
     if (!badge) {
         cartIcon.style.position = 'relative';
         badge = document.createElement('span');
@@ -221,33 +266,7 @@ function updateCartBadge() {
         `;
         cartIcon.appendChild(badge);
     }
-    
+
     badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }
-window.addToCart = function() {
-    if (!selectedPrice) return;
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    const exists = cart.find(
-        item => item.productId === currentProduct.id && item.label === selectedPrice.label
-    );
-    
-    if (exists) {
-        showToast('⚠️ هذه البطاقة بنفس الفئة موجودة مسبقاً في سلتك!', 'warning');
-        return;
-    }
-    
-    cart.push({
-        productId: currentProduct.id,
-        name: currentProduct.name,
-        image: currentProduct.image,
-        label: selectedPrice.label,
-        price: selectedPrice.value,
-        quantity: 1
-    });
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartBadge(); // ← تحديث فوري
-    showToast('✅ تمت الإضافة إلى السلة!', 'success');
-};
