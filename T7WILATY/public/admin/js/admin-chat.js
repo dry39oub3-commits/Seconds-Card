@@ -7,6 +7,10 @@ let newMsgSubscription = null;
 let badgeSubscription  = null;
 let isWidgetOpen      = false;
 let unreadCounts      = {};
+const seenMsgIds = new Set();
+
+// ✅ وقت تحميل الصفحة — فقط الرسائل بعد هذا الوقت تُحسب كجديدة
+const SESSION_START = new Date().toISOString();
 
 // ==================== بناء Widget الأدمن ====================
 function buildAdminWidget() {
@@ -153,9 +157,6 @@ window.toggleAdminChat = async () => {
         });
         if (btn) btn.querySelector('i').className = 'fas fa-times';
 
-        unreadCounts = {};
-        updateFloatBadge();
-
         await loadConversations();
         subscribeToNewMessages();
     } else {
@@ -165,6 +166,27 @@ window.toggleAdminChat = async () => {
         if (btn) btn.querySelector('i').className = 'fas fa-headset';
     }
 };
+
+// ==================== جلب العداد من DB ====================
+// ✅ تحسب فقط الرسائل التي وصلت بعد بدء الجلسة الحالية (SESSION_START)
+async function refreshUnreadFromDB() {
+    const { data } = await supabase
+        .from('chats')
+        .select('user_id')
+        .eq('sender', 'user')
+        .eq('is_read', false)
+        .gte('created_at', SESSION_START); // ← فقط رسائل هذه الجلسة
+
+    const fresh = {};
+    (data || []).forEach(m => {
+        fresh[m.user_id] = (fresh[m.user_id] || 0) + 1;
+    });
+
+    if (selectedUserId) fresh[selectedUserId] = 0;
+
+    unreadCounts = fresh;
+    updateFloatBadge();
+}
 
 // ==================== تحميل قائمة المحادثات ====================
 async function loadConversations() {
@@ -194,6 +216,7 @@ async function loadConversations() {
     }
 
     list.innerHTML = conversations.map(c => {
+        // ✅ العداد من الذاكرة فقط
         const unread   = unreadCounts[c.user_id] || 0;
         const isActive = selectedUserId === c.user_id;
         return `
@@ -210,8 +233,9 @@ async function loadConversations() {
                 </span>
                 ${unread > 0 ? `
                 <span style="background:#f97316;color:white;border-radius:50%;
-                             width:17px;height:17px;font-size:10px;font-weight:800;
-                             display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                             min-width:17px;height:17px;font-size:10px;font-weight:800;
+                             display:flex;align-items:center;justify-content:center;
+                             flex-shrink:0;padding:0 3px;">
                     ${unread}
                 </span>` : ''}
             </div>
@@ -237,8 +261,24 @@ window.openConversation = async (userId, userEmail) => {
     selectedUserId    = userId;
     selectedUserEmail = userEmail;
 
+    // ✅ صفّر الذاكرة فوراً
     unreadCounts[userId] = 0;
     updateFloatBadge();
+
+    // حدّث القائمة من الذاكرة (العداد صفر الآن)
+    await loadConversations();
+
+    // علّم الرسائل كمقروءة في DB في الخلفية
+    supabase
+        .from('chats')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .eq('sender', 'user')
+        .eq('is_read', false)
+        .then(() => {
+            unreadCounts[userId] = 0;
+            updateFloatBadge();
+        });
 
     const chatWith = document.getElementById('aw-chat-with');
     const status   = document.getElementById('aw-chat-status');
@@ -256,7 +296,6 @@ window.openConversation = async (userId, userEmail) => {
         el.style.borderRight = active ? '3px solid #f97316'     : '3px solid transparent';
     });
 
-    // ✅ إلغاء الاشتراك القديم بشكل صحيح
     if (msgSubscription) {
         await supabase.removeChannel(msgSubscription);
         msgSubscription = null;
@@ -284,22 +323,27 @@ window.openConversation = async (userId, userEmail) => {
         box.scrollTop = box.scrollHeight;
     }
 
-    // ✅ Realtime بدون filter — تصفية يدوية
     msgSubscription = supabase
         .channel('aw-msg-' + userId + '-' + Date.now())
         .on('postgres_changes', {
             event:  'INSERT',
             schema: 'public',
             table:  'chats'
-            // لا filter هنا — يسبب تأخير في بعض إصدارات Supabase
-        }, (payload) => {
-            // ✅ تصفية يدوية
+        }, async (payload) => {
             if (payload.new.user_id !== userId) return;
 
             const empty = box.querySelector('div[style*="flex-direction:column"]');
             if (empty) empty.remove();
             appendMessage(payload.new);
             box.scrollTop = box.scrollHeight;
+
+            if (payload.new.sender === 'user') {
+                supabase
+                    .from('chats')
+                    .update({ is_read: true })
+                    .eq('id', payload.new.id)
+                    .then(() => {});
+            }
         })
         .subscribe((status) => {
             console.log('[AdminChat] msg subscription:', status);
@@ -347,13 +391,11 @@ function appendMessage(msg) {
 
 // ==================== مراقبة رسائل جديدة من أي مستخدم ====================
 function subscribeToNewMessages() {
-    // إلغاء الاشتراك القديم إن وجد
     if (newMsgSubscription) {
         supabase.removeChannel(newMsgSubscription);
         newMsgSubscription = null;
     }
 
-    // ✅ بدون filter — تصفية يدوية
     newMsgSubscription = supabase
         .channel('aw-all-new-' + Date.now())
         .on('postgres_changes', {
@@ -361,15 +403,15 @@ function subscribeToNewMessages() {
             schema: 'public',
             table:  'chats'
         }, (payload) => {
-            // ✅ تصفية يدوية — فقط رسائل العملاء
             if (payload.new.sender !== 'user') return;
+            if (seenMsgIds.has(payload.new.id)) return;
+            seenMsgIds.add(payload.new.id);
 
+            if (payload.new.user_id === selectedUserId) return;
+
+            unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
+            updateFloatBadge();
             loadConversations();
-
-            if (payload.new.user_id !== selectedUserId) {
-                unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
-                updateFloatBadge();
-            }
         })
         .subscribe((status) => {
             console.log('[AdminChat] all-new subscription:', status);
@@ -413,11 +455,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => toggleAdminChat());
     }
 
-    // ✅ مراقبة Badge حتى لو الـ widget مغلق — بدون filter
     if (badgeSubscription) {
         supabase.removeChannel(badgeSubscription);
         badgeSubscription = null;
     }
+
+    // ✅ عند تحميل الصفحة: العداد = صفر (لا شيء قديم يُحسب)
+    unreadCounts = {};
+    updateFloatBadge();
 
     badgeSubscription = supabase
         .channel('aw-badge-' + Date.now())
@@ -426,13 +471,14 @@ document.addEventListener('DOMContentLoaded', () => {
             schema: 'public',
             table:  'chats'
         }, (payload) => {
-            // ✅ تصفية يدوية
             if (payload.new.sender !== 'user') return;
+            if (seenMsgIds.has(payload.new.id)) return;
+            seenMsgIds.add(payload.new.id);
 
-            if (!isWidgetOpen) {
-                unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
-                updateFloatBadge();
-            }
+            if (payload.new.user_id === selectedUserId) return;
+
+            unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
+            updateFloatBadge();
         })
         .subscribe((status) => {
             console.log('[AdminChat] badge subscription:', status);

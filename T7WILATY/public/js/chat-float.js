@@ -5,6 +5,7 @@ let subscription     = null;
 let badgeSubscription = null;
 let isOpen           = false;
 let unreadCount      = 0;
+const seenIds        = new Set();
 
 // ==================== بناء نافذة الدردشة ====================
 function buildChatWidget() {
@@ -68,26 +69,25 @@ function buildChatWidget() {
         </div>
 
         <!-- Input -->
-
-<form id="cw-form" style="display:flex;gap:8px;padding:10px 12px;
-      border-top:1px solid #1e2d42;background:#0d1424;flex-shrink:0;">
-    <button type="submit" id="cw-send" style="background:#f97316;color:white;border:none;
-            padding:9px 14px;border-radius:8px;cursor:pointer;font-size:14px;
-            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i class="fas fa-paper-plane"></i>
-    </button>
-    <button type="button" id="cw-screenshot" title="إرسال لقطة شاشة"
-            style="background:#1e293b;color:#94a3b8;border:1px solid #334155;
-                   padding:9px 12px;border-radius:8px;cursor:pointer;font-size:14px;
-                   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                   transition:all 0.2s;">
-        <i class="fas fa-camera"></i>
-    </button>
-    <input id="cw-input" type="text" placeholder="اكتب رسالتك..." autocomplete="off" maxlength="500"
-        style="flex:1;background:#111827;border:1px solid #1e2d42;border-radius:8px;
-               padding:9px 12px;color:#f1f5f9;font-size:13px;font-family:inherit;
-               direction:rtl;outline:none;transition:border-color 0.2s;">
-</form>
+        <form id="cw-form" style="display:flex;gap:8px;padding:10px 12px;
+              border-top:1px solid #1e2d42;background:#0d1424;flex-shrink:0;">
+            <button type="submit" id="cw-send" style="background:#f97316;color:white;border:none;
+                    padding:9px 14px;border-radius:8px;cursor:pointer;font-size:14px;
+                    display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <button type="button" id="cw-screenshot" title="إرسال صورة"
+                    style="background:#1e293b;color:#94a3b8;border:1px solid #334155;
+                           padding:9px 12px;border-radius:8px;cursor:pointer;font-size:14px;
+                           display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                           transition:all 0.2s;">
+                <i class="fas fa-camera"></i>
+            </button>
+            <input id="cw-input" type="text" placeholder="اكتب رسالتك..." autocomplete="off" maxlength="500"
+                style="flex:1;background:#111827;border:1px solid #1e2d42;border-radius:8px;
+                       padding:9px 12px;color:#f1f5f9;font-size:13px;font-family:inherit;
+                       direction:rtl;outline:none;transition:border-color 0.2s;">
+        </form>
 
         <style>
             @keyframes chatPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -96,11 +96,13 @@ function buildChatWidget() {
             #cw-input:focus { border-color:#f97316; }
             #cw-send:hover { opacity:0.85; }
             #cw-send:disabled { opacity:0.4; cursor:not-allowed; }
+            #cw-screenshot:hover { background:#334155!important; color:#f1f5f9!important; }
         </style>
     `;
 
     document.body.appendChild(widget);
 
+    // ✅ إرسال رسالة نصية
     widget.querySelector('#cw-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!currentUser) return;
@@ -114,10 +116,16 @@ function buildChatWidget() {
             user_id:    currentUser.id,
             user_email: currentUser.email,
             message,
-            sender:     'user'
+            sender:     'user',
+            is_read:    false
         });
         sendBtn.disabled = false;
         input.focus();
+    });
+
+    // ✅ زر الكاميرا — يُضاف هنا مباشرة بعد بناء الـ widget
+    widget.querySelector('#cw-screenshot').addEventListener('click', () => {
+        takeScreenshot();
     });
 
     setTimeout(() => document.getElementById('cw-input')?.focus(), 300);
@@ -141,6 +149,7 @@ window.toggleChatWidget = async () => {
         if (btn) btn.querySelector('i').className = 'fas fa-times';
 
         unreadCount = 0;
+        seenIds.clear();
         updateBadge();
 
         if (!currentUser) {
@@ -155,7 +164,6 @@ window.toggleChatWidget = async () => {
 
         await loadWidgetMessages();
 
-        // ✅ أعد بناء الاشتراك في كل مرة تُفتح النافذة بـ channel جديد
         if (subscription) {
             await supabase.removeChannel(subscription);
             subscription = null;
@@ -202,20 +210,17 @@ async function loadWidgetMessages() {
     box.scrollTop = box.scrollHeight;
 }
 
-// ==================== Real-time — بدون filter ====================
+// ==================== Real-time ====================
 function subscribeWidget() {
     if (!currentUser) return;
 
-    // ✅ channel فريد في كل مرة + بدون filter
     subscription = supabase
         .channel('cw-' + currentUser.id + '-' + Date.now())
         .on('postgres_changes', {
             event:  'INSERT',
             schema: 'public',
             table:  'chats'
-            // ✅ لا filter هنا — يسبب تأخير
         }, (payload) => {
-            // ✅ تصفية يدوية
             if (payload.new.user_id !== currentUser.id) return;
 
             const box = document.getElementById('cw-messages');
@@ -227,11 +232,13 @@ function subscribeWidget() {
             appendWidgetMessage(payload.new);
             box.scrollTop = box.scrollHeight;
 
-            // إشعار إذا كانت النافذة مغلقة ورسالة من الأدمن
             if (!isOpen && payload.new.sender === 'admin') {
-                unreadCount++;
-                updateBadge();
-                playNotifSound();
+                if (!seenIds.has(payload.new.id)) {
+                    seenIds.add(payload.new.id);
+                    unreadCount++;
+                    updateBadge();
+                    playNotifSound();
+                }
             }
         })
         .subscribe((status) => {
@@ -276,6 +283,96 @@ function appendWidgetMessage(msg) {
     box.appendChild(bubble);
 }
 
+// ==================== لقطة الشاشة / رفع صورة ====================
+async function takeScreenshot() {
+    if (!currentUser) return;
+
+    const btn = document.getElementById('cw-screenshot');
+    if (!btn) return;
+
+    // ✅ إنشاء input مخفي من نوع file لفتح معرض الصور
+    const input = document.createElement('input');
+    input.type    = 'file';
+    input.accept  = 'image/*';         // ← يقبل كل أنواع الصور
+    input.capture = '';                // ← بدون capture حتى يفتح المعرض وليس الكاميرا
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    // تغيير أيقونة الزر للانتظار
+    btn.innerHTML  = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled   = true;
+
+    input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        document.body.removeChild(input);
+
+        if (!file) {
+            btn.innerHTML = '<i class="fas fa-camera"></i>';
+            btn.disabled  = false;
+            return;
+        }
+
+        try {
+            const ext      = file.name.split('.').pop() || 'jpg';
+            const fileName = `screenshots/${currentUser.id}_${Date.now()}.${ext}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('chat-screenshots')
+                .upload(fileName, file, { contentType: file.type });
+
+            if (uploadError) {
+                showScreenshotToast('❌ فشل رفع الصورة');
+                btn.innerHTML = '<i class="fas fa-camera"></i>';
+                btn.disabled  = false;
+                return;
+            }
+
+            const { data: urlData } = supabase.storage
+                .from('chat-screenshots')
+                .getPublicUrl(fileName);
+
+            await supabase.from('chats').insert({
+                user_id:    currentUser.id,
+                user_email: currentUser.email,
+                message:    `[screenshot]${urlData.publicUrl}`,
+                sender:     'user',
+                is_read:    false
+            });
+
+            showScreenshotToast('✅ تم إرسال الصورة!');
+        } catch (err) {
+            showScreenshotToast('❌ حدث خطأ أثناء الرفع');
+        }
+
+        btn.innerHTML = '<i class="fas fa-camera"></i>';
+        btn.disabled  = false;
+    });
+
+    // ✅ إذا أغلق المستخدم النافذة بدون اختيار
+    input.addEventListener('cancel', () => {
+        document.body.removeChild(input);
+        btn.innerHTML = '<i class="fas fa-camera"></i>';
+        btn.disabled  = false;
+    });
+
+    input.click();
+}
+
+// ==================== Toast إشعار ====================
+function showScreenshotToast(msg) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = `
+        position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+        background:#1e293b; color:white; border:1px solid #334155;
+        padding:10px 20px; border-radius:8px; font-size:13px;
+        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+        transition: opacity 0.3s;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
 // ==================== Badge العداد ====================
 function updateBadge() {
     const badge = document.getElementById('chat-float-badge');
@@ -289,7 +386,7 @@ function updateBadge() {
     }
 }
 
-// ==================== صوت إشعار خفيف ====================
+// ==================== صوت إشعار ====================
 function playNotifSound() {
     try {
         const ctx  = new (window.AudioContext || window.webkitAudioContext)();
@@ -319,7 +416,6 @@ function escHtml(str) {
 
 // ==================== تهيئة عند تحميل الصفحة ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // تحديث الزر العائم تلقائياً
     const floatBtn = document.getElementById('chat-float-btn');
     if (floatBtn) {
         floatBtn.removeAttribute('onclick');
@@ -333,24 +429,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!user) return;
     currentUser = user;
 
-    // ✅ إلغاء الاشتراك القديم إن وجد
     if (badgeSubscription) {
         await supabase.removeChannel(badgeSubscription);
         badgeSubscription = null;
     }
 
-    // ✅ بدون filter — تصفية يدوية
     badgeSubscription = supabase
         .channel('cw-badge-' + user.id + '-' + Date.now())
         .on('postgres_changes', {
             event:  'INSERT',
             schema: 'public',
             table:  'chats'
-            // ✅ لا filter
         }, (payload) => {
-            // ✅ تصفية يدوية
             if (payload.new.user_id !== user.id) return;
             if (payload.new.sender  !== 'admin') return;
+            if (seenIds.has(payload.new.id)) return;
+            seenIds.add(payload.new.id);
 
             if (!isOpen) {
                 unreadCount++;
@@ -362,87 +456,3 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[Chat] badge subscription:', status);
         });
 })();
-
-
-// ==================== لقطة الشاشة ====================
-async function takeScreenshot() {
-    const btn = document.getElementById('cw-screenshot');
-    if (!currentUser || !btn) return;
-
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    btn.disabled  = true;
-
-    try {
-        // ✅ فتح معرض الصور بدل لقطة الشاشة
-        const input = document.createElement('input');
-        input.type   = 'file';
-        input.accept = 'image/*';
-        input.style.display = 'none';
-        document.body.appendChild(input);
-
-        input.onchange = async () => {
-            const file = input.files[0];
-            document.body.removeChild(input);
-            if (!file) {
-                btn.innerHTML = '<i class="fas fa-camera"></i>';
-                btn.disabled  = false;
-                return;
-            }
-
-            const fileName = `screenshots/${currentUser.id}_${Date.now()}.${file.name.split('.').pop()}`;
-            const { error: uploadError } = await supabase.storage
-                .from('chat-screenshots')
-                .upload(fileName, file, { contentType: file.type });
-
-            if (uploadError) {
-                showScreenshotToast('❌ فشل رفع الصورة');
-                btn.innerHTML = '<i class="fas fa-camera"></i>';
-                btn.disabled  = false;
-                return;
-            }
-
-            const { data: urlData } = supabase.storage
-                .from('chat-screenshots')
-                .getPublicUrl(fileName);
-
-            await supabase.from('chats').insert({
-                user_id:    currentUser.id,
-                user_email: currentUser.email,
-                message:    `[screenshot]${urlData.publicUrl}`,
-                sender:     'user'
-            });
-
-            showScreenshotToast('✅ تم إرسال الصورة!');
-            btn.innerHTML = '<i class="fas fa-camera"></i>';
-            btn.disabled  = false;
-        };
-
-        input.oncancel = () => {
-            document.body.removeChild(input);
-            btn.innerHTML = '<i class="fas fa-camera"></i>';
-            btn.disabled  = false;
-        };
-
-        input.click();
-
-    } catch (err) {
-        showScreenshotToast('❌ حدث خطأ');
-        btn.innerHTML = '<i class="fas fa-camera"></i>';
-        btn.disabled  = false;
-    }
-}
-
-document.getElementById('cw-screenshot')?.addEventListener('click', takeScreenshot);
-
-function showScreenshotToast(msg) {
-    const toast = document.createElement('div');
-    toast.textContent = msg;
-    toast.style.cssText = `
-        position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
-        background:#1e293b; color:white; border:1px solid #334155;
-        padding:10px 20px; border-radius:8px; font-size:13px;
-        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.4);
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
