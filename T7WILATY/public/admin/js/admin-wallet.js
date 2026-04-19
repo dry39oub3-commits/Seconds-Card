@@ -1,5 +1,4 @@
 import { supabase } from '../../js/supabase-config.js';
-
 let allTransactions = [];
 let allUsers = [];
 let currentEditUserId = null;
