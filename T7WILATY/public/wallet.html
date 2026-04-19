@@ -6,6 +6,7 @@
     <title>SecondsCard | المحفظة</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/chat-float.css">
     <link rel="stylesheet" href="css/wallet.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -173,8 +174,14 @@
         </p>
     </div>
 </div>
-
+ <!-- زر الدردشة العائم -->
+   <div id="chat-float-btn" 
+     onclick="window.location.href='chat.html'" 
+     title="تواصل مع الدعم الفني">
+    <i class="fas fa-headset"></i>
+    <span class="chat-float-badge" id="chat-float-badge"></span>
+</div>
 <script type="module" src="./js/wallet.js"></script>
-
+<script type="module" src="js/chat-float.js"></script>
 </body>
 </html>
