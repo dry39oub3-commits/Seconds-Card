@@ -1,171 +1,338 @@
-/**
- * chat-float.js
- * ضعه في: public/js/chat-float.js
- * ثم أضف في كل صفحة HTML للعميل قبل </body>:
- * <script type="module" src="/js/chat-float.js"></script>
- */
-
 import { supabase } from './supabase-config.js';
 
-// ===== إنشاء الزر =====
-const btn = document.createElement('div');
-btn.id = 'chat-float-btn';
-btn.title = 'تواصل مع الدعم الفني';
-btn.innerHTML = `
-    <i class="fas fa-headset"></i>
-    <span class="chat-float-badge" id="chat-float-badge"></span>
-`;
-document.body.appendChild(btn);
+let currentUser    = null;
+let subscription   = null;
+let isOpen         = false;
+let unreadCount    = 0;
 
-// ===== CSS =====
-const style = document.createElement('style');
-style.textContent = `
-#chat-float-btn {
-    position: fixed;
-    bottom: 28px;
-    left: 28px;
-    width: 56px;
-    height: 56px;
-    background: #f97316;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 9999;
-    box-shadow: 0 4px 24px rgba(249,115,22,0.45);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-#chat-float-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 32px rgba(249,115,22,0.65);
-}
-#chat-float-btn:active { transform: scale(0.96); }
-#chat-float-btn i {
-    color: white;
-    font-size: 22px;
-    pointer-events: none;
-}
-.chat-float-badge {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    background: #ef4444;
-    color: white;
-    border-radius: 50%;
-    min-width: 20px;
-    height: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #0a0f1a;
-    padding: 0 3px;
-    animation: pulse-badge 2s infinite;
-}
-@keyframes pulse-badge {
-    0%, 100% { transform: scale(1); }
-    50%       { transform: scale(1.25); }
-}
-.chat-float-tooltip {
-    position: fixed;
-    bottom: 94px;
-    left: 28px;
-    background: #111827;
-    color: #f1f5f9;
-    border: 1px solid #1e2d42;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-family: 'Tajawal', sans-serif;
-    white-space: nowrap;
-    z-index: 9998;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-    animation: fadeInTip 0.3s ease, fadeOutTip 0.4s ease 3.5s forwards;
-    pointer-events: none;
-}
-.chat-float-tooltip::after {
-    content: '';
-    position: absolute;
-    bottom: -7px;
-    left: 20px;
-    border: 6px solid transparent;
-    border-top-color: #1e2d42;
-    border-bottom: none;
-}
-@keyframes fadeInTip {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeOutTip {
-    from { opacity: 1; }
-    to   { opacity: 0; }
-}
-`;
-document.head.appendChild(style);
+// ==================== بناء نافذة الدردشة ====================
+function buildChatWidget() {
+    if (document.getElementById('chat-widget')) return;
 
-// ===== عند الضغط =====
-btn.addEventListener('click', () => {
-    window.location.href = 'chat.html';
-});
+    const widget = document.createElement('div');
+    widget.id = 'chat-widget';
+    widget.style.cssText = `
+        position: fixed;
+        bottom: 90px;
+        left: 24px;
+        width: 360px;
+        max-height: 520px;
+        background: #111827;
+        border: 1px solid #1e2d42;
+        border-radius: 18px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 99998;
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        pointer-events: none;
+        font-family: 'Tajawal','Segoe UI',sans-serif;
+    `;
 
-// ===== التلميح عند أول زيارة =====
-if (!localStorage.getItem('chat_tooltip_shown')) {
-    const tooltip = document.createElement('div');
-    tooltip.className = 'chat-float-tooltip';
-    tooltip.textContent = '💬 هل تحتاج مساعدة؟';
-    document.body.appendChild(tooltip);
-    setTimeout(() => tooltip.remove(), 4200);
-    localStorage.setItem('chat_tooltip_shown', '1');
+    widget.innerHTML = `
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;
+                    background:#0d1424;border-bottom:1px solid #1e2d42;flex-shrink:0;">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(249,115,22,0.15);
+                        display:flex;align-items:center;justify-content:center;
+                        color:#f97316;font-size:16px;flex-shrink:0;">
+                <i class="fas fa-headset"></i>
+            </div>
+            <div style="flex:1;">
+                <div style="font-weight:800;font-size:14px;color:#f1f5f9;">
+                    الدعم الفني
+                    <span style="display:inline-block;width:7px;height:7px;background:#22c55e;
+                                 border-radius:50%;margin-right:5px;vertical-align:middle;
+                                 animation:chatPulse 2s infinite;"></span>
+                </div>
+                <div style="font-size:11px;color:#475569;">تواصل مع فريق الدعم مباشرةً</div>
+            </div>
+            <button onclick="toggleChatWidget()" style="background:rgba(239,68,68,0.12);
+                    color:#ef4444;border:1px solid rgba(239,68,68,0.25);border-radius:8px;
+                    width:30px;height:30px;cursor:pointer;font-size:13px;
+                    display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div id="cw-messages" style="flex:1;overflow-y:auto;padding:14px 12px;
+             display:flex;flex-direction:column;gap:10px;min-height:320px;max-height:320px;">
+            <div id="cw-loading" style="text-align:center;color:#475569;padding:30px;font-size:13px;">
+                <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
+            </div>
+        </div>
+
+        <!-- Input -->
+        <form id="cw-form" style="display:flex;gap:8px;padding:10px 12px;
+              border-top:1px solid #1e2d42;background:#0d1424;flex-shrink:0;">
+            <button type="submit" id="cw-send" style="background:#f97316;color:white;border:none;
+                    padding:9px 14px;border-radius:8px;cursor:pointer;font-size:14px;
+                    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                    transition:opacity 0.2s;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <input id="cw-input" type="text" placeholder="اكتب رسالتك..." autocomplete="off" maxlength="500"
+                style="flex:1;background:#111827;border:1px solid #1e2d42;border-radius:8px;
+                       padding:9px 12px;color:#f1f5f9;font-size:13px;font-family:inherit;
+                       direction:rtl;outline:none;transition:border-color 0.2s;">
+        </form>
+
+        <style>
+            @keyframes chatPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+            #cw-messages::-webkit-scrollbar{width:3px}
+            #cw-messages::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
+            #cw-input:focus{border-color:#f97316;}
+            #cw-send:hover{opacity:0.85;}
+            #cw-send:disabled{opacity:0.4;cursor:not-allowed;}
+        </style>
+    `;
+
+    document.body.appendChild(widget);
+
+    // إرسال الرسالة
+    widget.querySelector('#cw-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentUser) return;
+        const input   = document.getElementById('cw-input');
+        const sendBtn = document.getElementById('cw-send');
+        const message = input.value.trim();
+        if (!message) return;
+        input.value      = '';
+        sendBtn.disabled = true;
+        await supabase.from('chats').insert({
+            user_id:    currentUser.id,
+            user_email: currentUser.email,
+            message,
+            sender:     'user'
+        });
+        sendBtn.disabled = false;
+        input.focus();
+    });
+
+    // focus على الـ input عند الفتح
+    setTimeout(() => document.getElementById('cw-input')?.focus(), 300);
 }
 
-// ===== إشعارات الرسائل =====
-// ===== إشعارات الرسائل =====
-const { data: { user } } = await supabase.auth.getUser();
-if (user) {
+// ==================== فتح / إغلاق ====================
+window.toggleChatWidget = async () => {
+    isOpen = !isOpen;
+    buildChatWidget();
 
-    const badge = document.getElementById('chat-float-badge');
+    const widget = document.getElementById('chat-widget');
+    const btn    = document.getElementById('chat-float-btn');
 
-    async function checkUnread() {
-        const { data } = await supabase
-            .from('chats')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('sender', 'admin')
-            .eq('is_read', false);
+    if (isOpen) {
+        // أظهر النافذة
+        widget.style.pointerEvents = 'all';
+        requestAnimationFrame(() => {
+            widget.style.opacity   = '1';
+            widget.style.transform = 'translateY(0) scale(1)';
+        });
 
-        const count = data?.length || 0;
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'flex' : 'none';
+        // تغيير أيقونة الزر
+        if (btn) btn.querySelector('i').className = 'fas fa-times';
+
+        // تصفير العداد
+        unreadCount = 0;
+        updateBadge();
+
+        // تحميل المستخدم والرسائل
+        if (!currentUser) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                document.getElementById('cw-loading').innerHTML =
+                    '<span style="color:#ef4444;">يجب تسجيل الدخول أولاً</span>';
+                return;
+            }
+            currentUser = user;
+        }
+
+        await loadWidgetMessages();
+        if (!subscription) subscribeWidget();
+
+    } else {
+        // أخفِ النافذة
+        widget.style.opacity      = '0';
+        widget.style.transform    = 'translateY(16px) scale(0.97)';
+        widget.style.pointerEvents = 'none';
+        if (btn) btn.querySelector('i').className = 'fas fa-headset';
+    }
+};
+
+// ==================== تحميل الرسائل ====================
+async function loadWidgetMessages() {
+    const box = document.getElementById('cw-messages');
+    if (!box) return;
+
+    const { data, error } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        box.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px;font-size:13px;">❌ خطأ في التحميل</div>';
+        return;
     }
 
-    await checkUnread();
+    box.innerHTML = '';
 
-    supabase.channel('float-' + user.id)
+    if (!data || data.length === 0) {
+        box.innerHTML = `
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;
+                        justify-content:center;color:#475569;gap:8px;font-size:13px;padding:30px;">
+                <i class="fas fa-comments" style="font-size:28px;opacity:0.25;"></i>
+                <span>لا توجد رسائل، ابدأ المحادثة!</span>
+            </div>`;
+        return;
+    }
+
+    data.forEach(msg => appendWidgetMessage(msg));
+    box.scrollTop = box.scrollHeight;
+}
+
+// ==================== Real-time ====================
+function subscribeWidget() {
+    subscription = supabase
+        .channel('cw-' + currentUser.id)
+        .on('postgres_changes', {
+            event:  'INSERT',
+            schema: 'public',
+            table:  'chats',
+            filter: `user_id=eq.${currentUser.id}`
+        }, (payload) => {
+            const box = document.getElementById('cw-messages');
+            if (!box) return;
+
+            // احذف رسالة "لا توجد رسائل" إن وجدت
+            const empty = box.querySelector('div[style*="flex-direction:column"]');
+            if (empty) empty.remove();
+
+            appendWidgetMessage(payload.new);
+            box.scrollTop = box.scrollHeight;
+
+            // إذا كانت النافذة مغلقة وكانت رسالة من الأدمن → زد العداد
+            if (!isOpen && payload.new.sender === 'admin') {
+                unreadCount++;
+                updateBadge();
+                playNotifSound();
+            }
+        })
+        .subscribe();
+}
+
+// ==================== إضافة رسالة ====================
+function appendWidgetMessage(msg) {
+    const box = document.getElementById('cw-messages');
+    if (!box) return;
+
+    const isUser = msg.sender === 'user';
+    const bubble = document.createElement('div');
+    bubble.style.cssText = `
+        max-width: 78%;
+        padding: 9px 13px;
+        border-radius: ${isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px'};
+        font-size: 13px;
+        line-height: 1.6;
+        word-break: break-word;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        align-self: ${isUser ? 'flex-start' : 'flex-end'};
+        background: ${isUser ? '#f97316' : '#1a2535'};
+        color: ${isUser ? 'white' : '#f1f5f9'};
+        border: ${isUser ? 'none' : '1px solid #1e2d42'};
+    `;
+
+    bubble.innerHTML = `
+        ${!isUser ? '<span style="font-size:10px;font-weight:700;opacity:0.6;margin-bottom:2px;">🎧 الدعم الفني</span>' : ''}
+        <span>${escHtml(msg.message)}</span>
+        <span style="font-size:10px;opacity:0.55;align-self:flex-end;">${formatTime(msg.created_at)}</span>
+    `;
+
+    box.appendChild(bubble);
+}
+
+// ==================== Badge العداد ====================
+function updateBadge() {
+    const badge = document.getElementById('chat-float-badge');
+    if (!badge) return;
+    if (unreadCount > 0) {
+        badge.textContent    = unreadCount;
+        badge.style.display  = 'flex';
+    } else {
+        badge.style.display  = 'none';
+        badge.textContent    = '';
+    }
+}
+
+// ==================== صوت إشعار خفيف ====================
+function playNotifSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+    } catch (_) {}
+}
+
+// ==================== مساعدات ====================
+function formatTime(dateStr) {
+    return new Date(dateStr).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// ==================== تحديث الزر العائم ====================
+// يجب تعديل onclick في كل صفحة من:
+//   onclick="window.location.href='chat.html'"
+// إلى:
+//   onclick="toggleChatWidget()"
+//
+// أو أضف هذا الكود ليعدّله تلقائياً بعد تحميل الصفحة:
+document.addEventListener('DOMContentLoaded', () => {
+    const floatBtn = document.getElementById('chat-float-btn');
+    if (floatBtn) {
+        // إزالة onclick القديم واستبداله
+        floatBtn.removeAttribute('onclick');
+        floatBtn.addEventListener('click', () => toggleChatWidget());
+    }
+});
+
+// ==================== مراقبة الرسائل الجديدة حتى لو مغلقة ====================
+(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    currentUser = user;
+
+    // راقب رسائل الأدمن الجديدة لتحديث العداد
+    supabase.channel('cw-badge-' + user.id)
         .on('postgres_changes', {
             event:  'INSERT',
             schema: 'public',
             table:  'chats',
             filter: `user_id=eq.${user.id}`
         }, (payload) => {
-            if (payload.new.sender === 'admin') {
-                const current = parseInt(badge.textContent) || 0;
-                badge.textContent = current + 1;
-                badge.style.display = 'flex';
-                try {
-                    const ctx  = new AudioContext();
-                    const osc  = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.frequency.value = 880;
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.3);
-                } catch(e) {}
+            if (!isOpen && payload.new.sender === 'admin') {
+                unreadCount++;
+                updateBadge();
+                playNotifSound();
             }
         })
         .subscribe();
-}
+})();

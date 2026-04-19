@@ -3,48 +3,192 @@ import { supabase } from '../../js/supabase-config.js';
 let selectedUserId    = null;
 let selectedUserEmail = null;
 let msgSubscription   = null;
+let isWidgetOpen      = false;
+let unreadCounts      = {};   // { user_id: count }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadConversations();
-    subscribeToNewMessages();
+// ==================== بناء Widget الأدمن ====================
+function buildAdminWidget() {
+    if (document.getElementById('admin-chat-widget')) return;
 
-    document.getElementById('admin-chat-form').addEventListener('submit', async (e) => {
+    const widget = document.createElement('div');
+    widget.id = 'admin-chat-widget';
+    widget.style.cssText = `
+        position: fixed;
+        bottom: 90px;
+        left: 24px;
+        width: 680px;
+        max-width: calc(100vw - 32px);
+        height: 520px;
+        background: #111827;
+        border: 1px solid #1e2d42;
+        border-radius: 18px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        overflow: hidden;
+        z-index: 99998;
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        pointer-events: none;
+        font-family: 'Tajawal','Segoe UI',sans-serif;
+        direction: rtl;
+    `;
+
+    widget.innerHTML = `
+        <!-- قائمة المحادثات -->
+        <div style="background:#0d1424;border-left:1px solid #1e2d42;
+                    display:flex;flex-direction:column;overflow:hidden;">
+
+            <!-- Header -->
+            <div style="padding:13px 14px;border-bottom:1px solid #1e2d42;
+                        display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+                <span style="font-size:13px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:7px;">
+                    <i class="fas fa-comments" style="color:#f97316;"></i> المحادثات
+                </span>
+                <button onclick="toggleAdminChat()" style="background:rgba(239,68,68,0.12);
+                        color:#ef4444;border:1px solid rgba(239,68,68,0.25);border-radius:7px;
+                        width:26px;height:26px;cursor:pointer;font-size:12px;
+                        display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- قائمة -->
+            <div id="aw-conv-list" style="flex:1;overflow-y:auto;">
+                <div style="text-align:center;color:#475569;padding:30px;font-size:12px;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- لوحة الدردشة -->
+        <div style="display:flex;flex-direction:column;overflow:hidden;">
+
+            <!-- Chat Header -->
+            <div id="aw-chat-header" style="padding:12px 16px;border-bottom:1px solid #1e2d42;
+                 background:#111827;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                <div style="width:34px;height:34px;border-radius:50%;background:rgba(249,115,22,0.12);
+                            display:flex;align-items:center;justify-content:center;
+                            color:#f97316;font-size:15px;flex-shrink:0;">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div id="aw-chat-with" style="font-size:13px;font-weight:700;color:#f1f5f9;
+                         overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        اختر محادثة
+                    </div>
+                    <div id="aw-chat-status" style="font-size:10px;color:#22c55e;margin-top:1px;"></div>
+                </div>
+            </div>
+
+            <!-- الرسائل -->
+            <div id="aw-messages" style="flex:1;overflow-y:auto;padding:14px 12px;
+                 display:flex;flex-direction:column;gap:10px;background:#0a0f1a;">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;
+                            justify-content:center;color:#475569;gap:8px;font-size:13px;padding:30px;">
+                    <i class="fas fa-hand-point-right" style="font-size:28px;opacity:0.2;"></i>
+                    <span>اختر محادثة من القائمة</span>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <form id="aw-form" style="display:flex;gap:8px;padding:10px 12px;
+                  border-top:1px solid #1e2d42;background:#0d1424;flex-shrink:0;">
+                <button type="submit" id="aw-send" disabled
+                    style="background:#f97316;color:white;border:none;padding:9px 14px;
+                           border-radius:8px;cursor:pointer;font-size:14px;flex-shrink:0;
+                           display:flex;align-items:center;justify-content:center;
+                           transition:opacity 0.2s;opacity:0.4;">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <input id="aw-input" type="text" placeholder="اكتب ردك..." disabled
+                    autocomplete="off" maxlength="500"
+                    style="flex:1;background:#111827;border:1px solid #1e2d42;border-radius:8px;
+                           padding:9px 12px;color:#f1f5f9;font-size:13px;font-family:inherit;
+                           direction:rtl;outline:none;transition:border-color 0.2s;opacity:0.4;">
+            </form>
+        </div>
+
+        <style>
+            #aw-conv-list::-webkit-scrollbar,#aw-messages::-webkit-scrollbar{width:3px}
+            #aw-conv-list::-webkit-scrollbar-thumb,#aw-messages::-webkit-scrollbar-thumb{
+                background:#1e2d42;border-radius:3px}
+            #aw-input:focus{border-color:#f97316!important;}
+            #aw-send:not(:disabled):hover{opacity:0.85!important;}
+        </style>
+    `;
+
+    document.body.appendChild(widget);
+
+    // إرسال رد الأدمن
+    widget.querySelector('#aw-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!selectedUserId) return;
-
-        const input   = document.getElementById('admin-chat-input');
-        const sendBtn = document.getElementById('admin-send-btn');
+        const input   = document.getElementById('aw-input');
+        const sendBtn = document.getElementById('aw-send');
         const message = input.value.trim();
         if (!message) return;
-
-        input.value = '';
+        input.value      = '';
         sendBtn.disabled = true;
-
-        const { error } = await supabase.from('chats').insert({
+        sendBtn.style.opacity = '0.4';
+        await supabase.from('chats').insert({
             user_id:    selectedUserId,
             user_email: selectedUserEmail,
             message,
             sender:     'admin'
         });
-
         sendBtn.disabled = false;
-        if (error) console.error('Admin send error:', error.message);
+        sendBtn.style.opacity = '1';
+        input.focus();
     });
-});
+}
 
+// ==================== فتح / إغلاق ====================
+window.toggleAdminChat = async () => {
+    isWidgetOpen = !isWidgetOpen;
+    buildAdminWidget();
+
+    const widget = document.getElementById('admin-chat-widget');
+    const btn    = document.getElementById('admin-chat-float-btn');
+
+    if (isWidgetOpen) {
+        widget.style.pointerEvents = 'all';
+        requestAnimationFrame(() => {
+            widget.style.opacity   = '1';
+            widget.style.transform = 'translateY(0) scale(1)';
+        });
+        if (btn) btn.querySelector('i').className = 'fas fa-times';
+
+        // تصفير عداد الكل
+        unreadCounts = {};
+        updateFloatBadge();
+
+        await loadConversations();
+        subscribeToNewMessages();
+    } else {
+        widget.style.opacity      = '0';
+        widget.style.transform    = 'translateY(16px) scale(0.97)';
+        widget.style.pointerEvents = 'none';
+        if (btn) btn.querySelector('i').className = 'fas fa-headset';
+    }
+};
+
+// ==================== تحميل قائمة المحادثات ====================
 async function loadConversations() {
+    const list = document.getElementById('aw-conv-list');
+    if (!list) return;
+
     const { data, error } = await supabase
         .from('chats')
         .select('user_id, user_email, message, created_at, sender')
         .order('created_at', { ascending: false });
 
     if (error) {
-        document.getElementById('conversations-list').innerHTML =
-            '<div class="no-conversations">❌ خطأ في تحميل المحادثات</div>';
+        list.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px;font-size:12px;">❌ خطأ</div>';
         return;
     }
 
-    // استخرج المحادثات الفريدة (آخر رسالة لكل مستخدم)
     const seen = new Set();
     const conversations = (data || []).filter(m => {
         if (seen.has(m.user_id)) return false;
@@ -52,36 +196,78 @@ async function loadConversations() {
         return true;
     });
 
-    const list = document.getElementById('conversations-list');
-
     if (!conversations.length) {
-        list.innerHTML = '<div class="no-conversations">لا توجد محادثات بعد</div>';
+        list.innerHTML = '<div style="text-align:center;color:#475569;padding:30px;font-size:12px;">لا توجد محادثات</div>';
         return;
     }
 
-    list.innerHTML = conversations.map(c => `
-        <div class="conv-item ${selectedUserId === c.user_id ? 'active' : ''}"
-             onclick="openConversation('${c.user_id}', '${escAttr(c.user_email)}')">
-            <div class="conv-email">${escHtml(c.user_email)}</div>
-            <div class="conv-preview">${escHtml(c.message.substring(0, 45))}${c.message.length > 45 ? '...' : ''}</div>
-            <div class="conv-time">${formatTime(c.created_at)}</div>
-        </div>
-    `).join('');
+    list.innerHTML = conversations.map(c => {
+        const unread = unreadCounts[c.user_id] || 0;
+        const isActive = selectedUserId === c.user_id;
+        return `
+        <div class="aw-conv-item" data-uid="${c.user_id}"
+             onclick="openConversation('${c.user_id}','${escAttr(c.user_email)}')"
+             style="padding:12px 14px;border-bottom:1px solid #1e2d42;cursor:pointer;
+                    transition:background 0.15s;display:flex;flex-direction:column;gap:3px;
+                    background:${isActive ? 'rgba(249,115,22,0.08)' : 'transparent'};
+                    border-right:${isActive ? '3px solid #f97316' : '3px solid transparent'};">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;
+                             overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">
+                    ${escHtml(c.user_email)}
+                </span>
+                ${unread > 0 ? `
+                <span style="background:#f97316;color:white;border-radius:50%;
+                             width:17px;height:17px;font-size:10px;font-weight:800;
+                             display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    ${unread}
+                </span>` : ''}
+            </div>
+            <div style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ${c.sender === 'admin' ? '↩ أنت: ' : ''}${escHtml(c.message.substring(0, 40))}${c.message.length > 40 ? '...' : ''}
+            </div>
+            <div style="font-size:10px;color:#334155;">${formatTime(c.created_at)}</div>
+        </div>`;
+    }).join('');
+
+    // hover effect
+    list.querySelectorAll('.aw-conv-item').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            if (el.dataset.uid !== selectedUserId) el.style.background = '#1a2535';
+        });
+        el.addEventListener('mouseleave', () => {
+            if (el.dataset.uid !== selectedUserId) el.style.background = 'transparent';
+        });
+    });
 }
 
+// ==================== فتح محادثة ====================
 window.openConversation = async (userId, userEmail) => {
     selectedUserId    = userId;
     selectedUserEmail = userEmail;
 
-    // تحديث UI
-    document.getElementById('chat-with').textContent    = userEmail;
-    document.getElementById('chat-status').textContent  = '🟢 نشط';
-    document.getElementById('admin-chat-input').disabled  = false;
-    document.getElementById('admin-send-btn').disabled    = false;
+    // تصفير عداد هذا المستخدم
+    unreadCounts[userId] = 0;
+    updateFloatBadge();
 
-    // تحديث التمييز في قائمة المحادثات
-    document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
-    event?.currentTarget?.classList.add('active');
+    // تحديث header
+    const chatWith = document.getElementById('aw-chat-with');
+    const status   = document.getElementById('aw-chat-status');
+    if (chatWith) chatWith.textContent = userEmail;
+    if (status)   status.textContent  = '🟢 نشط';
+
+    // تفعيل الإدخال
+    const input   = document.getElementById('aw-input');
+    const sendBtn = document.getElementById('aw-send');
+    if (input)   { input.disabled   = false; input.style.opacity   = '1'; input.focus(); }
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.style.opacity = '1'; }
+
+    // تمييز المحادثة النشطة
+    document.querySelectorAll('.aw-conv-item').forEach(el => {
+        const isActive = el.dataset.uid === userId;
+        el.style.background   = isActive ? 'rgba(249,115,22,0.08)' : 'transparent';
+        el.style.borderRight  = isActive ? '3px solid #f97316' : '3px solid transparent';
+    });
 
     // إلغاء الاشتراك القديم
     if (msgSubscription) supabase.removeChannel(msgSubscription);
@@ -93,59 +279,106 @@ window.openConversation = async (userId, userEmail) => {
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
-    const box = document.getElementById('admin-chat-messages');
+    const box = document.getElementById('aw-messages');
+    if (!box) return;
     box.innerHTML = '';
 
     if (!data || data.length === 0) {
-        box.innerHTML = '<div class="empty-state"><i class="fas fa-comment-slash"></i><span>لا توجد رسائل</span></div>';
+        box.innerHTML = `
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;
+                        justify-content:center;color:#475569;gap:8px;font-size:13px;padding:30px;">
+                <i class="fas fa-comment-slash" style="font-size:24px;opacity:0.2;"></i>
+                <span>لا توجد رسائل</span>
+            </div>`;
     } else {
         data.forEach(msg => appendMessage(msg));
         box.scrollTop = box.scrollHeight;
     }
 
-    // اشتراك للرسائل الجديدة في هذه المحادثة
+    // اشتراك real-time
     msgSubscription = supabase
-        .channel('admin-chat-' + userId)
+        .channel('aw-msg-' + userId)
         .on('postgres_changes', {
             event:  'INSERT',
             schema: 'public',
             table:  'chats',
             filter: `user_id=eq.${userId}`
         }, (payload) => {
-            const emptyDiv = box.querySelector('.empty-state');
-            if (emptyDiv) emptyDiv.remove();
+            const empty = box.querySelector('div[style*="flex-direction:column"]');
+            if (empty) empty.remove();
             appendMessage(payload.new);
             box.scrollTop = box.scrollHeight;
         })
         .subscribe();
 };
 
+// ==================== إضافة رسالة ====================
 function appendMessage(msg) {
-    const box = document.getElementById('admin-chat-messages');
-    const div = document.createElement('div');
+    const box = document.getElementById('aw-messages');
+    if (!box) return;
+
     const isAdmin = msg.sender === 'admin';
-    div.className = `chat-bubble ${isAdmin ? 'bubble-admin-sent' : 'bubble-client'}`;
-    div.innerHTML = `
-        ${!isAdmin ? `<span class="bubble-label">👤 ${escHtml(msg.user_email || 'عميل')}</span>` : ''}
-        <span>${escHtml(msg.message)}</span>
-        <small>${formatTime(msg.created_at)}</small>
+    const bubble  = document.createElement('div');
+    bubble.style.cssText = `
+        max-width: 75%;
+        padding: 9px 13px;
+        border-radius: ${isAdmin ? '14px 14px 14px 4px' : '14px 14px 4px 14px'};
+        font-size: 13px;
+        line-height: 1.6;
+        word-break: break-word;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        align-self: ${isAdmin ? 'flex-start' : 'flex-end'};
+        background: ${isAdmin ? '#f97316' : '#1a2535'};
+        color: ${isAdmin ? 'white' : '#f1f5f9'};
+        border: ${isAdmin ? 'none' : '1px solid #1e2d42'};
     `;
-    box.appendChild(div);
+
+    bubble.innerHTML = `
+        ${!isAdmin ? `<span style="font-size:10px;font-weight:700;opacity:0.6;margin-bottom:1px;">
+            👤 ${escHtml(msg.user_email || 'عميل')}
+        </span>` : ''}
+        <span>${escHtml(msg.message)}</span>
+        <span style="font-size:10px;opacity:0.55;align-self:flex-end;">${formatTime(msg.created_at)}</span>
+    `;
+
+    box.appendChild(bubble);
 }
 
+// ==================== مراقبة رسائل جديدة من أي مستخدم ====================
 function subscribeToNewMessages() {
-    supabase.channel('admin-all-new-msgs')
+    supabase.channel('aw-all-new')
         .on('postgres_changes', {
             event:  'INSERT',
             schema: 'public',
             table:  'chats',
             filter: `sender=eq.user`
-        }, () => {
+        }, (payload) => {
             loadConversations();
+            // إذا كانت من مستخدم غير مفتوح → زد العداد
+            if (payload.new.user_id !== selectedUserId) {
+                unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
+                updateFloatBadge();
+            }
         })
         .subscribe();
 }
 
+// ==================== Badge الزر العائم ====================
+function updateFloatBadge() {
+    const badge = document.getElementById('admin-chat-badge');
+    if (!badge) return;
+    const total = Object.values(unreadCounts).reduce((s, n) => s + n, 0);
+    if (total > 0) {
+        badge.textContent   = total;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// ==================== مساعدات ====================
 function formatTime(dateStr) {
     return new Date(dateStr).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
 }
@@ -160,3 +393,27 @@ function escHtml(str) {
 function escAttr(str) {
     return String(str).replace(/'/g, "\\'");
 }
+
+// ==================== تحديث الزر العائم تلقائياً ====================
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('admin-chat-float-btn');
+    if (btn) {
+        btn.removeAttribute('onclick');
+        btn.addEventListener('click', () => toggleAdminChat());
+    }
+
+    // مراقبة الرسائل حتى لو الـ widget مغلق
+    supabase.channel('aw-badge-watch')
+        .on('postgres_changes', {
+            event:  'INSERT',
+            schema: 'public',
+            table:  'chats',
+            filter: `sender=eq.user`
+        }, (payload) => {
+            if (!isWidgetOpen) {
+                unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
+                updateFloatBadge();
+            }
+        })
+        .subscribe();
+});
