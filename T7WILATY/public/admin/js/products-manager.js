@@ -29,6 +29,10 @@ const loadProducts = async () => {
                     <img src="${p.image || ''}" class="p-img-thumb" onerror="this.style.display='none'">
                     <span class="p-name">${p.name}</span>
                     <span style="color:#94a3b8; font-size:13px;">${p.country || ''}</span>
+                    ${p.category ? `<span style="background:rgba(249,115,22,0.15);color:#f97316;
+                        border-radius:10px;padding:2px 8px;font-size:11px;margin-right:4px;">
+                        ${p.category}
+                    </span>` : ''}
                 </div>
                 <div class="p-meta">
                     <span>${p.prices?.length || 0} فئات</span>
@@ -324,6 +328,15 @@ window.editProduct = (product) => {
             <label style="font-size:13px;color:#94a3b8;display:block;margin-bottom:5px;">الدولة / المنطقة</label>
             <input type="text" id="edit-p-country" value="${product.country || ''}"
                 style="width:100%;padding:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;margin-bottom:14px;box-sizing:border-box;">
+            <label style="font-size:13px;color:#94a3b8;display:block;margin-bottom:5px;">التصنيف</label>
+            <select id="edit-p-category"
+                style="width:100%;padding:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;margin-bottom:14px;box-sizing:border-box;">
+                <option value="ألعاب"       ${product.category === 'ألعاب'       ? 'selected' : ''}>🎮 ألعاب</option>
+                <option value="بطاقات Apple" ${product.category === 'بطاقات Apple' ? 'selected' : ''}>🍎 بطاقات Apple</option>
+                <option value="ستريمينغ"    ${product.category === 'ستريمينغ'    ? 'selected' : ''}>📺 ستريمينغ</option>
+                <option value="متاجر"       ${product.category === 'متاجر'       ? 'selected' : ''}>🛍️ متاجر</option>
+                <option value="أخرى"        ${product.category === 'أخرى'        ? 'selected' : ''}>🏷️ أخرى</option>
+            </select>
             <label style="font-size:13px;color:#94a3b8;display:block;margin-bottom:5px;">رابط الصورة</label>
             <input type="url" id="edit-p-image" value="${product.image || ''}"
                 style="width:100%;padding:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;margin-bottom:6px;box-sizing:border-box;">
@@ -343,11 +356,12 @@ window.editProduct = (product) => {
 };
 
 window.saveProductEdit = async (productId) => {
-    const name    = document.getElementById('edit-p-name').value.trim();
-    const country = document.getElementById('edit-p-country').value.trim();
-    const image   = document.getElementById('edit-p-image').value.trim();
+    const name     = document.getElementById('edit-p-name').value.trim();
+    const country  = document.getElementById('edit-p-country').value.trim();
+    const image    = document.getElementById('edit-p-image').value.trim();
+    const category = document.getElementById('edit-p-category').value;
     if (!name) { showToast('⚠️ اسم المنتج مطلوب!', true); return; }
-    const { error } = await supabase.from('products').update({ name, country, image }).eq('id', productId);
+    const { error } = await supabase.from('products').update({ name, country, image, category }).eq('id', productId);
     if (error) showToast('❌ خطأ: ' + error.message, true);
     else { document.getElementById('edit-product-modal').remove(); showToast('✅ تم تحديث المنتج!'); loadProducts(); }
 };
