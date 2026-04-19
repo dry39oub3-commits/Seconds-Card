@@ -537,7 +537,7 @@ window.refundGroupOrders = async (ids) => {
     }
 
     document.getElementById('order-detail-popup')?.remove();
-    showAlert(` تم استرداد ${ids.length} طلب\n💰 تم إرجاع ${totalRefunded.toLocaleString()} MRU للمحفظة\n🔑 تم إرجاع ${totalCodesReturned} كود للمخزون`);
+    showToast(`✅ تم استرداد ${ids.length} طلب\n💰 تم إرجاع ${totalRefunded.toLocaleString()} MRU للمحفظة\n🔑 تم إرجاع ${totalCodesReturned} كود للمخزون`);
     loadCompletedOrders();
 };
 
@@ -545,7 +545,7 @@ window.refundGroupOrders = async (ids) => {
 window.refundOrder = async (orderId) => {
     const { data: mainOrder, error: fetchError } = await supabase
         .from('orders').select('order_number').eq('id', orderId).single();
-    if (fetchError) { showAlert('خطأ: ' + fetchError.message); return; }
+    if (fetchError) { showToast('❌ خطأ: ' + fetchError.message); return; }
 
     const { data: allOrders } = await supabase
         .from('orders')
@@ -553,13 +553,13 @@ window.refundOrder = async (orderId) => {
         .eq('order_number', mainOrder.order_number)
         .eq('status', 'مكتمل');
 
-    if (!allOrders || allOrders.length === 0) { showAlert('لا توجد طلبات للاسترداد'); return; }
+    if (!allOrders || allOrders.length === 0) { showToast('لا توجد طلبات للاسترداد'); return; }
     await window.refundGroupOrders(allOrders.map(o => o.id));
 };
 
 // ==================== نسخ ====================
 window.copyText = (text) => {
-    navigator.clipboard.writeText(text).then(() => showAlert(' تم النسخ!'));
+    navigator.clipboard.writeText(text).then(() => showToast(' تم النسخ!'));
 };
 
 // ==================== فلاتر ====================

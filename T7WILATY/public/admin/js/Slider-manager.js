@@ -136,7 +136,7 @@ window.saveSlide = async () => {
     const image    = document.getElementById('slide-image').value.trim();
     const order    = parseInt(document.getElementById('slide-order').value) || 0;
 
-    if (!title) { alert('⚠️ العنوان مطلوب!'); return; }
+    if (!title) { showToast('⚠️ العنوان مطلوب!'); return; }
 
     const payload = {
         title,
@@ -155,8 +155,8 @@ window.saveSlide = async () => {
         ({ error } = await supabase.from('sliders').insert({ ...payload, is_active: true }));
     }
 
-    if (error) { alert('❌ خطأ: ' + error.message); return; }
-    alert(id ? '✅ تم تحديث الشريحة!' : '✅ تمت إضافة الشريحة!');
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
+    showToast(id ? '✅ تم تحديث الشريحة!' : '✅ تمت إضافة الشريحة!');
     resetForm();
     loadSlides();
 };
@@ -180,14 +180,14 @@ window.editSlide = (slide) => {
 window.deleteSlide = async (id) => {
     if (!confirm('هل تريد حذف هذه الشريحة؟')) return;
     const { error } = await supabase.from('sliders').delete().eq('id', id);
-    if (error) { alert('❌ خطأ: ' + error.message); return; }
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
     loadSlides();
 };
 
 // ===== تفعيل/تعطيل =====
 window.toggleActive = async (id, current) => {
     const { error } = await supabase.from('sliders').update({ is_active: !current }).eq('id', id);
-    if (error) { alert('❌ خطأ: ' + error.message); return; }
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
     loadSlides();
 };
 
@@ -234,3 +234,40 @@ document.getElementById('logoutBtn').onclick = async () => {
 
 // تحميل عند البداية
 loadSlides();
+
+
+function showToast(message, type = 'success') {
+    document.getElementById('_toast')?.remove();
+    const t = document.createElement('div');
+    t.id = '_toast';
+    t.textContent = message;
+    t.style.cssText = `
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: 'Tajawal', sans-serif;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => {
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(-10px)';
+        setTimeout(() => t.remove(), 300);
+    }, 2800);
+}

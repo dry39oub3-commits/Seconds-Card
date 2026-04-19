@@ -573,14 +573,14 @@ window.approveOrder = async (orderId, quantity) => {
     const supplierId      = document.getElementById('modal-supplier-id').value.trim();
     const supplierOrderId = document.getElementById('modal-supplier-order-id')?.value.trim() || '';
 
-    if (codes.length === 0)             { alert('⚠️ يرجى إدخال كود البطاقة!'); return; }
-    if (codes.length !== quantity)      { alert(`⚠️ عدد الأكواد (${codes.length}) لا يطابق الكمية (${quantity})!`); return; }
-    if (!cost || parseFloat(cost) <= 0) { alert('⚠️ يرجى إدخال سعر التكلفة!'); return; }
-    if (!supplierId)                    { alert('⚠️ يرجى إدخال اسم المورد!'); return; }
+    if (codes.length === 0)             { showToast('⚠️ يرجى إدخال كود البطاقة!'); return; }
+    if (codes.length !== quantity)      { showToast(`⚠️ عدد الأكواد (${codes.length}) لا يطابق الكمية (${quantity})!`); return; }
+    if (!cost || parseFloat(cost) <= 0) { showToast('⚠️ يرجى إدخال سعر التكلفة!'); return; }
+    if (!supplierId)                    { showToast('⚠️ يرجى إدخال اسم المورد!'); return; }
 
     for (const c of codes) {
         const { data: existing } = await supabase.from('used_codes').select('id').eq('code', c).maybeSingle();
-        if (existing) { alert(`⚠️ الكود "${c}" مستخدم بالفعل!`); return; }
+        if (existing) { showToast(`⚠️ الكود "${c}" مستخدم بالفعل!`); return; }
     }
 
     const stockCodesData   = window._stockCodesData || [];
@@ -592,7 +592,7 @@ window.approveOrder = async (orderId, quantity) => {
         suppliers_details: suppliersDetails.length > 0 ? suppliersDetails : null
     }).eq('id', orderId).select().single();
 
-    if (error) { alert('خطأ: ' + error.message); return; }
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
 
     for (const c of codes) {
         await supabase.from('used_codes').insert({ code: c, order_id: orderId, product_name: orderData?.product_name || '' });
@@ -609,7 +609,7 @@ window.approveOrder = async (orderId, quantity) => {
     }
 
     document.getElementById('order-modal').remove();
-    alert('✅ تم قبول الطلب بنجاح!');
+    showToast('✅ تم قبول الطلب بنجاح!');
     loadOrders();
 };
 
@@ -626,14 +626,14 @@ window.approveGroupOrders = async () => {
         const supplier = document.getElementById(`supplier-${i}`)?.value.trim();
         const qty      = item.quantity || 1;
 
-        if (!codes.length)               { alert(`⚠️ العنصر ${i+1}: يرجى إدخال الأكواد!`); return; }
-        if (codes.length !== qty)        { alert(`⚠️ العنصر ${i+1}: عدد الأكواد لا يطابق الكمية!`); return; }
-        if (!cost || parseFloat(cost) <= 0) { alert(`⚠️ العنصر ${i+1}: يرجى إدخال سعر التكلفة!`); return; }
-        if (!supplier)                   { alert(`⚠️ العنصر ${i+1}: يرجى إدخال اسم المورد!`); return; }
+        if (!codes.length)               { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال الأكواد!`); return; }
+        if (codes.length !== qty)        { showToast(`⚠️ العنصر ${i+1}: عدد الأكواد لا يطابق الكمية!`); return; }
+        if (!cost || parseFloat(cost) <= 0) { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال سعر التكلفة!`); return; }
+        if (!supplier)                   { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال اسم المورد!`); return; }
 
         for (const c of codes) {
             const { data: existing } = await supabase.from('used_codes').select('id').eq('code', c).maybeSingle();
-            if (existing) { alert(`⚠️ الكود "${c}" مستخدم بالفعل!`); return; }
+            if (existing) { showToast(`⚠️ الكود "${c}" مستخدم بالفعل!`); return; }
         }
     }
 
@@ -651,7 +651,7 @@ window.approveGroupOrders = async () => {
             suppliers_details: stockData?.suppliersDetails?.length > 0 ? stockData.suppliersDetails : null
         }).eq('id', item.id).select().single();
 
-        if (error) { alert(`خطأ في الطلب ${i+1}: ` + error.message); return; }
+        if (error) { showToast(`❌ خطأ في الطلب ${i+1}: ` + error.message); return; }
 
         for (const c of codes) {
             await supabase.from('used_codes').insert({ code: c, order_id: item.id, product_name: orderData?.product_name || '' });
@@ -668,34 +668,34 @@ window.approveGroupOrders = async () => {
 
     window._groupItems = null; window._groupStockData = null;
     document.getElementById('order-modal').remove();
-    alert(`✅ تم قبول ${items.length} طلب بنجاح!`);
+    showToast(`✅ تم قبول ${items.length} طلب بنجاح!`);
     loadOrders();
 };
 
 // ==================== رفض ====================
 window.rejectOrder = async (orderId) => {
     const reason = document.getElementById('reject-reason').value.trim();
-    if (!reason) { alert('⚠️ يرجى إدخال سبب الرفض!'); return; }
+    if (!reason) { showToast('⚠️ يرجى إدخال سبب الرفض!'); return; }
     if (!confirm(`هل تريد رفض هذا الطلب؟\nالسبب: ${reason}`)) return;
     const { error } = await supabase.from('orders').update({ status: 'ملغي', reject_reason: reason }).eq('id', orderId);
-    if (error) { alert('خطأ: ' + error.message); return; }
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
     window._reservedStockIds = null; window._stockCodesData = null;
     document.getElementById('order-modal').remove();
-    alert('تم رفض الطلب.');
+    showToast('تم رفض الطلب.');
     loadOrders();
 };
 
 window.rejectGroupOrders = async () => {
     const items  = window._groupItems || [];
     const reason = document.getElementById('group-reject-reason')?.value.trim();
-    if (!reason) { alert('⚠️ يرجى إدخال سبب الرفض!'); return; }
+    if (!reason) { showToast('⚠️ يرجى إدخال سبب الرفض!'); return; }
     if (!confirm(`هل تريد رفض ${items.length} طلب؟`)) return;
     for (const item of items) {
         await supabase.from('orders').update({ status: 'ملغي', reject_reason: reason }).eq('id', item.id);
     }
     window._groupItems = null; window._groupStockData = null;
     document.getElementById('order-modal').remove();
-    alert(`تم رفض ${items.length} طلب.`);
+    showToast(`تم رفض ${items.length} طلب.`);
     loadOrders();
 };
 
@@ -723,3 +723,40 @@ document.addEventListener('DOMContentLoaded', () => {
         .subscribe();
     setInterval(checkNewOrders, 30000);
 });
+
+
+function showToast(message, type = 'success') {
+    document.getElementById('_toast')?.remove();
+    const t = document.createElement('div');
+    t.id = '_toast';
+    t.textContent = message;
+    t.style.cssText = `
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: 'Tajawal', sans-serif;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => {
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(-10px)';
+        setTimeout(() => t.remove(), 300);
+    }, 2800);
+}

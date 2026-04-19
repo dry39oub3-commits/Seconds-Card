@@ -12,16 +12,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function checkUserIcon() {
     const { data: { session } } = await supabase.auth.getSession();
-    const userMenuContainer = document.querySelector('.user-menu-container');
-    if (userMenuContainer) {
-        userMenuContainer.style.display = session?.user ? 'block' : 'none';
-    }
-}
-async function checkAuthState() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const userIcon = document.querySelector('#user-icon-btn i');
-    if (userIcon && session?.user) {
-        userIcon.className = 'fas fa-user-check';
+    const userBtn = document.getElementById('user-icon-btn');
+    if (!userBtn) return;
+
+    if (session?.user) {
+        const user = session.user;
+        const avatarUrl = user.user_metadata?.avatar_url || '';
+
+        if (avatarUrl) {
+            // ← صورة المستخدم
+            userBtn.innerHTML = `
+                <img src="${avatarUrl}" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                     style="width:32px; height:32px; border-radius:50%; object-fit:cover;
+                            border:2px solid #f97316; display:block;">
+                <i class="fas fa-user-check" style="display:none;"></i>
+            `;
+        } else {
+            userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
+        }
+
+        userBtn.style.padding = '0';
+        userBtn.style.background = 'transparent';
+        userBtn.style.border = 'none';
+
+        userBtn.onclick = (e) => {
+            e.stopPropagation();
+            document.getElementById('user-dropdown')?.classList.toggle('show');
+        };
+    } else {
+        userBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i>';
+        userBtn.title = 'تسجيل الدخول';
+        userBtn.onclick = () => { window.location.href = 'login.html'; };
     }
 }
 
@@ -139,7 +161,7 @@ function updateSummary(total) {
 // --- 4. معالجة الانتقال للدفع ---
 window.processCheckout = () => {
     if (cart.length === 0) {
-        alert("سلتك فارغة! قم بإضافة بطاقات أولاً.");
+        showToast("سلتك فارغة! قم بإضافة بطاقات أولاً.");
         return;
     }
     window.location.href = "checkout.html";
@@ -212,3 +234,38 @@ function updateCartBadge() {
     
     }
 
+function showToast(message, type = 'success') {
+    document.getElementById('_toast')?.remove();
+    const t = document.createElement('div');
+    t.id = '_toast';
+    t.textContent = message;
+    t.style.cssText = `
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: 'Tajawal', sans-serif;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => {
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(-10px)';
+        setTimeout(() => t.remove(), 300);
+    }, 2800);
+}

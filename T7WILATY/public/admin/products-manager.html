@@ -11,7 +11,13 @@
         .product-row-item { background:#1e293b; border-radius:12px; margin-bottom:12px; overflow:hidden; }
         .product-main-info { display:flex; align-items:center; gap:15px; padding:15px 20px; cursor:pointer; }
         .product-main-info:hover { background:rgba(255,255,255,0.03); }
-        .p-img-thumb { width:50px; height:50px; object-fit:contain; background:white; border-radius:8px; padding:3px; }
+        .p-img-thumb { width: 110px; 
+    height: 110px; 
+    object-fit: cover;      /* تملأ الإطار بالكامل */
+    border-radius: 15px; 
+    background: white; 
+    padding: 0;             /* إزالة الـ padding */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);}
         .p-identity { display:flex; align-items:center; gap:12px; flex:1; }
         .p-name { font-size:16px; font-weight:bold; }
         .p-meta { display:flex; align-items:center; gap:10px; color:#94a3b8; font-size:13px; }

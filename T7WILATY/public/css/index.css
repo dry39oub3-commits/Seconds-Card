@@ -165,25 +165,36 @@ left: auto;
 .card-image {
     width: 100%;
     height: 160px;
-    background: #f1f1f1; /* لون خلفية خفيف خلف الصور الشفافة */
     border-radius: 15px;
     margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
+    position: relative;
+    background: #0f172a;
 }
 
 .card-image img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* يضمن عدم قص الصورة أو تمددها بشكل سيء */
-    padding: 10px; /* مسافة داخلية للصورة */
+    object-fit: cover;
+    object-position: center;
     transition: transform 0.5s ease;
+    display: block;
 }
 
 .card-item:hover .card-image img {
-    transform: scale(1.1); /* تكبير الصورة قليلاً عند التحويم */
+    transform: scale(1.08);
+}
+
+/* تأثير تدرج خفيف في الأسفل */
+.card-image::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to top, rgba(0,0,0,0.35), transparent);
+    pointer-events: none;
 }
 
 /* معلومات البطاقة */

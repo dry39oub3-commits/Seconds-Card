@@ -23,13 +23,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         .eq('id', user.id)
         .single();
 
-    const name = userData?.full_name || user.user_metadata?.full_name || 'مستخدم';
-const photo = user.user_metadata?.avatar_url || '';
+    const name  = userData?.full_name || user.user_metadata?.full_name || 'مستخدم';
+    const photo = user.user_metadata?.avatar_url || '';
 
     document.getElementById('user-display-name').value = name;
-    document.getElementById('user-name').textContent = name;
+    document.getElementById('user-name').textContent   = name;
 
-displayUserPhoto(photo);
+    displayUserPhoto(photo);
+    updateHeaderAvatar(photo); // ← تحديث الهيدر عند التحميل
 
     // إظهار زر الحفظ عند تعديل الاسم
     document.getElementById('user-display-name').addEventListener('input', () => {
@@ -37,7 +38,7 @@ displayUserPhoto(photo);
     });
 });
 
-// حفظ التعديلات
+// ==================== حفظ التعديلات ====================
 window.updateProfileData = async function() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -47,19 +48,19 @@ window.updateProfileData = async function() {
 
     const { error } = await supabase
         .from('users')
-       .update({ full_name: newName })
+        .update({ full_name: newName })
         .eq('id', user.id);
 
     if (error) {
-        alert('خطأ في الحفظ: ' + error.message);
+        showToast('خطأ في الحفظ: ' + error.message);
     } else {
-        alert('✅ تم حفظ التعديلات!');
+        showToast('✅ تم حفظ التعديلات!');
         document.getElementById('save-profile-btn').style.display = 'none';
         document.getElementById('user-name').textContent = newName;
     }
 };
 
-// رفع الصورة
+// ==================== رفع الصورة ====================
 window.triggerPhotoUpload = function() {
     document.getElementById('photo-input').click();
 };
@@ -77,26 +78,60 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
-    if (uploadError) { alert('خطأ في رفع الصورة'); return; }
+    if (uploadError) { showToast('خطأ في رفع الصورة'); return; }
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
     const photoURL = data.publicUrl;
 
-await supabase.auth.updateUser({ data: { avatar_url: photoURL } });
-displayUserPhoto(photoURL + '?t=' + Date.now());
-alert('✅ تم تحديث الصورة!');
+    // تحديث metadata في Supabase Auth
+    await supabase.auth.updateUser({ data: { avatar_url: photoURL } });
+
+    const freshUrl = photoURL + '?t=' + Date.now();
+
+    // تحديث الصورة في صفحة البروفيل
+    displayUserPhoto(freshUrl);
+
+    // ← تحديث أيقونة الهيدر فوراً
+    window.updateHeaderAvatar?.(freshUrl);
+
+    showToast('✅ تم تحديث الصورة!');
 });
 
-// تسجيل الخروج
+// ==================== تحديث أيقونة الهيدر ====================
+function updateHeaderAvatar(photoUrl) {
+    const userBtn = document.getElementById('user-icon-btn');
+    if (!userBtn) return;
+
+    if (photoUrl) {
+        userBtn.innerHTML = `
+            <img src="${photoUrl}"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                 style="width:32px; height:32px; border-radius:50%; object-fit:cover;
+                        border:2px solid #f97316; display:block;">
+            <i class="fas fa-user-check" style="display:none;"></i>
+        `;
+        userBtn.style.cssText = 'padding:0; background:transparent; border:none; cursor:pointer;';
+    } else {
+        userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
+    }
+
+    // إعادة ربط حدث الـ dropdown
+    userBtn.onclick = (e) => {
+        e.stopPropagation();
+        document.getElementById('user-dropdown')?.classList.toggle('show');
+    };
+}
+
+// ==================== تسجيل الخروج ====================
 window.handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
         localStorage.clear();
-        window.location.href = "index.html";
+        window.location.href = 'index.html';
     }
 };
 
-// دالة تحول الـ UUID إلى SC-XXXXXX
+// ==================== SC-ID ====================
 function generateSCId(uuid) {
     const hash = uuid.replace(/-/g, '');
     let num = 0;
@@ -106,24 +141,22 @@ function generateSCId(uuid) {
     return `SC-${String(num + 100000).padStart(6, '0')}`;
 }
 
-
-// وظيفة تحديث الصورة في الواجهة
+// ==================== عرض الصورة في البروفيل ====================
 function displayUserPhoto(photoUrl) {
-    const imgElement = document.getElementById('user-display-photo');
+    const imgElement  = document.getElementById('user-display-photo');
     const iconElement = document.getElementById('default-avatar-icon');
 
     if (photoUrl) {
-        imgElement.src = photoUrl;
-        imgElement.style.display = 'block'; // إظهار الصورة
-        iconElement.style.display = 'none'; // إخفاء الأيقونة تماماً
+        imgElement.src          = photoUrl;
+        imgElement.style.display = 'block';
+        iconElement.style.display = 'none';
     } else {
-        imgElement.style.display = 'none';
+        imgElement.style.display  = 'none';
         iconElement.style.display = 'block';
     }
 }
 
-
-// ===== Theme =====
+// ==================== Theme ====================
 function initTheme() {
     const btn   = document.getElementById('theme-toggle');
     const saved = localStorage.getItem('theme') || 'light';
@@ -142,4 +175,41 @@ function initTheme() {
 function updateIcon(theme) {
     const i = document.querySelector('#theme-toggle i');
     if (i) i.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+
+function showToast(message, type = 'success') {
+    document.getElementById('_toast')?.remove();
+    const t = document.createElement('div');
+    t.id = '_toast';
+    t.textContent = message;
+    t.style.cssText = `
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: 'Tajawal', sans-serif;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => {
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(-10px)';
+        setTimeout(() => t.remove(), 300);
+    }, 2800);
 }

@@ -48,7 +48,9 @@ function setupUserMenu() {
         userDropdown.classList.toggle('show');
     };
 
-    window.addEventListener('click', (e) => {
+   window.addEventListener('header-search', (e) => {
+    searchProducts(e.detail);
+
         if (!userDropdown.contains(e.target) && !userBtn.contains(e.target)) {
             userDropdown.classList.remove('show');
         }
@@ -207,19 +209,34 @@ async function checkUserIcon() {
     if (!userBtn) return;
 
     if (session?.user) {
-        // مسجل دخول — أيقونة عادية مع dropdown
-        userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
+        const user = session.user;
+        const avatarUrl = user.user_metadata?.avatar_url || '';
+
+        if (avatarUrl) {
+            // ← صورة المستخدم
+            userBtn.innerHTML = `
+                <img src="${avatarUrl}" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                     style="width:32px; height:32px; border-radius:50%; object-fit:cover;
+                            border:2px solid #f97316; display:block;">
+                <i class="fas fa-user-check" style="display:none;"></i>
+            `;
+        } else {
+            userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
+        }
+
+        userBtn.style.padding = '0';
+        userBtn.style.background = 'transparent';
+        userBtn.style.border = 'none';
+
         userBtn.onclick = (e) => {
             e.stopPropagation();
-            document.getElementById('user-dropdown').classList.toggle('show');
+            document.getElementById('user-dropdown')?.classList.toggle('show');
         };
     } else {
-        // غير مسجل — زر تسجيل الدخول
         userBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i>';
         userBtn.title = 'تسجيل الدخول';
-        userBtn.onclick = () => {
-            window.location.href = 'login.html';
-        };
+        userBtn.onclick = () => { window.location.href = 'login.html'; };
     }
 }
 

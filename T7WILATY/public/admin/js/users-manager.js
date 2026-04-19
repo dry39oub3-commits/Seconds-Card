@@ -1,5 +1,4 @@
 import { supabase } from '../../js/supabase-config.js';
-
 let allUsers = [];
 
 // ==================== SC-ID ====================
@@ -82,7 +81,7 @@ function renderUsersTable(usersList) {
 }
 
 window.filterUsers = function() {
-    const searchTerm  = document.getElementById('userSearch').value.toLowerCase().trim();
+    const searchTerm   = document.getElementById('userSearch').value.toLowerCase().trim();
     const statusFilter = document.getElementById('statusFilter').value;
 
     const filtered = allUsers.filter(user => {
@@ -110,11 +109,11 @@ window.openEditModal = function(userId) {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
 
-    document.getElementById('edit-user-id').value   = user.id;
-    document.getElementById('edit-name').value       = user.fullName || user.full_name || '';
-    document.getElementById('edit-email').value      = user.email || '';
-    document.getElementById('edit-status').value     = user.is_blocked ? 'blocked' : 'active';
-    document.getElementById('edit-password').value   = '';
+    document.getElementById('edit-user-id').value    = user.id;
+    document.getElementById('edit-name').value        = user.fullName || user.full_name || '';
+    document.getElementById('edit-email').value       = user.email || '';
+    document.getElementById('edit-status').value      = user.is_blocked ? 'blocked' : 'active';
+    document.getElementById('edit-password').value    = '';
     document.getElementById('editModal').style.display = 'block';
 };
 
@@ -127,7 +126,9 @@ window.saveUserChanges = async function() {
     const newName   = document.getElementById('edit-name').value;
     const newEmail  = document.getElementById('edit-email').value;
     const newStatus = document.getElementById('edit-status').value;
+    const newPass   = document.getElementById('edit-password').value.trim();
 
+    // تحديث البيانات الأساسية في جدول users
     const { error: dbError } = await supabase
         .from('users')
         .update({
@@ -138,13 +139,40 @@ window.saveUserChanges = async function() {
         .eq('id', userId);
 
     if (dbError) {
-        alert("❌ خطأ في تحديث البيانات: " + dbError.message);
+        alert("❌ خطأ: " + dbError.message);
         return;
     }
 
-    alert("✅ تم تحديث بيانات العميل بنجاح");
-    closeModal();
-    initializeUsersPage();
+    // تغيير كلمة المرور عبر Edge Function
+    if (newPass) {
+    const SUPABASE_ANON_KEY = "sb_publishable_UKw4zfQRW6-RsX8ntT_Ssw_ZnZuhvKd";
+
+    const res = await fetch(
+        'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/update-user-password',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({ userId, password: newPass })
+        }
+    );
+
+    const result = await res.json();
+
+    if (result.error) {
+        alert('❌ خطأ في تغيير كلمة المرور: ' + result.error);
+        return;
+    }
+
+    alert("✅ تم تحديث البيانات وكلمة المرور بنجاح");
+} else {
+    alert("✅ تم تحديث البيانات بنجاح");
+}
+
+closeModal();
+initializeUsersPage();
 };
 
 window.onclick = function(event) {
@@ -153,9 +181,3 @@ window.onclick = function(event) {
 };
 
 document.addEventListener('DOMContentLoaded', initializeUsersPage);
-
-
-
-
-
-

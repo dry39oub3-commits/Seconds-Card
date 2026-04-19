@@ -1,48 +1,14 @@
 import { supabase } from './supabase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    setupUserMenu();
     checkAuthState();
 });
 
-function initTheme() {
-    const themeToggle = document.getElementById('theme-toggle');
-    if (!themeToggle) return;
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
-    themeToggle.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(newTheme);
-    });
-}
 
-function updateThemeIcon(theme) {
-    const icon = document.querySelector('#theme-toggle i');
-    if (icon) icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-}
-
-function setupUserMenu() {
-    const userBtn = document.getElementById('user-icon-btn');
-    const userDropdown = document.getElementById('user-dropdown');
-    if (userBtn && userDropdown) {
-        userBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-        });
-        window.addEventListener('click', () => userDropdown.classList.remove('show'));
-    }
-}
 
 async function checkAuthState() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user || null;
-    const userIcon = document.querySelector('#user-icon-btn i');
-    if (user && userIcon) userIcon.className = 'fas fa-user-check';
     fetchUserOrders();
     watchOrders(); // ← أضف هذا السطر فقط
 }

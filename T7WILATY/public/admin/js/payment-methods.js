@@ -70,13 +70,13 @@
         const logo_url = document.getElementById('method-logo').value.trim();
         const account_number = document.getElementById('method-account').value.trim();
 
-        if (!name) { alert('أدخل اسم البنك!'); return; }
+        if (!name) { showToast('⚠️ أدخل اسم البنك!'); return; }
 
         const { error } = await supabase
             .from('payment_methods')
             .insert({ name, logo_url, account_number, is_active: true });
 
-        if (error) { alert('خطأ: ' + error.message); return; }
+        if (error) { showToast('❌ خطأ: ' + error.message); return; }
 
         document.getElementById('method-name').value = '';
         document.getElementById('method-logo').value = '';
@@ -97,9 +97,45 @@ window.toggleMethodVisibility = async (id, field, currentValue) => {
         .eq('id', id);
 
     if (error) {
-        alert('❌ خطأ: ' + error.message);
+        showToast('❌ خطأ: ' + error.message);
         return;
     }
 
     loadMethods();
 };
+
+function showToast(message, type = 'success') {
+    document.getElementById('_toast')?.remove();
+    const t = document.createElement('div');
+    t.id = '_toast';
+    t.textContent = message;
+    t.style.cssText = `
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: 'Tajawal', sans-serif;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => {
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(-10px)';
+        setTimeout(() => t.remove(), 300);
+    }, 2800);
+}
