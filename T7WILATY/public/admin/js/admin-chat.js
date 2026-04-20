@@ -484,3 +484,21 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[AdminChat] badge subscription:', status);
         });
 });
+
+
+// ==================== فاصل التاريخ ====================
+function formatDateLabel(dateStr) {
+    const d     = new Date(dateStr);
+    const today = new Date();
+    const yest  = new Date(); yest.setDate(today.getDate() - 1);
+
+    const sameDay = (a, b) =>
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth()    === b.getMonth()    &&
+        a.getDate()     === b.getDate();
+
+    if (sameDay(d, today)) return 'اليوم';
+    if (sameDay(d, yest))  return 'أمس';
+
+    return d.toLocaleDateString('ar', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
