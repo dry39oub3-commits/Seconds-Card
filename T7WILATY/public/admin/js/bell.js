@@ -76,3 +76,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+// ==================== عداد المحافظ في الهيدر ====================
+ 
+function updateWalletBadge(count) {
+    document.querySelectorAll('a[href*="admin-wallet.html"]').forEach(link => {
+        link.querySelector('.wallet-badge')?.remove();
+        if (count > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'wallet-badge';
+            badge.textContent = count;
+            badge.style.cssText = `
+                background: #ef4444;
+                color: white;
+                border-radius: 50%;
+                font-size: 10px;
+                font-weight: 800;
+                min-width: 17px;
+                height: 17px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 4px;
+                margin-right: 4px;
+                line-height: 1;
+                vertical-align: middle;
+            `;
+            link.appendChild(badge);
+        }
+    });
+}
+ 
+async function fetchPendingCount() {
+    const { count, error } = await supabase
+        .from('wallet_transactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'قيد المراجعة');
+ 
+    if (!error) updateWalletBadge(count || 0);
+}
+ 
+// ✅ جلب العداد فور تحميل الصفحة
+fetchPendingCount();
+ 
+// ✅ مراقبة realtime — يُحدَّث العداد فوراً عند أي تغيير
+supabase
+    .channel('wallet-badge-realtime')
+    .on('postgres_changes', {
+        event:  '*',           // INSERT أو UPDATE أو DELETE
+        schema: 'public',
+        table:  'wallet_transactions'
+    }, () => {
+        // أي تغيير في الجدول → أعد جلب العداد
+        fetchPendingCount();
+    })
+    .subscribe();
