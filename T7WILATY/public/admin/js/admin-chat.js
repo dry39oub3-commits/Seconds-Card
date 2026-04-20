@@ -310,7 +310,7 @@ window.openConversation = async (userId, userEmail) => {
     const box = document.getElementById('aw-messages');
     if (!box) return;
     box.innerHTML = '';
-
+    lastDateLabel = null;
     if (!data || data.length === 0) {
         box.innerHTML = `
             <div style="flex:1;display:flex;flex-direction:column;align-items:center;
