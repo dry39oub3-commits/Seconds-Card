@@ -287,18 +287,13 @@ body {
     color: white !important;
 }
 
-.main-header .search-bar {
-    background-color: #2d3748 !important; /* خلفية البحث داكنة دائماً */
-    border: 1px solid #4a5568;
-}
+.search-container {
+        order: 3;
+        width: 100%;
+        flex-grow: unset;
+    }
 
-.main-header .search-bar input {
-    color: white !important;
-}
-
-.main-header .search-bar input::placeholder {
-    color: #a0aec0 !important;
-}
+    .search-bar { max-width: 100%; }
 
 
 /* --- ضمان ظهور سجل العمليات في الوضع الداكن --- */
@@ -401,3 +396,9 @@ body.dark-mode .history-section h3 {
 header {
     position: relative;
 }
+
+.header-container {
+        flex-wrap: wrap;
+        padding: 8px 15px;
+        gap: 10px;
+    }

@@ -15,6 +15,17 @@ async function initializeUsersPage() {
     const tbody = document.getElementById('users-list-body');
     if (!tbody) return;
 
+    // ===== إضافة حاوية السكرول التلقائية للهاتف =====
+    const table = tbody.closest('table');
+    if (table && !table.parentElement.classList.contains('table-container')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-container';
+        // نضع الـ table داخل الـ wrapper
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+    }
+    // ==================================================
+
     const { data: users, error } = await supabase
         .from('users')
         .select('*')
@@ -22,7 +33,7 @@ async function initializeUsersPage() {
 
     if (error) {
         console.error("خطأ في جلب المستخدمين:", error.message);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">❌ خطأ في جلب البيانات</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: #94a3b8; padding: 20px;">❌ خطأ في جلب البيانات</td></tr>';
         return;
     }
 
@@ -35,7 +46,8 @@ function renderUsersTable(usersList) {
     const tbody = document.getElementById('users-list-body');
 
     if (!usersList || usersList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">لا يوجد عملاء</td></tr>';
+        // إضافة لون رمادي للنص ليظهر في الوضع الداكن
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: #94a3b8; padding: 20px;">لا يوجد عملاء</td></tr>`;
         return;
     }
 

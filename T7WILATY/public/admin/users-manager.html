@@ -82,18 +82,54 @@ header #theme-toggle i {
         }
 
         /* أضف في نهاية الـ CSS الخاص بصفحة users-manager */
+/* حاوية الجدول المتجاوبة */
 .table-container, .users-table-wrap {
+    width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch; /* لجعل السكرول سلس جداً في الآيفون */
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: var(--card-bg);
 }
 
 table {
-    min-width: 600px;
+    width: 100%;
+    min-width: 750px; /* ضمان عدم انضغاط الجدول حتى مع وجود 7 أعمدة */
+    border-collapse: collapse;
 }
 
+th, td {
+    padding: 14px 12px;
+    text-align: right;
+    white-space: nowrap; /* لمنع تكسير النصوص داخل الخلايا */
+}
+
+/* تحسينات الهواتف */
 @media (max-width: 768px) {
-    table { min-width: 500px; }
-    th, td { padding: 10px 8px; font-size: 12px; white-space: nowrap; }
+    .users-container { 
+        padding: 10px; 
+    }
+    
+    .controls-row {
+        flex-direction: column;
+    }
+    
+    .search-box {
+        min-width: 100%;
+    }
+    
+    /* إخفاء بعض الأعمدة غير الأساسية في شاشات الهاتف الصغيرة جداً (أقل من 500px) */
+    @media (max-width: 500px) {
+        table { min-width: 600px; }
+        
+        /* إخفاء عمود رقم الهاتف والتاريخ في الموبايل لتوفير المساحة */
+        th:nth-child(3), td:nth-child(3), /* عمود الهاتف */
+        th:nth-child(6), td:nth-child(6)  /* عمود التاريخ */
+        { 
+            display: none; 
+        }
+    }
 }
 
     </style>

@@ -20,7 +20,6 @@ async function checkUserIcon() {
         const avatarUrl = user.user_metadata?.avatar_url || '';
 
         if (avatarUrl) {
-            // ← صورة المستخدم
             userBtn.innerHTML = `
                 <img src="${avatarUrl}" 
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
@@ -47,7 +46,6 @@ async function checkUserIcon() {
     }
 }
 
-
 // --- 2. عرض محتويات السلة وتحديث الواجهة ---
 function renderCart() {
     const list = document.getElementById('cart-items-list');
@@ -59,6 +57,7 @@ function renderCart() {
         list.innerHTML = "";
         if (emptyMsg) emptyMsg.style.display = 'block';
         updateSummary(0);
+        updateCartBadge();
         return;
     }
 
@@ -115,27 +114,6 @@ window.updateQty = (index, change) => {
     }
 };
 
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${type === 'success' ? '#22c55e' : '#c70d0d'};
-        color: white;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-size: 16px;
-        z-index: 9999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        transition: opacity 0.5s;
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2000);
-}
-
 window.removeItem = (index) => {
     cart.splice(index, 1);
     saveAndReload();
@@ -161,14 +139,13 @@ function updateSummary(total) {
 // --- 4. معالجة الانتقال للدفع ---
 window.processCheckout = () => {
     if (cart.length === 0) {
-        showToast("سلتك فارغة! قم بإضافة بطاقات أولاً.");
+        showToast("سلتك فارغة! قم بإضافة بطاقات أولاً.", 'error');
         return;
     }
     window.location.href = "checkout.html";
 };
 
-
-
+// ==================== الوظائف المساعدة ====================
 
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -197,11 +174,9 @@ window.handleLogout = async () => {
     }
 };
 
-
 function updateCartBadge() {
     const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
     
-    // أضف badge إذا لم يكن موجوداً
     let badge = document.querySelector('.cart-badge');
     const cartIcon = document.querySelector('a[href="cart.html"]');
     
@@ -231,20 +206,26 @@ function updateCartBadge() {
     
     badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
-    
-    }
+}
 
+// ==================== دالة التنبيهات (نسخة واحدة فقط) ====================
 function showToast(message, type = 'success') {
     document.getElementById('_toast')?.remove();
     const t = document.createElement('div');
     t.id = '_toast';
     t.textContent = message;
+    
+    // تعديل بسيط ليعمل مع الـ warning أيضاً
+    let bgColor = '#22c55e';
+    if(type === 'error') bgColor = '#ef4444';
+    if(type === 'warning') bgColor = '#f97316';
+
     t.style.cssText = `
         position: fixed;
         top: 24px;
         left: 50%;
         transform: translateX(-50%) translateY(-10px);
-        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        background: ${bgColor};
         color: white;
         padding: 12px 24px;
         border-radius: 10px;
