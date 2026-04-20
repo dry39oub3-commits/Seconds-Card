@@ -351,9 +351,33 @@ window.openConversation = async (userId, userEmail) => {
 };
 
 // ==================== إضافة رسالة ====================
+let lastDateLabel = null;
+
 function appendMessage(msg) {
     const box = document.getElementById('aw-messages');
     if (!box) return;
+
+    // ✅ فاصل التاريخ
+    const dateLabel = formatDateLabel(msg.created_at);
+    if (dateLabel !== lastDateLabel) {
+        lastDateLabel = dateLabel;
+        const separator = document.createElement('div');
+        separator.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            color: #475569;
+            font-size: 11px;
+            text-align: center;
+        `;
+        separator.innerHTML = `
+            <div style="flex:1;height:1px;background:#1e2d42;"></div>
+            <span style="white-space:nowrap;padding:0 4px;">${escHtml(dateLabel)}</span>
+            <div style="flex:1;height:1px;background:#1e2d42;"></div>
+        `;
+        box.appendChild(separator);
+    }
 
     const isAdmin = msg.sender === 'admin';
     const isScreenshot = msg.message?.startsWith('[screenshot]');
@@ -486,19 +510,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ==================== فاصل التاريخ ====================
-function formatDateLabel(dateStr) {
-    const d     = new Date(dateStr);
-    const today = new Date();
-    const yest  = new Date(); yest.setDate(today.getDate() - 1);
-
-    const sameDay = (a, b) =>
-        a.getFullYear() === b.getFullYear() &&
-        a.getMonth()    === b.getMonth()    &&
-        a.getDate()     === b.getDate();
-
-    if (sameDay(d, today)) return 'اليوم';
-    if (sameDay(d, yest))  return 'أمس';
-
-    return d.toLocaleDateString('ar', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-}
