@@ -1,0 +1,7 @@
+# Excel files
+*.xlsx
+*.xls
+*.csv
+
+# Other
+*.lnk
