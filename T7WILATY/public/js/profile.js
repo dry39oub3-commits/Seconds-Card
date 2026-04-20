@@ -24,13 +24,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         .single();
 
     const name  = userData?.full_name || user.user_metadata?.full_name || 'مستخدم';
-    const photo = user.user_metadata?.avatar_url || '';
+
+    // ← التعديل الأول: نقرأ الصورة من جدول users أولاً، ثم metadata كـ بديل
+    const photo = userData?.avatar_url || user.user_metadata?.avatar_url || '';
 
     document.getElementById('user-display-name').value = name;
     document.getElementById('user-name').textContent   = name;
 
     displayUserPhoto(photo);
-    updateHeaderAvatar(photo); // ← تحديث الهيدر عند التحميل
+    updateHeaderAvatar(photo);
 
     // إظهار زر الحفظ عند تعديل الاسم
     document.getElementById('user-display-name').addEventListener('input', () => {
@@ -52,7 +54,7 @@ window.updateProfileData = async function() {
         .eq('id', user.id);
 
     if (error) {
-        showToast('خطأ في الحفظ: ' + error.message);
+        showToast('خطأ في الحفظ: ' + error.message, 'error');
     } else {
         showToast('✅ تم حفظ التعديلات!');
         document.getElementById('save-profile-btn').style.display = 'none';
@@ -60,7 +62,7 @@ window.updateProfileData = async function() {
     }
 };
 
-// ==================== رفع الصورة ====================
+// ==================== رفع الصورة (مُصلح بالكامل) ====================
 window.triggerPhotoUpload = function() {
     document.getElementById('photo-input').click();
 };
@@ -73,25 +75,45 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
     const user = session?.user;
     if (!user) return;
 
+    // 1) رفع الملف إلى Storage
     const filePath = `avatars/${user.id}`;
     const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
-    if (uploadError) { showToast('خطأ في رفع الصورة'); return; }
+    if (uploadError) {
+        showToast('خطأ في رفع الصورة: ' + uploadError.message, 'error');
+        return;
+    }
 
+    // 2) الحصول على الرابط العام
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
     const photoURL = data.publicUrl;
-
-    // تحديث metadata في Supabase Auth
-    await supabase.auth.updateUser({ data: { avatar_url: photoURL } });
-
     const freshUrl = photoURL + '?t=' + Date.now();
 
-    // تحديث الصورة في صفحة البروفيل
-    displayUserPhoto(freshUrl);
+    // 3) ← التعديل الثاني: حفظ الرابط في جدول users (المصدر الموثوق)
+    const { error: dbError } = await supabase
+        .from('users')
+        .update({ avatar_url: freshUrl })
+        .eq('id', user.id);
 
-    // ← تحديث أيقونة الهيدر فوراً
+    if (dbError) {
+        showToast('خطأ في حفظ الصورة في قاعدة البيانات', 'error');
+        return;
+    }
+
+    // 4) تحديث metadata في Auth (كمصدر ثانوي)
+    const { error: metaError } = await supabase.auth.updateUser({
+        data: { avatar_url: freshUrl }
+    });
+
+    if (metaError) {
+        console.warn('تحذير: لم يتم تحديث metadata:', metaError.message);
+        // لا نوقف العملية لأننا حفظنا في جدول users بنجاح
+    }
+
+    // 5) تحديث الواجهة فوراً
+    displayUserPhoto(freshUrl);
     window.updateHeaderAvatar?.(freshUrl);
 
     showToast('✅ تم تحديث الصورة!');
@@ -115,7 +137,6 @@ function updateHeaderAvatar(photoUrl) {
         userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
     }
 
-    // إعادة ربط حدث الـ dropdown
     userBtn.onclick = (e) => {
         e.stopPropagation();
         document.getElementById('user-dropdown')?.classList.toggle('show');
@@ -147,7 +168,7 @@ function displayUserPhoto(photoUrl) {
     const iconElement = document.getElementById('default-avatar-icon');
 
     if (photoUrl) {
-        imgElement.src          = photoUrl;
+        imgElement.src = photoUrl;
         imgElement.style.display = 'block';
         iconElement.style.display = 'none';
     } else {
@@ -177,7 +198,7 @@ function updateIcon(theme) {
     if (i) i.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 }
 
-
+// ==================== Toast ====================
 function showToast(message, type = 'success') {
     document.getElementById('_toast')?.remove();
     const t = document.createElement('div');
