@@ -50,7 +50,7 @@ function buildAdminWidget() {
                 <span style="font-size:13px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:7px;">
                     <i class="fas fa-comments" style="color:#f97316;"></i> المحادثات
                 </span>
-                <button onclick="toggleAdminChat()" style="background:rgba(239,68,68,0.12);
+                <button id="aw-close-btn" style="background:rgba(239,68,68,0.12);
                         color:#ef4444;border:1px solid rgba(239,68,68,0.25);border-radius:7px;
                         width:26px;height:26px;cursor:pointer;font-size:12px;
                         display:flex;align-items:center;justify-content:center;">
@@ -119,6 +119,9 @@ function buildAdminWidget() {
 
     document.body.appendChild(widget);
 
+    // ✅ زر الإغلاق بـ event listener بدل onclick inline
+    widget.querySelector('#aw-close-btn').addEventListener('click', () => toggleAdminChat());
+
     widget.querySelector('#aw-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!selectedUserId) return;
@@ -168,14 +171,13 @@ window.toggleAdminChat = async () => {
 };
 
 // ==================== جلب العداد من DB ====================
-// ✅ تحسب فقط الرسائل التي وصلت بعد بدء الجلسة الحالية (SESSION_START)
 async function refreshUnreadFromDB() {
     const { data } = await supabase
         .from('chats')
         .select('user_id')
         .eq('sender', 'user')
         .eq('is_read', false)
-        .gte('created_at', SESSION_START); // ← فقط رسائل هذه الجلسة
+        .gte('created_at', SESSION_START);
 
     const fresh = {};
     (data || []).forEach(m => {
@@ -216,12 +218,12 @@ async function loadConversations() {
     }
 
     list.innerHTML = conversations.map(c => {
-        // ✅ العداد من الذاكرة فقط
         const unread   = unreadCounts[c.user_id] || 0;
         const isActive = selectedUserId === c.user_id;
         return `
-        <div class="aw-conv-item" data-uid="${c.user_id}"
-             onclick="openConversation('${c.user_id}','${escAttr(c.user_email)}')"
+        <div class="aw-conv-item"
+             data-uid="${escAttr(c.user_id)}"
+             data-email="${escAttr(c.user_email)}"
              style="padding:12px 14px;border-bottom:1px solid #1e2d42;cursor:pointer;
                     transition:background 0.15s;display:flex;flex-direction:column;gap:3px;
                     background:${isActive ? 'rgba(249,115,22,0.08)' : 'transparent'};
@@ -246,7 +248,11 @@ async function loadConversations() {
         </div>`;
     }).join('');
 
+    // ✅ event listeners بدل onclick inline — يحل مشكلة الأحرف الخاصة في userId/email
     list.querySelectorAll('.aw-conv-item').forEach(el => {
+        el.addEventListener('click', () => {
+            openConversation(el.dataset.uid, el.dataset.email);
+        });
         el.addEventListener('mouseenter', () => {
             if (el.dataset.uid !== selectedUserId) el.style.background = '#1a2535';
         });
@@ -309,8 +315,9 @@ window.openConversation = async (userId, userEmail) => {
 
     const box = document.getElementById('aw-messages');
     if (!box) return;
-    box.innerHTML = '';
-    lastDateLabel = null;
+    box.innerHTML  = '';
+    lastDateLabel  = null; // ✅ إعادة تعيين فاصل التاريخ
+
     if (!data || data.length === 0) {
         box.innerHTML = `
             <div style="flex:1;display:flex;flex-direction:column;align-items:center;
@@ -379,9 +386,9 @@ function appendMessage(msg) {
         box.appendChild(separator);
     }
 
-    const isAdmin = msg.sender === 'admin';
+    const isAdmin      = msg.sender === 'admin';
     const isScreenshot = msg.message?.startsWith('[screenshot]');
-    const imgUrl = isScreenshot ? msg.message.replace('[screenshot]', '') : null;
+    const imgUrl       = isScreenshot ? msg.message.replace('[screenshot]', '') : null;
 
     const bubble = document.createElement('div');
     bubble.style.cssText = `
@@ -404,8 +411,8 @@ function appendMessage(msg) {
             👤 ${escHtml(msg.user_email || 'عميل')}
         </span>` : ''}
         ${isScreenshot
-            ? `<img src="${imgUrl}" style="max-width:220px;border-radius:8px;cursor:pointer;"
-                    onclick="window.open('${imgUrl}','_blank')">`
+            ? `<img src="${escHtml(imgUrl)}" style="max-width:220px;border-radius:8px;cursor:pointer;"
+                    onclick="window.open('${escAttr(imgUrl)}','_blank')">`
             : `<span>${escHtml(msg.message)}</span>`
         }
         <span style="font-size:10px;opacity:0.55;align-self:flex-end;">${formatTime(msg.created_at)}</span>
@@ -460,6 +467,22 @@ function formatTime(dateStr) {
     return new Date(dateStr).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatDateLabel(dateStr) {
+    const d     = new Date(dateStr);
+    const today = new Date();
+    const yest  = new Date(); yest.setDate(today.getDate() - 1);
+
+    const sameDay = (a, b) =>
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth()    === b.getMonth()    &&
+        a.getDate()     === b.getDate();
+
+    if (sameDay(d, today)) return 'اليوم';
+    if (sameDay(d, yest))  return 'أمس';
+
+    return d.toLocaleDateString('ar', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 function escHtml(str) {
     return String(str)
         .replace(/&/g, '&amp;')
@@ -468,7 +491,10 @@ function escHtml(str) {
 }
 
 function escAttr(str) {
-    return String(str).replace(/'/g, "\\'");
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/'/g, '&#39;')
+        .replace(/"/g, '&quot;');
 }
 
 // ==================== تهيئة عند تحميل الصفحة ====================
@@ -484,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
         badgeSubscription = null;
     }
 
-    // ✅ عند تحميل الصفحة: العداد = صفر (لا شيء قديم يُحسب)
+    // ✅ عند تحميل الصفحة: العداد = صفر
     unreadCounts = {};
     updateFloatBadge();
 
@@ -508,5 +534,3 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[AdminChat] badge subscription:', status);
         });
 });
-
-
