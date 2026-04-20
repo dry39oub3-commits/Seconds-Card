@@ -102,7 +102,7 @@ function buildChatWidget() {
 
     document.body.appendChild(widget);
 
-    // ✅ إرسال رسالة نصية
+    // إرسال رسالة نصية
     widget.querySelector('#cw-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!currentUser) return;
@@ -123,12 +123,172 @@ function buildChatWidget() {
         input.focus();
     });
 
-    // ✅ زر الكاميرا — يُضاف هنا مباشرة بعد بناء الـ widget
+    // زر الكاميرا — يفتح الـ picker
     widget.querySelector('#cw-screenshot').addEventListener('click', () => {
-        takeScreenshot();
+        showImageSourcePicker();
     });
 
     setTimeout(() => document.getElementById('cw-input')?.focus(), 300);
+}
+
+// ==================== Picker: كاميرا أو معرض ====================
+function showImageSourcePicker() {
+    document.getElementById('cw-img-picker')?.remove();
+
+    const picker = document.createElement('div');
+    picker.id = 'cw-img-picker';
+    picker.style.cssText = `
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.65);
+        backdrop-filter: blur(4px);
+        z-index: 999999;
+        display: flex; align-items: flex-end; justify-content: center;
+        padding-bottom: 24px;
+        animation: pickerFadeIn 0.2s ease;
+    `;
+
+    picker.innerHTML = `
+        <style>
+            @keyframes pickerFadeIn  { from{opacity:0} to{opacity:1} }
+            @keyframes pickerSlideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+            .cw-picker-box {
+                background:#1e293b; border:1px solid #334155; border-radius:20px;
+                padding:20px 16px; width:100%; max-width:340px;
+                display:flex; flex-direction:column; gap:10px;
+                animation:pickerSlideUp 0.25s ease;
+                font-family:'Tajawal','Segoe UI',sans-serif;
+            }
+            .cw-picker-title {
+                text-align:center; font-size:13px; color:#94a3b8;
+                margin-bottom:4px; font-weight:600;
+            }
+            .cw-picker-btn {
+                display:flex; align-items:center; gap:14px;
+                padding:14px 18px; border-radius:12px;
+                border:1px solid #2d3f55; background:#0f172a;
+                color:#e2e8f0; font-size:14px; font-weight:700;
+                cursor:pointer; width:100%; text-align:right;
+                transition:background 0.18s, border-color 0.18s, transform 0.15s;
+                font-family:'Tajawal','Segoe UI',sans-serif;
+            }
+            .cw-picker-btn:hover { background:#1a2535; border-color:#f97316; transform:translateY(-1px); }
+            .cw-picker-btn i { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
+            .cw-picker-sub { font-size:11px; font-weight:400; color:#64748b; margin-top:2px; }
+            .cw-picker-cancel {
+                text-align:center; padding:10px; color:#64748b; font-size:13px;
+                cursor:pointer; border-radius:10px;
+                transition:color 0.15s; font-family:'Tajawal','Segoe UI',sans-serif;
+            }
+            .cw-picker-cancel:hover { color:#ef4444; }
+        </style>
+
+        <div class="cw-picker-box">
+            <div class="cw-picker-title">اختر مصدر الصورة</div>
+
+            <button class="cw-picker-btn" id="cw-pick-camera">
+                <i class="fas fa-camera" style="color:#f97316;"></i>
+                <div>
+                    <div>الكاميرا</div>
+                    <div class="cw-picker-sub">التقط صورة جديدة</div>
+                </div>
+            </button>
+
+            <button class="cw-picker-btn" id="cw-pick-gallery">
+                <i class="fas fa-images" style="color:#3b82f6;"></i>
+                <div>
+                    <div>معرض الصور</div>
+                    <div class="cw-picker-sub">اختر من الاستوديو</div>
+                </div>
+            </button>
+
+            <div class="cw-picker-cancel" id="cw-pick-cancel">إلغاء</div>
+        </div>
+    `;
+
+    document.body.appendChild(picker);
+
+    const close = () => {
+        picker.style.opacity = '0';
+        picker.style.transition = 'opacity 0.2s';
+        setTimeout(() => picker.remove(), 200);
+    };
+
+    picker.addEventListener('click', e => { if (e.target === picker) close(); });
+    document.getElementById('cw-pick-cancel').addEventListener('click', close);
+
+    // ── الكاميرا: capture=environment يفتح الكاميرا الخلفية ──
+    document.getElementById('cw-pick-camera').addEventListener('click', () => {
+        close();
+        openFileInput(true);
+    });
+
+    // ── المعرض: بدون capture يفتح الاستوديو ──
+    document.getElementById('cw-pick-gallery').addEventListener('click', () => {
+        close();
+        openFileInput(false);
+    });
+}
+
+// ── رفع الصورة بعد الاختيار ──
+function openFileInput(useCamera) {
+    if (!currentUser) return;
+
+    const btn = document.getElementById('cw-screenshot');
+
+    const input = document.createElement('input');
+    input.type   = 'file';
+    input.accept = 'image/*';
+    // capture=environment  → يفتح الكاميرا الخلفية مباشرة
+    // بدون capture         → يفتح معرض الصور
+    if (useCamera) input.setAttribute('capture', 'environment');
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    const resetBtn = () => {
+        if (btn) { btn.innerHTML = '<i class="fas fa-camera"></i>'; btn.disabled = false; }
+    };
+    if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true; }
+
+    input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        document.body.removeChild(input);
+        if (!file) { resetBtn(); return; }
+
+        try {
+            const ext      = file.name.split('.').pop() || 'jpg';
+            const fileName = `screenshots/${currentUser.id}_${Date.now()}.${ext}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('chat-screenshots')
+                .upload(fileName, file, { contentType: file.type });
+
+            if (uploadError) { showScreenshotToast('❌ فشل رفع الصورة'); resetBtn(); return; }
+
+            const { data: urlData } = supabase.storage
+                .from('chat-screenshots').getPublicUrl(fileName);
+
+            await supabase.from('chats').insert({
+                user_id:    currentUser.id,
+                user_email: currentUser.email,
+                message:    `[screenshot]${urlData.publicUrl}`,
+                sender:     'user',
+                is_read:    false
+            });
+
+            showScreenshotToast('✅ تم إرسال الصورة!');
+        } catch (err) {
+            showScreenshotToast('❌ حدث خطأ أثناء الرفع');
+        }
+
+        resetBtn();
+    });
+
+    input.addEventListener('cancel', () => {
+        document.body.removeChild(input);
+        resetBtn();
+    });
+
+    input.click();
 }
 
 // ==================== فتح / إغلاق ====================
@@ -251,9 +411,9 @@ function appendWidgetMessage(msg) {
     const box = document.getElementById('cw-messages');
     if (!box) return;
 
-    const isUser = msg.sender === 'user';
+    const isUser       = msg.sender === 'user';
     const isScreenshot = msg.message?.startsWith('[screenshot]');
-    const imgUrl = isScreenshot ? msg.message.replace('[screenshot]', '') : null;
+    const imgUrl       = isScreenshot ? msg.message.replace('[screenshot]', '') : null;
 
     const bubble = document.createElement('div');
     bubble.style.cssText = `
@@ -283,82 +443,7 @@ function appendWidgetMessage(msg) {
     box.appendChild(bubble);
 }
 
-// ==================== لقطة الشاشة / رفع صورة ====================
-async function takeScreenshot() {
-    if (!currentUser) return;
-
-    const btn = document.getElementById('cw-screenshot');
-    if (!btn) return;
-
-    // ✅ إنشاء input مخفي من نوع file لفتح معرض الصور
-    const input = document.createElement('input');
-    input.type    = 'file';
-    input.accept  = 'image/*';         // ← يقبل كل أنواع الصور
-    input.capture = '';                // ← بدون capture حتى يفتح المعرض وليس الكاميرا
-    input.style.display = 'none';
-    document.body.appendChild(input);
-
-    // تغيير أيقونة الزر للانتظار
-    btn.innerHTML  = '<i class="fas fa-spinner fa-spin"></i>';
-    btn.disabled   = true;
-
-    input.addEventListener('change', async () => {
-        const file = input.files?.[0];
-        document.body.removeChild(input);
-
-        if (!file) {
-            btn.innerHTML = '<i class="fas fa-camera"></i>';
-            btn.disabled  = false;
-            return;
-        }
-
-        try {
-            const ext      = file.name.split('.').pop() || 'jpg';
-            const fileName = `screenshots/${currentUser.id}_${Date.now()}.${ext}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('chat-screenshots')
-                .upload(fileName, file, { contentType: file.type });
-
-            if (uploadError) {
-                showScreenshotToast('❌ فشل رفع الصورة');
-                btn.innerHTML = '<i class="fas fa-camera"></i>';
-                btn.disabled  = false;
-                return;
-            }
-
-            const { data: urlData } = supabase.storage
-                .from('chat-screenshots')
-                .getPublicUrl(fileName);
-
-            await supabase.from('chats').insert({
-                user_id:    currentUser.id,
-                user_email: currentUser.email,
-                message:    `[screenshot]${urlData.publicUrl}`,
-                sender:     'user',
-                is_read:    false
-            });
-
-            showScreenshotToast('✅ تم إرسال الصورة!');
-        } catch (err) {
-            showScreenshotToast('❌ حدث خطأ أثناء الرفع');
-        }
-
-        btn.innerHTML = '<i class="fas fa-camera"></i>';
-        btn.disabled  = false;
-    });
-
-    // ✅ إذا أغلق المستخدم النافذة بدون اختيار
-    input.addEventListener('cancel', () => {
-        document.body.removeChild(input);
-        btn.innerHTML = '<i class="fas fa-camera"></i>';
-        btn.disabled  = false;
-    });
-
-    input.click();
-}
-
-// ==================== Toast إشعار ====================
+// ==================== Toast ====================
 function showScreenshotToast(msg) {
     const toast = document.createElement('div');
     toast.textContent = msg;
@@ -373,7 +458,7 @@ function showScreenshotToast(msg) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ==================== Badge العداد ====================
+// ==================== Badge ====================
 function updateBadge() {
     const badge = document.getElementById('chat-float-badge');
     if (!badge) return;
@@ -386,7 +471,7 @@ function updateBadge() {
     }
 }
 
-// ==================== صوت إشعار ====================
+// ==================== صوت ====================
 function playNotifSound() {
     try {
         const ctx  = new (window.AudioContext || window.webkitAudioContext)();
@@ -406,7 +491,6 @@ function playNotifSound() {
 function formatTime(dateStr) {
     return new Date(dateStr).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
 }
-
 function escHtml(str) {
     return String(str)
         .replace(/&/g, '&amp;')
@@ -414,7 +498,7 @@ function escHtml(str) {
         .replace(/>/g, '&gt;');
 }
 
-// ==================== تهيئة عند تحميل الصفحة ====================
+// ==================== تهيئة ====================
 document.addEventListener('DOMContentLoaded', () => {
     const floatBtn = document.getElementById('chat-float-btn');
     if (floatBtn) {
@@ -423,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ==================== مراقبة Badge حتى لو النافذة مغلقة ====================
+// ==================== Badge في الخلفية ====================
 (async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
