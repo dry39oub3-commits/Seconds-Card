@@ -1,11 +1,12 @@
 import { supabase } from './supabase-config.js';
 
-let currentUser      = null;
-let subscription     = null;
+let currentUser       = null;
+let subscription      = null;
 let badgeSubscription = null;
-let isOpen           = false;
-let unreadCount      = 0;
-const seenIds        = new Set();
+let isOpen            = false;
+let unreadCount       = 0;
+let lastShownDate     = null;   // ← آخر تاريخ ظهر كفاصل
+const seenIds         = new Set();
 
 // ==================== بناء نافذة الدردشة ====================
 function buildChatWidget() {
@@ -102,7 +103,6 @@ function buildChatWidget() {
 
     document.body.appendChild(widget);
 
-    // إرسال رسالة نصية
     widget.querySelector('#cw-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!currentUser) return;
@@ -123,7 +123,6 @@ function buildChatWidget() {
         input.focus();
     });
 
-    // زر الكاميرا — يفتح الـ picker
     widget.querySelector('#cw-screenshot').addEventListener('click', () => {
         showImageSourcePicker();
     });
@@ -158,10 +157,7 @@ function showImageSourcePicker() {
                 animation:pickerSlideUp 0.25s ease;
                 font-family:'Tajawal','Segoe UI',sans-serif;
             }
-            .cw-picker-title {
-                text-align:center; font-size:13px; color:#94a3b8;
-                margin-bottom:4px; font-weight:600;
-            }
+            .cw-picker-title { text-align:center; font-size:13px; color:#94a3b8; margin-bottom:4px; font-weight:600; }
             .cw-picker-btn {
                 display:flex; align-items:center; gap:14px;
                 padding:14px 18px; border-radius:12px;
@@ -176,31 +172,21 @@ function showImageSourcePicker() {
             .cw-picker-sub { font-size:11px; font-weight:400; color:#64748b; margin-top:2px; }
             .cw-picker-cancel {
                 text-align:center; padding:10px; color:#64748b; font-size:13px;
-                cursor:pointer; border-radius:10px;
-                transition:color 0.15s; font-family:'Tajawal','Segoe UI',sans-serif;
+                cursor:pointer; border-radius:10px; transition:color 0.15s;
+                font-family:'Tajawal','Segoe UI',sans-serif;
             }
             .cw-picker-cancel:hover { color:#ef4444; }
         </style>
-
         <div class="cw-picker-box">
             <div class="cw-picker-title">اختر مصدر الصورة</div>
-
             <button class="cw-picker-btn" id="cw-pick-camera">
                 <i class="fas fa-camera" style="color:#f97316;"></i>
-                <div>
-                    <div>الكاميرا</div>
-                    <div class="cw-picker-sub">التقط صورة جديدة</div>
-                </div>
+                <div><div>الكاميرا</div><div class="cw-picker-sub">التقط صورة جديدة</div></div>
             </button>
-
             <button class="cw-picker-btn" id="cw-pick-gallery">
                 <i class="fas fa-images" style="color:#3b82f6;"></i>
-                <div>
-                    <div>معرض الصور</div>
-                    <div class="cw-picker-sub">اختر من الاستوديو</div>
-                </div>
+                <div><div>معرض الصور</div><div class="cw-picker-sub">اختر من الاستوديو</div></div>
             </button>
-
             <div class="cw-picker-cancel" id="cw-pick-cancel">إلغاء</div>
         </div>
     `;
@@ -215,58 +201,34 @@ function showImageSourcePicker() {
 
     picker.addEventListener('click', e => { if (e.target === picker) close(); });
     document.getElementById('cw-pick-cancel').addEventListener('click', close);
-
-    // ── الكاميرا: capture=environment يفتح الكاميرا الخلفية ──
-    document.getElementById('cw-pick-camera').addEventListener('click', () => {
-        close();
-        openFileInput(true);
-    });
-
-    // ── المعرض: بدون capture يفتح الاستوديو ──
-    document.getElementById('cw-pick-gallery').addEventListener('click', () => {
-        close();
-        openFileInput(false);
-    });
+    document.getElementById('cw-pick-camera').addEventListener('click', () => { close(); openFileInput(true); });
+    document.getElementById('cw-pick-gallery').addEventListener('click', () => { close(); openFileInput(false); });
 }
 
-// ── رفع الصورة بعد الاختيار ──
 function openFileInput(useCamera) {
     if (!currentUser) return;
-
     const btn = document.getElementById('cw-screenshot');
-
     const input = document.createElement('input');
     input.type   = 'file';
     input.accept = 'image/*';
-    // capture=environment  → يفتح الكاميرا الخلفية مباشرة
-    // بدون capture         → يفتح معرض الصور
     if (useCamera) input.setAttribute('capture', 'environment');
     input.style.display = 'none';
     document.body.appendChild(input);
-
     const resetBtn = () => {
         if (btn) { btn.innerHTML = '<i class="fas fa-camera"></i>'; btn.disabled = false; }
     };
     if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true; }
-
     input.addEventListener('change', async () => {
         const file = input.files?.[0];
         document.body.removeChild(input);
         if (!file) { resetBtn(); return; }
-
         try {
             const ext      = file.name.split('.').pop() || 'jpg';
             const fileName = `screenshots/${currentUser.id}_${Date.now()}.${ext}`;
-
             const { error: uploadError } = await supabase.storage
-                .from('chat-screenshots')
-                .upload(fileName, file, { contentType: file.type });
-
+                .from('chat-screenshots').upload(fileName, file, { contentType: file.type });
             if (uploadError) { showScreenshotToast('❌ فشل رفع الصورة'); resetBtn(); return; }
-
-            const { data: urlData } = supabase.storage
-                .from('chat-screenshots').getPublicUrl(fileName);
-
+            const { data: urlData } = supabase.storage.from('chat-screenshots').getPublicUrl(fileName);
             await supabase.from('chats').insert({
                 user_id:    currentUser.id,
                 user_email: currentUser.email,
@@ -274,20 +236,11 @@ function openFileInput(useCamera) {
                 sender:     'user',
                 is_read:    false
             });
-
             showScreenshotToast('✅ تم إرسال الصورة!');
-        } catch (err) {
-            showScreenshotToast('❌ حدث خطأ أثناء الرفع');
-        }
-
+        } catch (err) { showScreenshotToast('❌ حدث خطأ أثناء الرفع'); }
         resetBtn();
     });
-
-    input.addEventListener('cancel', () => {
-        document.body.removeChild(input);
-        resetBtn();
-    });
-
+    input.addEventListener('cancel', () => { document.body.removeChild(input); resetBtn(); });
     input.click();
 }
 
@@ -305,9 +258,7 @@ window.toggleChatWidget = async () => {
             widget.style.opacity   = '1';
             widget.style.transform = 'translateY(0) scale(1)';
         });
-
         if (btn) btn.querySelector('i').className = 'fas fa-times';
-
         unreadCount = 0;
         seenIds.clear();
         updateBadge();
@@ -324,10 +275,7 @@ window.toggleChatWidget = async () => {
 
         await loadWidgetMessages();
 
-        if (subscription) {
-            await supabase.removeChannel(subscription);
-            subscription = null;
-        }
+        if (subscription) { await supabase.removeChannel(subscription); subscription = null; }
         subscribeWidget();
 
     } else {
@@ -344,9 +292,7 @@ async function loadWidgetMessages() {
     if (!box) return;
 
     const { data, error } = await supabase
-        .from('chats')
-        .select('*')
-        .eq('user_id', currentUser.id)
+        .from('chats').select('*').eq('user_id', currentUser.id)
         .order('created_at', { ascending: true });
 
     if (error) {
@@ -354,7 +300,8 @@ async function loadWidgetMessages() {
         return;
     }
 
-    box.innerHTML = '';
+    box.innerHTML  = '';
+    lastShownDate  = null;   // ← نعيد التهيئة عند كل تحميل
 
     if (!data || data.length === 0) {
         box.innerHTML = `
@@ -373,25 +320,16 @@ async function loadWidgetMessages() {
 // ==================== Real-time ====================
 function subscribeWidget() {
     if (!currentUser) return;
-
     subscription = supabase
         .channel('cw-' + currentUser.id + '-' + Date.now())
-        .on('postgres_changes', {
-            event:  'INSERT',
-            schema: 'public',
-            table:  'chats'
-        }, (payload) => {
+        .on('postgres_changes', { event:'INSERT', schema:'public', table:'chats' }, (payload) => {
             if (payload.new.user_id !== currentUser.id) return;
-
             const box = document.getElementById('cw-messages');
             if (!box) return;
-
             const empty = box.querySelector('div[style*="flex-direction:column"]');
             if (empty) empty.remove();
-
             appendWidgetMessage(payload.new);
             box.scrollTop = box.scrollHeight;
-
             if (!isOpen && payload.new.sender === 'admin') {
                 if (!seenIds.has(payload.new.id)) {
                     seenIds.add(payload.new.id);
@@ -401,15 +339,52 @@ function subscribeWidget() {
                 }
             }
         })
-        .subscribe((status) => {
-            console.log('[Chat] subscription:', status);
-        });
+        .subscribe((status) => { console.log('[Chat] subscription:', status); });
+}
+
+// ==================== فاصل التاريخ ====================
+function formatDateLabel(dateStr) {
+    const d     = new Date(dateStr);
+    const today = new Date();
+    const yest  = new Date(); yest.setDate(today.getDate() - 1);
+
+    const sameDay = (a, b) =>
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth()    === b.getMonth()    &&
+        a.getDate()     === b.getDate();
+
+    if (sameDay(d, today)) return 'اليوم';
+    if (sameDay(d, yest))  return 'أمس';
+
+    return d.toLocaleDateString('ar', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+function makeDateSeparator(label) {
+    const sep = document.createElement('div');
+    sep.style.cssText = `
+        display: flex; align-items: center; gap: 10px;
+        margin: 6px 0; color: #475569; font-size: 11px; font-weight: 600;
+    `;
+    sep.innerHTML = `
+        <span style="flex:1;height:1px;background:#1e2d42;"></span>
+        <span style="background:#0d1424;padding:3px 12px;border-radius:20px;
+                     border:1px solid #1e2d42;white-space:nowrap;">${label}</span>
+        <span style="flex:1;height:1px;background:#1e2d42;"></span>
+    `;
+    return sep;
 }
 
 // ==================== إضافة رسالة ====================
 function appendWidgetMessage(msg) {
     const box = document.getElementById('cw-messages');
     if (!box) return;
+
+    // ── فاصل التاريخ (مرة واحدة لكل يوم) ──
+    const msgDate = new Date(msg.created_at).toDateString();
+    if (msgDate !== lastShownDate) {
+        lastShownDate = msgDate;
+        box.appendChild(makeDateSeparator(formatDateLabel(msg.created_at)));
+    }
 
     const isUser       = msg.sender === 'user';
     const isScreenshot = msg.message?.startsWith('[screenshot]');
@@ -451,8 +426,7 @@ function showScreenshotToast(msg) {
         position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
         background:#1e293b; color:white; border:1px solid #334155;
         padding:10px 20px; border-radius:8px; font-size:13px;
-        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.4);
-        transition: opacity 0.3s;
+        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.4); transition:opacity 0.3s;
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
@@ -477,25 +451,20 @@ function playNotifSound() {
         const ctx  = new (window.AudioContext || window.webkitAudioContext)();
         const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+        osc.connect(gain); gain.connect(ctx.destination);
         osc.frequency.value = 880;
         gain.gain.setValueAtTime(0.1, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
     } catch (_) {}
 }
 
 // ==================== مساعدات ====================
 function formatTime(dateStr) {
-    return new Date(dateStr).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
+    return new Date(dateStr).toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
 }
 function escHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ==================== تهيئة ====================
@@ -513,30 +482,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!user) return;
     currentUser = user;
 
-    if (badgeSubscription) {
-        await supabase.removeChannel(badgeSubscription);
-        badgeSubscription = null;
-    }
+    if (badgeSubscription) { await supabase.removeChannel(badgeSubscription); badgeSubscription = null; }
 
     badgeSubscription = supabase
         .channel('cw-badge-' + user.id + '-' + Date.now())
-        .on('postgres_changes', {
-            event:  'INSERT',
-            schema: 'public',
-            table:  'chats'
-        }, (payload) => {
-            if (payload.new.user_id !== user.id) return;
-            if (payload.new.sender  !== 'admin') return;
-            if (seenIds.has(payload.new.id)) return;
+        .on('postgres_changes', { event:'INSERT', schema:'public', table:'chats' }, (payload) => {
+            if (payload.new.user_id !== user.id)  return;
+            if (payload.new.sender  !== 'admin')  return;
+            if (seenIds.has(payload.new.id))      return;
             seenIds.add(payload.new.id);
-
-            if (!isOpen) {
-                unreadCount++;
-                updateBadge();
-                playNotifSound();
-            }
+            if (!isOpen) { unreadCount++; updateBadge(); playNotifSound(); }
         })
-        .subscribe((status) => {
-            console.log('[Chat] badge subscription:', status);
-        });
+        .subscribe((status) => { console.log('[Chat] badge subscription:', status); });
 })();
