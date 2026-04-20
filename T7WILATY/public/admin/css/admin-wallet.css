@@ -1,48 +1,339 @@
-        .tabs { display:flex; gap:10px; margin-bottom:20px; }
-        .tab-btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold; background:#1e293b; color:#94a3b8; transition:0.2s; }
-        .tab-btn.active { background:#f97316; color:white; }
-        .tab-content { display:none; }
-        .tab-content.active { display:block; }
-        .tx-card { background:#1e293b; border-radius:12px; padding:16px 20px; margin-bottom:12px; display:flex; align-items:center; gap:15px; }
-        .tx-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
-        .tx-icon.charge { background:rgba(34,197,94,0.15); color:#22c55e; }
-        .tx-icon.withdraw { background:rgba(59,130,246,0.15); color:#3b82f6; }
-        .tx-info { flex:1; }
-        .tx-info h4 { margin:0 0 4px; font-size:14px; color:#e2e8f0; }
-        .tx-info p { margin:0; color:#64748b; font-size:12px; }
-        .tx-amount { font-weight:bold; font-size:15px; min-width:100px; text-align:left; }
-        .tx-amount.credit { color:#22c55e; }
-        .tx-amount.debit { color:#3b82f6; }
-        .tx-actions { display:flex; gap:8px; }
-        .btn-approve { background:#22c55e; color:white; border:none; padding:7px 14px; border-radius:7px; cursor:pointer; font-size:13px; }
-        .btn-reject { background:#ef4444; color:white; border:none; padding:7px 14px; border-radius:7px; cursor:pointer; font-size:13px; }
-        .status-badge { font-size:11px; padding:3px 10px; border-radius:20px; display:inline-block; margin-top:4px; }
-        .status-pending { background:rgba(234,179,8,0.2); color:#eab308; }
-        .status-completed { background:rgba(34,197,94,0.2); color:#22c55e; }
-        .status-rejected { background:rgba(239,68,68,0.2); color:#ef4444; }
-        .stats-grid { display: grid;
+/* ============================================================
+   admin-wallet.css — مع دعم كامل للثيم الفاتح والداكن
+   يعتمد على متغيرات dashboard-main.css
+   ============================================================ */
+
+/* ── متغيرات خاصة بالمحفظة (Dark default) ── */
+:root {
+    --w-surface:      #1e293b;
+    --w-surface-2:    #0f172a;
+    --w-border:       #2d3f55;
+    --w-border-2:     #334155;
+    --w-text:         #e2e8f0;
+    --w-text-muted:   #64748b;
+    --w-text-soft:    #94a3b8;
+    --w-input-bg:     #0f172a;
+    --w-badge-blue:   rgba(96,165,250,0.08);
+    --w-badge-blue-b: rgba(96,165,250,0.2);
+}
+
+/* ── Light Theme override ── */
+[data-theme="light"] {
+    --w-surface:      #ffffff;
+    --w-surface-2:    #f8fafc;
+    --w-border:       #e2e8f0;
+    --w-border-2:     #cbd5e1;
+    --w-text:         #0f172a;
+    --w-text-muted:   #64748b;
+    --w-text-soft:    #94a3b8;
+    --w-input-bg:     #f1f5f9;
+    --w-badge-blue:   rgba(37,99,235,0.08);
+    --w-badge-blue-b: rgba(37,99,235,0.2);
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: 1px solid var(--w-border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    background: var(--w-surface);
+    color: var(--w-text-soft);
+    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.tab-btn:hover:not(.active) {
+    background: var(--w-surface-2);
+    color: var(--w-text);
+    transform: translateY(-1px);
+}
+
+.tab-btn.active {
+    background: #f97316;
+    color: white;
+    border-color: #f97316;
+    box-shadow: 0 3px 12px rgba(249,115,22,0.3);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ============================================================
+   Transaction Cards
+   ============================================================ */
+.tx-card {
+    background: var(--w-surface) !important;
+    border-radius: 14px !important;
+    padding: 16px 18px !important;
+    margin-bottom: 10px !important;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid var(--w-border) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: background 0.3s, border-color 0.3s, transform 0.2s, box-shadow 0.2s;
+}
+
+.tx-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.tx-card:last-child { margin-bottom: 0 !important; }
+
+/* Icons */
+.tx-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.tx-icon.charge   { background: rgba(34,197,94,0.15);  color: #22c55e; }
+.tx-icon.withdraw { background: rgba(59,130,246,0.15); color: #3b82f6; }
+
+/* Info */
+.tx-info { flex: 1; }
+.tx-info h4 { margin: 0 0 4px; font-size: 14px; color: var(--w-text); }
+.tx-info p  { margin: 0; color: var(--w-text-muted); font-size: 12px; }
+
+/* Amount */
+.tx-amount { font-weight: bold; font-size: 15px; min-width: 100px; text-align: left; }
+.tx-amount.credit { color: #22c55e; }
+.tx-amount.debit  { color: #3b82f6; }
+
+/* Actions */
+.tx-actions { display: flex; gap: 8px; }
+
+/* Order number badge */
+.tx-order-num {
+    font-family: monospace;
+    font-size: 12px;
+    color: #60a5fa;
+    background: var(--w-badge-blue);
+    padding: 2px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--w-badge-blue-b);
+}
+
+/* ============================================================
+   Action Buttons
+   ============================================================ */
+.btn-approve {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(34,197,94,0.3);
+    transition: opacity 0.2s, transform 0.15s;
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    color: white;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(239,68,68,0.3);
+    transition: opacity 0.2s, transform 0.15s;
+}
+
+.btn-approve:hover, .btn-reject:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   Status Badges
+   ============================================================ */
+.status-badge {
+    font-size: 11px !important;
+    padding: 3px 10px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    display: inline-block !important;
+}
+
+.status-pending   { background: rgba(249,115,22,0.15) !important; color: #f97316 !important; }
+.status-completed { background: rgba(34,197,94,0.15)  !important; color: #22c55e !important; }
+.status-rejected  { background: rgba(239,68,68,0.15)  !important; color: #ef4444 !important; }
+
+/* ============================================================
+   Stats Grid
+   ============================================================ */
+.stats-grid {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
-    margin-bottom: 24px; }
-        .stat-card { background:#1e293b; border-radius:12px; padding:18px; text-align:center; }
-        .stat-card .stat-value { font-size:24px; font-weight:bold; color:#f97316; }
-        .stat-card .stat-label { font-size:12px; color:#64748b; margin-top:4px; }
-        .receipt-img { width:40px; height:40px; border-radius:6px; object-fit:cover; cursor:pointer; border:1px solid #334155; }
-        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; }
-        .modal-overlay.active { display:flex; }
-        .modal-box { background:#1e293b; border-radius:16px; padding:24px; width:90%; max-width:420px; color:#e2e8f0; }
-        .modal-input { width:100%; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; margin-bottom:12px; box-sizing:border-box; }
-        .filter-bar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
-        .filter-bar input, .filter-bar select { padding:9px 12px; background:#1e293b; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:13px; }
+    margin-bottom: 24px;
+}
 
+.stat-card {
+    background: var(--w-surface) !important;
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    border: 1px solid var(--w-border) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: background 0.3s, border-color 0.3s, transform 0.2s;
+}
 
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card .stat-value { font-size: 24px; font-weight: bold; color: #f97316; }
+.stat-card .stat-label { font-size: 12px; color: var(--w-text-muted); margin-top: 4px; }
 
-        @media (max-width: 768px) {
-    .tabs {
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    
+/* ============================================================
+   Filter Bar
+   ============================================================ */
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.filter-bar input,
+.filter-bar select {
+    padding: 9px 12px;
+    background: var(--w-surface) !important;
+    border: 1px solid var(--w-border) !important;
+    border-radius: 8px;
+    color: var(--w-text) !important;
+    font-size: 13px;
+    transition: border-color 0.2s, background 0.3s;
+}
+
+.filter-bar input::placeholder { color: var(--w-text-soft); }
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+    border-color: #f97316 !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+}
+
+.filter-bar select option {
+    background: var(--w-surface);
+    color: var(--w-text);
+}
+
+/* ============================================================
+   Receipt Image
+   ============================================================ */
+.receipt-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 1px solid var(--w-border);
+}
+
+/* ============================================================
+   Modals
+   ============================================================ */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(3px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.modal-overlay.active { display: flex !important; }
+
+/* Modal Box */
+.modal-box {
+    background: var(--w-surface) !important;
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 420px;
+    color: var(--w-text) !important;
+    border: 1px solid var(--w-border) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.modal-input {
+    width: 100%;
+    padding: 10px;
+    background: var(--w-input-bg) !important;
+    border: 1px solid var(--w-border) !important;
+    border-radius: 8px;
+    color: var(--w-text) !important;
+    font-size: 14px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.modal-input:focus {
+    border-color: #f97316 !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+}
+
+/* Reject Modal */
+#reject-modal > div,
+#user-orders-modal > div {
+    background: var(--w-surface) !important;
+    border: 1px solid var(--w-border) !important;
+    color: var(--w-text) !important;
+}
+
+#reject-reason-input {
+    background: var(--w-input-bg) !important;
+    border: 1px solid var(--w-border) !important;
+    color: var(--w-text) !important;
+}
+
+#reject-reason-input:focus {
+    border-color: #f97316 !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+}
+
+/* Edit Modal inputs */
+#edit-balance-input,
+#edit-note-input {
+    background: var(--w-input-bg) !important;
+    border: 1px solid var(--w-border) !important;
+    color: var(--w-text) !important;
+}
+
+/* User Orders Modal */
+#user-orders-title { color: var(--w-text) !important; }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+    .tabs { gap: 6px; }
+
     .tab-btn {
         padding: 8px 14px;
         font-size: 12px;
@@ -56,91 +347,19 @@
         gap: 10px;
     }
 
-    .stat-card {
-        padding: 12px;
-    }
-
-    .stat-card .stat-value {
-        font-size: 18px;
-    }
+    .stat-card { padding: 12px; }
+    .stat-card .stat-value { font-size: 18px; }
 
     .tx-card {
         flex-wrap: wrap;
         gap: 10px;
-        padding: 12px;
+        padding: 12px !important;
     }
 
-    .tx-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
+    .tx-actions { width: 100%; justify-content: flex-end; }
+    .tx-amount  { min-width: auto; }
 
-    .tx-amount {
-        min-width: auto;
-    }
-
-    .filter-bar {
-        flex-direction: column;
-    }
-
+    .filter-bar { flex-direction: column; }
     .filter-bar input,
-    .filter-bar select {
-        width: 100%;
-    }
+    .filter-bar select { width: 100%; }
 }
-
-.modal-overlay { display: none !important; }
-.modal-overlay.active { display: flex !important; }
-
-/* تحسين tx-card */
-.tx-card {
-    border-radius: 14px !important;
-    margin-bottom: 10px !important;
-    padding: 16px 18px !important;
-    background: #1e293b !important;
-    border: 1px solid #2d3f55 !important;
-}
-
-.tx-card:last-child { margin-bottom: 0 !important; }
-
-/* رقم الطلب */
-.tx-order-num {
-    font-family: monospace;
-    font-size: 12px;
-    color: #60a5fa;
-    background: rgba(96,165,250,0.08);
-    padding: 2px 8px;
-    border-radius: 5px;
-    border: 1px solid rgba(96,165,250,0.2);
-}
-
-/* تحسين شارة الحالة */
-.status-badge {
-    font-size: 11px !important;
-    padding: 3px 10px !important;
-    border-radius: 20px !important;
-    font-weight: 700 !important;
-    display: inline-block !important;
-}
-
-.status-completed { background: rgba(34,197,94,0.15)  !important; color: #22c55e !important; }
-.status-rejected  { background: rgba(239,68,68,0.15)  !important; color: #ef4444 !important; }
-.status-pending   { background: rgba(249,115,22,0.15) !important; color: #f97316 !important; }
-
-/* تحسين أزرار القبول والرفض */
-.btn-approve {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    box-shadow: 0 3px 10px rgba(34,197,94,0.3) !important;
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-}
-
-.btn-reject {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-    box-shadow: 0 3px 10px rgba(239,68,68,0.3) !important;
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-}
-
-.btn-approve:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-reject:hover  { opacity: 0.9; transform: translateY(-1px); }

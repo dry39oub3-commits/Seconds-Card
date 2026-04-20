@@ -142,7 +142,7 @@ section, .form-section, .list-section, .add-form, .preview-section, .slide-card,
 .form-title { color: var(--accent-orange); }
 
 /* ============================================================
-   6. الجداول (Tables) - الإصلاح الأهم للهواتف
+   6. الجداول (Tables)
    ============================================================ */
 .table-container, .products-table-container {
     overflow-x: auto;
@@ -153,7 +153,7 @@ section, .form-section, .list-section, .add-form, .preview-section, .slide-card,
 
 table {
     width: 100%;
-    min-width: 800px; /* يمنع الانضغاط الشديد ويفعّل السكرول */
+    min-width: 800px;
     border-collapse: collapse;
 }
 
@@ -173,7 +173,7 @@ table {
     border-bottom: 1px solid var(--border-light);
     vertical-align: middle;
     color: var(--text-main);
-    white-space: nowrap; /* يمنع تكسير النصوص داخل الخلايا */
+    white-space: nowrap;
 }
 
 .admin-table tr:hover, tbody tr:hover {
@@ -252,10 +252,8 @@ textarea, .code-area { min-height: 100px; resize: vertical; font-family: 'Courie
 .modal-content, .modal-box { background: var(--white); padding: 25px; width: 90%; max-width: 500px; border-radius: 15px; border: 1px solid var(--border-light); color: var(--text-main); }
 
 /* ============================================================
-   11. استجابة الهواتف (Responsive Design) - الإصلاح الأساسي
+   11. استجابة الهواتف (Responsive Design)
    ============================================================ */
-
-/* شاشات التابلت */
 @media (max-width: 992px) {
     .nav-link span { display: none; }
     .nav-link i { font-size: 1.3rem; }
@@ -263,40 +261,34 @@ textarea, .code-area { min-height: 100px; resize: vertical; font-family: 'Courie
     .form-grid { grid-template-columns: 1fr; }
 }
 
-/* شاشات الهواتف */
 @media (max-width: 768px) {
     .admin-top-header { height: 56px; padding: 0; }
     .header-container { padding: 0 14px; height: 56px; }
     .main-nav { display: none; }
     .hamburger-btn { display: flex; }
-    
+
     .admin-container, .page-container, .stock-container { padding: 0 10px; margin: 15px auto; }
-    
+
     section, .form-section, .list-section, .add-form, .payment-methods-form { padding: 20px 15px; border-radius: 10px; }
-    
+
     .stats-grid { grid-template-columns: 1fr; gap: 15px; }
     .stat-card { padding: 15px; }
     .stat-value { font-size: 1.4rem; }
     .stat-icon { width: 50px; height: 50px; font-size: 1.4rem; }
-    
+
     .methods-list { grid-template-columns: 1fr; }
-    
-    /* تحسينات الموبايل للنماذج */
+
     .input-group label, .form-group label { font-size: 0.85rem; }
-    input[type="text"], input[type="number"], select { padding: 10px; font-size: 16px; } /* 16px يمنع زووم الآيفون التلقائي */
+    input[type="text"], input[type="number"], select { padding: 10px; font-size: 16px; }
 }
 
-/* هواتف صغيرة جداً (أقل من 500px) */
 @media (max-width: 500px) {
-    /* إخفاء الأعمدة غير الأساسية في الجدول لتوفير المساحة */
-    .admin-table th:nth-child(4), .admin-table td:nth-child(4), /* عمود الهاتف/التاريخ */
-    .admin-table th:nth-child(5), .admin-table td:nth-child(5)  /* عمود SC-ID */
-    { 
-        display: none; 
+    .admin-table th:nth-child(4), .admin-table td:nth-child(4),
+    .admin-table th:nth-child(5), .admin-table td:nth-child(5) {
+        display: none;
     }
-    
-    /* تقليل الحد الأدنى للجدول بعد إخفاء الأعمدة */
+
     table { min-width: 550px; }
-    
+
     th, td { padding: 10px 8px; font-size: 12px; }
 }

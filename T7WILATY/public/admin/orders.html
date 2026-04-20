@@ -8,10 +8,105 @@
     <link rel="stylesheet" href="./css/dashboard-main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+<style>
+/* ===== عزل ثيم orders - الوضع الداكن افتراضي ===== */
+body.orders-page {
+    --bg-light: #0f172a;
+    --white: #1e293b;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border-light: #334155;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    background-color: var(--bg-light);
+    color: var(--text-main);
+}
 
+body.orders-page section,
+body.orders-page .table-container,
+body.orders-page .products-table-container {
+    background: var(--white) !important;
+    border-color: var(--border-light) !important;
+}
+
+body.orders-page table thead th {
+    background: #0f172a !important;
+    color: var(--text-muted) !important;
+    border-bottom-color: var(--border-light) !important;
+}
+
+body.orders-page table tbody td {
+    border-bottom-color: var(--border-light) !important;
+    color: var(--text-main) !important;
+}
+
+body.orders-page table tbody tr:hover {
+    background: rgba(249,115,22,0.07) !important;
+}
+
+body.orders-page input[type="text"],
+body.orders-page input[type="search"],
+body.orders-page input[type="number"],
+body.orders-page select {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.orders-page input::placeholder {
+    color: #475569 !important;
+}
+
+/* ===== وضع النهار ===== */
+[data-theme="light"] body.orders-page,
+html[data-theme="light"] body.orders-page {
+    --bg-light: #f1f5f9;
+    --white: #ffffff;
+    --text-main: #111827;
+    --text-muted: #6b7280;
+    --border-light: #e5e7eb;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    background-color: #f1f5f9;
+    color: #111827;
+}
+
+html[data-theme="light"] body.orders-page tbody td span[style*="color:#e2e8f0"] {
+    color: #111827 !important;
+}
+
+html[data-theme="light"] body.orders-page section,
+html[data-theme="light"] body.orders-page .table-container {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] body.orders-page table thead th {
+    background: #f8fafc !important;
+    color: #6b7280 !important;
+    border-bottom-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] body.orders-page table tbody td {
+    color: #111827 !important;
+    border-bottom-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] body.orders-page input[type="text"],
+html[data-theme="light"] body.orders-page input[type="search"],
+html[data-theme="light"] body.orders-page input[type="number"],
+html[data-theme="light"] body.orders-page select {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+html[data-theme="light"] body.orders-page input::placeholder {
+    color: #9ca3af !important;
+}
+</style>
 
 </head>
-<body>
+<body class="orders-page">
+
 <header class="admin-top-header">
     <div class="header-container">
                 <!-- زر الهامبرغر - يظهر فقط في الموبايل -->

@@ -3,6 +3,7 @@ import { supabase } from '../../js/supabase-config.js';
 const USD_TO_MRU = 43;
 
 // ==================== تحميل الطلبات ====================
+// ==================== تحميل الطلبات ====================
 async function loadOrders() {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
@@ -25,27 +26,20 @@ async function loadOrders() {
         return;
     }
 
-    // ✅ معالجة طلبات المحفظة تلقائياً
-    for (const order of orders) {
-        const paymentMethod = order.paymentMethod || order.payment_method || '';
-        if (paymentMethod === 'المحفظة' || paymentMethod === 'محفظة') {
-            await tryAutoApproveFromStock(order);
-        }
-    }
+    // ✅ عرض الطلبات فوراً بدون انتظار
+    renderOrders(orders);
 
-    const { data: remainingOrders } = await supabase
-        .from('orders')
-        .select('*, products(image, prices)')
-        .not('status', 'in', '("مكتمل","ملغي","مسترد")')
-        .order('created_at', { ascending: false });
+    // ✅ معالجة المحفظة في الخلفية بدون انتظار
+    processWalletOrders(orders);
+}
 
-    if (!remainingOrders || remainingOrders.length === 0) {
-        ordersList.innerHTML = '<tr><td colspan="11" style="text-align:center;">📭 لا توجد طلبات حالياً</td></tr>';
-        return;
-    }
+// ==================== عرض الطلبات ====================
+function renderOrders(orders) {
+    const ordersList = document.getElementById('admin-orders-list');
+    if (!ordersList) return;
 
     const groupedMap = {};
-    remainingOrders.forEach(order => {
+    orders.forEach(order => {
         const key = order.order_number || order.id;
         if (!groupedMap[key]) {
             groupedMap[key] = { ...order, items: [], totalPrice: 0 };
@@ -55,6 +49,11 @@ async function loadOrders() {
     });
 
     const groupedOrders = Object.values(groupedMap);
+
+    if (groupedOrders.length === 0) {
+        ordersList.innerHTML = '<tr><td colspan="11" style="text-align:center;">📭 لا توجد طلبات حالياً</td></tr>';
+        return;
+    }
 
     ordersList.innerHTML = groupedOrders.map(group => {
         const date          = group.created_at ? new Date(group.created_at).toLocaleString('ar-EG') : 'غير محدد';
@@ -71,9 +70,9 @@ async function loadOrders() {
 
         const productsCell = group.items.map(item =>
             `<div style="font-size:12px;margin-bottom:3px;">
-                <span style="color:#e2e8f0;">${item.product_name || 'غير محدد'}</span>
+                <span class="order-product-name">${item.product_name || 'غير محدد'}</span>
                 ${item.label ? `<span style="color:#f97316;margin-right:4px;">(${item.label})</span>` : ''}
-                ${group.items.length > 1 ? `<span style="color:#64748b;">× ${item.quantity || 1}</span>` : ''}
+                ${group.items.length > 1 ? `<span style="color:var(--text-muted);">× ${item.quantity || 1}</span>` : ''}
             </div>`
         ).join('');
 
@@ -104,6 +103,25 @@ async function loadOrders() {
             </tr>
         `;
     }).join('');
+}
+
+// ==================== معالجة المحفظة في الخلفية ====================
+async function processWalletOrders(orders) {
+    const walletOrders = orders.filter(order => {
+        const pm = order.paymentMethod || order.payment_method || '';
+        return pm === 'المحفظة' || pm === 'محفظة';
+    });
+
+    if (walletOrders.length === 0) return;
+
+    let anyApproved = false;
+    for (const order of walletOrders) {
+        const approved = await tryAutoApproveFromStock(order);
+        if (approved) anyApproved = true;
+    }
+
+    // إعادة تحميل فقط إذا تم قبول طلب
+    if (anyApproved) loadOrders();
 }
 
 // ==================== قبول تلقائي ====================
@@ -151,27 +169,26 @@ async function tryAutoApproveFromStock(order) {
 }
 
 // ==================== بناء قسم السحب + السيليكت ====================
-// suffix = '' للطلب الواحد، أو idx للمجموعة
 function buildStockSection({ suffix = '', productId, label, quantity, orderPrice, prices = [] }) {
-    // جمع الموردين من prices
+    const c          = getThemeColors();
     const priceObj   = (prices || []).find(p => p.label === label) || prices[0] || {};
     const suppliers  = priceObj.suppliers || [];
+    const inputStyle = `width:100%; padding:9px 12px; background:${c.inputBg}; border:1px solid ${c.inputBorder}; border-radius:8px; color:${c.inputColor}; font-family:inherit; font-size:13px;`;
 
     const suppliersSelectHTML = suppliers.length > 0 ? `
         <div id="supplier-select-wrap${suffix}" style="margin-top:10px; display:none;">
-            <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">🔗 اختر المورد للشراء</label>
+            <label style="font-size:12px; color:${c.textMuted}; display:block; margin-bottom:5px;">🔗 اختر المورد للشراء</label>
             <div style="display:flex; gap:8px; align-items:center;">
                 <select id="supplier-select${suffix}"
                     onchange="onSupplierSelectChange('${suffix}')"
-                    style="flex:1; padding:9px 12px; background:#0f172a; border:1px solid #3b82f6;
-                           border-radius:8px; color:#e2e8f0; font-family:inherit; font-size:13px; cursor:pointer;">
+                    style="${inputStyle} flex:1; border-color:#3b82f6; cursor:pointer;">
                     <option value="">-- اختر مورداً --</option>
                     ${suppliers.map(s => `<option value="${s.url || ''}" data-name="${s.name}">${s.name}</option>`).join('')}
                 </select>
                 <a id="buy-btn${suffix}" href="#" target="_blank"
                     style="display:none; padding:9px 16px; background:#f97316; color:white;
                            border-radius:8px; text-decoration:none; font-size:13px; font-weight:700;
-                           white-space:nowrap; transition:opacity 0.2s;"
+                           white-space:nowrap;"
                     onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                     <i class="fas fa-shopping-cart"></i> شراء
                 </a>
@@ -181,11 +198,10 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
 
     return `
         <div>
-            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
+            <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
             <input type="number" id="modal-cost${suffix}" placeholder="0.00" step="0.01"
                 oninput="calcProfit${suffix === '' ? '(' + orderPrice + ')' : 'Item(' + suffix + ',' + orderPrice + ')'}"
-                style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155;
-                       border-radius:8px; color:#e2e8f0; font-size:14px; box-sizing:border-box;">
+                style="${inputStyle} width:100%; box-sizing:border-box;">
 
             <button onclick="loadFromStock${suffix === '' ? '(\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')' : 'ForItem(' + suffix + ',\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')'}"
                 style="width:100%; margin-top:10px; padding:10px; background:rgba(59,130,246,0.15);
@@ -195,7 +211,7 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
                 onmouseout="this.style.background='rgba(59,130,246,0.15)'">
                 <i class="fas fa-box-open"></i> سحب من المخزون
             </button>
-            <p id="stock-status${suffix}" style="font-size:11px; color:#94a3b8; margin-top:5px; text-align:center;"></p>
+            <p id="stock-status${suffix}" style="font-size:11px; color:${c.textMuted}; margin-top:5px; text-align:center;"></p>
 
             ${suppliersSelectHTML}
         </div>
@@ -227,6 +243,7 @@ window.openOrderModal = (order) => {
     const image      = product.image  || '';
     const prices     = product.prices || [];
     const totalPrice = order.price * (order.quantity || 1);
+    const c          = getThemeColors(); // ← ألوان الثيم
 
     document.getElementById('order-modal')?.remove();
     window._reservedStockIds = null;
@@ -246,45 +263,46 @@ window.openOrderModal = (order) => {
         quantity: order.quantity || 1, orderPrice: totalPrice, prices
     });
 
+    const inputStyle = `width:100%;padding:10px;background:${c.inputBg};border:1px solid ${c.inputBorder};border-radius:8px;color:${c.inputColor};font-size:14px;box-sizing:border-box;`;
+
     modal.innerHTML = `
-        <div style="background:#1e293b; border-radius:16px; padding:30px; width:100%; max-width:750px; color:#e2e8f0; position:relative; margin:auto;">
+        <div style="background:${c.modalBg}; border-radius:16px; padding:30px; width:100%; max-width:750px; color:${c.text}; position:relative; margin:auto; border:1px solid ${c.border};">
             <button onclick="document.getElementById('order-modal').remove()"
                     style="position:absolute; top:15px; left:15px; background:#ef4444; color:white; border:none; border-radius:8px; padding:6px 12px; cursor:pointer;">
                 ✕ إغلاق
             </button>
             <h2 style="text-align:center; margin-bottom:20px; color:#f97316;">تفاصيل الطلب</h2>
 
-            <div style="background:#0f172a; border-radius:12px; padding:20px; margin-bottom:20px; display:flex; gap:15px; align-items:center;">
+            <div style="background:${c.deepBg}; border-radius:12px; padding:20px; margin-bottom:20px; display:flex; gap:15px; align-items:center; border:1px solid ${c.border};">
                 <img src="${image}" style="width:90px;height:90px;object-fit:contain;background:white;border-radius:10px;padding:5px;flex-shrink:0;" onerror="this.style.display='none'">
                 <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <h3 style="margin:0 0 4px; font-size:17px; grid-column:1/-1;">${order.product_name || 'غير محدد'}</h3>
-                    <p style="margin:0; color:#94a3b8; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
-                    <p style="margin:0; font-size:13px;">🏷️ الفئة: <strong style="color:#f97316;">${order.label || '-'}</strong></p>
-                    <p style="margin:0; color:#94a3b8; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
+                    <h3 style="margin:0 0 4px; font-size:17px; grid-column:1/-1; color:${c.text};">${order.product_name || 'غير محدد'}</h3>
+                    <p style="margin:0; color:${c.textMuted}; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
+                    <p style="margin:0; font-size:13px; color:${c.text};">🏷️ الفئة: <strong style="color:#f97316;">${order.label || '-'}</strong></p>
+                    <p style="margin:0; color:${c.textMuted}; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
                     <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${totalPrice} MRU</strong></p>
-                    <p style="margin:0; color:#94a3b8; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
-                    <p style="margin:0; color:#94a3b8; font-size:13px;">💳 ${order.paymentMethod || order.payment_method || '-'}</p>
+                    <p style="margin:0; color:${c.textMuted}; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
+                    <p style="margin:0; color:${c.textMuted}; font-size:13px;">💳 ${order.paymentMethod || order.payment_method || '-'}</p>
                 </div>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 ${stockSectionHTML}
                 <div>
-                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+                    <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">
                         🔑 أكواد البطاقة (${order.quantity || 1} كود) — كود في كل سطر
                     </label>
                     <textarea id="modal-code" placeholder="كود 1&#10;كود 2&#10;كود 3..."
                         rows="${Math.max(3, order.quantity || 1)}"
-                        style="width:100%;padding:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;resize:vertical;font-family:monospace;line-height:1.8;"></textarea>
-                    <p style="font-size:11px; color:#64748b; margin-top:4px;">أدخل كل كود في سطر منفصل</p>
+                        style="${inputStyle} resize:vertical; font-family:monospace; line-height:1.8;"></textarea>
+                    <p style="font-size:11px; color:${c.textMuted}; margin-top:4px;">أدخل كل كود في سطر منفصل</p>
                 </div>
             </div>
 
-            <div id="profit-display" style="display:none; margin-bottom:15px; background:#0f172a; border-radius:8px; padding:12px; text-align:center;"></div>
+            <div id="profit-display" style="display:none; margin-bottom:15px; background:${c.deepBg}; border-radius:8px; padding:12px; text-align:center; border:1px solid ${c.border};"></div>
 
-            <!-- موردو المخزون -->
             <div id="stock-suppliers-section" style="display:none; margin-bottom:15px;">
-                <div style="background:#0f172a; border:1px solid #1e3a5f; border-radius:12px; padding:16px;">
+                <div style="background:${c.deepBg}; border:1px solid #1e3a5f; border-radius:12px; padding:16px;">
                     <p style="font-size:13px; color:#3b82f6; font-weight:700; margin:0 0 12px;">
                         <i class="fas fa-boxes"></i> موردو هذا الكود في المخزون
                     </p>
@@ -293,20 +311,18 @@ window.openOrderModal = (order) => {
             </div>
 
             <div style="margin-bottom:15px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🏪 اسم المورد</label>
-                <input type="text" id="modal-supplier-id" placeholder="اسم المورد..."
-                    style="width:100%;padding:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">🏪 اسم المورد</label>
+                <input type="text" id="modal-supplier-id" placeholder="اسم المورد..." style="${inputStyle}">
             </div>
 
             <div style="margin-bottom:20px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">🔖 Order ID المورد</label>
-                <input type="text" id="modal-supplier-order-id" placeholder="أدخل Order ID من المورد..."
-                    style="width:100%;padding:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">🔖 Order ID المورد</label>
+                <input type="text" id="modal-supplier-order-id" placeholder="أدخل Order ID من المورد..." style="${inputStyle}">
             </div>
 
             <div style="margin-bottom:12px;">
                 <input type="text" id="reject-reason" placeholder="سبب الرفض..."
-                    style="width:100%;padding:10px;background:#0f172a;border:1px solid #ef4444;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;margin-bottom:8px;">
+                    style="${inputStyle} border-color:#ef4444; margin-bottom:8px;">
                 <button onclick="rejectOrder('${order.id}')"
                     style="width:100%;padding:14px;background:#ef4444;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;font-weight:bold;">
                     <i class="fas fa-times-circle"></i> رفض الطلب
@@ -328,9 +344,10 @@ window.openGroupOrderModal = (items) => {
     document.getElementById('order-modal')?.remove();
     window._groupItems     = items;
     window._groupStockData = items.map(() => null);
-
+    const c          = getThemeColors();
     const firstItem  = items[0];
     const totalPrice = items.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
+    const inputStyle = `width:100%;padding:8px;background:${c.inputBg};border:1px solid ${c.inputBorder};border-radius:7px;color:${c.inputColor};font-size:13px;box-sizing:border-box;`;
 
     const modal = document.createElement('div');
     modal.id = 'order-modal';
@@ -350,11 +367,11 @@ window.openGroupOrderModal = (items) => {
         });
 
         return `
-        <div style="background:#0f172a; border-radius:10px; padding:16px; margin-bottom:12px; border:1px solid #1e3a5f;">
+        <div style="background:${c.deepBg}; border-radius:10px; padding:16px; margin-bottom:12px; border:1px solid ${c.cardBorder};">
             <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
                 ${img ? `<img src="${img}" style="width:50px;height:50px;object-fit:contain;background:white;border-radius:8px;padding:3px;flex-shrink:0;">` : ''}
                 <div>
-                    <div style="font-weight:700;">${item.product_name || 'غير محدد'}</div>
+                    <div style="font-weight:700; color:${c.text};">${item.product_name || 'غير محدد'}</div>
                     <div style="font-size:13px; color:#f97316;">${item.label || '-'} • ${item.quantity || 1} قطعة • ${item.price * (item.quantity || 1)} MRU</div>
                 </div>
             </div>
@@ -362,30 +379,28 @@ window.openGroupOrderModal = (items) => {
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 ${stockHTML}
                 <div>
-                    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">🔑 الأكواد (${item.quantity || 1} كود)</label>
+                    <label style="font-size:12px; color:${c.textMuted}; display:block; margin-bottom:5px;">🔑 الأكواد (${item.quantity || 1} كود)</label>
                     <textarea id="code-${idx}" placeholder="كود 1&#10;كود 2..."
                         rows="${Math.max(2, item.quantity || 1)}"
-                        style="width:100%;padding:8px;background:#1e293b;border:1px solid #334155;border-radius:7px;color:#e2e8f0;font-size:13px;box-sizing:border-box;resize:vertical;font-family:monospace;line-height:1.8;"></textarea>
+                        style="${inputStyle} resize:vertical; font-family:monospace; line-height:1.8;"></textarea>
                 </div>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
                 <div>
-                    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">🏪 المورد</label>
-                    <input type="text" id="supplier-${idx}" placeholder="اسم المورد..."
-                        style="width:100%;padding:8px;background:#1e293b;border:1px solid #334155;border-radius:7px;color:#e2e8f0;font-size:13px;box-sizing:border-box;">
+                    <label style="font-size:12px; color:${c.textMuted}; display:block; margin-bottom:5px;">🏪 المورد</label>
+                    <input type="text" id="supplier-${idx}" placeholder="اسم المورد..." style="${inputStyle}">
                 </div>
                 <div>
-                    <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">🔖 Order ID</label>
-                    <input type="text" id="supplier-order-${idx}" placeholder="Order ID..."
-                        style="width:100%;padding:8px;background:#1e293b;border:1px solid #334155;border-radius:7px;color:#e2e8f0;font-size:13px;box-sizing:border-box;">
+                    <label style="font-size:12px; color:${c.textMuted}; display:block; margin-bottom:5px;">🔖 Order ID</label>
+                    <input type="text" id="supplier-order-${idx}" placeholder="Order ID..." style="${inputStyle}">
                 </div>
             </div>
         </div>`;
     }).join('');
 
     modal.innerHTML = `
-        <div style="background:#1e293b; border-radius:16px; padding:30px; width:100%; max-width:800px; color:#e2e8f0; position:relative; margin:auto;">
+        <div style="background:${c.modalBg}; border-radius:16px; padding:30px; width:100%; max-width:800px; color:${c.text}; position:relative; margin:auto; border:1px solid ${c.border};">
             <button onclick="document.getElementById('order-modal').remove()"
                     style="position:absolute;top:15px;left:15px;background:#ef4444;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">
                 ✕ إغلاق
@@ -394,14 +409,14 @@ window.openGroupOrderModal = (items) => {
                 <i class="fas fa-layer-group"></i> مجموعة طلبات
             </h2>
             <div style="text-align:center; margin-bottom:20px;">
-                <span style="background:#1e293b; border:1px solid #334155; border-radius:20px; padding:4px 14px; font-size:13px; color:#94a3b8;">
+                <span style="background:${c.deepBg}; border:1px solid ${c.border}; border-radius:20px; padding:4px 14px; font-size:13px; color:${c.textMuted};">
                     ${firstItem.order_number || '-'} &nbsp;•&nbsp; 👤 ${firstItem.customer_name || '-'} &nbsp;•&nbsp; 💰 ${totalPrice} MRU
                 </span>
             </div>
             ${itemsSections}
             <div style="margin-top:16px; margin-bottom:12px;">
                 <input type="text" id="group-reject-reason" placeholder="سبب الرفض..."
-                    style="width:100%;padding:10px;background:#0f172a;border:1px solid #ef4444;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;margin-bottom:8px;">
+                    style="width:100%;padding:10px;background:${c.inputBg};border:1px solid #ef4444;border-radius:8px;color:${c.inputColor};font-size:14px;box-sizing:border-box;margin-bottom:8px;">
                 <button onclick="rejectGroupOrders()"
                     style="width:100%;padding:12px;background:#ef4444;color:white;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:bold;">
                     <i class="fas fa-times-circle"></i> رفض المجموعة كاملة
@@ -721,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const channel = supabase.channel('orders-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { loadOrders(); checkNewOrders(); })
         .subscribe();
-    setInterval(checkNewOrders, 30000);
+    setInterval(checkNewOrders, 1000);
 });
 
 
@@ -759,4 +774,20 @@ function showToast(message, type = 'success') {
         t.style.transform = 'translateX(-50%) translateY(-10px)';
         setTimeout(() => t.remove(), 300);
     }, 2800);
+}
+// ===== دالة للحصول على ألوان حسب الثيم =====
+function getThemeColors() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    return {
+        modalBg:     isLight ? '#ffffff'  : '#1e293b',
+        deepBg:      isLight ? '#f8fafc'  : '#0f172a',
+        border:      isLight ? '#e2e8f0'  : '#334155',
+        text:        isLight ? '#1e293b'  : '#e2e8f0',
+        textMuted:   isLight ? '#64748b'  : '#94a3b8',
+        inputBg:     isLight ? '#f8fafc'  : '#0f172a',
+        inputBorder: isLight ? '#e2e8f0'  : '#334155',
+        inputColor:  isLight ? '#1e293b'  : '#e2e8f0',
+        cardBg:      isLight ? '#f1f5f9'  : '#0f172a',
+        cardBorder:  isLight ? '#e2e8f0'  : '#1e3a5f',
+    };
 }

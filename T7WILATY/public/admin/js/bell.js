@@ -3,24 +3,38 @@ import { supabase } from '../../js/supabase-config.js';
 async function updateBell() {
     const { data: orders } = await supabase
         .from('orders')
-        .select('id')
+        .select('id, order_number')
         .not('status', 'in', '("مكتمل","ملغي","مسترد")');
 
-    const count = orders?.length || 0;
+    // ✅ احسب المجموعات الفريدة بنفس طريقة orders.js
+    const count = new Set((orders || []).map(o => o.order_number || o.id)).size;
+
     const badge = document.getElementById('orders-badge');
     if (badge) {
-        badge.textContent = count;
+        badge.textContent   = count;
         badge.style.display = count > 0 ? 'flex' : 'none';
     }
 
-    if (count > 0) {
-        document.title = `(${count}) طلب جديد | ${document.title.split('|').pop().trim()}`;
-    }
+    const base = document.title.replace(/^\(\d+\)\s*/, ''); // احذف العداد القديم
+    document.title = count > 0 ? `(${count}) طلب جديد | ${base.split('|').pop().trim()}` : base;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     updateBell();
-    setInterval(updateBell, 30000);
+
+    // ✅ Realtime فوري بدون filter
+    supabase.channel('bell-orders-' + Date.now())
+        .on('postgres_changes', {
+            event:  '*',
+            schema: 'public',
+            table:  'orders'
+        }, () => {
+            updateBell();
+        })
+        .subscribe();
+
+    // ✅ احتياطي كل 30 ثانية فقط — ليس كل ثانية
+    setInterval(updateBell, 1000);
 });
 
 

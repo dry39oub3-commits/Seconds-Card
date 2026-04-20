@@ -105,7 +105,7 @@ window.calcProfitFromPrice = (productId, priceIndex) => {
 // ==================== توليد بطاقات الفئات ====================
 function generatePriceCards(product) {
     if (!product.prices || product.prices.length === 0)
-        return "<p style='color:#64748b; padding:10px;'>لا توجد فئات سعرية</p>";
+        return "<p style='color:var(--text-muted); padding:10px;'>لا توجد فئات سعرية</p>";
 
     return product.prices.map((item, index) => {
         const suppliers = item.suppliers      || [];
@@ -114,21 +114,16 @@ function generatePriceCards(product) {
         const rateVal   = item.exchange_rate  || 43;
 
         return `
-        <div class="sub-card-item" style="
-            display:flex; flex-direction:column; gap:10px;
-            padding:16px 18px; border-radius:12px;
-            background:#0f172a; margin-bottom:12px;
-            border:1px solid #1e293b;
-        ">
+        <div class="sub-card-item">
             <!-- الصف الأول: تفعيل + اسم الفئة + حذف -->
-            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
                 <label class="toggle-switch" style="flex-shrink:0;">
                     <input type="checkbox" ${item.active !== false ? 'checked' : ''}
                            onchange="togglePriceActive('${product.id}', ${index}, this.checked)">
                     <span class="slider"></span>
                 </label>
 
-                <strong style="font-size:15px; color:#f1f5f9; min-width:70px;">${item.label || 'فئة'}</strong>
+                <strong style="font-size:15px; color:var(--text-primary); min-width:70px;">${item.label || 'فئة'}</strong>
 
                 <button onclick="deletePriceItem('${product.id}', ${index})"
                     style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3);
@@ -139,82 +134,74 @@ function generatePriceCards(product) {
             </div>
 
             <!-- حقول الحساب -->
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:10px;">
 
                 <!-- سعر المورد -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <label style="font-size:11px; color:#64748b; font-weight:600;">💲 سعر المورد ($)</label>
+                    <label style="font-size:11px; color:var(--text-muted); font-weight:600;">💲 سعر المورد ($)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
                         <input type="number" step="0.01"
                                id="cost-input-${product.id}-${index}"
                                value="${costVal}" placeholder="0.00"
                                oninput="calcAutoPrice('${product.id}', ${index})"
-                               style="width:100%; padding:7px 10px; background:#1e293b;
-                                      border:1px solid #334155; border-radius:7px;
-                                      color:#60a5fa; font-weight:600; font-size:13px;">
-                        <span style="color:#64748b; font-size:11px; flex-shrink:0;">$</span>
+                               class="price-field cost-field">
+                        <span style="color:var(--text-muted); font-size:11px; flex-shrink:0;">$</span>
                     </div>
                 </div>
 
-                <!-- ربح / دولار — ثابت لا يتغير عند تعديل سعر البيع -->
+                <!-- ربح / دولار -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <label style="font-size:11px; color:#64748b; font-weight:600;">📈 ربح / دولار (MRU)</label>
+                    <label style="font-size:11px; color:var(--text-muted); font-weight:600;">📈 ربح / دولار (MRU)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
                         <input type="number" step="0.5"
                                id="profit-input-${product.id}-${index}"
                                value="${profitVal}" placeholder="4"
                                oninput="calcAutoPrice('${product.id}', ${index})"
-                               style="width:100%; padding:7px 10px; background:#1e293b;
-                                      border:1px solid #334155; border-radius:7px;
-                                      color:#22c55e; font-weight:600; font-size:13px;">
-                        <span style="color:#64748b; font-size:11px; flex-shrink:0;">MRU</span>
+                               class="price-field profit-field">
+                        <span style="color:var(--text-muted); font-size:11px; flex-shrink:0;">MRU</span>
                     </div>
                 </div>
 
                 <!-- سعر الصرف -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <label style="font-size:11px; color:#64748b; font-weight:600;">💱 سعر الصرف ($ → MRU)</label>
+                    <label style="font-size:11px; color:var(--text-muted); font-weight:600;">💱 سعر الصرف ($ → MRU)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
                         <input type="number" step="0.5"
                                id="rate-input-${product.id}-${index}"
                                value="${rateVal}" placeholder="43"
                                oninput="calcAutoPrice('${product.id}', ${index})"
-                               style="width:100%; padding:7px 10px; background:#1e293b;
-                                      border:1px solid #334155; border-radius:7px;
-                                      color:#f97316; font-weight:600; font-size:13px;">
-                        <span style="color:#64748b; font-size:11px; flex-shrink:0;">MRU/$</span>
+                               class="price-field rate-field">
+                        <span style="color:var(--text-muted); font-size:11px; flex-shrink:0;">MRU/$</span>
                     </div>
                 </div>
 
-                <!-- سعر البيع — تغييره يحدّث المعاينة فقط -->
+                <!-- سعر البيع -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <label style="font-size:11px; color:#64748b; font-weight:600;">🏷️ سعر البيع (MRU)</label>
+                    <label style="font-size:11px; color:var(--text-muted); font-weight:600;">🏷️ سعر البيع (MRU)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
                         <input type="number"
                                id="price-input-${product.id}-${index}"
                                value="${item.value}"
                                oninput="calcProfitFromPrice('${product.id}', ${index})"
-                               style="width:100%; padding:7px 10px; background:#1e293b;
-                                      border:1px solid #f97316; border-radius:7px;
-                                      color:#f97316; font-weight:700; font-size:13px;">
-                        <span style="color:#64748b; font-size:11px; flex-shrink:0;">MRU</span>
+                               class="price-field sell-field">
+                        <span style="color:var(--text-muted); font-size:11px; flex-shrink:0;">MRU</span>
                     </div>
                 </div>
             </div>
 
-            <!-- معاينة الربح الفعلي -->
-            <div id="profit-preview-${product.id}-${index}" style="min-height:18px;"></div>
+            <!-- معاينة الربح -->
+            <div id="profit-preview-${product.id}-${index}" style="min-height:18px; margin-bottom:8px;"></div>
 
             <!-- الموردون -->
             <div>
-                <div style="font-size:11px; color:#64748b; margin-bottom:6px; font-weight:600;">🏪 الموردون</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px; font-weight:600;">🏪 الموردون</div>
                 <div style="display:flex; flex-direction:column; gap:6px;" id="sup-container-${product.id}-${index}">
                     ${suppliers.map((s, si) => renderSupplier(product.id, index, si, s.name, s.url)).join('')}
                 </div>
             </div>
 
             <!-- أزرار -->
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
                 <button class="add-sup-btn" style="padding:7px 14px; white-space:nowrap;"
                         onclick="addSupplier('${product.id}', ${index})">
                     <i class="fas fa-plus"></i> مورد
@@ -227,6 +214,8 @@ function generatePriceCards(product) {
         </div>`;
     }).join('');
 }
+
+
 
 function renderSupplier(pId, priceIdx, sIdx, name = '', url = '') {
     return `
