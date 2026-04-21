@@ -1,77 +1,96 @@
-/* wallet-client.css */
+/* wallet.css */
 
+/* ===== Light Theme (default) ===== */
 :root {
-    --primary-color: #00a884; /* لون الهوية للمحفظة */
+    --primary-color: #00a884;
     --secondary-color: #3182ce;
-    --bg-light: #f7fafc;
-    --text-dark: #2d3748;
-    --white: #ffffff;
+    --w-bg:           #f7fafc;
+    --w-card-bg:      #ffffff;
+    --w-text:         #1a202c;
+    --w-text-muted:   #718096;
+    --w-border:       #e2e8f0;
+    --w-item-border:  #edf2f7;
+    --w-icon-bg:      #f0fff4;
+    --w-icon-color:   #00a884;
 }
 
+/* ===== Dark Theme ===== */
+[data-theme="dark"] {
+    --w-bg:           #0f172a;
+    --w-card-bg:      #1e293b;
+    --w-text:         #f1f5f9;
+    --w-text-muted:   #94a3b8;
+    --w-border:       #334155;
+    --w-item-border:  #1e293b;
+    --w-icon-bg:      #0f172a;
+    --w-icon-color:   #22c55e;
+}
+
+/* ===== Base ===== */
 body {
-    background-color: var(--bg-light);
+    background-color: var(--w-bg) !important;
+    color: var(--w-text) !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
+    transition: background-color 0.3s, color 0.3s;
 }
 
-/* حاوية المحفظة */
+/* ===== Wallet Container ===== */
 .wallet-container {
     max-width: 800px;
     margin: 20px auto;
     padding: 15px;
 }
 
-/* كروت الرصيد - تصميم مودرن */
+/* ===== Balance Cards ===== */
 .balance-section {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
     margin-bottom: 30px;
 }
 
 .balance-card {
-    background: var(--white);
+    background: var(--w-card-bg) !important;
+    border: 1px solid var(--w-border) !important;
     padding: 20px;
     border-radius: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
     position: relative;
     overflow: hidden;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s, background 0.3s, border-color 0.3s;
 }
 
-.balance-card:hover {
-    transform: translateY(-5px);
-}
+.balance-card:hover { transform: translateY(-4px); }
 
 .balance-card i {
     font-size: 24px;
     margin-bottom: 10px;
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
 .balance-card span {
     font-size: 0.85rem;
-    color: #718096;
+    color: var(--w-text-muted) !important;
     margin-bottom: 5px;
 }
 
 .balance-card h2 {
     font-size: 1.5rem;
-    color: var(--text-dark);
+    color: var(--w-text) !important;
     margin: 0;
     font-weight: 700;
 }
 
-/* تمييز كرت العملة المحلية */
-.mru-card { border-bottom: 4px solid var(--primary-color); }
-.usd-card { border-bottom: 4px solid var(--secondary-color); }
+.mru-card { border-bottom: 4px solid var(--primary-color) !important; }
+.usd-card { border-bottom: 4px solid var(--secondary-color) !important; }
 
-/* زر إضافة رصيد للعميل */
+/* ===== Add Balance Button ===== */
 .add-balance-btn {
     width: 100%;
     background: var(--primary-color);
@@ -87,38 +106,43 @@ body {
     justify-content: center;
     gap: 10px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 12px rgba(0, 168, 132, 0.3);
+    box-shadow: 0 4px 12px rgba(0,168,132,0.3);
+    transition: opacity 0.2s;
 }
+.add-balance-btn:hover { opacity: 0.9; }
 
-/* سجل العمليات */
+/* ===== History Section ===== */
 .history-section {
-    background: var(--white);
+    background: var(--w-card-bg) !important;
+    border: 1px solid var(--w-border) !important;
     border-radius: 20px;
     padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: background 0.3s, border-color 0.3s;
 }
 
 .history-section h3 {
     margin-top: 0;
     font-size: 1.1rem;
-    color: var(--text-dark);
+    color: var(--w-text) !important;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-/* جدول الحركات بشكل متجاوب للهواتف */
+/* ===== Transaction Items ===== */
 .transaction-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 0;
-    border-bottom: 1px solid #edf2f7;
+    border-bottom: 1px solid var(--w-item-border) !important;
+    transition: border-color 0.3s;
 }
-
-.transaction-item:last-child { border: none; }
+.transaction-item:last-child { border: none !important; }
 
 .t-info { display: flex; align-items: center; gap: 12px; }
+
 .t-icon {
     width: 40px;
     height: 40px;
@@ -126,40 +150,35 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f0fff4;
-    color: var(--primary-color);
+    background: var(--w-icon-bg) !important;
+    color: var(--w-icon-color) !important;
+    transition: background 0.3s;
 }
+.t-icon.minus { color: #e53e3e !important; }
 
-.t-details strong { display: block; font-size: 0.9rem; }
-.t-details span { font-size: 0.75rem; color: #a0aec0; }
+.t-details strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--w-text) !important;
+}
+.t-details span {
+    font-size: 0.75rem;
+    color: var(--w-text-muted) !important;
+}
 
 .t-amount { font-weight: bold; font-size: 1rem; }
-.t-amount.plus { color: #38a169; } /* رصيد مضاف */
-.t-amount.minus { color: #e53e3e; } /* شراء منتج */
+.t-amount.plus  { color: #38a169; }
+.t-amount.minus { color: #e53e3e; }
 
-/* تحسينات للهواتف */
-@media (max-width: 480px) {
-    .balance-section {
-        grid-template-columns: 1fr; /* جعل الكروت فوق بعض في الجوال الصغير */
-    }
-    
-    .balance-card h2 {
-        font-size: 1.3rem;
-    }
-}
-
-
-
-/* تنسيق هيدر العميل - SecondsCard */
-/* --- تنسيقات الهيدر الموحد (نفس مقاس index) --- */
+/* ===== Header (always dark) ===== */
 .main-header {
-    background: var(--dark-blue);
-    color: white;
+    background-color: #1a202c !important;
+    color: white !important;
     padding: 10px 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     position: sticky;
     top: 0;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
 .header-container {
@@ -170,14 +189,14 @@ body {
     align-items: center;
     padding: 0 20px;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
-.logo { font-size: 22px; font-weight: bold; min-width: 150px; color: white; cursor: pointer; }
-.logo span { color: var(--primary); }
-.logo-link { text-decoration: none; display: inline-block; transition: 0.2s; }
+.logo { font-size: 22px; font-weight: bold; min-width: 150px; color: white !important; cursor: pointer; }
+.logo span { color: #f97316; }
+.logo-link { text-decoration: none; display: inline-block; }
 
-/* --- شريط البحث --- */
-.search-container { flex-grow: 1; display: flex; justify-content: center; }
+.search-container { flex-grow: 1; display: flex; justify-content: center; order: 3; width: 100%; }
 .search-bar {
     width: 100%;
     max-width: 500px;
@@ -189,216 +208,53 @@ body {
 .search-bar input { border: none; outline: none; width: 100%; padding: 8px; font-size: 14px; }
 .search-bar button { background: none; border: none; color: #667; cursor: pointer; }
 
-/* --- الأزرار الجانبية والسليكتر --- */
 .header-actions { display: flex; align-items: center; gap: 15px; min-width: 180px; justify-content: flex-end; }
-.action-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; position: relative; text-decoration: none; }
+.action-btn { background: none; border: none; color: white !important; font-size: 20px; cursor: pointer; position: relative; text-decoration: none; }
 
-/* --- إدارة القائمة المنسدلة (Dropdown) --- */
-.user-menu-container {
-    position: relative;
-    display: inline-block;
-}
+/* ===== Dropdown ===== */
+.user-menu-container { position: relative; display: inline-block; }
 
-.dropdown-menu {
-    display: none; /* مخفية افتراضياً وتظهر بـ JS */
+#user-dropdown {
+    display: none;
     position: absolute;
-    top: 45px;
+    top: 100%;
     left: 0;
-    background: var(--dropdown-bg);
     min-width: 180px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    background: #1e293b;
+    border: 1px solid #334155;
     border-radius: 12px;
-    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    z-index: 9999;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.1);
 }
+#user-dropdown.show { display: block; }
 
-.dropdown-menu.show {
-    display: block; /* تظهر عند الضغط */
-    animation: fadeIn 0.2s ease-out;
-}
+.dropdown-nav { display: flex; flex-direction: column; padding: 5px 0; }
 
-.dropdown-nav {
-    display: flex;
-    flex-direction: column; /* ترتيب العناصر من الأعلى للأسفل */
-    padding: 5px 0;
-}
-
-.dropdown-nav a, .logout-btn {
+.dropdown-nav a,
+.dropdown-nav .logout-btn {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px 20px;
-    color: white;
-    text-decoration: none; /* إزالة الخطوط تماماً */
+    color: #e2e8f0;
+    text-decoration: none;
     font-size: 14px;
-    transition: 0.3s;
+    transition: background 0.2s;
     background: none;
     border: none;
     width: 100%;
     text-align: right;
     cursor: pointer;
 }
+.dropdown-nav a:hover,
+.dropdown-nav .logout-btn:hover { background: rgba(249,115,22,0.1); color: #f97316; }
+.dropdown-nav hr { border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0; }
+.dropdown-nav .logout-btn { color: #ff4d4d; font-weight: bold; }
 
-.dropdown-nav a:hover, .logout-btn:hover {
-    background: rgba(255, 152, 0, 0.1);
-    color: var(--primary);
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+    .balance-section { grid-template-columns: 1fr; }
+    .balance-card h2 { font-size: 1.3rem; }
+    .header-container { padding: 8px 15px; gap: 10px; }
 }
-
-.dropdown-nav hr {
-    border: 0;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin: 5px 0;
-}
-
-.logout-btn {
-    color: #ff4d4d; /* لون أحمر لتنبيه تسجيل الخروج */
-    font-weight: bold;
-}
-
-
-/* كروت الرصيد */
-.balance-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-
-
-/* الهيدر في وضع النهار */
-/* الهيدر ثابت داكن في كلا الوضعين */
-.main-header {
-    background-color: #1a202c !important; /* لون داكن ثابت */
-    color: white !important;
-    padding: 10px 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-/* ضمان بقاء الأيقونات واللوجو بيضاء في الهيدر */
-.main-header .logo { color: white !important; }
-.main-header .logo span { color: #f6ad55; } /* لون Card البرتقالي */
-
-.main-header .action-btn {
-    color: white !important;
-}
-
-.search-container {
-        order: 3;
-        width: 100%;
-        flex-grow: unset;
-    }
-
-    .search-bar { max-width: 100%; }
-
-
-/* --- ضمان ظهور سجل العمليات في الوضع الداكن --- */
-body.dark-mode .history-section {
-    background-color: #1a202c !important; /* خلفية داكنة واضحة */
-    border: 1px solid #2d3748 !important; /* حدود خفيفة لتمييز الحاوية */
-    color: #ffffff !important;
-}
-
-body.dark-mode .history-section h3 {
-    color: #ffffff !important;
-}
-
-/* ===== DARK MODE — data-theme ===== */
-
-[data-theme="dark"] body {
-    background-color: #0f172a;
-    color: #e2e8f0;
-}
-
-[data-theme="dark"] .balance-card,
-[data-theme="dark"] .history-section {
-    background-color: #1e293b !important;
-    color: #e2e8f0 !important;
-    border-color: #334155 !important;
-}
-
-[data-theme="dark"] .balance-card h2 { color: #f1f5f9 !important; }
-[data-theme="dark"] .balance-card span { color: #94a3b8 !important; }
-
-[data-theme="dark"] .history-section h3 { color: #f1f5f9 !important; }
-
-[data-theme="dark"] .transaction-item {
-    border-bottom-color: #334155 !important;
-}
-
-[data-theme="dark"] .t-details strong { color: #e2e8f0 !important; }
-[data-theme="dark"] .t-details span { color: #94a3b8 !important; }
-
-[data-theme="dark"] .t-icon {
-    background-color: #0f172a !important;
-    color: #22c55e !important;
-}
-
-[data-theme="dark"] .t-icon.minus { color: #ef4444 !important; }
-
-[data-theme="dark"] .dropdown-menu {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-}
-
-[data-theme="dark"] .dropdown-nav a,
-[data-theme="dark"] .dropdown-nav .logout-btn {
-    color: #e2e8f0 !important;
-}
-
-[data-theme="dark"] .dropdown-nav a:hover {
-    background: rgba(249,115,22,0.1) !important;
-    color: #f97316 !important;
-}
-
-[data-theme="dark"] .search-bar {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-}
-
-[data-theme="dark"] .search-bar input {
-    color: #e2e8f0 !important;
-    background: transparent !important;
-}
-
-[data-theme="dark"] .search-bar input::placeholder {
-    color: #64748b !important;
-}
-
-/* احذف كل كود body.dark-mode القديم */
-
-/* إصلاح موضع قائمة البروفيل */
-#user-dropdown {
-    position: absolute;
-    top: 100%;
-    right: auto;
-    left: 0;        /* يظهر لليسار بدل اليمين */
-    min-width: 160px;
-    z-index: 9999;
-    background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    padding: 8px 0;
-    display: none;
-}
-
-#user-dropdown.show {
-    display: block;
-}
-
-/* الحاوية تكون relative */
-.user-menu-wrapper,
-.nav-icons,
-header {
-    position: relative;
-}
-
-.header-container {
-        flex-wrap: wrap;
-        padding: 8px 15px;
-        gap: 10px;
-    }

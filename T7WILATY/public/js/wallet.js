@@ -30,7 +30,7 @@ function updateThemeIcon(theme) {
 
 // ===== User Menu =====
 function setupUserMenu() {
-    const userBtn = document.getElementById('user-icon-btn');
+    const userBtn  = document.getElementById('user-icon-btn');
     const dropdown = document.getElementById('user-dropdown');
     if (!userBtn || !dropdown) return;
     userBtn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); };
@@ -57,7 +57,7 @@ async function loadWalletData() {
         .eq('id', user.id)
         .single();
 
-    const balance = userData?.balance || 0;
+    const balance    = userData?.balance || 0;
     const balanceUSD = (balance / 43).toFixed(2);
 
     const mruEl = document.getElementById('mruBalance');
@@ -129,9 +129,9 @@ async function loadTransactions(userId) {
     }
 
     list.innerHTML = all.map(t => {
-        const isCharge   = t.type === 'charge' || t.type === 'deposit';
-        const isPurchase = t.type === 'purchase' || t.type === 'withdraw';
-        const isOrder    = !!t.order_number;
+        const isCharge    = t.type === 'charge' || t.type === 'deposit';
+        const isPurchase  = t.type === 'purchase' || t.type === 'withdraw';
+        const isOrder     = !!t.order_number;
         const isAdminEdit = t.payment_method === 'تعديل أدمن';
 
         const date = new Date(t.created_at).toLocaleString('fr-FR', {
@@ -141,7 +141,6 @@ async function loadTransactions(userId) {
 
         const { color, bg, border, icon } = getStatusStyle(t.status);
 
-        // شارة الحالة المشتركة
         const statusBadge = `
             <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;
                         padding-bottom:8px; border-bottom:1px solid ${color}22;">
@@ -149,7 +148,6 @@ async function loadTransactions(userId) {
                 <span style="color:${color}; font-weight:700; font-size:13px;">${t.status}</span>
             </div>`;
 
-        // سبب الرفض المشترك
         const rejectBlock = t.reject_reason ? `
             <div style="margin-top:8px; background:rgba(239,68,68,0.08);
                         border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:8px 10px;">
@@ -159,7 +157,6 @@ async function loadTransactions(userId) {
                 <div style="color:#fca5a5; font-weight:600; font-size:13px;">${t.reject_reason}</div>
             </div>` : '';
 
-        // ملاحظة التعديل
         const noteBlock = (t.note && isAdminEdit) ? `
             <div style="margin-top:8px; background:rgba(96,165,250,0.08);
                         border:1px solid rgba(96,165,250,0.3); border-radius:6px; padding:8px 10px;">
@@ -171,52 +168,43 @@ async function loadTransactions(userId) {
 
         let extraDetails = '';
 
-        // ===== تفاصيل الشحن =====
         if (isCharge) {
-    extraDetails = `
-    <div style="margin-top:8px; background:${bg};
-        border:1px solid ${border}; border-radius:8px; padding:8px 12px; font-size:12px; color:#cbd5e1;">
+            extraDetails = `
+            <div style="margin-top:8px; background:${bg};
+                border:1px solid ${border}; border-radius:8px; padding:8px 12px; font-size:12px; color:#cbd5e1;">
+                ${statusBadge}
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">🏦 طريقة الدفع</span>
+                    <span style="color:#e2e8f0; font-weight:600;">${t.payment_method || '-'}</span>
+                </div>
+                ${t.order_number ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">🔢 رقم الطلب</span>
+                    <span style="color:#60a5fa; font-weight:700; font-family:monospace;">${t.order_number}</span>
+                </div>` : ''}
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">💰 المبلغ</span>
+                    <span style="color:${color}; font-weight:600;">+${t.amount.toLocaleString()} MRU</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">📅 التاريخ</span>
+                    <span>${date}</span>
+                </div>
+                ${rejectBlock}
+                ${noteBlock}
+                ${t.receipt_url ? `
+                <div style="margin-top:6px;">
+                    <a href="${t.receipt_url}" target="_blank"
+                        style="display:inline-flex; align-items:center; gap:6px;
+                            background:#1e293b; color:#60a5fa; padding:5px 10px;
+                            border-radius:6px; font-size:11px; text-decoration:none;
+                            border:1px solid #334155;">
+                        <i class="fas fa-receipt"></i> عرض الإيصال
+                    </a>
+                </div>` : ''}
+            </div>`;
+        }
 
-        ${statusBadge}
-
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-            <span style="color:#94a3b8;">🏦 طريقة الدفع</span>
-            <span style="color:#e2e8f0; font-weight:600;">${t.payment_method || '-'}</span>
-        </div>
-
-        ${t.order_number ? `
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-            <span style="color:#94a3b8;">🔢 رقم الطلب</span>
-            <span style="color:#60a5fa; font-weight:700; font-family:monospace;">${t.order_number}</span>
-        </div>` : ''}
-
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-            <span style="color:#94a3b8;">💰 المبلغ</span>
-            <span style="color:${color}; font-weight:600;">+${t.amount.toLocaleString()} MRU</span>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-            <span style="color:#94a3b8;">📅 التاريخ</span>
-            <span>${date}</span>
-        </div>
-
-        ${rejectBlock}
-        ${noteBlock}
-
-        ${t.receipt_url ? `
-        <div style="margin-top:6px;">
-            <a href="${t.receipt_url}" target="_blank"
-                style="display:inline-flex; align-items:center; gap:6px;
-                    background:#1e293b; color:#60a5fa; padding:5px 10px;
-                    border-radius:6px; font-size:11px; text-decoration:none;
-                    border:1px solid #334155;">
-                <i class="fas fa-receipt"></i> عرض الإيصال
-            </a>
-        </div>` : ''}
-    </div>`;
-}
-
-        // ===== تفاصيل الشراء =====
         if (isPurchase) {
             const productName = t.product_name
                 || (t.payment_method || '').replace('المحفظة - ', '').replace('محفظة - ', '');
@@ -224,34 +212,26 @@ async function loadTransactions(userId) {
             extraDetails = `
             <div style="margin-top:8px; background:${bg};
                 border:1px solid ${border}; border-radius:8px; padding:8px 12px; font-size:12px; color:#cbd5e1;">
-
                 ${statusBadge}
-
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <span style="color:#94a3b8;">🛍️ المنتج</span>
                     <span style="color:#f97316; font-weight:600;">${productName || '-'}</span>
                 </div>
-
                 ${t.label ? `
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <span style="color:#94a3b8;">🏷️ الفئة</span>
                     <span style="color:#f97316; font-weight:600;">${t.label}</span>
                 </div>` : ''}
-
                 ${t.order_number ? `
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <span style="color:#94a3b8;">🔢 رقم الطلب</span>
                     <span style="color:#60a5fa; font-weight:600;">${t.order_number}</span>
                 </div>` : ''}
-
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <span style="color:#94a3b8;">📅 التاريخ</span>
                     <span>${date}</span>
                 </div>
-
                 ${rejectBlock}
-
-                
             </div>`;
         }
 
@@ -292,7 +272,7 @@ window.closeDepositModal = () => {
     document.getElementById('method-info').style.display = 'none';
     document.querySelectorAll('#payment-methods-container > div').forEach(d => {
         d.style.borderColor = '#334155';
-        d.style.background = '#0f172a';
+        d.style.background  = '#0f172a';
     });
 };
 
@@ -328,13 +308,13 @@ async function loadPaymentMethods() {
 window.selectMethod = (name, account, el) => {
     document.querySelectorAll('#payment-methods-container > div').forEach(d => {
         d.style.borderColor = '#334155';
-        d.style.background = '#0f172a';
+        d.style.background  = '#0f172a';
     });
     el.style.borderColor = '#f97316';
-    el.style.background = 'rgba(249,115,22,0.1)';
-    document.getElementById('charge-method-selected').value = name;
+    el.style.background  = 'rgba(249,115,22,0.1)';
+    document.getElementById('charge-method-selected').value     = name;
     document.getElementById('method-account-display').textContent = account;
-    document.getElementById('method-info').style.display = 'block';
+    document.getElementById('method-info').style.display        = 'block';
 };
 
 // ===== نسخ رقم الحساب =====
@@ -343,8 +323,12 @@ window.copyMethodAccount = () => {
     navigator.clipboard.writeText(account).then(() => showToast('✅ تم نسخ رقم الحساب!'));
 };
 
-// ===== إرسال طلب الشحن =====
+// ===== إرسال طلب الشحن — مع منع التكرار ✅ =====
+let isSubmitting = false;
+
 window.submitCharge = async () => {
+    if (isSubmitting) return; // ✅ منع الضغط المتكرر
+
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) return;
@@ -356,6 +340,16 @@ window.submitCharge = async () => {
     if (!amount || amount <= 0) { showToast('⚠️ أدخل مبلغاً صحيحاً'); return; }
     if (!method)                { showToast('⚠️ اختر طريقة الدفع أولاً'); return; }
     if (!receiptFile)           { showToast('⚠️ يرجى رفع إيصال التحويل'); return; }
+
+    // ✅ تعطيل الزر وإظهار حالة التحميل
+    isSubmitting = true;
+    const btn = document.querySelector('#depositModal button[onclick="submitCharge()"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.cursor  = 'not-allowed';
+        btn.innerHTML     = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    }
 
     let receipt_url = null;
 
@@ -373,7 +367,6 @@ window.submitCharge = async () => {
         console.warn('تعذر رفع الإيصال:', e);
     }
 
-    // توليد رقم طلب فريد يبدأ بـ S
     const chargeOrderNumber = `S${Math.floor(100000 + Math.random() * 900000)}`;
 
     const { error } = await supabase.from('wallet_transactions').insert({
@@ -385,6 +378,15 @@ window.submitCharge = async () => {
         status:         'قيد المراجعة',
         order_number:   chargeOrderNumber
     });
+
+    // ✅ إعادة تفعيل الزر دائماً
+    isSubmitting = false;
+    if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor  = 'pointer';
+        btn.innerHTML     = '<i class="fas fa-paper-plane"></i> إرسال طلب الشحن';
+    }
 
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
 
@@ -407,24 +409,15 @@ function showToast(msg, isError = false) {
     const toast = document.createElement('div');
     toast.textContent = msg;
     toast.style.cssText = `
-        position: fixed;
-        bottom: 28px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${isError ? '#ef4444' : '#22c55e'};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        z-index: 99999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        pointer-events: none;
-        white-space: nowrap;
+        position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+        background: ${isError ? '#ef4444' : '#22c55e'}; color: white;
+        padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
+        z-index: 99999; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        pointer-events: none; white-space: nowrap;
     `;
     document.body.appendChild(toast);
     setTimeout(() => {
-        toast.style.opacity = '0';
+        toast.style.opacity    = '0';
         toast.style.transition = 'opacity 0.4s';
         setTimeout(() => toast.remove(), 400);
     }, 2500);
