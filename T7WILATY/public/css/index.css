@@ -528,7 +528,9 @@ header {
     color: #f97316 !important;
 }
 
-.navbar-brand img,
+.navbar-brand img {
+  border-radius: 14px;
+}
 header .logo img {
   border-radius: 10px;
 }
