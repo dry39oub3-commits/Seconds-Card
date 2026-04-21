@@ -450,9 +450,9 @@ function updateSummary(orders) {
 // ==================== استرداد مجموعة ====================
 // ==================== استرداد مجموعة ====================
 window.refundGroupOrders = async (ids) => {
-    if (!confirm(`هل تريد استرداد ${ids.length} طلب وإرجاع الأكواد للمخزون؟`)) return;
+    if (!confirm(`هل تريد استرداد ${ids.length} طلب وإرجاع المبلغ للمحفظة؟`)) return;
 
-    let totalCodesReturned = 0;
+
     let totalRefunded      = 0;
 
     for (const orderId of ids) {
@@ -468,7 +468,7 @@ window.refundGroupOrders = async (ids) => {
 
         const refundAmount = (order.price || 0) * (order.quantity || 1);
 
-        if (order.user_id && refundAmount > 0) {
+        if (order.user_id && refundAmount > 0 && (order.paymentMethod === 'المحفظة' || order.payment_method === 'المحفظة')) {
             const { data: userData } = await supabase
                 .from('users').select('balance').eq('id', order.user_id).single();
 
@@ -493,51 +493,12 @@ window.refundGroupOrders = async (ids) => {
             totalRefunded += refundAmount;
         }
 
-        // ==================== إرجاع الأكواد مع مورد كل كود ====================
-        if (order.card_code) {
-            const codes           = order.card_code.split('\n').map(c => c.trim()).filter(c => c);
-            const suppliersDetails = order.suppliers_details || [];
 
-            // بناء خريطة كود → { supplier_name, supplier_order_id }
-            const codeSupplierMap = {};
-            suppliersDetails.forEach(s => {
-                if (s.code) {
-                    codeSupplierMap[s.code] = {
-                        supplier_name:     s.supplier_name     || order.supplier_id    || 'غير محدد',
-                        supplier_order_id: s.supplier_order_id || order.supplier_order_id || null
-                    };
-                }
-            });
-
-            totalCodesReturned += codes.length;
-
-            for (const code of codes) {
-                // استخدم بيانات المورد الخاصة بهذا الكود إن وجدت، وإلا fallback للطلب
-                const supplierInfo = codeSupplierMap[code] || {
-                    supplier_name:     order.supplier_id    || 'غير محدد',
-                    supplier_order_id: order.supplier_order_id || null
-                };
-
-                await supabase.from('used_codes').delete().eq('code', code);
-                await supabase.from('stocks').insert({
-                    product_id:        order.product_id,
-                    product_name:      order.product_name,
-                    price_label:       order.label,
-                    supplier_name:     supplierInfo.supplier_name,
-                    order_id:          supplierInfo.supplier_order_id,
-                    cost_per_card_usd: order.cost_price || 0,
-                    code,
-                    status:            'available',
-                    notes:             '↩️ مسترد من طلب #' + orderId.substring(0, 7),
-                    created_at:        new Date().toISOString()
-                });
-            }
-        }
         // =======================================================================
     }
 
     document.getElementById('order-detail-popup')?.remove();
-    showToast(`✅ تم استرداد ${ids.length} طلب\n💰 تم إرجاع ${totalRefunded.toLocaleString()} MRU للمحفظة\n🔑 تم إرجاع ${totalCodesReturned} كود للمخزون`);
+    showAlert(`✅ تم استرداد ${ids.length} طلب\n💰 تم إرجاع ${totalRefunded.toLocaleString()} MRU للمحفظة`, 'success');
     loadCompletedOrders();
 };
 
@@ -559,7 +520,7 @@ window.refundOrder = async (orderId) => {
 
 // ==================== نسخ ====================
 window.copyText = (text) => {
-    navigator.clipboard.writeText(text).then(() => showToast(' تم النسخ!'));
+    navigator.clipboard.writeText(text).then(() => showAlert('تم النسخ!', 'success'));
 };
 
 // ==================== فلاتر ====================

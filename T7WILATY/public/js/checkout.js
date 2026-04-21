@@ -74,11 +74,12 @@ window.selectMethod = function(id, account, name) {
         c.style.borderColor = '#334155';
         c.style.background = '';
     });
-
+document.querySelectorAll('.payment-method-card').forEach(c => {
+    c.classList.remove('selected');
+});
     const card = document.getElementById(`pm-${id}`);
     if (card) {
-        card.style.borderColor = '#f97316';
-        card.style.background = 'rgba(249,115,22,0.1)';
+        card.classList.add('selected');
     }
 
     selectedPaymentMethod = { id, account, name };

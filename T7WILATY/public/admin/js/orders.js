@@ -78,14 +78,26 @@ function renderOrders(orders) {
 
         const totalQty  = group.items.reduce((s, o) => s + (o.quantity || 1), 0);
         const acceptBtn = group.items.length === 1
-            ? `<button onclick="openOrderModal(${JSON.stringify(group.items[0]).replace(/"/g, '&quot;')})"
-                   style="background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
-                   <i class="fas fa-check-circle"></i> قبول
-               </button>`
-            : `<button onclick="openGroupOrderModal(${JSON.stringify(group.items).replace(/"/g, '&quot;')})"
-                   style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
-                   <i class="fas fa-layer-group"></i> قبول المجموعة (${group.items.length})
-               </button>`;
+    ? `<div style="display:flex;flex-direction:column;gap:6px;">
+        <button onclick="openOrderModal(${JSON.stringify(group.items[0]).replace(/"/g, '&quot;')})"
+            style="background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+            <i class="fas fa-check-circle"></i> قبول
+        </button>
+        <button onclick="quickRefund('${group.items[0].id}', '${group.items[0].paymentMethod || group.items[0].payment_method || ''}')"
+            style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+            <i class="fas fa-undo"></i> استرداد
+        </button>
+       </div>`
+    : `<div style="display:flex;flex-direction:column;gap:6px;">
+        <button onclick="openGroupOrderModal(${JSON.stringify(group.items).replace(/"/g, '&quot;')})"
+            style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+            <i class="fas fa-layer-group"></i> قبول المجموعة (${group.items.length})
+        </button>
+        <button onclick="quickRefundGroup(${JSON.stringify(group.items.map(i=>i.id)).replace(/"/g,'&quot;')}, '${group.paymentMethod || group.payment_method || ''}')"
+            style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+            <i class="fas fa-undo"></i> استرداد المجموعة
+        </button>
+       </div>`;
 
         return `
             <tr id="order-row-${group.order_number || group.id}">
@@ -791,3 +803,339 @@ function getThemeColors() {
         cardBorder:  isLight ? '#e2e8f0'  : '#1e3a5f',
     };
 }
+
+// ==================== Modal الاسترداد ====================
+// أضف هذا الكود في orders.js — استبدل دالتي quickRefund و quickRefundGroup
+
+window.quickRefund = async (orderId, paymentMethod) => {
+    // جلب بيانات الطلب الكاملة أولاً
+    const { data: order, error } = await supabase
+        .from('orders')
+        .select('id, user_id, price, quantity, payment_method, paymentMethod, customer_name, customer_phone, product_name, label, order_number, receipt_url, receiptUrl, created_at')
+        .eq('id', orderId)
+        .single();
+
+    if (error || !order) { showToast('❌ خطأ في جلب الطلب', 'error'); return; }
+
+    const pm            = order.paymentMethod || order.payment_method || '';
+    const refundAmount  = (order.price || 0) * (order.quantity || 1);
+    const isWallet      = pm === 'المحفظة' || pm === 'محفظة';
+    const receiptUrl    = order.receiptUrl || order.receipt_url;
+    const c             = getThemeColors();
+
+    // إزالة أي modal قديم
+    document.getElementById('refund-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'refund-modal';
+    modal.style.cssText = `
+        position:fixed; inset:0;
+        background:rgba(0,0,0,0.75);
+        backdrop-filter:blur(4px);
+        z-index:99999;
+        display:flex; align-items:center; justify-content:center;
+        padding:20px;
+        animation:refundFadeIn 0.2s ease;
+    `;
+
+    modal.innerHTML = `
+        <style>
+            @keyframes refundFadeIn  { from{opacity:0} to{opacity:1} }
+            @keyframes refundSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+            .refund-box {
+                background:${c.modalBg};
+                border:1px solid ${c.border};
+                border-radius:20px;
+                padding:28px;
+                width:100%; max-width:460px;
+                color:${c.text};
+                font-family:'Tajawal','Segoe UI',sans-serif;
+                animation:refundSlideUp 0.25s ease;
+            }
+            .refund-title {
+                text-align:center; font-size:18px; font-weight:800;
+                color:#f59e0b; margin-bottom:20px;
+                display:flex; align-items:center; justify-content:center; gap:8px;
+            }
+            .refund-row {
+                display:flex; justify-content:space-between; align-items:center;
+                padding:10px 14px;
+                border-radius:10px;
+                background:${c.deepBg};
+                border:1px solid ${c.border};
+                margin-bottom:8px;
+                font-size:13px;
+            }
+            .refund-row .label { color:${c.textMuted}; }
+            .refund-row .value { font-weight:700; color:${c.text}; }
+            .refund-amount-box {
+                background:rgba(245,158,11,0.1);
+                border:2px solid #f59e0b;
+                border-radius:12px;
+                padding:14px;
+                text-align:center;
+                margin:14px 0;
+            }
+            .refund-receipt-box {
+                border-radius:12px;
+                overflow:hidden;
+                border:1px solid ${c.border};
+                margin:14px 0;
+                cursor:pointer;
+                transition:transform 0.15s;
+            }
+            .refund-receipt-box:hover { transform:scale(1.01); }
+            .refund-receipt-box img { width:100%; max-height:180px; object-fit:cover; display:block; }
+            .refund-receipt-label {
+                background:${c.deepBg};
+                padding:8px 12px;
+                font-size:12px;
+                color:${c.textMuted};
+                display:flex; align-items:center; gap:6px;
+            }
+            .refund-note {
+                background:${isWallet ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)'};
+                border:1px solid ${isWallet ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'};
+                border-radius:10px; padding:10px 14px;
+                font-size:12px; color:${isWallet ? '#22c55e' : '#f59e0b'};
+                margin-bottom:16px; display:flex; align-items:flex-start; gap:8px; line-height:1.6;
+            }
+            .refund-btn-confirm {
+                width:100%; padding:13px;
+                background:linear-gradient(135deg,#f59e0b,#d97706);
+                color:white; border:none; border-radius:10px;
+                font-size:15px; font-weight:800; cursor:pointer;
+                font-family:'Tajawal','Segoe UI',sans-serif;
+                box-shadow:0 4px 14px rgba(245,158,11,0.35);
+                transition:opacity 0.2s, transform 0.15s;
+                margin-bottom:8px;
+            }
+            .refund-btn-confirm:hover { opacity:0.9; transform:translateY(-1px); }
+            .refund-btn-cancel {
+                width:100%; padding:11px;
+                background:${c.deepBg};
+                color:${c.textMuted}; border:1px solid ${c.border}; border-radius:10px;
+                font-size:14px; cursor:pointer;
+                font-family:'Tajawal','Segoe UI',sans-serif;
+                transition:background 0.2s;
+            }
+            .refund-btn-cancel:hover { background:rgba(239,68,68,0.1); color:#ef4444; border-color:#ef4444; }
+        </style>
+
+        <div class="refund-box">
+            <div class="refund-title">
+                <i class="fas fa-undo"></i> تأكيد الاسترداد
+            </div>
+
+            <!-- معلومات الطلب -->
+            <div class="refund-row">
+                <span class="label"><i class="fas fa-hashtag"></i> رقم الطلب</span>
+                <span class="value" style="font-family:monospace;color:#f97316;">${order.order_number || '#' + orderId.substring(0,8)}</span>
+            </div>
+
+            <div class="refund-row">
+                <span class="label"><i class="fas fa-box"></i> المنتج</span>
+                <span class="value">${order.product_name || '—'} ${order.label ? `<span style="color:#f97316;font-size:12px;">(${order.label})</span>` : ''}</span>
+            </div>
+
+            <div class="refund-row">
+                <span class="label"><i class="fas fa-user"></i> العميل</span>
+                <span class="value">${order.customer_name || '—'}</span>
+            </div>
+
+            ${order.customer_phone ? `
+            <div class="refund-row">
+                <span class="label"><i class="fas fa-phone"></i> الهاتف</span>
+                <span class="value" style="font-family:monospace;direction:ltr;">${order.customer_phone}</span>
+            </div>` : ''}
+
+            <div class="refund-row">
+                <span class="label"><i class="fas fa-credit-card"></i> طريقة الدفع</span>
+                <span class="value">${pm || '—'}</span>
+            </div>
+
+            <!-- المبلغ -->
+            <div class="refund-amount-box">
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">المبلغ الذي سيُسترد</div>
+                <div style="font-size:28px;font-weight:900;color:#f59e0b;">${refundAmount} <span style="font-size:14px;font-weight:600;">MRU</span></div>
+                ${order.quantity > 1 ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">${order.price} MRU × ${order.quantity} قطعة</div>` : ''}
+            </div>
+
+            <!-- الإيصال -->
+            ${receiptUrl ? `
+            <div class="refund-receipt-box" onclick="window.open('${receiptUrl}','_blank')">
+                <img src="${receiptUrl}" alt="إيصال الدفع" onerror="this.parentElement.style.display='none'">
+                <div class="refund-receipt-label">
+                    <i class="fas fa-receipt" style="color:#f97316;"></i>
+                    إيصال الدفع — انقر للتكبير
+                </div>
+            </div>` : ''}
+
+            <!-- ملاحظة -->
+            <div class="refund-note">
+                <i class="fas fa-${isWallet ? 'wallet' : 'exclamation-triangle'}" style="margin-top:2px;flex-shrink:0;"></i>
+                <span>${isWallet
+                    ? `سيتم إعادة <strong>${refundAmount} MRU</strong> تلقائياً إلى محفظة العميل فور التأكيد.`
+                    : `طريقة الدفع يدوية — ستحتاج إلى إعادة المبلغ يدوياً عبر <strong>${pm}</strong>.`
+                }</span>
+            </div>
+
+            <button class="refund-btn-confirm" id="refund-confirm-btn"
+                onclick="executeRefund('${orderId}', '${pm}', ${refundAmount}, '${order.user_id}')">
+                <i class="fas fa-check-circle"></i> تأكيد الاسترداد
+            </button>
+            <button class="refund-btn-cancel" onclick="document.getElementById('refund-modal').remove()">
+                إلغاء
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+};
+
+// ==================== تنفيذ الاسترداد ====================
+window.executeRefund = async (orderId, pm, refundAmount, userId) => {
+    const btn = document.getElementById('refund-confirm-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاسترداد...'; }
+
+    await supabase.from('orders').update({ status: 'مسترد' }).eq('id', orderId);
+
+    const isWallet = pm === 'المحفظة' || pm === 'محفظة';
+    if (isWallet && userId) {
+        const { data: userData } = await supabase.from('users').select('balance').eq('id', userId).single();
+        const newBalance = (userData?.balance || 0) + refundAmount;
+        await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
+        await supabase.from('wallet_transactions').insert({
+            user_id: userId, type: 'charge', amount: refundAmount,
+            payment_method: 'استرداد طلب', status: 'مكتمل',
+            created_at: new Date().toISOString()
+        });
+        showToast(`✅ تم الاسترداد — أُضيف ${refundAmount} MRU للمحفظة`);
+    } else {
+        showToast('✅ تم تغيير الحالة إلى مسترد — الإرجاع يدوي');
+    }
+
+    document.getElementById('refund-modal')?.remove();
+    loadOrders();
+};
+
+// ==================== استرداد المجموعة ====================
+window.quickRefundGroup = async (ids, paymentMethod) => {
+    if (ids.length === 1) {
+        return window.quickRefund(ids[0], paymentMethod);
+    }
+
+    // جلب الطلبات
+    const { data: orders } = await supabase
+        .from('orders')
+        .select('id, price, quantity, product_name, label, customer_name, customer_phone, order_number, payment_method, paymentMethod, user_id, receipt_url, receiptUrl')
+        .in('id', ids);
+
+    if (!orders?.length) { showToast('❌ خطأ في جلب الطلبات', 'error'); return; }
+
+    const totalAmount = orders.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
+    const pm          = orders[0].paymentMethod || orders[0].payment_method || '';
+    const isWallet    = pm === 'المحفظة' || pm === 'محفظة';
+    const c           = getThemeColors();
+
+    document.getElementById('refund-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'refund-modal';
+    modal.style.cssText = `
+        position:fixed; inset:0;
+        background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);
+        z-index:99999; display:flex; align-items:center; justify-content:center;
+        padding:20px; animation:refundFadeIn 0.2s ease;
+        overflow-y:auto;
+    `;
+
+    modal.innerHTML = `
+        <div style="background:${c.modalBg};border:1px solid ${c.border};border-radius:20px;
+                    padding:28px;width:100%;max-width:500px;color:${c.text};
+                    font-family:'Tajawal','Segoe UI',sans-serif;margin:auto;
+                    animation:refundSlideUp 0.25s ease;">
+
+            <div style="text-align:center;font-size:18px;font-weight:800;color:#f59e0b;margin-bottom:20px;">
+                <i class="fas fa-undo"></i> استرداد مجموعة (${orders.length} طلب)
+            </div>
+
+            <!-- قائمة الطلبات -->
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:240px;overflow-y:auto;">
+                ${orders.map(o => `
+                <div style="display:flex;justify-content:space-between;align-items:center;
+                            padding:10px 14px;border-radius:10px;
+                            background:${c.deepBg};border:1px solid ${c.border};font-size:13px;">
+                    <span style="color:${c.textMuted};">${o.product_name || '—'} ${o.label ? `<span style="color:#f97316;">(${o.label})</span>` : ''}</span>
+                    <span style="font-weight:700;color:#f59e0b;">${(o.price || 0) * (o.quantity || 1)} MRU</span>
+                </div>`).join('')}
+            </div>
+
+            <!-- إجمالي المبلغ -->
+            <div style="background:rgba(245,158,11,0.1);border:2px solid #f59e0b;border-radius:12px;
+                        padding:14px;text-align:center;margin-bottom:14px;">
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">إجمالي المبلغ المُسترد</div>
+                <div style="font-size:26px;font-weight:900;color:#f59e0b;">${totalAmount} <span style="font-size:14px;font-weight:600;">MRU</span></div>
+            </div>
+
+            <!-- ملاحظة -->
+            <div style="background:${isWallet ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)'};
+                        border:1px solid ${isWallet ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'};
+                        border-radius:10px;padding:10px 14px;font-size:12px;
+                        color:${isWallet ? '#22c55e' : '#f59e0b'};margin-bottom:16px;
+                        display:flex;align-items:flex-start;gap:8px;line-height:1.6;">
+                <i class="fas fa-${isWallet ? 'wallet' : 'exclamation-triangle'}" style="margin-top:2px;flex-shrink:0;"></i>
+                <span>${isWallet
+                    ? `سيتم إعادة <strong>${totalAmount} MRU</strong> تلقائياً إلى محفظة العميل.`
+                    : `طريقة الدفع يدوية — ستحتاج إلى الإرجاع يدوياً عبر <strong>${pm}</strong>.`
+                }</span>
+            </div>
+
+            <button id="refund-confirm-btn"
+                onclick="executeGroupRefund(${JSON.stringify(ids).replace(/"/g,'&quot;')}, '${pm}', ${totalAmount}, '${orders[0].user_id}')"
+                style="width:100%;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);
+                       color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;
+                       cursor:pointer;font-family:'Tajawal','Segoe UI',sans-serif;
+                       box-shadow:0 4px 14px rgba(245,158,11,0.35);margin-bottom:8px;">
+                <i class="fas fa-check-circle"></i> تأكيد استرداد ${orders.length} طلب
+            </button>
+            <button onclick="document.getElementById('refund-modal').remove()"
+                style="width:100%;padding:11px;background:${c.deepBg};color:${c.textMuted};
+                       border:1px solid ${c.border};border-radius:10px;font-size:14px;
+                       cursor:pointer;font-family:'Tajawal','Segoe UI',sans-serif;">
+                إلغاء
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+};
+
+window.executeGroupRefund = async (ids, pm, totalAmount, userId) => {
+    const btn = document.getElementById('refund-confirm-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاسترداد...'; }
+
+    for (const id of ids) {
+        await supabase.from('orders').update({ status: 'مسترد' }).eq('id', id);
+    }
+
+    const isWallet = pm === 'المحفظة' || pm === 'محفظة';
+    if (isWallet && userId) {
+        const { data: userData } = await supabase.from('users').select('balance').eq('id', userId).single();
+        const newBalance = (userData?.balance || 0) + totalAmount;
+        await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
+        await supabase.from('wallet_transactions').insert({
+            user_id: userId, type: 'charge', amount: totalAmount,
+            payment_method: 'استرداد طلب', status: 'مكتمل',
+            created_at: new Date().toISOString()
+        });
+        showToast(`✅ تم استرداد ${ids.length} طلب — أُضيف ${totalAmount} MRU للمحفظة`);
+    } else {
+        showToast(`✅ تم تغيير ${ids.length} طلب إلى مسترد — الإرجاع يدوي`);
+    }
+
+    document.getElementById('refund-modal')?.remove();
+    loadOrders();
+};

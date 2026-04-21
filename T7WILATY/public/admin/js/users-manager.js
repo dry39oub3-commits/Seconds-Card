@@ -151,7 +151,7 @@ window.saveUserChanges = async function() {
         .eq('id', userId);
 
     if (dbError) {
-        alert("❌ خطأ: " + dbError.message);
+        showToast("❌ خطأ: " + dbError.message);
         return;
     }
 
@@ -174,13 +174,13 @@ window.saveUserChanges = async function() {
     const result = await res.json();
 
     if (result.error) {
-        alert('❌ خطأ في تغيير كلمة المرور: ' + result.error);
+        showToast("❌ خطأ في تغيير كلمة المرور: " + result.error);
         return;
     }
 
-    alert("✅ تم تحديث البيانات وكلمة المرور بنجاح");
+    showToast("✅ تم تحديث البيانات وكلمة المرور بنجاح");
 } else {
-    alert("✅ تم تحديث البيانات بنجاح");
+    showToast("✅ تم تحديث البيانات بنجاح");
 }
 
 closeModal();
@@ -193,3 +193,24 @@ window.onclick = function(event) {
 };
 
 document.addEventListener('DOMContentLoaded', initializeUsersPage);
+
+
+
+function showToast(msg, isError = false) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = `
+        position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+        background: ${isError ? '#ef4444' : '#22c55e'}; color: white;
+        padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
+        z-index: 99999; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        pointer-events: none; white-space: nowrap;
+        animation: slideUp 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s';
+        setTimeout(() => toast.remove(), 400);
+    }, 2500);
+}

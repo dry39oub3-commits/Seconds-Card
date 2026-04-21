@@ -143,7 +143,7 @@ async function fetchUserOrders() {
                         ${order.status || 'قيد الانتظار'}
                     </span>
                     ${isCompleted ? `
-                        <button onclick="toggleCode('${order.id}', '${safeCode}')" class="copy-btn"
+                        <button onclick="toggleCode('${order.id}', '${safeCode}', '${(order.product_name || '').replace(/'/g, "\\'")}')" class="copy-btn"
                             style="font-size:11px; padding:5px 10px;">
                             <i class="fas fa-key"></i> الكود
                         </button>` : ''}
@@ -156,10 +156,7 @@ async function fetchUserOrders() {
             <div class="order-header">
                 <span>
                     ${orderNum}
-                    ${isMulti ? `<span style="background:rgba(249,115,22,0.15);color:#f97316;
-                        border-radius:10px;padding:2px 8px;font-size:11px;margin-right:6px;">
-                        
-                    </span>` : ''}
+                
                 </span>
                 <span style="display:flex;align-items:center;gap:8px;">
                     <span class="status-badge ${groupBadge}" style="font-size:11px;">${groupStatus}</span>
@@ -182,7 +179,7 @@ async function fetchUserOrders() {
     }).join('');
 }
 
-window.toggleCode = (orderId, cardCode) => {
+window.toggleCode = (orderId, cardCode, productName) => {
     document.getElementById('code-modal')?.remove();
 
     const codes = cardCode
@@ -204,7 +201,7 @@ window.toggleCode = (orderId, cardCode) => {
                 style="position:absolute; top:14px; left:14px; background:#ef4444; color:white; border:none; border-radius:8px; padding:5px 12px; cursor:pointer;">
                 ✕ إغلاق
             </button>
-            <h3 style="text-align:center; color:#f97316; margin-bottom:20px;">🔑 أكواد البطاقة</h3>
+            <h3 style="text-align:center; color:#f97316; margin-bottom:20px;">🔑 ${productName || 'أكواد البطاقة'}</h3>
             <div style="display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto;">
                 ${codes.length > 0 ? codes.map((code, i) => `
                     <div style="background:#0f172a; border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:10px;">
