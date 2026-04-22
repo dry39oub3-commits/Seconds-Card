@@ -2,8 +2,6 @@ import { supabase } from '../../js/supabase-config.js';
 
 const USD_TO_MRU = 43;
 
-// ==================== تحميل الطلبات ====================
-// ==================== تحميل الطلبات ====================
 async function loadOrders() {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
@@ -26,14 +24,10 @@ async function loadOrders() {
         return;
     }
 
-    // ✅ عرض الطلبات فوراً بدون انتظار
     renderOrders(orders);
-
-    // ✅ معالجة المحفظة في الخلفية بدون انتظار
     processWalletOrders(orders);
 }
 
-// ==================== عرض الطلبات ====================
 function renderOrders(orders) {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
@@ -117,7 +111,6 @@ function renderOrders(orders) {
     }).join('');
 }
 
-// ==================== معالجة المحفظة في الخلفية ====================
 async function processWalletOrders(orders) {
     const walletOrders = orders.filter(order => {
         const pm = order.paymentMethod || order.payment_method || '';
@@ -132,11 +125,9 @@ async function processWalletOrders(orders) {
         if (approved) anyApproved = true;
     }
 
-    // إعادة تحميل فقط إذا تم قبول طلب
     if (anyApproved) loadOrders();
 }
 
-// ==================== قبول تلقائي ====================
 async function tryAutoApproveFromStock(order) {
     const quantity  = order.quantity || 1;
     const productId = order.product_id;
@@ -180,7 +171,6 @@ async function tryAutoApproveFromStock(order) {
     return true;
 }
 
-// ==================== بناء قسم السحب + السيليكت ====================
 function buildStockSection({ suffix = '', productId, label, quantity, orderPrice, prices = [] }) {
     const c          = getThemeColors();
     const priceObj   = (prices || []).find(p => p.label === label) || prices[0] || {};
@@ -230,18 +220,16 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
     `;
 }
 
-// ==================== تغيير السيليكت → إظهار زر الشراء ====================
 window.onSupplierSelectChange = (suffix) => {
     const sel    = document.getElementById(`supplier-select${suffix}`);
     const buyBtn = document.getElementById(`buy-btn${suffix}`);
     const selectedOpt = sel.options[sel.selectedIndex];
 
     if (sel.value) {
-        buyBtn.href         = sel.value;
-        buyBtn.style.display = 'inline-flex';
-        buyBtn.style.alignItems = 'center';
-        buyBtn.style.gap    = '6px';
-        // تحديث حقل المورد تلقائياً
+        buyBtn.href              = sel.value;
+        buyBtn.style.display     = 'inline-flex';
+        buyBtn.style.alignItems  = 'center';
+        buyBtn.style.gap         = '6px';
         const supplierField = document.getElementById(`modal-supplier-id${suffix === '' ? '' : '-' + suffix}`);
         if (supplierField) supplierField.value = selectedOpt.dataset.name || '';
     } else {
@@ -249,13 +237,12 @@ window.onSupplierSelectChange = (suffix) => {
     }
 };
 
-// ==================== فتح Modal طلب واحد ====================
 window.openOrderModal = (order) => {
     const product    = order.products || {};
     const image      = product.image  || '';
     const prices     = product.prices || [];
     const totalPrice = order.price * (order.quantity || 1);
-    const c          = getThemeColors(); // ← ألوان الثيم
+    const c          = getThemeColors();
 
     document.getElementById('order-modal')?.remove();
     window._reservedStockIds = null;
@@ -351,7 +338,6 @@ window.openOrderModal = (order) => {
     document.body.appendChild(modal);
 };
 
-// ==================== فتح Modal مجموعة ====================
 window.openGroupOrderModal = (items) => {
     document.getElementById('order-modal')?.remove();
     window._groupItems     = items;
@@ -387,7 +373,6 @@ window.openGroupOrderModal = (items) => {
                     <div style="font-size:13px; color:#f97316;">${item.label || '-'} • ${item.quantity || 1} قطعة • ${item.price * (item.quantity || 1)} MRU</div>
                 </div>
             </div>
-
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 ${stockHTML}
                 <div>
@@ -397,7 +382,6 @@ window.openGroupOrderModal = (items) => {
                         style="${inputStyle} resize:vertical; font-family:monospace; line-height:1.8;"></textarea>
                 </div>
             </div>
-
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
                 <div>
                     <label style="font-size:12px; color:${c.textMuted}; display:block; margin-bottom:5px;">🏪 المورد</label>
@@ -444,7 +428,6 @@ window.openGroupOrderModal = (items) => {
     document.body.appendChild(modal);
 };
 
-// ==================== calcProfit ====================
 window.calcProfit = (orderPrice) => {
     const cost          = parseFloat(document.getElementById('modal-cost').value) || 0;
     const codesText     = document.getElementById('modal-code').value.trim();
@@ -465,13 +448,10 @@ window.calcProfit = (orderPrice) => {
     } else { profitDisplay.style.display = 'none'; }
 };
 
-// calcProfit للمجموعة (بدون profit display مركزي)
 window.calcProfitItem = (idx, orderPrice) => {
     const cost = parseFloat(document.getElementById(`modal-cost${idx}`)?.value) || 0;
-    // اختياري: يمكن عرض الربح لكل عنصر لاحقاً
 };
 
-// ==================== سحب من المخزون — طلب واحد ====================
 window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     const statusEl = document.getElementById('stock-status');
     if (!productId || productId === 'null') {
@@ -488,7 +468,6 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
         statusEl.textContent = error ? '❌ خطأ: ' + error.message : `❌ لا توجد أكواد متاحة للفئة "${label}"`;
         statusEl.style.color = '#ef4444';
         document.getElementById('stock-suppliers-section').style.display = 'none';
-        // إظهار السيليكت حتى بدون مخزون
         const wrap = document.getElementById('supplier-select-wrap');
         if (wrap) wrap.style.display = 'block';
         return;
@@ -511,7 +490,6 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     const firstCost = availableCodes[0]?.cost_per_card_usd;
     if (firstCost > 0) { document.getElementById('modal-cost').value = parseFloat(firstCost).toFixed(4); calcProfit(orderPrice); }
 
-    // موردو المخزون
     const suppliersMap = {};
     availableCodes.forEach(c => {
         const name = c.supplier_name || 'غير محدد';
@@ -533,18 +511,15 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
     `).join('');
     section.style.display = 'block';
 
-    // تعبئة حقول المورد
     const supplierInput = document.getElementById('modal-supplier-id');
     if (supplierInput) supplierInput.value = suppliers.map(s => s.name).join(' / ');
     const orderInput = document.getElementById('modal-supplier-order-id');
     if (orderInput) orderInput.value = suppliers.map(s => s.order_id).filter(Boolean).join(' / ');
 
-    // إظهار سيليكت الموردين
     const wrap = document.getElementById('supplier-select-wrap');
     if (wrap) { wrap.style.display = 'block'; wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 };
 
-// ==================== سحب من المخزون — مجموعة ====================
 window.loadFromStockForItem = async (idx, productId, label, quantity, orderPrice) => {
     const statusEl = document.getElementById(`stock-status${idx}`);
     if (!productId || productId === 'null') {
@@ -561,14 +536,14 @@ window.loadFromStockForItem = async (idx, productId, label, quantity, orderPrice
         statusEl.textContent = `❌ لا توجد أكواد متاحة`;
         statusEl.style.color = '#ef4444';
         const wrap = document.getElementById(`supplier-select-wrap${idx}`);
-        if (wrap) wrap.style.display = 'block'; // إظهار السيليكت للشراء اليدوي
+        if (wrap) wrap.style.display = 'block';
         return;
     }
 
     statusEl.textContent = `✅ تم سحب ${availableCodes.length} كود`; statusEl.style.color = '#22c55e';
 
-    document.getElementById(`code-${idx}`).value          = availableCodes.map(c => c.code).join('\n');
-    document.getElementById(`supplier-${idx}`).value      = availableCodes[0]?.supplier_name || '';
+    document.getElementById(`code-${idx}`).value           = availableCodes.map(c => c.code).join('\n');
+    document.getElementById(`supplier-${idx}`).value       = availableCodes[0]?.supplier_name || '';
     document.getElementById(`supplier-order-${idx}`).value = availableCodes[0]?.order_id || '';
 
     const costField = document.getElementById(`modal-cost${idx}`);
@@ -587,12 +562,10 @@ window.loadFromStockForItem = async (idx, productId, label, quantity, orderPrice
         }))
     };
 
-    // إظهار سيليكت الموردين للعنصر
     const wrap = document.getElementById(`supplier-select-wrap${idx}`);
     if (wrap) { wrap.style.display = 'block'; wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 };
 
-// ==================== قبول طلب واحد ====================
 window.approveOrder = async (orderId, quantity) => {
     const codesRaw        = document.getElementById('modal-code').value.trim();
     const codes           = codesRaw.split('\n').map(c => c.trim()).filter(c => c !== '');
@@ -640,7 +613,6 @@ window.approveOrder = async (orderId, quantity) => {
     loadOrders();
 };
 
-// ==================== قبول مجموعة ====================
 window.approveGroupOrders = async () => {
     const items = window._groupItems || [];
     if (!items.length) return;
@@ -653,10 +625,10 @@ window.approveGroupOrders = async () => {
         const supplier = document.getElementById(`supplier-${i}`)?.value.trim();
         const qty      = item.quantity || 1;
 
-        if (!codes.length)               { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال الأكواد!`); return; }
-        if (codes.length !== qty)        { showToast(`⚠️ العنصر ${i+1}: عدد الأكواد لا يطابق الكمية!`); return; }
+        if (!codes.length)                  { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال الأكواد!`); return; }
+        if (codes.length !== qty)           { showToast(`⚠️ العنصر ${i+1}: عدد الأكواد لا يطابق الكمية!`); return; }
         if (!cost || parseFloat(cost) <= 0) { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال سعر التكلفة!`); return; }
-        if (!supplier)                   { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال اسم المورد!`); return; }
+        if (!supplier)                      { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال اسم المورد!`); return; }
 
         for (const c of codes) {
             const { data: existing } = await supabase.from('used_codes').select('id').eq('code', c).maybeSingle();
@@ -699,7 +671,6 @@ window.approveGroupOrders = async () => {
     loadOrders();
 };
 
-// ==================== رفض ====================
 window.rejectOrder = async (orderId) => {
     const reason = document.getElementById('reject-reason').value.trim();
     if (!reason) { showToast('⚠️ يرجى إدخال سبب الرفض!'); return; }
@@ -726,7 +697,6 @@ window.rejectGroupOrders = async () => {
     loadOrders();
 };
 
-// ==================== عداد ====================
 async function checkNewOrders() {
     const { data: orders } = await supabase.from('orders').select('id, order_number').not('status', 'in', '("مكتمل","ملغي","مسترد")');
     const count = new Set((orders || []).map(o => o.order_number || o.id)).size;
@@ -745,12 +715,11 @@ window.filterOrders = () => {
 document.addEventListener('DOMContentLoaded', () => {
     loadOrders();
     checkNewOrders();
-    const channel = supabase.channel('orders-realtime')
+    supabase.channel('orders-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { loadOrders(); checkNewOrders(); })
         .subscribe();
     setInterval(checkNewOrders, 1000);
 });
-
 
 function showToast(message, type = 'success') {
     document.getElementById('_toast')?.remove();
@@ -758,84 +727,67 @@ function showToast(message, type = 'success') {
     t.id = '_toast';
     t.textContent = message;
     t.style.cssText = `
-        position: fixed;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-10px);
-        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        font-family: 'Tajawal', sans-serif;
-        z-index: 99999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        opacity: 0;
-        transition: opacity 0.3s, transform 0.3s;
-        pointer-events: none;
-        white-space: nowrap;
+        position:fixed; top:24px; left:50%;
+        transform:translateX(-50%) translateY(-10px);
+        background:${type === 'success' ? '#22c55e' : '#ef4444'};
+        color:white; padding:12px 24px; border-radius:10px;
+        font-size:14px; font-weight:700; font-family:'Tajawal',sans-serif;
+        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.3);
+        opacity:0; transition:opacity 0.3s,transform 0.3s;
+        pointer-events:none; white-space:nowrap;
     `;
     document.body.appendChild(t);
     requestAnimationFrame(() => {
-        t.style.opacity = '1';
+        t.style.opacity   = '1';
         t.style.transform = 'translateX(-50%) translateY(0)';
     });
     setTimeout(() => {
-        t.style.opacity = '0';
+        t.style.opacity   = '0';
         t.style.transform = 'translateX(-50%) translateY(-10px)';
         setTimeout(() => t.remove(), 300);
     }, 2800);
 }
-// ===== دالة للحصول على ألوان حسب الثيم =====
+
 function getThemeColors() {
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
     return {
-        modalBg:     isLight ? '#ffffff'  : '#1e293b',
-        deepBg:      isLight ? '#f8fafc'  : '#0f172a',
-        border:      isLight ? '#e2e8f0'  : '#334155',
-        text:        isLight ? '#1e293b'  : '#e2e8f0',
-        textMuted:   isLight ? '#64748b'  : '#94a3b8',
-        inputBg:     isLight ? '#f8fafc'  : '#0f172a',
-        inputBorder: isLight ? '#e2e8f0'  : '#334155',
-        inputColor:  isLight ? '#1e293b'  : '#e2e8f0',
-        cardBg:      isLight ? '#f1f5f9'  : '#0f172a',
-        cardBorder:  isLight ? '#e2e8f0'  : '#1e3a5f',
+        modalBg:     isLight ? '#ffffff' : '#1e293b',
+        deepBg:      isLight ? '#f8fafc' : '#0f172a',
+        border:      isLight ? '#e2e8f0' : '#334155',
+        text:        isLight ? '#1e293b' : '#e2e8f0',
+        textMuted:   isLight ? '#64748b' : '#94a3b8',
+        inputBg:     isLight ? '#f8fafc' : '#0f172a',
+        inputBorder: isLight ? '#e2e8f0' : '#334155',
+        inputColor:  isLight ? '#1e293b' : '#e2e8f0',
+        cardBg:      isLight ? '#f1f5f9' : '#0f172a',
+        cardBorder:  isLight ? '#e2e8f0' : '#1e3a5f',
     };
 }
 
 // ==================== Modal الاسترداد ====================
-// أضف هذا الكود في orders.js — استبدل دالتي quickRefund و quickRefundGroup
-
 window.quickRefund = async (orderId, paymentMethod) => {
-    // جلب بيانات الطلب الكاملة أولاً
     const { data: order, error } = await supabase
         .from('orders')
-        .select('id, user_id, price, quantity, payment_method, paymentMethod, customer_name, customer_phone, product_name, label, order_number, receipt_url, receiptUrl, created_at')
+        .select('id, user_id, price, quantity, payment_method, paymentMethod, customer_name, customer_phone, product_name, label, order_number, created_at')
         .eq('id', orderId)
         .single();
 
     if (error || !order) { showToast('❌ خطأ في جلب الطلب', 'error'); return; }
 
-    const pm            = order.paymentMethod || order.payment_method || '';
-    const refundAmount  = (order.price || 0) * (order.quantity || 1);
-    const isWallet      = pm === 'المحفظة' || pm === 'محفظة';
-    const receiptUrl    = order.receiptUrl || order.receipt_url;
-    const c             = getThemeColors();
+    const pm           = order.paymentMethod || order.payment_method || '';
+    const refundAmount = (order.price || 0) * (order.quantity || 1);
+    const isWallet     = pm === 'المحفظة' || pm === 'محفظة';
+    const c            = getThemeColors();
 
-    // إزالة أي modal قديم
     document.getElementById('refund-modal')?.remove();
 
     const modal = document.createElement('div');
     modal.id = 'refund-modal';
     modal.style.cssText = `
         position:fixed; inset:0;
-        background:rgba(0,0,0,0.75);
-        backdrop-filter:blur(4px);
-        z-index:99999;
-        display:flex; align-items:center; justify-content:center;
-        padding:20px;
-        animation:refundFadeIn 0.2s ease;
+        background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);
+        z-index:99999; display:flex; align-items:center; justify-content:center;
+        padding:20px; animation:refundFadeIn 0.2s ease;
     `;
 
     modal.innerHTML = `
@@ -843,61 +795,33 @@ window.quickRefund = async (orderId, paymentMethod) => {
             @keyframes refundFadeIn  { from{opacity:0} to{opacity:1} }
             @keyframes refundSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
             .refund-box {
-                background:${c.modalBg};
-                border:1px solid ${c.border};
-                border-radius:20px;
-                padding:28px;
-                width:100%; max-width:460px;
-                color:${c.text};
-                font-family:'Tajawal','Segoe UI',sans-serif;
+                background:${c.modalBg}; border:1px solid ${c.border};
+                border-radius:20px; padding:28px; width:100%; max-width:460px;
+                color:${c.text}; font-family:'Tajawal','Segoe UI',sans-serif;
                 animation:refundSlideUp 0.25s ease;
+                overflow-y:auto; max-height:90vh;
             }
             .refund-title {
-                text-align:center; font-size:18px; font-weight:800;
-                color:#f59e0b; margin-bottom:20px;
-                display:flex; align-items:center; justify-content:center; gap:8px;
+                text-align:center; font-size:18px; font-weight:800; color:#f59e0b;
+                margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px;
             }
             .refund-row {
                 display:flex; justify-content:space-between; align-items:center;
-                padding:10px 14px;
-                border-radius:10px;
-                background:${c.deepBg};
-                border:1px solid ${c.border};
-                margin-bottom:8px;
-                font-size:13px;
+                padding:10px 14px; border-radius:10px;
+                background:${c.deepBg}; border:1px solid ${c.border};
+                margin-bottom:8px; font-size:13px;
             }
             .refund-row .label { color:${c.textMuted}; }
             .refund-row .value { font-weight:700; color:${c.text}; }
             .refund-amount-box {
-                background:rgba(245,158,11,0.1);
-                border:2px solid #f59e0b;
-                border-radius:12px;
-                padding:14px;
-                text-align:center;
-                margin:14px 0;
-            }
-            .refund-receipt-box {
-                border-radius:12px;
-                overflow:hidden;
-                border:1px solid ${c.border};
-                margin:14px 0;
-                cursor:pointer;
-                transition:transform 0.15s;
-            }
-            .refund-receipt-box:hover { transform:scale(1.01); }
-            .refund-receipt-box img { width:100%; max-height:180px; object-fit:cover; display:block; }
-            .refund-receipt-label {
-                background:${c.deepBg};
-                padding:8px 12px;
-                font-size:12px;
-                color:${c.textMuted};
-                display:flex; align-items:center; gap:6px;
+                background:rgba(245,158,11,0.1); border:2px solid #f59e0b;
+                border-radius:12px; padding:14px; text-align:center; margin:14px 0;
             }
             .refund-note {
                 background:${isWallet ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)'};
                 border:1px solid ${isWallet ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'};
-                border-radius:10px; padding:10px 14px;
-                font-size:12px; color:${isWallet ? '#22c55e' : '#f59e0b'};
+                border-radius:10px; padding:10px 14px; font-size:12px;
+                color:${isWallet ? '#22c55e' : '#f59e0b'};
                 margin-bottom:16px; display:flex; align-items:flex-start; gap:8px; line-height:1.6;
             }
             .refund-btn-confirm {
@@ -907,77 +831,69 @@ window.quickRefund = async (orderId, paymentMethod) => {
                 font-size:15px; font-weight:800; cursor:pointer;
                 font-family:'Tajawal','Segoe UI',sans-serif;
                 box-shadow:0 4px 14px rgba(245,158,11,0.35);
-                transition:opacity 0.2s, transform 0.15s;
-                margin-bottom:8px;
+                transition:opacity 0.2s,transform 0.15s; margin-bottom:8px;
             }
             .refund-btn-confirm:hover { opacity:0.9; transform:translateY(-1px); }
             .refund-btn-cancel {
-                width:100%; padding:11px;
-                background:${c.deepBg};
-                color:${c.textMuted}; border:1px solid ${c.border}; border-radius:10px;
-                font-size:14px; cursor:pointer;
-                font-family:'Tajawal','Segoe UI',sans-serif;
-                transition:background 0.2s;
+                width:100%; padding:11px; background:${c.deepBg};
+                color:${c.textMuted}; border:1px solid ${c.border};
+                border-radius:10px; font-size:14px; cursor:pointer;
+                font-family:'Tajawal','Segoe UI',sans-serif; transition:background 0.2s;
             }
             .refund-btn-cancel:hover { background:rgba(239,68,68,0.1); color:#ef4444; border-color:#ef4444; }
         </style>
 
         <div class="refund-box">
-            <div class="refund-title">
-                <i class="fas fa-undo"></i> تأكيد الاسترداد
-            </div>
+            <div class="refund-title"><i class="fas fa-undo"></i> تأكيد الاسترداد</div>
 
-            <!-- معلومات الطلب -->
             <div class="refund-row">
                 <span class="label"><i class="fas fa-hashtag"></i> رقم الطلب</span>
                 <span class="value" style="font-family:monospace;color:#f97316;">${order.order_number || '#' + orderId.substring(0,8)}</span>
             </div>
-
             <div class="refund-row">
                 <span class="label"><i class="fas fa-box"></i> المنتج</span>
                 <span class="value">${order.product_name || '—'} ${order.label ? `<span style="color:#f97316;font-size:12px;">(${order.label})</span>` : ''}</span>
             </div>
-
             <div class="refund-row">
                 <span class="label"><i class="fas fa-user"></i> العميل</span>
                 <span class="value">${order.customer_name || '—'}</span>
             </div>
-
             ${order.customer_phone ? `
             <div class="refund-row">
                 <span class="label"><i class="fas fa-phone"></i> الهاتف</span>
                 <span class="value" style="font-family:monospace;direction:ltr;">${order.customer_phone}</span>
             </div>` : ''}
-
             <div class="refund-row">
                 <span class="label"><i class="fas fa-credit-card"></i> طريقة الدفع</span>
                 <span class="value">${pm || '—'}</span>
             </div>
 
-            <!-- المبلغ -->
             <div class="refund-amount-box">
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">المبلغ الذي سيُسترد</div>
                 <div style="font-size:28px;font-weight:900;color:#f59e0b;">${refundAmount} <span style="font-size:14px;font-weight:600;">MRU</span></div>
                 ${order.quantity > 1 ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">${order.price} MRU × ${order.quantity} قطعة</div>` : ''}
             </div>
 
-            <!-- الإيصال -->
-            ${receiptUrl ? `
-            <div class="refund-receipt-box" onclick="window.open('${receiptUrl}','_blank')">
-                <img src="${receiptUrl}" alt="إيصال الدفع" onerror="this.parentElement.style.display='none'">
-                <div class="refund-receipt-label">
-                    <i class="fas fa-receipt" style="color:#f97316;"></i>
-                    إيصال الدفع — انقر للتكبير
-                </div>
-            </div>` : ''}
-
-            <!-- ملاحظة -->
             <div class="refund-note">
                 <i class="fas fa-${isWallet ? 'wallet' : 'exclamation-triangle'}" style="margin-top:2px;flex-shrink:0;"></i>
                 <span>${isWallet
                     ? `سيتم إعادة <strong>${refundAmount} MRU</strong> تلقائياً إلى محفظة العميل فور التأكيد.`
                     : `طريقة الدفع يدوية — ستحتاج إلى إعادة المبلغ يدوياً عبر <strong>${pm}</strong>.`
                 }</span>
+            </div>
+
+            <!-- ✅ رفع إيصال الاسترداد فقط -->
+            <div style="margin-bottom:16px;">
+                <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">
+                    <i class="fas fa-receipt" style="color:#f59e0b;"></i>
+                    إيصال الاسترداد (اختياري — يظهر للعميل)
+                </label>
+                <input type="file" id="refund-receipt-file" accept="image/*"
+                    style="width:100%; padding:10px; background:${c.deepBg}; border:1px solid ${c.border};
+                           border-radius:8px; color:${c.text}; font-size:13px; box-sizing:border-box; cursor:pointer;">
+                <div id="refund-receipt-preview" style="display:none; margin-top:8px; border-radius:10px; overflow:hidden; border:1px solid ${c.border};">
+                    <img id="refund-receipt-img" style="width:100%; max-height:150px; object-fit:cover; display:block;">
+                </div>
             </div>
 
             <button class="refund-btn-confirm" id="refund-confirm-btn"
@@ -992,6 +908,18 @@ window.quickRefund = async (orderId, paymentMethod) => {
 
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    // ✅ معاينة الإيصال
+    document.getElementById('refund-receipt-file').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.getElementById('refund-receipt-img').src = ev.target.result;
+            document.getElementById('refund-receipt-preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
 };
 
 // ==================== تنفيذ الاسترداد ====================
@@ -999,7 +927,23 @@ window.executeRefund = async (orderId, pm, refundAmount, userId) => {
     const btn = document.getElementById('refund-confirm-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاسترداد...'; }
 
-    await supabase.from('orders').update({ status: 'مسترد' }).eq('id', orderId);
+    // ✅ رفع إيصال الاسترداد إن وجد
+    let refundReceiptUrl = null;
+    const receiptFile = document.getElementById('refund-receipt-file')?.files[0];
+    if (receiptFile) {
+        try {
+            const fileName = `refunds/${orderId}_${Date.now()}`;
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, receiptFile);
+            if (!uploadError) {
+                const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
+                refundReceiptUrl = urlData?.publicUrl;
+            }
+        } catch(e) { console.warn('تعذر رفع إيصال الاسترداد:', e); }
+    }
+
+    await supabase.from('orders')
+        .update({ status: 'مسترد', ...(refundReceiptUrl && { refund_receipt_url: refundReceiptUrl }) })
+        .eq('id', orderId);
 
     const isWallet = pm === 'المحفظة' || pm === 'محفظة';
     if (isWallet && userId) {
@@ -1007,9 +951,13 @@ window.executeRefund = async (orderId, pm, refundAmount, userId) => {
         const newBalance = (userData?.balance || 0) + refundAmount;
         await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
         await supabase.from('wallet_transactions').insert({
-            user_id: userId, type: 'charge', amount: refundAmount,
-            payment_method: 'استرداد طلب', status: 'مكتمل',
-            created_at: new Date().toISOString()
+            user_id:        userId,
+            type:           'charge',
+            amount:         refundAmount,
+            payment_method: 'استرداد طلب',
+            status:         'مكتمل',
+            receipt_url:    refundReceiptUrl || null,  // ✅ يظهر للعميل
+            created_at:     new Date().toISOString()
         });
         showToast(`✅ تم الاسترداد — أُضيف ${refundAmount} MRU للمحفظة`);
     } else {
@@ -1026,10 +974,9 @@ window.quickRefundGroup = async (ids, paymentMethod) => {
         return window.quickRefund(ids[0], paymentMethod);
     }
 
-    // جلب الطلبات
     const { data: orders } = await supabase
         .from('orders')
-        .select('id, price, quantity, product_name, label, customer_name, customer_phone, order_number, payment_method, paymentMethod, user_id, receipt_url, receiptUrl')
+        .select('id, price, quantity, product_name, label, customer_name, customer_phone, order_number, payment_method, paymentMethod, user_id')
         .in('id', ids);
 
     if (!orders?.length) { showToast('❌ خطأ في جلب الطلبات', 'error'); return; }
@@ -1047,8 +994,7 @@ window.quickRefundGroup = async (ids, paymentMethod) => {
         position:fixed; inset:0;
         background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);
         z-index:99999; display:flex; align-items:center; justify-content:center;
-        padding:20px; animation:refundFadeIn 0.2s ease;
-        overflow-y:auto;
+        padding:20px; animation:refundFadeIn 0.2s ease; overflow-y:auto;
     `;
 
     modal.innerHTML = `
@@ -1061,7 +1007,6 @@ window.quickRefundGroup = async (ids, paymentMethod) => {
                 <i class="fas fa-undo"></i> استرداد مجموعة (${orders.length} طلب)
             </div>
 
-            <!-- قائمة الطلبات -->
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:240px;overflow-y:auto;">
                 ${orders.map(o => `
                 <div style="display:flex;justify-content:space-between;align-items:center;
@@ -1072,14 +1017,12 @@ window.quickRefundGroup = async (ids, paymentMethod) => {
                 </div>`).join('')}
             </div>
 
-            <!-- إجمالي المبلغ -->
             <div style="background:rgba(245,158,11,0.1);border:2px solid #f59e0b;border-radius:12px;
                         padding:14px;text-align:center;margin-bottom:14px;">
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">إجمالي المبلغ المُسترد</div>
                 <div style="font-size:26px;font-weight:900;color:#f59e0b;">${totalAmount} <span style="font-size:14px;font-weight:600;">MRU</span></div>
             </div>
 
-            <!-- ملاحظة -->
             <div style="background:${isWallet ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)'};
                         border:1px solid ${isWallet ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'};
                         border-radius:10px;padding:10px 14px;font-size:12px;
@@ -1127,9 +1070,12 @@ window.executeGroupRefund = async (ids, pm, totalAmount, userId) => {
         const newBalance = (userData?.balance || 0) + totalAmount;
         await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
         await supabase.from('wallet_transactions').insert({
-            user_id: userId, type: 'charge', amount: totalAmount,
-            payment_method: 'استرداد طلب', status: 'مكتمل',
-            created_at: new Date().toISOString()
+            user_id:        userId,
+            type:           'charge',
+            amount:         totalAmount,
+            payment_method: 'استرداد طلب',
+            status:         'مكتمل',
+            created_at:     new Date().toISOString()
         });
         showToast(`✅ تم استرداد ${ids.length} طلب — أُضيف ${totalAmount} MRU للمحفظة`);
     } else {

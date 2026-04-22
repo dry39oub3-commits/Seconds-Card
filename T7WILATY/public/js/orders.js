@@ -35,7 +35,7 @@ async function fetchUserOrders() {
 
     const { data: orders, error } = await supabase
         .from('orders')
-        .select('*, products(image, name)')
+        .select('*, products(image, name), refund_receipt_url')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -142,6 +142,13 @@ async function fetchUserOrders() {
                         style="font-size:11px;">
                         ${order.status || 'قيد الانتظار'}
                     </span>
+                    ${order.status === 'مسترد' && order.refund_receipt_url && order.refund_receipt_url !== 'null' && order.refund_receipt_url.startsWith('http') ? `
+    <button onclick="showReceiptModal('${order.refund_receipt_url}')"
+        style="font-size:11px; padding:5px 10px; background:#f59e0b; color:white;
+               border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+        <i class="fas fa-receipt"></i> إيصال
+    </button>` : ''}
+
                     ${isCompleted ? `
                         <button onclick="toggleCode('${order.id}', '${safeCode}', '${(order.product_name || '').replace(/'/g, "\\'")}')" class="copy-btn"
                             style="font-size:11px; padding:5px 10px;">
@@ -386,4 +393,27 @@ window.filterOrders = () => {
 
         card.style.display = matchSearch && matchFilter ? '' : 'none';
     });
+};
+
+window.showReceiptModal = (url) => {
+    document.getElementById('receipt-modal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'receipt-modal';
+    modal.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.9);
+        z-index:99999; display:flex; align-items:center; justify-content:center;
+        padding:20px; box-sizing:border-box;
+    `;
+    modal.innerHTML = `
+        <div style="position:relative; max-width:500px; width:100%;">
+            <button onclick="document.getElementById('receipt-modal').remove()"
+                style="position:absolute; top:-40px; left:0; background:#ef4444; color:white;
+                       border:none; border-radius:8px; padding:6px 14px; cursor:pointer; font-size:14px;">
+                ✕ إغلاق
+            </button>
+            <img src="${url}" style="width:100%; border-radius:12px; display:block;">
+        </div>
+    `;
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
 };

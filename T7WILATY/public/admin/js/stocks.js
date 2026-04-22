@@ -209,9 +209,9 @@ async function submitCodes() {
     errors.push('عدد الكمية');
   }
 
-  const codes = [...new Set(
+  let codes = [...new Set(
     raw.split('\n').map(c => c.trim()).filter(c => c.length > 0)
-  )];
+)];
 
   if (codes.length === 0) {
     highlightError('fill-codes');
@@ -233,7 +233,74 @@ async function submitCodes() {
   const supplier = sidx !== '' ? (price.suppliers?.[sidx] || null) : null;
 
   // [FIX 2] حساب تكلفة البطاقة الواحدة بالدولار لحفظها مع كل كود
-  const costPerCardUSD = parseFloat(costVal) / parseInt(qtyVal);
+const costPerCardUSD = parseFloat(costVal) / parseInt(qtyVal);
+
+  // ✅ تعريف bar هنا قبل أي استخدام
+  const bar  = document.getElementById('progress-bar');
+  const fill = document.getElementById('progress-fill');
+
+  // التحقق من الأكواد الموجودة مسبقاً
+  const { data: existingCodes } = await supabase
+    .from('stocks')
+    .select('code, status')
+    .in('code', codes);
+
+const duplicates = (existingCodes || []).filter(c => 
+    c.status === 'available' || c.status === 'sold'
+);
+
+if (duplicates.length > 0) {
+    const dupSet = new Set(duplicates.map(c => c.code));
+    
+    // تلوين الأكواد المكررة في الـ textarea
+    const textarea = document.getElementById('fill-codes');
+    const lines = textarea.value.split('\n');
+    
+    // إنشاء عرض مرئي للأكواد المكررة
+    let dupDisplay = document.getElementById('dup-codes-display');
+    if (!dupDisplay) {
+        dupDisplay = document.createElement('div');
+        dupDisplay.id = 'dup-codes-display';
+        textarea.parentNode.insertBefore(dupDisplay, textarea.nextSibling);
+    }
+    
+    dupDisplay.innerHTML = `
+        <div style="margin-top:10px; padding:12px; background:rgba(239,68,68,0.1); 
+                    border:1px solid #ef4444; border-radius:8px;">
+            <div style="font-size:13px; color:#ef4444; font-weight:700; margin-bottom:8px;">
+                ❌ تم إيقاف الرفع — ${duplicates.length} كود موجود مسبقاً:
+            </div>
+            <div style="font-family:monospace; font-size:13px; display:flex; flex-direction:column; gap:4px;">
+                ${lines.map(line => {
+                    const code = line.trim();
+                    if (dupSet.has(code)) {
+                        return `<span style="background:rgba(239,68,68,0.2); color:#ef4444; 
+                                padding:3px 8px; border-radius:4px; border-left:3px solid #ef4444;">
+                                ⚠️ ${code} — موجود مسبقاً
+                               </span>`;
+                    }
+                    return `<span style="color:#22c55e; padding:3px 8px;">✅ ${code}</span>`;
+                }).filter(l => l.trim()).join('')}
+            </div>
+            <button onclick="document.getElementById('dup-codes-display').remove()"
+                style="margin-top:10px; padding:6px 14px; background:#334155; color:white; 
+                       border:none; border-radius:6px; cursor:pointer; font-size:12px;">
+                إغلاق
+            </button>
+        </div>
+    `;
+    
+    showToast(`❌ يوجد ${duplicates.length} كود مكرر — تم إيقاف الرفع`, true);
+    return; // ✅ إيقاف الرفع كلياً
+}
+
+// التحقق من تطابق عدد الأكواد مع الكمية
+if (codes.length !== parseInt(qtyVal)) {
+    showToast(`❌ عدد الأكواد (${codes.length}) لا يطابق الكمية (${qtyVal})!`, true);
+    highlightError('fill-codes');
+    highlightError('fill-qty');
+    return;
+}
 
   const rows = codes.map(code => ({
     product_id:       pid,
@@ -248,9 +315,9 @@ async function submitCodes() {
     created_at:       new Date().toISOString()
   }));
 
-  // Progress
-  const bar  = document.getElementById('progress-bar');
-  const fill = document.getElementById('progress-fill');
+// Progress
+  bar.style.display = 'block';
+  fill.style.width  = '10%';
   bar.style.display = 'block';
   fill.style.width  = '10%';
 
@@ -354,11 +421,11 @@ function renderInventoryTable() {
         <td>${s.price_label || '—'}</td>
         <td>${s.supplier_name || '<span style="color:var(--text-muted)">—</span>'}</td>
         <td>${s.order_id || '<span style="color:var(--text-muted)">—</span>'}</td>
-        <td class="code-cell" title="${s.code}" style="text-align: center; vertical-align: middle;">
-            ${s.code.length > 3 
-              ? s.code[0] + 'x'.repeat(8) + s.code.slice(-2) 
-              : s.code}
-        </td>
+<td class="code-cell" style="text-align: center; vertical-align: middle;">
+    ${s.code.length > 3 
+      ? s.code[0] + 'x'.repeat(8) + s.code.slice(-2) 
+      : 'x'.repeat(s.code.length)}
+</td>
         <td style="text-align:center;">${costDisplay}</td>
         <td style="color:var(--text-muted); font-size:12px;">${formatDate(s.created_at)}</td>
         <td>
@@ -484,8 +551,6 @@ function renderStats() {
       <td>${r.label}</td>
       <td><strong>${r.total}</strong></td>
       <td style="color:var(--success)">${r.available || 0}</td>
-      <td style="color:var(--danger)">${r.sold || 0}</td>
-      <td style="color:var(--warning)">${r.reserved || 0}</td>
       <td style="color:var(--warning)">${(r.total * r.value).toLocaleString()} MRU</td>
     </tr>
   `).join('');
