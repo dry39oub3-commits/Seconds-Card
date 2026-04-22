@@ -1,7 +1,8 @@
-// ===== MOBILE DRAWER — مشترك لكل الصفحات =====
+import { supabase } from '../../js/supabase-config.js';
+
+// ===== MOBILE DRAWER =====
 document.addEventListener('DOMContentLoaded', function () {
 
-    // أضف الـ drawer والـ overlay للصفحة تلقائياً
     document.body.insertAdjacentHTML('afterbegin', `
         <div class="mobile-nav-overlay" id="mobile-overlay"></div>
         <div class="mobile-nav-drawer" id="mobile-drawer">
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     `);
 
-    // أضف زر الهامبرغر للهيدر إذا لم يكن موجوداً
+    // زر الهامبرغر
     const headerContainer = document.querySelector('.header-container');
     if (headerContainer && !document.getElementById('hamburger-btn')) {
         const hamburger = document.createElement('button');
@@ -44,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function () {
         headerContainer.appendChild(hamburger);
     }
 
-    // منطق الفتح والإغلاق
     const btn      = document.getElementById('hamburger-btn');
     const drawer   = document.getElementById('mobile-drawer');
     const overlay  = document.getElementById('mobile-overlay');
@@ -52,19 +52,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!btn || !drawer || !overlay) return;
 
-    function openDrawer() {
+    const openDrawer = () => {
         drawer.classList.add('open');
         overlay.classList.add('open');
         btn.classList.add('open');
         document.body.style.overflow = 'hidden';
-    }
-
-    function shutDrawer() {
+    };
+    const shutDrawer = () => {
         drawer.classList.remove('open');
         overlay.classList.remove('open');
         btn.classList.remove('open');
         document.body.style.overflow = '';
-    }
+    };
 
     btn.addEventListener('click', () =>
         drawer.classList.contains('open') ? shutDrawer() : openDrawer()
@@ -73,56 +72,55 @@ document.addEventListener('DOMContentLoaded', function () {
     overlay.addEventListener('click', shutDrawer);
     drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', shutDrawer));
 
-    // تحديد الرابط النشط تلقائياً في الـ Drawer
+    // الرابط النشط في الـ Drawer
     const currentPage = window.location.pathname.split('/').pop();
     drawer.querySelectorAll('.nav-link').forEach(link => {
-        const href = link.getAttribute('href')?.split('/').pop();
-        if (href === currentPage) {
+        if (link.getAttribute('href')?.split('/').pop() === currentPage)
             link.classList.add('active');
-        }
     });
+
+    // ✅ زر الخروج في الـ Drawer
+    document.getElementById('logoutBtn-mobile')?.addEventListener('click', handleLogout);
 });
 
-// ==================== تحديد الصفحة النشطة في الهيدر ====================
+// ==================== الصفحة النشطة في الهيدر ====================
 function setActiveNavLink() {
     const currentPage = window.location.pathname.split('/').pop();
-
     document.querySelectorAll('.nav-link').forEach(link => {
         const href = link.getAttribute('href')?.split('/').pop();
-        if (href === currentPage) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
+        link.classList.toggle('active', href === currentPage);
     });
 }
-
 document.addEventListener('DOMContentLoaded', setActiveNavLink);
 
-// ==================== Badge المحافظ — Realtime ====================
+// ==================== زر الخروج الرئيسي ====================
+async function handleLogout() {
+    try {
+        await supabase.auth.signOut();
+    } catch (e) {
+        console.warn('signOut error:', e);
+    }
+    window.location.href = 'login.html';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // زر الخروج في الهيدر (كل الصفحات)
+    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+});
+
+// ==================== Badge المحافظ ====================
 function updateBadgeUI(count) {
     document.querySelectorAll('a[href="admin-wallet.html"]').forEach(link => {
         link.querySelector('.wallet-badge')?.remove();
-
         if (count > 0) {
             const badge = document.createElement('span');
             badge.className = 'wallet-badge';
             badge.textContent = count;
             badge.style.cssText = `
-                background: #ef4444;
-                color: white;
-                border-radius: 50%;
-                font-size: 10px;
-                font-weight: 800;
-                min-width: 17px;
-                height: 17px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0 4px;
-                margin-right: 4px;
-                line-height: 1;
-                flex-shrink: 0;
+                background:#ef4444; color:white; border-radius:50%;
+                font-size:10px; font-weight:800; min-width:17px; height:17px;
+                display:inline-flex; align-items:center; justify-content:center;
+                padding:0 4px; margin-right:4px; line-height:1; flex-shrink:0;
             `;
             link.appendChild(badge);
         }
@@ -131,9 +129,6 @@ function updateBadgeUI(count) {
 
 async function loadWalletPendingBadge() {
     try {
-        const { supabase } = await import('../../js/supabase-config.js');
-
-        // جلب العدد مباشرة بدل جلب البيانات
         const { count, error } = await supabase
             .from('wallet_transactions')
             .select('*', { count: 'exact', head: true })
@@ -144,15 +139,12 @@ async function loadWalletPendingBadge() {
         supabase
             .channel('wallet-pending-realtime')
             .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'wallet_transactions'
+                event: '*', schema: 'public', table: 'wallet_transactions'
             }, async () => {
                 const { count: fresh } = await supabase
                     .from('wallet_transactions')
                     .select('*', { count: 'exact', head: true })
                     .eq('status', 'قيد المراجعة');
-
                 updateBadgeUI(fresh || 0);
             })
             .subscribe();

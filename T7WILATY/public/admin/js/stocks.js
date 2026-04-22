@@ -682,3 +682,4 @@ window.calcProfit = function() {
     card.style.display = 'none';
   }
 };
+
