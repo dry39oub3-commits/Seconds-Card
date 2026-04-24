@@ -50,7 +50,7 @@ function renderOrders(orders) {
     }
 
     ordersList.innerHTML = groupedOrders.map(group => {
-        const date          = group.created_at ? new Date(group.created_at).toLocaleString('ar-EG') : 'غير محدد';
+        const date = group.created_at ? new Date(group.created_at).toLocaleString('fr-FR') : 'غير محدد';
         const paymentMethod = group.paymentMethod || group.payment_method || '-';
         const receiptUrl    = group.receiptUrl || group.receipt_url;
         const receiptBtn    = receiptUrl
