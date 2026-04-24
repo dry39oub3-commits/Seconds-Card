@@ -549,7 +549,6 @@ window.loadCompletedOrders = loadCompletedOrders;
 // ==================== تشغيل ====================
 document.addEventListener('DOMContentLoaded', () => {
     loadCompletedOrders();
-    setInterval(loadCompletedOrders, 10000);
 });
 
 // ==================== إشعار عائم يستبدل alert ====================
