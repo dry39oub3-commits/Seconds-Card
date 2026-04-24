@@ -586,7 +586,7 @@ function exportCSV() {
     s.code,
     s.cost_per_card_usd != null ? parseFloat(s.cost_per_card_usd).toFixed(3) : '',
     s.status,
-    s.created_at ? new Date(s.created_at).toLocaleString('ar-SA') : ''
+    s.created_at ? new Date(s.created_at).toLocaleString('fr-FR') : ''
   ]);
   const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });

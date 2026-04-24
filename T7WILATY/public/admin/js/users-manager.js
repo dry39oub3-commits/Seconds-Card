@@ -55,7 +55,7 @@ function renderUsersTable(usersList) {
         const scId        = generateSCId(user.id);
         const statusClass = user.is_blocked ? 'status-blocked' : 'status-active';
         const statusText  = user.is_blocked ? 'محظور' : 'نشط';
-        const joinDate    = user.created_at ? new Date(user.created_at).toLocaleDateString('ar-EG') : 'غير معروف';
+        const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : 'غير معروف';
         const name        = user.fullName || user.full_name || 'بدون اسم';
 
         return `
