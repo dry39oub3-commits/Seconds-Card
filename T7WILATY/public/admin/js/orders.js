@@ -71,26 +71,35 @@ function renderOrders(orders) {
         ).join('');
 
         const totalQty  = group.items.reduce((s, o) => s + (o.quantity || 1), 0);
-        const acceptBtn = group.items.length === 1
+        const canApprove = window.hasPerm?.('approve_orders') ?? true;
+const canRefund  = window.hasPerm?.('refund_orders')  ?? true;
+ 
+const acceptBtn = group.items.length === 1
     ? `<div style="display:flex;flex-direction:column;gap:6px;">
+        ${canApprove ? `
         <button onclick="openOrderModal(${JSON.stringify(group.items[0]).replace(/"/g, '&quot;')})"
             style="background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
             <i class="fas fa-check-circle"></i> قبول
-        </button>
+        </button>` : ''}
+        ${canRefund ? `
         <button onclick="quickRefund('${group.items[0].id}', '${group.items[0].paymentMethod || group.items[0].payment_method || ''}')"
             style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
             <i class="fas fa-undo"></i> استرداد
-        </button>
+        </button>` : ''}
+        ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
        </div>`
     : `<div style="display:flex;flex-direction:column;gap:6px;">
+        ${canApprove ? `
         <button onclick="openGroupOrderModal(${JSON.stringify(group.items).replace(/"/g, '&quot;')})"
             style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
             <i class="fas fa-layer-group"></i> قبول المجموعة (${group.items.length})
-        </button>
+        </button>` : ''}
+        ${canRefund ? `
         <button onclick="quickRefundGroup(${JSON.stringify(group.items.map(i=>i.id)).replace(/"/g,'&quot;')}, '${group.paymentMethod || group.payment_method || ''}')"
             style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
             <i class="fas fa-undo"></i> استرداد المجموعة
-        </button>
+        </button>` : ''}
+        ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
        </div>`;
 
         return `

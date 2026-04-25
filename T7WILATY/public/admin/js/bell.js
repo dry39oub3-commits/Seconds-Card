@@ -121,3 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateBell,        1000);
     setInterval(fetchPendingCount, 1000);
 });
+
+
+
+
+

@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-/* ── Reset ── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
 :root {
@@ -39,7 +38,6 @@ body {
     position: relative;
 }
 
-/* ── خلفية متحركة ── */
 .bg-grid {
     position: fixed; inset: 0; z-index: 0;
     background-image:
@@ -67,7 +65,6 @@ body {
 @keyframes pulse1 { 0%,100%{transform:scale(1) translate(0,0)} 50%{transform:scale(1.15) translate(30px,20px)} }
 @keyframes pulse2 { 0%,100%{transform:scale(1) translate(0,0)} 50%{transform:scale(1.2) translate(-20px,-30px)} }
 
-/* ── الكارد الرئيسي ── */
 .login-wrap {
     position: relative; z-index: 1;
     width: 100%; max-width: 420px;
@@ -90,7 +87,6 @@ body {
         inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* ── شعار ── */
 .logo-area {
     display: flex; flex-direction: column; align-items: center;
     margin-bottom: 32px; gap: 10px;
@@ -123,7 +119,6 @@ body {
     text-transform: uppercase;
 }
 
-/* ── عنوان ── */
 .login-title {
     text-align: center; margin-bottom: 28px;
 }
@@ -131,14 +126,9 @@ body {
     font-size: 20px; font-weight: 800; color: var(--text);
     margin-bottom: 6px;
 }
-.login-title p {
-    font-size: 13px; color: var(--soft);
-}
+.login-title p { font-size: 13px; color: var(--soft); }
 
-/* ── حقول الإدخال ── */
-.field {
-    margin-bottom: 18px;
-}
+.field { margin-bottom: 18px; }
 .field label {
     display: flex; align-items: center; gap: 6px;
     font-size: 12px; font-weight: 700;
@@ -147,9 +137,7 @@ body {
 }
 .field label i { color: var(--orange); font-size: 11px; }
 
-.input-wrap {
-    position: relative;
-}
+.input-wrap { position: relative; }
 .input-wrap input {
     width: 100%; padding: 13px 16px 13px 44px;
     background: var(--surface);
@@ -176,7 +164,6 @@ body {
 }
 .input-wrap input:focus ~ .input-icon { color: var(--orange); }
 
-/* زر عرض كلمة المرور */
 .toggle-pass {
     position: absolute; right: 14px; top: 50%;
     transform: translateY(-50%);
@@ -187,7 +174,6 @@ body {
 }
 .toggle-pass:hover { color: var(--orange); }
 
-/* ── رسالة الخطأ ── */
 .error-msg {
     display: none;
     background: rgba(239,68,68,0.1);
@@ -208,7 +194,6 @@ body {
     80%{transform:translateX(4px)}
 }
 
-/* ── زر الدخول ── */
 .login-btn {
     width: 100%; padding: 14px;
     background: linear-gradient(135deg, var(--orange), var(--orange2));
@@ -232,7 +217,6 @@ body {
 .login-btn:active { transform: translateY(0); }
 .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-/* ── spinner ── */
 .spinner {
     display: none;
     width: 18px; height: 18px;
@@ -243,7 +227,6 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── خط فاصل + footer ── */
 .divider {
     display: flex; align-items: center; gap: 12px;
     margin: 22px 0 16px;
@@ -263,10 +246,7 @@ body {
 }
 .security-note i { color: var(--green); font-size: 10px; }
 
-/* ── نبضة تحميل أولية ── */
-.field, .login-btn {
-    animation: fadeUp 0.5s ease both;
-}
+.field, .login-btn { animation: fadeUp 0.5s ease both; }
 .field:nth-child(1) { animation-delay: 0.3s; }
 .field:nth-child(2) { animation-delay: 0.4s; }
 .login-btn         { animation-delay: 0.5s; }
@@ -275,7 +255,6 @@ body {
     to   { opacity:1; transform:translateY(0); }
 }
 
-/* ── Responsive ── */
 @media (max-width: 480px) {
     .login-card { padding: 32px 24px 28px; border-radius: 20px; }
     .login-wrap { padding: 16px; }
@@ -291,7 +270,6 @@ body {
 <div class="login-wrap">
     <div class="login-card">
 
-        <!-- شعار -->
         <div class="logo-area">
             <div class="logo-icon">
                 <img src="../assets/logo.png" style="width:36px;height:36px;object-fit:contain;" onerror="this.parentElement.innerHTML='⚡'">
@@ -300,19 +278,16 @@ body {
             <div class="logo-badge">ADMIN PANEL</div>
         </div>
 
-        <!-- عنوان -->
         <div class="login-title">
             <h1>مرحباً بك</h1>
             <p>أدخل بيانات المسؤول للوصول إلى لوحة التحكم</p>
         </div>
 
-        <!-- رسالة خطأ -->
         <div class="error-msg" id="error-msg">
             <i class="fas fa-exclamation-circle"></i>
             <span id="error-text">البريد أو كلمة المرور غير صحيحة</span>
         </div>
 
-        <!-- البريد الإلكتروني -->
         <div class="field">
             <label><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
             <div class="input-wrap">
@@ -322,7 +297,6 @@ body {
             </div>
         </div>
 
-        <!-- كلمة المرور -->
         <div class="field">
             <label><i class="fas fa-lock"></i> كلمة المرور</label>
             <div class="input-wrap">
@@ -335,7 +309,6 @@ body {
             </div>
         </div>
 
-        <!-- زر الدخول -->
         <button class="login-btn" id="login-btn" onclick="handleLogin()">
             <span class="spinner" id="spinner"></span>
             <i class="fas fa-arrow-left" id="btn-icon"></i>
@@ -357,10 +330,10 @@ import { supabase } from '../js/supabase-config.js';
 
 // ── عرض/إخفاء كلمة المرور ──
 document.getElementById('toggle-pass').addEventListener('click', () => {
-    const input   = document.getElementById('password');
-    const icon    = document.getElementById('eye-icon');
-    const isPass  = input.type === 'password';
-    input.type    = isPass ? 'text' : 'password';
+    const input    = document.getElementById('password');
+    const icon     = document.getElementById('eye-icon');
+    const isPass   = input.type === 'password';
+    input.type     = isPass ? 'text' : 'password';
     icon.className = isPass ? 'fas fa-eye-slash' : 'fas fa-eye';
 });
 
@@ -373,23 +346,22 @@ document.getElementById('email').addEventListener('keydown', e => {
 });
 
 // ── إخفاء الخطأ عند الكتابة ──
-['email','password'].forEach(id => {
+['email', 'password'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
         document.getElementById('error-msg').classList.remove('show');
     });
 });
 
-// ── قائمة ايميلات الادمن ──
 // ── تسجيل الدخول ──
 window.handleLogin = async () => {
-    const email    = document.getElementById('email').value.trim();
+    const email   = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const btn      = document.getElementById('login-btn');
-    const spinner  = document.getElementById('spinner');
-    const btnIcon  = document.getElementById('btn-icon');
-    const btnText  = document.getElementById('btn-text');
-    const errMsg   = document.getElementById('error-msg');
-    const errText  = document.getElementById('error-text');
+    const btn     = document.getElementById('login-btn');
+    const spinner = document.getElementById('spinner');
+    const btnIcon = document.getElementById('btn-icon');
+    const btnText = document.getElementById('btn-text');
+    const errMsg  = document.getElementById('error-msg');
+    const errText = document.getElementById('error-text');
 
     if (!email || !password) {
         errText.textContent = 'يرجى إدخال البريد وكلمة المرور';
@@ -407,14 +379,14 @@ window.handleLogin = async () => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
-        // ✅ التحقق من is_admin في قاعدة البيانات فقط
+        // ✅ التحقق من is_admin أو is_staff في قاعدة البيانات
         const { data: userData } = await supabase
             .from('users')
-            .select('is_admin')
+            .select('is_admin, is_staff')
             .eq('id', data.user.id)
             .single();
 
-        if (!userData?.is_admin) {
+        if (!userData?.is_admin && !userData?.is_staff) {
             await supabase.auth.signOut();
             throw new Error('ليس لديك صلاحية الوصول إلى لوحة التحكم');
         }
@@ -449,10 +421,13 @@ window.handleLogin = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
         const { data: userData } = await supabase
-            .from('users').select('is_admin')
-            .eq('id', session.user.id).single();
+            .from('users')
+            .select('is_admin, is_staff')
+            .eq('id', session.user.id)
+            .single();
 
-        if (userData?.is_admin === true) {
+        // ✅ يقبل is_admin أو is_staff
+        if (userData?.is_admin === true || userData?.is_staff === true) {
             window.location.href = 'dashboard.html';
         }
     }

@@ -14,50 +14,81 @@
 
 <header class="admin-top-header">
     <div class="header-container">
-                <!-- زر الهامبرغر - يظهر فقط في الموبايل -->
-<button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
-    <span></span><span></span><span></span>
-</button>
-<div class="logo">
-    <a href="dashboard.html" style="text-decoration:none; color:inherit;">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <img src="../assets/Icon.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain;">
-            <div style="display:flex; flex-direction:column; line-height:1.1;">
-                <span style="font-size:18px; font-weight:800; color:white;">Seconds<span style="color:#f97316;">Card</span></span>
-            </div>
+ 
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+            <span></span><span></span><span></span>
+        </button>
+ 
+        <div class="logo">
+            <a href="orders.html" style="text-decoration:none; color:inherit;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="../assets/Icon.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain;">
+                    <div style="display:flex; flex-direction:column; line-height:1.1;">
+                        <span style="font-size:18px; font-weight:800; color:white;">
+                            Seconds<span style="color:#f97316;">Card</span>
+                        </span>
+                    </div>
+                </div>
+            </a>
         </div>
-    </a>
-</div>
-        
+ 
         <nav class="main-nav">
-            <ul class="nav-list">
-                <li><a href="Slider-manager.html" class="nav-link"><i class="fas fa-chart-line"></i> السلايدر</a></li>
-                <li><a href="admin-chat.html" class="nav-link"><i class="fas fa-chart-line"></i> الدردشة</a></li>
-                <li><a href="admin-wallet.html" class="nav-link"><i class="fas fa-wallet"></i> المحافظ</a></li>
-                <li><a href="payment-methods.html" class="nav-link"><i class="fas fa-credit-card"></i>الدفع</a></li>
-                <li><a href="orders.html" class="nav-link"><i class="fas fa-shopping-cart"></i> الطلبات</a></li>
-                <li><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i>المنتجات</a></li>
-                <li><a href="stocks.html" class="nav-link"><i class="fas fa-layer-group"></i> المخزون</a></li>
-                <li><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i> الطلبات المكتملة</a></li>
+            <ul class="nav-list" id="main-nav-list">
+                <li data-perm="all">
+                    <a href="Slider-manager.html" class="nav-link">
+                        <i class="fas fa-chart-line"></i> السلايدر
+                    </a>
+                </li>
+                <li data-perm="view_wallets">
+                    <a href="admin-wallet.html" class="nav-link">
+                        <i class="fas fa-wallet"></i> المحافظ
+                    </a>
+                </li>
+                <li data-perm="all">
+                    <a href="payment-methods.html" class="nav-link">
+                        <i class="fas fa-credit-card"></i> الدفع
+                    </a>
+                </li>
+                <li data-perm="view_stats">
+                    <a href="dashboard.html" class="nav-link">
+                        <i class="fas fa-chart-bar"></i> الإحصائيات
+                    </a>
+                </li>
+                <li data-perm="all">
+                    <a href="products-manager.html" class="nav-link">
+                        <i class="fas fa-box-open"></i> المنتجات
+                    </a>
+                </li>
+                <li data-perm="manage_stock">
+                    <a href="stocks.html" class="nav-link">
+                        <i class="fas fa-layer-group"></i> المخزون
+                    </a>
+                </li>
+                <li data-perm="view_completed">
+                    <a href="completed-orders.html" class="nav-link">
+                        <i class="fas fa-check-double"></i> الطلبات المكتملة
+                    </a>
+                </li>
             </ul>
         </nav>
-
+ 
         <div style="position:relative; display:inline-block; margin-left:15px;">
-    <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
-        <i class="fas fa-bell"></i>
-        <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
-    </button>
-</div>
-
-<button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
-    <i class="fas fa-moon"></i>
-</button>
-
+            <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
+                <i class="fas fa-bell"></i>
+                <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+            </button>
+        </div>
+ 
+        <button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
+            <i class="fas fa-moon"></i>
+        </button>
+ 
         <div class="user-actions">
             <button class="logout-btn" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
             </button>
         </div>
+ 
     </div>
 </header>
 

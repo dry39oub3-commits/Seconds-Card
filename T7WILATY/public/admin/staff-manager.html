@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecondsCard | إدارة العمال</title>
+    <link rel="icon" type="image/png" href="../assets/logo.png">
+    <link rel="stylesheet" href="./css/dashboard-main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- ✅ admin-guard أول شيء في الhead -->
+    <script type="module" src="./js/admin-guard.js"></script>
+
+<style>
+.page-wrap { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+.page-title {
+    font-size: 20px; font-weight: 800; color: #f97316;
+    margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+}
+.staff-card {
+    background: var(--white, #1e293b);
+    border: 1px solid var(--border-light, #334155);
+    border-radius: 16px; padding: 20px 24px;
+    margin-bottom: 16px;
+    transition: box-shadow 0.2s;
+}
+.staff-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+.staff-card-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px; flex-wrap: wrap;
+}
+.staff-avatar {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(59,130,246,0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: #3b82f6; font-size: 20px; flex-shrink: 0;
+}
+.staff-info { flex: 1; min-width: 0; }
+.staff-name { font-weight: 800; font-size: 15px; color: var(--text-main, #e2e8f0); }
+.staff-email { font-size: 12px; color: var(--text-muted, #64748b); margin-top: 2px; }
+.staff-status {
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.status-active   { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+.status-inactive { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.perms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+.perm-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-light, #0f172a);
+    border: 1px solid var(--border-light, #1e2d42);
+    border-radius: 10px; padding: 10px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+}
+.perm-item:hover { border-color: #f97316; }
+.perm-item.active {
+    border-color: #22c55e;
+    background: rgba(34,197,94,0.07);
+}
+.perm-toggle {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 2px solid var(--border-light, #334155);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s;
+    font-size: 11px; color: transparent;
+}
+.perm-item.active .perm-toggle { background: #22c55e; border-color: #22c55e; color: white; }
+.perm-label { font-size: 13px; color: var(--text-main, #e2e8f0); font-weight: 600; }
+.perm-desc  { font-size: 11px; color: var(--text-muted, #64748b); margin-top: 1px; }
+.card-actions {
+    display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap;
+    padding-top: 16px; border-top: 1px solid var(--border-light, #1e2d42);
+}
+.btn-save {
+    padding: 9px 20px; background: linear-gradient(135deg,#22c55e,#16a34a);
+    color: white; border: none; border-radius: 9px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    display: flex; align-items: center; gap: 6px;
+    box-shadow: 0 3px 10px rgba(34,197,94,0.3);
+    transition: opacity 0.2s, transform 0.15s;
+}
+.btn-save:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-toggle {
+    padding: 9px 16px;
+    border: 1px solid var(--border-light, #334155);
+    background: var(--bg-light, #0f172a);
+    color: var(--text-muted, #94a3b8);
+    border-radius: 9px; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: 'Tajawal', sans-serif;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+}
+.btn-toggle:hover { border-color: #f97316; color: #f97316; }
+.loading-state {
+    text-align: center; padding: 60px; color: var(--text-muted, #475569);
+}
+.loading-state i { font-size: 32px; margin-bottom: 14px; display: block; opacity: 0.4; }
+#staff-toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; color: white; border: 1px solid #334155;
+    padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
+    z-index: 99999; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    display: none; white-space: nowrap;
+    font-family: 'Tajawal', sans-serif;
+}
+@media (max-width: 600px) {
+    .perms-grid { grid-template-columns: 1fr; }
+    .staff-card { padding: 16px; }
+    .card-actions { flex-direction: column; }
+    .btn-save, .btn-toggle { width: 100%; justify-content: center; }
+}
+</style>
+</head>
+<body>
+<header class="admin-top-header">
+    <div class="header-container">
+ 
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+            <span></span><span></span><span></span>
+        </button>
+ 
+        <div class="logo">
+            <a href="orders.html" style="text-decoration:none; color:inherit;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="../assets/Icon.png" alt="SecondsCard" style="height:40px; width:40px; object-fit:contain;">
+                    <div style="display:flex; flex-direction:column; line-height:1.1;">
+                        <span style="font-size:18px; font-weight:800; color:white;">
+                            Seconds<span style="color:#f97316;">Card</span>
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+ 
+        <nav class="main-nav">
+            <ul class="nav-list" id="main-nav-list">
+                <li data-perm="all">
+                    <a href="Slider-manager.html" class="nav-link">
+                        <i class="fas fa-chart-line"></i> السلايدر
+                    </a>
+                </li>
+                <li data-perm="view_wallets">
+                    <a href="admin-wallet.html" class="nav-link">
+                        <i class="fas fa-wallet"></i> المحافظ
+                    </a>
+                </li>
+                <li data-perm="all">
+                    <a href="payment-methods.html" class="nav-link">
+                        <i class="fas fa-credit-card"></i> الدفع
+                    </a>
+                </li>
+                <li data-perm="view_stats">
+                    <a href="dashboard.html" class="nav-link">
+                        <i class="fas fa-chart-bar"></i> الإحصائيات
+                    </a>
+                </li>
+                <li data-perm="all">
+                    <a href="products-manager.html" class="nav-link">
+                        <i class="fas fa-box-open"></i> المنتجات
+                    </a>
+                </li>
+                <li data-perm="manage_stock">
+                    <a href="stocks.html" class="nav-link">
+                        <i class="fas fa-layer-group"></i> المخزون
+                    </a>
+                </li>
+                <li data-perm="view_completed">
+                    <a href="completed-orders.html" class="nav-link">
+                        <i class="fas fa-check-double"></i> الطلبات المكتملة
+                    </a>
+                </li>
+            </ul>
+        </nav>
+ 
+        <div style="position:relative; display:inline-block; margin-left:15px;">
+            <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
+                <i class="fas fa-bell"></i>
+                <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+            </button>
+        </div>
+ 
+        <button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
+            <i class="fas fa-moon"></i>
+        </button>
+ 
+        <div class="user-actions">
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
+            </button>
+        </div>
+ 
+    </div>
+</header>
+<div id="staff-toast"></div>
+
+<div class="page-wrap">
+    <div class="page-title">
+        <i class="fas fa-users-cog"></i> إدارة العمال وصلاحياتهم
+    </div>
+    <div id="staff-list">
+        <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>جاري تحميل العمال...</p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { supabase } from '../js/supabase-config.js';
+
+const ALL_PERMISSIONS = [
+    { key: 'approve_orders',  label: 'قبول الطلبات',    icon: 'fa-check-circle', desc: 'يمكنه إتمام وقبول الطلبات' },
+    { key: 'refund_orders',   label: 'استرداد الطلبات', icon: 'fa-undo',         desc: 'يمكنه استرداد الطلبات' },
+    { key: 'view_completed',  label: 'الطلبات المكتملة',icon: 'fa-check-double', desc: 'يمكنه عرض الأرشيف' },
+    { key: 'view_stats',      label: 'عرض الإحصائيات', icon: 'fa-chart-bar',    desc: 'يمكنه رؤية الأرقام والتقارير' },
+    { key: 'manage_stock',    label: 'إدارة المخزون',   icon: 'fa-layer-group',  desc: 'يمكنه إضافة وعرض المخزون' },
+    { key: 'view_wallets',    label: 'عرض المحافظ',     icon: 'fa-wallet',       desc: 'يمكنه عرض طلبات الشحن والسحب' },
+    { key: 'chat_support',    label: 'دعم العملاء',     icon: 'fa-headset',      desc: 'يمكنه الرد على العملاء' },
+];
+
+async function loadStaff() {
+    const container = document.getElementById('staff-list');
+    const { data: staff, error } = await supabase
+        .from('users')
+        .select('id, full_name, email, is_staff, staff_permissions, avatar_url')
+        .eq('is_staff', true)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        container.innerHTML = `<div class="loading-state" style="color:#ef4444;">
+            <i class="fas fa-exclamation-circle"></i><p>خطأ في تحميل البيانات</p></div>`;
+        return;
+    }
+    if (!staff?.length) {
+        container.innerHTML = `<div class="loading-state">
+            <i class="fas fa-users-slash"></i>
+            <p>لا يوجد عمال حتى الآن</p>
+            <p style="font-size:12px;margin-top:8px;">فعّل is_staff = true لأي مستخدم من Supabase</p>
+        </div>`;
+        return;
+    }
+    container.innerHTML = staff.map(s => buildStaffCard(s)).join('');
+}
+
+function buildStaffCard(s) {
+    const perms    = s.staff_permissions || [];
+    const isActive = s.is_active !== false;
+    const name     = s.full_name || s.email || 'عامل';
+    const avatar   = s.avatar_url;
+
+    const avatarHtml = avatar
+        ? `<img src="${avatar}" style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid #334155;">`
+        : `<div class="staff-avatar"><i class="fas fa-user-hard-hat"></i></div>`;
+
+    const permsHtml = ALL_PERMISSIONS.map(p => {
+        const has = perms.includes(p.key);
+        return `
+            <div class="perm-item ${has ? 'active' : ''}" id="perm-${s.id}-${p.key}" onclick="togglePerm('${s.id}', '${p.key}')">
+                <div class="perm-toggle"><i class="fas fa-check"></i></div>
+                <div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <i class="fas ${p.icon}" style="font-size:12px;color:#f97316;"></i>
+                        <span class="perm-label">${p.label}</span>
+                    </div>
+                    <div class="perm-desc">${p.desc}</div>
+                </div>
+            </div>`;
+    }).join('');
+
+    return `
+        <div class="staff-card" id="card-${s.id}">
+            <div class="staff-card-header">
+                ${avatarHtml}
+                <div class="staff-info">
+                    <div class="staff-name">${name}</div>
+                    <div class="staff-email">${s.email || ''}</div>
+                </div>
+                <span class="staff-status ${isActive ? 'status-active' : 'status-inactive'}">
+                    <i class="fas fa-circle" style="font-size:7px;margin-left:4px;"></i>
+                    ${isActive ? 'نشط' : 'معطّل'}
+                </span>
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:10px;font-weight:700;">
+                <i class="fas fa-shield-alt" style="color:#f97316;margin-left:6px;"></i> الصلاحيات
+            </div>
+            <div class="perms-grid" id="perms-${s.id}">${permsHtml}</div>
+            <div class="card-actions">
+                <button class="btn-save" onclick="savePermissions('${s.id}')">
+                    <i class="fas fa-save"></i> حفظ الصلاحيات
+                </button>
+                <button class="btn-toggle" onclick="toggleAllPerms('${s.id}')">
+                    <i class="fas fa-layer-group"></i> تحديد الكل / إلغاؤه
+                </button>
+                <button class="btn-toggle" onclick="toggleStaffActive('${s.id}', ${isActive})"
+                    style="${isActive ? 'color:#ef4444;border-color:#ef4444;' : 'color:#22c55e;border-color:#22c55e;'}">
+                    <i class="fas fa-${isActive ? 'ban' : 'check'}"></i>
+                    ${isActive ? 'تعطيل الحساب' : 'تفعيل الحساب'}
+                </button>
+            </div>
+        </div>`;
+}
+
+window.togglePerm = (userId, permKey) => {
+    document.getElementById(`perm-${userId}-${permKey}`)?.classList.toggle('active');
+};
+
+window.toggleAllPerms = (userId) => {
+    const items = document.querySelectorAll(`#perms-${userId} .perm-item`);
+    const allOn = [...items].every(i => i.classList.contains('active'));
+    items.forEach(i => allOn ? i.classList.remove('active') : i.classList.add('active'));
+};
+
+window.savePermissions = async (userId) => {
+    const activePerms = [...document.querySelectorAll(`#perms-${userId} .perm-item.active`)]
+        .map(el => el.id.replace(`perm-${userId}-`, ''));
+    const { error } = await supabase.from('users').update({ staff_permissions: activePerms }).eq('id', userId);
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
+    showToast(`✅ تم حفظ ${activePerms.length} صلاحية`);
+};
+
+window.toggleStaffActive = async (userId, currentActive) => {
+    const newState = !currentActive;
+    if (!confirm(`هل تريد ${newState ? 'تفعيل' : 'تعطيل'} هذا الحساب؟`)) return;
+    const { error } = await supabase.from('users').update({ is_active: newState }).eq('id', userId);
+    if (error) { showToast('❌ خطأ: ' + error.message); return; }
+    showToast(`✅ تم ${newState ? 'تفعيل' : 'تعطيل'} الحساب`);
+    loadStaff();
+};
+
+function showToast(msg) {
+    const t = document.getElementById('staff-toast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+loadStaff();
+</script>
+</body>
+</html>
