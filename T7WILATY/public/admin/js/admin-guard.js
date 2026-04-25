@@ -2,6 +2,7 @@
 import { supabase } from '../../js/supabase-config.js';
 
 const PAGE_PERM_MAP = {
+    'dashboard.html':            'view_stats',
     'orders.html':               'approve_orders',
     'completed-orders.html':     'view_completed',
     'stocks.html':               'manage_stock',

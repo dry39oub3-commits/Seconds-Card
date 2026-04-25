@@ -399,8 +399,8 @@ window.handleLogin = async () => {
         btn.style.background  = 'linear-gradient(135deg,#22c55e,#16a34a)';
 
         setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 800);
+                window.location.href = 'orders.html';
+            }, 800);
 
     } catch (err) {
         errText.textContent = err.message === 'Invalid login credentials'
