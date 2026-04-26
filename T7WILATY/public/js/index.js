@@ -126,8 +126,8 @@ function setupSearch() {
         top: 100%;
         left: 0;
         right: 0;
-        background: var(--card-bg, #fff);
-        border: 1px solid var(--border-color, #e2e8f0);
+        background: var(--color-background-secondary, #fff);
+        border: 1px solid var(--color-border-secondary, #e2e8f0);
         border-radius: 12px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         z-index: 9999;
@@ -199,7 +199,7 @@ function showAutocomplete(query, dropdown) {
 
     if (results.length === 0) {
         dropdown.innerHTML = `
-            <div style="padding:16px; text-align:center; color:#94a3b8; font-size:14px;">
+            <div style="padding:16px; text-align:center; color:var(--color-text-secondary); font-size:14px;">
                 لا توجد نتائج لـ "${query}"
             </div>
         `;
@@ -215,7 +215,7 @@ function showAutocomplete(query, dropdown) {
              onmouseleave="this.style.background='transparent'">
             <img src="${r.img}" onerror="this.src='assets/placeholder.png'"
                  style="width:40px; height:40px; border-radius:8px; object-fit:cover; flex-shrink:0;">
-            <span style="font-size:14px; color:var(--text-primary, #1e293b);">
+            <span style="font-size:14px; color:var(--color-text-primary, #1e293b);">
                 ${highlightMatch(r.name, query)}
             </span>
         </div>
