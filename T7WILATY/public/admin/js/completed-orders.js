@@ -167,15 +167,18 @@ async function loadCompletedOrders() {
                     <i class="fas fa-box"></i> مخزون${autoApprovedCount > 1 ? ' (' + autoApprovedCount + ')' : ''}
                 </span></div>`;
         }
-        if (manualCount > 0) {
-            approvalBadge += `<div style="margin-top:4px;">
-                <span style="display:inline-flex;align-items:center;gap:4px;
-                    background:rgba(168,85,247,0.12);color:#c084fc;
-                    border:1px solid rgba(168,85,247,0.3);
-                    padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
-                    <i class="fas fa-hand-paper"></i> يدوي${manualCount > 1 ? ' (' + manualCount + ')' : ''}
-                </span></div>`;
-        }
+        // ✅ استبدله بهذا
+            if (manualCount > 0) {
+                const manualItems   = group.items.filter(i => i.status === 'مكتمل' && !i.auto_approved);
+                const approvedByName = manualItems[0]?.completed_by_name || 'يدوي';
+                approvalBadge += `<div style="margin-top:4px;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;
+                        background:rgba(168,85,247,0.12);color:#c084fc;
+                        border:1px solid rgba(168,85,247,0.3);
+                        padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                        <i class="fas fa-user-check"></i> ${approvedByName}${manualCount > 1 ? ' (' + manualCount + ')' : ''}
+                    </span></div>`;
+            }
 
         const completedItems = group.items.filter(i => i.status === 'مكتمل');
         const completedIds   = JSON.stringify(completedItems.map(i => i.id)).replace(/"/g, '&quot;');

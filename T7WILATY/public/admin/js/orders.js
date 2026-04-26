@@ -596,10 +596,11 @@ window.approveOrder = async (orderId, quantity) => {
     const suppliersDetails = stockCodesData.map(c => ({ code: c.code, supplier_name: c.supplier_name, supplier_order_id: c.order_id }));
 
     const { data: orderData, error } = await supabase.from('orders').update({
-        status: 'مكتمل', card_code: codes.join('\n'),
-        cost_price: parseFloat(cost), supplier_id: supplierId, supplier_order_id: supplierOrderId,
-        suppliers_details: suppliersDetails.length > 0 ? suppliersDetails : null
-    }).eq('id', orderId).select().single();
+    status: 'مكتمل', card_code: codes.join('\n'),
+    cost_price: parseFloat(cost), supplier_id: supplierId, supplier_order_id: supplierOrderId,
+    suppliers_details: suppliersDetails.length > 0 ? suppliersDetails : null,
+    completed_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+}).eq('id', orderId).select().single();
 
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
 
@@ -654,10 +655,11 @@ window.approveGroupOrders = async () => {
         const stockData       = window._groupStockData?.[i];
 
         const { data: orderData, error } = await supabase.from('orders').update({
-            status: 'مكتمل', card_code: codes.join('\n'), cost_price: parseFloat(cost),
-            supplier_id: supplierId, supplier_order_id: supplierOrderId,
-            suppliers_details: stockData?.suppliersDetails?.length > 0 ? stockData.suppliersDetails : null
-        }).eq('id', item.id).select().single();
+    status: 'مكتمل', card_code: codes.join('\n'), cost_price: parseFloat(cost),
+    supplier_id: supplierId, supplier_order_id: supplierOrderId,
+    suppliers_details: stockData?.suppliersDetails?.length > 0 ? stockData.suppliersDetails : null,
+    completed_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'  // ← أضف هذا
+}).eq('id', item.id).select().single();
 
         if (error) { showToast(`❌ خطأ في الطلب ${i+1}: ` + error.message); return; }
 
