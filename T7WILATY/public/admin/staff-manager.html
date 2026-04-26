@@ -117,7 +117,7 @@ async function loadStaff() {
     const container = document.getElementById('staff-list');
     const { data: staff, error } = await supabase
         .from('users')
-        .select('id, full_name, email, is_staff, staff_permissions, avatar_url')
+        .select('id, full_name, email, is_staff, is_active, staff_permissions, avatar_url')
         .eq('is_staff', true)
         .order('created_at', { ascending: true });
 
