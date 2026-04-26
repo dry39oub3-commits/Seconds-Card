@@ -11,7 +11,7 @@ async function loadCompletedOrders() {
         .from('orders')
         .select('*, products(image)')
         .in('status', ['مكتمل', 'ملغي', 'مسترد'])
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
     const from = document.getElementById('date-from')?.value;
     const to   = document.getElementById('date-to')?.value;
