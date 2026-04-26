@@ -219,6 +219,40 @@ html[data-theme="light"] body.orders-page input::placeholder {
                 </table>
             </div>
         </section>
+
+        <!-- ===== جدول الطلبات المكتملة ===== -->
+<section class="content-card" id="completed-section" style="margin-top:30px;">
+    <div class="section-header">
+        <h2><i class="fas fa-check-double" style="color:#22c55e;"></i> الطلبات المكتملة  </h2>
+        <div class="search-box">
+            <input type="text" id="completed-search"
+                   placeholder="بحث..." onkeyup="filterCompleted()">
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>رقم الطلب</th>
+                    <th>المستخدم</th>
+                    <th>صورة</th>
+                    <th>المنتج</th>
+                    <th>المبلغ</th>
+                    <th>الكمية</th>
+                    <th>التاريخ</th>
+                    <th>طريقة الدفع</th>
+                    <th>الحالة</th>
+                    
+                </tr>
+            </thead>
+            <tbody id="completed-orders-list">
+                <tr><td colspan="10" style="text-align:center;color:#64748b;">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
     </main>
     <!-- زر الدردشة العائم للأدمن -->
 <div id="admin-chat-float-btn" onclick="toggleAdminChat()"

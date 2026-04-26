@@ -107,66 +107,126 @@ products.forEach((product) => {
 }
 
 
-// ===== البحث =====
+// ===== البحث مع Autocomplete =====
+let allProductsCache = []; // كاش المنتجات
+
 function setupSearch() {
     const searchInput = document.getElementById('main-search');
     const searchBtn = document.querySelector('.search-bar button');
     if (!searchInput) return;
 
-    // بحث عند الكتابة
+    // إنشاء dropdown container
+    const wrapper = searchInput.closest('.search-bar') || searchInput.parentElement;
+    wrapper.style.position = 'relative';
+
+    const dropdown = document.createElement('div');
+    dropdown.id = 'search-dropdown';
+    dropdown.style.cssText = `
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--card-bg, #fff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        z-index: 9999;
+        max-height: 320px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 6px;
+    `;
+    wrapper.appendChild(dropdown);
+
+    // إغلاق الـ dropdown عند الضغط خارجه
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+
     searchInput.addEventListener('input', () => {
-        searchProducts(searchInput.value.trim());
+        const query = searchInput.value.trim();
+        if (query.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        showAutocomplete(query, dropdown);
     });
 
-    // بحث عند الضغط على Enter
     searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') searchProducts(searchInput.value.trim());
-    });
+    if (e.key === 'Escape') {
+        dropdown.style.display = 'none';
+        searchInput.value = '';
+        // أظهر كل الكاردات مرة ثانية
+        document.querySelectorAll('.card-item').forEach(c => c.style.display = '');
+    }
+    if (e.key === 'Enter') {
+        dropdown.style.display = 'none';
+        const query = searchInput.value.trim();
+        if (query) {
+            filterCards(query); // فلتر الكاردات
+            // سكرول لقسم الكاردات
+            document.getElementById('cards-grid')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+});
 
-    // بحث عند الضغط على الزر
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
-            searchProducts(searchInput.value.trim());
+            dropdown.style.display = 'none';
         });
     }
 }
 
-function searchProducts(query) {
-    const cardsGrid = document.getElementById('cards-grid');
-    const allCards = cardsGrid.querySelectorAll('.card-item');
-
-    if (!query) {
-        // إظهار كل البطاقات لو البحث فارغ
-        allCards.forEach(card => card.style.display = '');
-        return;
-    }
-
+function showAutocomplete(query, dropdown) {
     const lowerQuery = query.toLowerCase();
-    let found = 0;
 
+    // جلب المنتجات من الـ DOM
+    const cardsGrid = document.getElementById('cards-grid');
+    const allCards = cardsGrid ? cardsGrid.querySelectorAll('.card-item') : [];
+
+    const results = [];
     allCards.forEach(card => {
-        const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
-        if (name.includes(lowerQuery)) {
-            card.style.display = '';
-            found++;
-        } else {
-            card.style.display = 'none';
+        const name = card.querySelector('h3')?.textContent || '';
+        const img = card.querySelector('img')?.src || '';
+        const href = card.getAttribute('onclick')?.match(/href='([^']+)'/)?.[1] || '#';
+
+        if (name.toLowerCase().includes(lowerQuery)) {
+            results.push({ name, img, href });
         }
     });
 
-    // رسالة لو ما في نتائج
-    const noResult = document.getElementById('no-search-result');
-    if (found === 0) {
-        if (!noResult) {
-            const msg = document.createElement('p');
-            msg.id = 'no-search-result';
-            msg.style.cssText = 'text-align:center; color:#94a3b8; padding:30px; width:100%;';
-            msg.textContent = `لا توجد نتائج لـ "${query}"`;
-            cardsGrid.appendChild(msg);
-        }
-    } else {
-        noResult?.remove();
+    if (results.length === 0) {
+        dropdown.innerHTML = `
+            <div style="padding:16px; text-align:center; color:#94a3b8; font-size:14px;">
+                لا توجد نتائج لـ "${query}"
+            </div>
+        `;
+        dropdown.style.display = 'block';
+        return;
     }
+
+    dropdown.innerHTML = results.map(r => `
+        <div onclick="window.location.href='${r.href}'"
+             style="display:flex; align-items:center; gap:12px; padding:10px 14px;
+                    cursor:pointer; transition:background 0.15s; border-radius:8px;"
+             onmouseenter="this.style.background='rgba(249,115,22,0.08)'"
+             onmouseleave="this.style.background='transparent'">
+            <img src="${r.img}" onerror="this.src='assets/placeholder.png'"
+                 style="width:40px; height:40px; border-radius:8px; object-fit:cover; flex-shrink:0;">
+            <span style="font-size:14px; color:var(--text-primary, #1e293b);">
+                ${highlightMatch(r.name, query)}
+            </span>
+        </div>
+    `).join('');
+
+    dropdown.style.display = 'block';
+}
+
+function highlightMatch(text, query) {
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark style="background:rgba(249,115,22,0.25);color:inherit;border-radius:3px;padding:0 2px;">$1</mark>');
 }
 
 function updateCartBadge() {
@@ -357,3 +417,33 @@ wrapper.innerHTML = slides.map(s => {
 
 initSlider();
 
+function filterCards(query) {
+    const cardsGrid = document.getElementById('cards-grid');
+    const allCards = cardsGrid.querySelectorAll('.card-item');
+    const lowerQuery = query.toLowerCase();
+    let found = 0;
+
+    allCards.forEach(card => {
+        const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
+        if (name.includes(lowerQuery)) {
+            card.style.display = '';
+            found++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // رسالة لو ما في نتائج
+    let noResult = document.getElementById('no-search-result');
+    if (found === 0) {
+        if (!noResult) {
+            const msg = document.createElement('p');
+            msg.id = 'no-search-result';
+            msg.style.cssText = 'text-align:center; color:#94a3b8; padding:30px; width:100%;';
+            msg.textContent = `لا توجد نتائج لـ "${query}"`;
+            cardsGrid.appendChild(msg);
+        }
+    } else {
+        noResult?.remove();
+    }
+}

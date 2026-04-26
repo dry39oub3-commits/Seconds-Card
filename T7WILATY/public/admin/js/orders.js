@@ -2,6 +2,12 @@ import { supabase } from '../../js/supabase-config.js';
 
 const USD_TO_MRU = 43;
 
+// ==================== Pagination ====================
+// أضف هذه المتغيرات في أعلى orders.js بعد الـ imports
+let currentPage    = 1;
+const PAGE_SIZE    = 10;
+let allGrouped     = []; // كل المجموعات بعد التجميع
+
 async function loadOrders() {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
@@ -28,10 +34,12 @@ async function loadOrders() {
     processWalletOrders(orders);
 }
 
+// ==================== استبدل renderOrders بهذا ====================
 function renderOrders(orders) {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
-
+ 
+    // ── تجميع الطلبات ──
     const groupedMap = {};
     orders.forEach(order => {
         const key = order.order_number || order.id;
@@ -41,27 +49,48 @@ function renderOrders(orders) {
         groupedMap[key].items.push(order);
         groupedMap[key].totalPrice += (order.price || 0) * (order.quantity || 1);
     });
-
-    const groupedOrders = Object.values(groupedMap);
-
-    if (groupedOrders.length === 0) {
+ 
+    allGrouped = Object.values(groupedMap);
+ 
+    if (allGrouped.length === 0) {
         ordersList.innerHTML = '<tr><td colspan="11" style="text-align:center;">📭 لا توجد طلبات حالياً</td></tr>';
+        renderPagination(0);
         return;
     }
-
-    ordersList.innerHTML = groupedOrders.map(group => {
-        const date = group.created_at ? new Date(group.created_at).toLocaleString('fr-FR') : 'غير محدد';
+ 
+    renderPage(currentPage);
+}
+ 
+function renderPage(page) {
+    const ordersList = document.getElementById('admin-orders-list');
+    if (!ordersList) return;
+ 
+    const total      = allGrouped.length;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    currentPage      = Math.max(1, Math.min(page, totalPages));
+ 
+    const start  = (currentPage - 1) * PAGE_SIZE;
+    const end    = Math.min(start + PAGE_SIZE, total);
+    const slice  = allGrouped.slice(start, end);
+ 
+    const canApprove = window.hasPerm?.('approve_orders') ?? true;
+    const canRefund  = window.hasPerm?.('refund_orders')  ?? true;
+ 
+    ordersList.innerHTML = slice.map(group => {
+        const date          = group.created_at ? new Date(group.created_at).toLocaleString('fr-FR') : 'غير محدد';
         const paymentMethod = group.paymentMethod || group.payment_method || '-';
         const receiptUrl    = group.receiptUrl || group.receipt_url;
         const receiptBtn    = receiptUrl
             ? `<a href="${receiptUrl}" target="_blank" class="btn-check" title="عرض الإيصال"><i class="fas fa-receipt"></i></a>`
             : '-';
-
+ 
         const imagesCell = group.items.map(item => {
             const img = item.products?.image;
-            return img ? `<img src="${img}" style="width:36px;height:36px;object-fit:contain;background:white;border-radius:5px;padding:2px;margin:1px;" title="${item.product_name || ''}">` : '';
+            return img
+                ? `<img src="${img}" style="width:36px;height:36px;object-fit:contain;background:white;border-radius:5px;padding:2px;margin:1px;" title="${item.product_name || ''}">`
+                : '';
         }).join('');
-
+ 
         const productsCell = group.items.map(item =>
             `<div style="font-size:12px;margin-bottom:3px;">
                 <span class="order-product-name">${item.product_name || 'غير محدد'}</span>
@@ -69,42 +98,32 @@ function renderOrders(orders) {
                 ${group.items.length > 1 ? `<span style="color:var(--text-muted);">× ${item.quantity || 1}</span>` : ''}
             </div>`
         ).join('');
-
-        const totalQty  = group.items.reduce((s, o) => s + (o.quantity || 1), 0);
-        const canApprove = window.hasPerm?.('approve_orders') ?? true;
-const canRefund  = window.hasPerm?.('refund_orders')  ?? true;
  
-const acceptBtn = group.items.length === 1
-    ? `<div style="display:flex;flex-direction:column;gap:6px;">
-        ${canApprove ? `
-        <button onclick="openOrderModal(${JSON.stringify(group.items[0]).replace(/"/g, '&quot;')})"
-            style="background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
-            <i class="fas fa-check-circle"></i> قبول
-        </button>` : ''}
-        ${canRefund ? `
-        <button onclick="quickRefund('${group.items[0].id}', '${group.items[0].paymentMethod || group.items[0].payment_method || ''}')"
-            style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
-            <i class="fas fa-undo"></i> استرداد
-        </button>` : ''}
-        ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
-       </div>`
-    : `<div style="display:flex;flex-direction:column;gap:6px;">
-        ${canApprove ? `
-        <button onclick="openGroupOrderModal(${JSON.stringify(group.items).replace(/"/g, '&quot;')})"
-            style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
-            <i class="fas fa-layer-group"></i> قبول المجموعة (${group.items.length})
-        </button>` : ''}
-        ${canRefund ? `
-        <button onclick="quickRefundGroup(${JSON.stringify(group.items.map(i=>i.id)).replace(/"/g,'&quot;')}, '${group.paymentMethod || group.payment_method || ''}')"
-            style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
-            <i class="fas fa-undo"></i> استرداد المجموعة
-        </button>` : ''}
-        ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
-       </div>`;
-
+        const totalQty = group.items.reduce((s, o) => s + (o.quantity || 1), 0);
+ 
+        const acceptBtn = group.items.length === 1
+            ? `<div style="display:flex;flex-direction:column;gap:6px;">
+                ${canApprove ? `<button onclick="openOrderModal(${JSON.stringify(group.items[0]).replace(/"/g,'&quot;')})"
+                    style="background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+                    <i class="fas fa-check-circle"></i> قبول</button>` : ''}
+                ${canRefund ? `<button onclick="quickRefund('${group.items[0].id}','${group.items[0].paymentMethod||group.items[0].payment_method||''}')"
+                    style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+                    <i class="fas fa-undo"></i> استرداد</button>` : ''}
+                ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
+               </div>`
+            : `<div style="display:flex;flex-direction:column;gap:6px;">
+                ${canApprove ? `<button onclick="openGroupOrderModal(${JSON.stringify(group.items).replace(/"/g,'&quot;')})"
+                    style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+                    <i class="fas fa-layer-group"></i> قبول المجموعة (${group.items.length})</button>` : ''}
+                ${canRefund ? `<button onclick="quickRefundGroup(${JSON.stringify(group.items.map(i=>i.id)).replace(/"/g,'&quot;')},'${group.paymentMethod||group.payment_method||''}')"
+                    style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
+                    <i class="fas fa-undo"></i> استرداد المجموعة</button>` : ''}
+                ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
+               </div>`;
+ 
         return `
             <tr id="order-row-${group.order_number || group.id}">
-                <td style="color:#f97316; font-weight:bold;">${group.order_number || '#' + group.id.substring(0, 7)}</td>
+                <td style="color:#f97316;font-weight:bold;">${group.order_number || '#' + group.id.substring(0,7)}</td>
                 <td>${group.customer_name || 'غير معروف'}</td>
                 <td>${imagesCell || '-'}</td>
                 <td>${productsCell}</td>
@@ -115,10 +134,110 @@ const acceptBtn = group.items.length === 1
                 <td>${paymentMethod}</td>
                 <td>${receiptBtn}</td>
                 <td>${acceptBtn}</td>
-            </tr>
-        `;
+            </tr>`;
     }).join('');
+ 
+    renderPagination(total);
 }
+ 
+function renderPagination(total) {
+    // إزالة pagination قديم
+    document.getElementById('orders-pagination')?.remove();
+ 
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    if (totalPages <= 1) return;
+ 
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end   = Math.min(currentPage * PAGE_SIZE, total);
+ 
+    // بناء أرقام الصفحات
+    let pages = [];
+    if (totalPages <= 7) {
+        pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    } else {
+        pages = [1];
+        if (currentPage > 3) pages.push('...');
+        for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+            pages.push(i);
+        }
+        if (currentPage < totalPages - 2) pages.push('...');
+        pages.push(totalPages);
+    }
+ 
+    const pag = document.createElement('div');
+    pag.id = 'orders-pagination';
+    pag.style.cssText = `
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; flex-wrap: wrap; gap: 10px;
+        border-top: 1px solid var(--border-light, #334155);
+        margin-top: 4px;
+    `;
+ 
+    pag.innerHTML = `
+        <span style="font-size:13px;color:#64748b;">
+            عرض <strong style="color:#f97316;">${start}–${end}</strong> من <strong>${total}</strong> طلب
+        </span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <!-- السابق -->
+            <button onclick="goToPage(${currentPage - 1})"
+                ${currentPage === 1 ? 'disabled' : ''}
+                style="padding:7px 14px;border-radius:8px;border:1px solid var(--border-light,#334155);
+                       background:${currentPage === 1 ? 'transparent' : 'var(--white,#1e293b)'};
+                       color:${currentPage === 1 ? '#475569' : '#e2e8f0'};
+                       cursor:${currentPage === 1 ? 'not-allowed' : 'pointer'};font-size:13px;
+                       font-family:'Tajawal',sans-serif;transition:all 0.15s;">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+ 
+            <!-- أرقام الصفحات -->
+            ${pages.map(p => p === '...'
+                ? `<span style="color:#475569;padding:0 4px;">...</span>`
+                : `<button onclick="goToPage(${p})"
+                    style="padding:7px 13px;border-radius:8px;font-size:13px;cursor:pointer;
+                           font-family:'Tajawal',sans-serif;transition:all 0.15s;
+                           border:1px solid ${p === currentPage ? '#f97316' : 'var(--border-light,#334155)'};
+                           background:${p === currentPage ? '#f97316' : 'var(--white,#1e293b)'};
+                           color:${p === currentPage ? 'white' : '#e2e8f0'};
+                           font-weight:${p === currentPage ? '700' : '400'};">
+                    ${p}
+                   </button>`
+            ).join('')}
+ 
+            <!-- التالي -->
+            <button onclick="goToPage(${currentPage + 1})"
+                ${currentPage === totalPages ? 'disabled' : ''}
+                style="padding:7px 14px;border-radius:8px;border:1px solid var(--border-light,#334155);
+                       background:${currentPage === totalPages ? 'transparent' : 'var(--white,#1e293b)'};
+                       color:${currentPage === totalPages ? '#475569' : '#e2e8f0'};
+                       cursor:${currentPage === totalPages ? 'not-allowed' : 'pointer'};font-size:13px;
+                       font-family:'Tajawal',sans-serif;transition:all 0.15s;">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+    `;
+ 
+    // أضف بعد الجدول
+    const tableContainer = document.querySelector('.table-container') || document.getElementById('admin-orders-list')?.closest('section');
+    tableContainer?.appendChild(pag);
+}
+ 
+// ── التنقل بين الصفحات ──
+window.goToPage = (page) => {
+    const totalPages = Math.ceil(allGrouped.length / PAGE_SIZE);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderPage(currentPage);
+    // Scroll للأعلى
+    document.querySelector('.table-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+ 
+// ── إعادة تعيين الصفحة عند البحث ──
+window.filterOrders = () => {
+    const search = document.getElementById('orderSearch').value.trim().toLowerCase();
+    document.querySelectorAll('#admin-orders-list tr').forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(search) ? '' : 'none';
+    });
+};
 
 async function processWalletOrders(orders) {
     const walletOrders = orders.filter(order => {
@@ -725,9 +844,14 @@ window.filterOrders = () => {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadOrders();
+    loadCompletedOrders(); // ← أضف هذا
     checkNewOrders();
     supabase.channel('orders-realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { loadOrders(); checkNewOrders(); })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+            loadOrders();
+            loadCompletedOrders(); // ← وهذا
+            checkNewOrders();
+        })
         .subscribe();
     setInterval(checkNewOrders, 1000);
 });
@@ -1095,4 +1219,122 @@ window.executeGroupRefund = async (ids, pm, totalAmount, userId) => {
 
     document.getElementById('refund-modal')?.remove();
     loadOrders();
+};
+
+
+
+
+
+
+
+
+// ==================== جدول الطلبات المكتملة ====================
+let allCompletedGrouped = [];
+let completedPage = 1;
+const COMPLETED_PAGE_SIZE = 10;
+
+async function loadCompletedOrders() {
+    const container = document.getElementById('completed-orders-list');
+    if (!container) return;
+
+    container.innerHTML = '<tr><td colspan="10" style="text-align:center;">جاري التحميل...</td></tr>';
+
+    const { data: orders, error } = await supabase
+        .from('orders')
+        .select('*, products(image)')
+        .in('status', ['مكتمل', 'مسترد', 'ملغي'])
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+    if (error || !orders?.length) {
+        container.innerHTML = '<tr><td colspan="10" style="text-align:center;">لا توجد طلبات مكتملة</td></tr>';
+        return;
+    }
+
+    const groupedMap = {};
+    orders.forEach(order => {
+        const key = order.order_number || order.id;
+        if (!groupedMap[key]) groupedMap[key] = { ...order, items: [], totalPrice: 0 };
+        groupedMap[key].items.push(order);
+        groupedMap[key].totalPrice += (order.price || 0) * (order.quantity || 1);
+    });
+
+    allCompletedGrouped = Object.values(groupedMap);
+    renderCompletedPage(1);
+}
+
+function renderCompletedPage(page) {
+    const container  = document.getElementById('completed-orders-list');
+    if (!container) return;
+
+    const total      = allCompletedGrouped.length;
+    const totalPages = Math.ceil(total / COMPLETED_PAGE_SIZE);
+    completedPage    = Math.max(1, Math.min(page, totalPages));
+
+    const start = (completedPage - 1) * COMPLETED_PAGE_SIZE;
+    const slice = allCompletedGrouped.slice(start, start + COMPLETED_PAGE_SIZE);
+
+    const statusColor = { 'مكتمل': '#22c55e', 'ملغي': '#ef4444', 'مسترد': '#f59e0b' };
+
+    container.innerHTML = slice.map(group => {
+        const date     = new Date(group.created_at).toLocaleString('fr-FR');
+        const orderNum = group.order_number || '#' + group.id?.substring(0, 7);
+        const pm       = group.paymentMethod || group.payment_method || '-';
+        const color    = statusColor[group.items[0]?.status] || '#94a3b8';
+
+        const imagesCell = group.items.map(item => {
+            const img = item.products?.image;
+            return img ? `<img src="${img}" style="width:32px;height:32px;object-fit:contain;background:white;border-radius:5px;padding:2px;margin:1px;">` : '';
+        }).join('');
+
+        const productsCell = group.items.map(item => `
+            <div style="font-size:12px;margin-bottom:2px;">
+                <span>${item.product_name || '—'}</span>
+                ${item.label ? `<span style="color:#f97316;margin-right:4px;">(${item.label})</span>` : ''}
+            </div>`
+        ).join('');
+
+        const statusBadge = `<span style="background:${color}22;color:${color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${group.items[0]?.status || '—'}</span>`;
+
+        return `
+        <tr>
+            <td style="color:#f97316;font-weight:bold;font-size:12px;">${orderNum}</td>
+            <td style="font-size:12px;">${group.customer_name || '—'}</td>
+            <td>${imagesCell || '—'}</td>
+            <td>${productsCell}</td>
+            <td><strong>${group.totalPrice} MRU</strong></td>
+            <td>${group.items.reduce((s, o) => s + (o.quantity || 1), 0)}</td>
+            <td><small style="color:#94a3b8;">${date}</small></td>
+            <td style="font-size:12px;">${pm}</td>
+            <td>${statusBadge}</td>
+        </tr>`;
+    }).join('');
+
+    // Pagination
+    document.getElementById('completed-pagination')?.remove();
+    if (totalPages > 1) {
+        const pag = document.createElement('div');
+        pag.id = 'completed-pagination';
+        pag.style.cssText = 'display:flex;justify-content:center;gap:6px;padding:14px;flex-wrap:wrap;';
+        for (let i = 1; i <= totalPages; i++) {
+            pag.innerHTML += `
+                <button onclick="renderCompletedPage(${i})"
+                    style="padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px;
+                           border:1px solid ${i === completedPage ? '#f97316' : '#334155'};
+                           background:${i === completedPage ? '#f97316' : 'transparent'};
+                           color:${i === completedPage ? 'white' : '#94a3b8'};">
+                    ${i}
+                </button>`;
+        }
+        document.getElementById('completed-section')?.appendChild(pag);
+    }
+}
+
+window.renderCompletedPage = renderCompletedPage;
+
+window.filterCompleted = () => {
+    const q = document.getElementById('completed-search')?.value.toLowerCase().trim() || '';
+    document.querySelectorAll('#completed-orders-list tr').forEach(row => {
+        row.style.display = !q || row.innerText.toLowerCase().includes(q) ? '' : 'none';
+    });
 };
