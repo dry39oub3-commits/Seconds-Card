@@ -718,7 +718,7 @@ window.approveOrder = async (orderId, quantity) => {
     status: 'مكتمل', card_code: codes.join('\n'),
     cost_price: parseFloat(cost), supplier_id: supplierId, supplier_order_id: supplierOrderId,
     suppliers_details: suppliersDetails.length > 0 ? suppliersDetails : null,
-    completed_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+    approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
 }).eq('id', orderId).select().single();
 
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
@@ -773,12 +773,13 @@ window.approveGroupOrders = async () => {
         const supplierOrderId = document.getElementById(`supplier-order-${i}`)?.value.trim() || '';
         const stockData       = window._groupStockData?.[i];
 
-        const { data: orderData, error } = await supabase.from('orders').update({
-    status: 'مكتمل', card_code: codes.join('\n'), cost_price: parseFloat(cost),
-    supplier_id: supplierId, supplier_order_id: supplierOrderId,
-    suppliers_details: stockData?.suppliersDetails?.length > 0 ? stockData.suppliersDetails : null,
-    completed_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'  // ← أضف هذا
-}).eq('id', item.id).select().single();
+        await supabase.from('orders')
+    .update({ 
+        status: 'مسترد', 
+        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
+        ...(refundReceiptUrl && { refund_receipt_url: refundReceiptUrl }) 
+    })
+    .eq('id', orderId);
 
         if (error) { showToast(`❌ خطأ في الطلب ${i+1}: ` + error.message); return; }
 
@@ -1196,8 +1197,11 @@ window.executeGroupRefund = async (ids, pm, totalAmount, userId) => {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاسترداد...'; }
 
     for (const id of ids) {
-        await supabase.from('orders').update({ status: 'مسترد' }).eq('id', id);
-    }
+    await supabase.from('orders').update({ 
+        status: 'مسترد',
+        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+    }).eq('id', id);
+}
 
     const isWallet = pm === 'المحفظة' || pm === 'محفظة';
     if (isWallet && userId) {
@@ -1241,8 +1245,7 @@ async function loadCompletedOrders() {
 
     const { data: orders, error } = await supabase
         .from('orders')
-        .select('*, products(image), approved_by_name, auto_approved')
-        .select('*, products(image)')
+        .select('*, products(image)')   // ✅ select واحدة فقط — * يجلب approved_by_name و auto_approved تلقائياً
         .in('status', ['مكتمل', 'مسترد', 'ملغي'])
         .order('created_at', { ascending: false })
         .limit(200);
@@ -1260,7 +1263,11 @@ async function loadCompletedOrders() {
         groupedMap[key].totalPrice += (order.price || 0) * (order.quantity || 1);
     });
 
-    allCompletedGrouped = Object.values(groupedMap);
+    allCompletedGrouped = Object.values(groupedMap).sort((a, b) => {
+    const aDate = Math.max(...a.items.map(i => new Date(i.created_at).getTime()));
+    const bDate = Math.max(...b.items.map(i => new Date(i.created_at).getTime()));
+    return bDate - aDate;
+});
     renderCompletedPage(1);
 }
 
@@ -1295,7 +1302,36 @@ function renderCompletedPage(page) {
             </div>`
         ).join('');
 
-        const statusBadge = `<span style="background:${color}22;color:${color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${group.items[0]?.status || '—'}</span>`;
+        const firstItem  = group.items[0];
+const isAuto     = group.items.some(i => i.auto_approved);
+const approvedBy = [...new Set(
+    group.items.map(i => i.approved_by_name || i.completed_by_name).filter(Boolean)
+)].join(' / ');
+
+const statusBadge = `
+    <div style="display:flex;flex-direction:column;gap:4px;">
+        <span style="background:${color}22;color:${color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">
+            ${firstItem?.status || '—'}
+        </span>
+        ${(firstItem?.status === 'مكتمل' || firstItem?.status === 'مسترد')
+            ? isAuto
+                ? `<span style="display:inline-flex;align-items:center;gap:3px;
+                        background:rgba(59,130,246,0.12);color:#60a5fa;
+                        border:1px solid rgba(59,130,246,0.3);
+                        padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;">
+                        <i class="fas fa-box"></i> مخزون
+                   </span>`
+                : approvedBy
+                ? `<span style="display:inline-flex;align-items:center;gap:3px;
+                        background:rgba(168,85,247,0.12);color:#c084fc;
+                        border:1px solid rgba(168,85,247,0.3);
+                        padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;"
+                        title="${approvedBy}">
+                        <i class="fas fa-user-check"></i> ${approvedBy}
+                   </span>`
+                : ''
+            : ''}
+    </div>`;
 
         return `
         <tr>
