@@ -180,6 +180,36 @@ async function loadCompletedOrders() {
                     </span></div>`;
             }
 
+            // بعد autoApprovedCount و manualCount — أضف هذا
+const refundedItems  = group.items.filter(i => i.status === 'مسترد');
+const rejectedItems  = group.items.filter(i => i.status === 'ملغي');
+
+if (refundedItems.length > 0) {
+    const refundedBy = refundedItems[0]?.approved_by_name || '';
+    if (refundedBy) {
+        approvalBadge += `<div style="margin-top:4px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;
+                background:rgba(245,158,11,0.12);color:#fbbf24;
+                border:1px solid rgba(245,158,11,0.3);
+                padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                <i class="fas fa-undo"></i> ${refundedBy}
+            </span></div>`;
+    }
+}
+
+if (rejectedItems.length > 0) {
+    const rejectedBy = rejectedItems[0]?.approved_by_name || '';
+    if (rejectedBy) {
+        approvalBadge += `<div style="margin-top:4px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;
+                background:rgba(239,68,68,0.12);color:#f87171;
+                border:1px solid rgba(239,68,68,0.3);
+                padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                <i class="fas fa-times"></i> ${rejectedBy}
+            </span></div>`;
+    }
+}
+
         const completedItems = group.items.filter(i => i.status === 'مكتمل');
         const completedIds   = JSON.stringify(completedItems.map(i => i.id)).replace(/"/g, '&quot;');
         const refundBtn = completedItems.length > 0
@@ -455,6 +485,10 @@ function updateSummary(orders) {
 window.refundGroupOrders = async (ids) => {
     if (!confirm(`هل تريد استرداد ${ids.length} طلب وإرجاع المبلغ للمحفظة؟`)) return;
 
+await supabase.from('orders').update({ 
+    status: 'مسترد',
+    approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+}).eq('id', orderId);
 
     let totalRefunded      = 0;
 

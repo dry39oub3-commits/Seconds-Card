@@ -49,6 +49,12 @@ async function initGuard() {
         return;
     }
 
+    if (!u?.is_admin && u?.is_active === false) {
+    await supabase.auth.signOut();
+    window.location.replace('login.html');
+    return;
+}
+
     // تخزين البيانات عالمياً
     window.CURRENT_USER      = session.user;
     window.IS_ADMIN          = u?.is_admin === true;

@@ -746,13 +746,13 @@ window.approveGroupOrders = async () => {
     const items = window._groupItems || [];
     if (!items.length) return;
 
+    // ✅ أضف هذه الحلقة للتحقق قبل التنفيذ
     for (let i = 0; i < items.length; i++) {
-        const item     = items[i];
         const codesRaw = document.getElementById(`code-${i}`)?.value.trim() || '';
         const codes    = codesRaw.split('\n').map(c => c.trim()).filter(c => c !== '');
         const cost     = document.getElementById(`modal-cost${i}`)?.value.trim();
         const supplier = document.getElementById(`supplier-${i}`)?.value.trim();
-        const qty      = item.quantity || 1;
+        const qty      = items[i].quantity || 1;
 
         if (!codes.length)                  { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال الأكواد!`); return; }
         if (codes.length !== qty)           { showToast(`⚠️ العنصر ${i+1}: عدد الأكواد لا يطابق الكمية!`); return; }
@@ -765,36 +765,38 @@ window.approveGroupOrders = async () => {
         }
     }
 
+    // ثم حلقة التنفيذ الموجودة...
     for (let i = 0; i < items.length; i++) {
-        const item            = items[i];
-        const codes           = document.getElementById(`code-${i}`).value.trim().split('\n').map(c => c.trim()).filter(c => c !== '');
-        const cost            = document.getElementById(`modal-cost${i}`).value.trim();
-        const supplierId      = document.getElementById(`supplier-${i}`).value.trim();
-        const supplierOrderId = document.getElementById(`supplier-order-${i}`)?.value.trim() || '';
-        const stockData       = window._groupStockData?.[i];
+    const item            = items[i];
+    const codes           = document.getElementById(`code-${i}`).value.trim().split('\n').map(c => c.trim()).filter(c => c !== '');
+    const cost            = document.getElementById(`modal-cost${i}`).value.trim();
+    const supplierId      = document.getElementById(`supplier-${i}`).value.trim();
+    const supplierOrderId = document.getElementById(`supplier-order-${i}`)?.value.trim() || '';
+    const stockData       = window._groupStockData?.[i];
 
-        await supabase.from('orders')
-    .update({ 
-        status: 'مسترد', 
-        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
-        ...(refundReceiptUrl && { refund_receipt_url: refundReceiptUrl }) 
-    })
-    .eq('id', orderId);
+    const { data: orderData, error } = await supabase.from('orders').update({
+        status: 'مكتمل', card_code: codes.join('\n'),
+        cost_price: parseFloat(cost),
+        supplier_id: supplierId,
+        supplier_order_id: supplierOrderId,
+        suppliers_details: stockData?.suppliersDetails?.length > 0 ? stockData.suppliersDetails : null,
+        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+    }).eq('id', item.id).select().single();
 
-        if (error) { showToast(`❌ خطأ في الطلب ${i+1}: ` + error.message); return; }
+    if (error) { showToast(`❌ خطأ في الطلب ${i+1}: ` + error.message); return; }
 
-        for (const c of codes) {
-            await supabase.from('used_codes').insert({ code: c, order_id: item.id, product_name: orderData?.product_name || '' });
-        }
+    for (const c of codes) {
+        await supabase.from('used_codes').insert({ code: c, order_id: item.id, product_name: orderData?.product_name || '' });
+    }
 
-        if (stockData?.stockIds?.length > 0) {
-            await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: item.id }).in('id', stockData.stockIds);
-        } else {
-            for (const code of codes) {
-                await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: item.id }).eq('code', code).eq('status', 'available');
-            }
+    if (stockData?.stockIds?.length > 0) {
+        await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: item.id }).in('id', stockData.stockIds);
+    } else {
+        for (const code of codes) {
+            await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: item.id }).eq('code', code).eq('status', 'available');
         }
     }
+}
 
     window._groupItems = null; window._groupStockData = null;
     document.getElementById('order-modal').remove();
@@ -806,7 +808,13 @@ window.rejectOrder = async (orderId) => {
     const reason = document.getElementById('reject-reason').value.trim();
     if (!reason) { showToast('⚠️ يرجى إدخال سبب الرفض!'); return; }
     if (!confirm(`هل تريد رفض هذا الطلب؟\nالسبب: ${reason}`)) return;
-    const { error } = await supabase.from('orders').update({ status: 'ملغي', reject_reason: reason }).eq('id', orderId);
+
+    const { error } = await supabase.from('orders').update({ 
+        status: 'ملغي', 
+        reject_reason: reason,
+        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+    }).eq('id', orderId);
+
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
     window._reservedStockIds = null; window._stockCodesData = null;
     document.getElementById('order-modal').remove();
@@ -819,9 +827,15 @@ window.rejectGroupOrders = async () => {
     const reason = document.getElementById('group-reject-reason')?.value.trim();
     if (!reason) { showToast('⚠️ يرجى إدخال سبب الرفض!'); return; }
     if (!confirm(`هل تريد رفض ${items.length} طلب؟`)) return;
+
     for (const item of items) {
-        await supabase.from('orders').update({ status: 'ملغي', reject_reason: reason }).eq('id', item.id);
+        await supabase.from('orders').update({ 
+            status: 'ملغي', 
+            reject_reason: reason,
+            approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+        }).eq('id', item.id);
     }
+
     window._groupItems = null; window._groupStockData = null;
     document.getElementById('order-modal').remove();
     showToast(`تم رفض ${items.length} طلب.`);
@@ -1078,8 +1092,12 @@ window.executeRefund = async (orderId, pm, refundAmount, userId) => {
     }
 
     await supabase.from('orders')
-        .update({ status: 'مسترد', ...(refundReceiptUrl && { refund_receipt_url: refundReceiptUrl }) })
-        .eq('id', orderId);
+    .update({ 
+        status: 'مسترد',
+        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
+        ...(refundReceiptUrl && { refund_receipt_url: refundReceiptUrl }) 
+    })
+    .eq('id', orderId);
 
     const isWallet = pm === 'المحفظة' || pm === 'محفظة';
     if (isWallet && userId) {

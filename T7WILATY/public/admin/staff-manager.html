@@ -118,7 +118,7 @@ async function loadStaff() {
     const { data: staff, error } = await supabase
         .from('users')
         .select('id, full_name, email, is_staff, staff_permissions, avatar_url')
-        .eq('is_staff', true)
+        .or('is_staff.eq.true,is_active.eq.false')
         .order('created_at', { ascending: true });
 
     if (error) {
@@ -208,10 +208,16 @@ window.savePermissions = async (userId) => {
     showToast(`✅ تم حفظ ${activePerms.length} صلاحية`);
 };
 
+// في staff-manager.html — استبدل toggleStaffActive
 window.toggleStaffActive = async (userId, currentActive) => {
     const newState = !currentActive;
     if (!confirm(`هل تريد ${newState ? 'تفعيل' : 'تعطيل'} هذا الحساب؟`)) return;
-    const { error } = await supabase.from('users').update({ is_active: newState }).eq('id', userId);
+    
+    const { error } = await supabase.from('users').update({ 
+        is_active: newState,
+        is_staff: newState  // ✅ هذا هو المفتاح الحقيقي
+    }).eq('id', userId);
+    
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
     showToast(`✅ تم ${newState ? 'تفعيل' : 'تعطيل'} الحساب`);
     loadStaff();
