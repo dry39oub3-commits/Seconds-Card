@@ -1241,6 +1241,7 @@ async function loadCompletedOrders() {
 
     const { data: orders, error } = await supabase
         .from('orders')
+        .select('*, products(image), approved_by_name, auto_approved')
         .select('*, products(image)')
         .in('status', ['مكتمل', 'مسترد', 'ملغي'])
         .order('created_at', { ascending: false })
