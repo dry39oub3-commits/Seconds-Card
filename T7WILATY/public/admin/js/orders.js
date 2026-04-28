@@ -128,7 +128,7 @@ function renderPage(page) {
                 <td>${imagesCell || '-'}</td>
                 <td>${productsCell}</td>
                 <td>—</td>
-                <td><strong>${group.totalPrice} MRU</strong></td>
+                <td><strong>${group.totalPrice} ${group.items[0]?.currency || 'MRU'}</strong></td>
                 <td>${totalQty}</td>
                 <td><small>${date}</small></td>
                 <td>${paymentMethod}</td>
@@ -1357,7 +1357,7 @@ const statusBadge = `
             <td style="font-size:12px;">${group.customer_name || '—'}</td>
             <td>${imagesCell || '—'}</td>
             <td>${productsCell}</td>
-            <td><strong>${group.totalPrice} MRU</strong></td>
+            <td><strong>${group.totalPrice} ${group.items[0]?.currency || 'MRU'}</strong></td>
             <td>${group.items.reduce((s, o) => s + (o.quantity || 1), 0)}</td>
             <td><small style="color:#94a3b8;">${date}</small></td>
             <td style="font-size:12px;">${pm}</td>

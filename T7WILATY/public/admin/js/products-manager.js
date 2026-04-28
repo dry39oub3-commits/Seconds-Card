@@ -180,11 +180,23 @@ function generatePriceCards(product) {
                     <label style="font-size:11px; color:var(--text-muted); font-weight:600;">🏷️ سعر البيع (MRU)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
                         <input type="number"
-                               id="price-input-${product.id}-${index}"
-                               value="${item.value}"
-                               oninput="calcProfitFromPrice('${product.id}', ${index})"
-                               class="price-field sell-field">
+                            id="price-input-${product.id}-${index}"
+                            value="${item.value}"
+                            oninput="calcProfitFromPrice('${product.id}', ${index})"
+                            class="price-field sell-field">
                         <span style="color:var(--text-muted); font-size:11px; flex-shrink:0;">MRU</span>
+                    </div>
+                </div>
+
+                <!-- سعر USDT - أضف هذا -->
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label style="font-size:11px; color:var(--text-muted); font-weight:600;">💵 سعر البيع (USDT)</label>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="number" step="0.01"
+                            id="usdt-input-${product.id}-${index}"
+                            value="${item.usdt_price || ''}" placeholder="0.00"
+                            class="price-field">
+                        <span style="color:var(--text-muted); font-size:11px; flex-shrink:0;">USDT</span>
                     </div>
                 </div>
             </div>
@@ -278,6 +290,10 @@ window.savePriceData = async (productId) => {
 
         return { ...item, value: newValue, cost_usd: newCost, profit_per_usd: newProfit, exchange_rate: newRate, suppliers };
     });
+
+    const newUSDT = parseFloat(document.getElementById(`usdt-input-${productId}-${index}`)?.value) || null;
+
+    return { ...item, value: newValue, cost_usd: newCost, profit_per_usd: newProfit, exchange_rate: newRate, usdt_price: newUSDT, suppliers };
 
     const { error } = await supabase.from('products').update({ prices: updatedPrices }).eq('id', productId);
     if (error) showToast('❌ خطأ في الحفظ: ' + error.message, true);

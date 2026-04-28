@@ -104,34 +104,42 @@ function renderProduct(product) {
     }).join('');
 
     document.getElementById('product-content').innerHTML = `
-        <div class="product-header">
-            <img src="${product.image || 'assets/placeholder.png'}" alt="${product.name}" onerror="this.src='assets/placeholder.png'">
-            <div>
-                <h1>${product.name}</h1>
-                <p class="country"><i class="fas fa-globe"></i> ${product.country || 'غير محدد'}</p>
-            </div>
+    <div class="product-header">
+        <img src="${product.image || 'assets/placeholder.png'}" alt="${product.name}" onerror="this.src='assets/placeholder.png'">
+        <div>
+            <h1>${product.name}</h1>
+            <p class="country"><i class="fas fa-globe"></i> ${product.country || 'غير محدد'}</p>
         </div>
-        <h2 class="prices-title">اختر الفئة:</h2>
-        <div class="prices-grid">${pricesHTML}</div>
+    </div>
 
-        <div class="action-buttons">
-    <button class="add-to-cart-btn" id="buy-btn" onclick="buyNow()" disabled>
-        <i class="fas fa-bolt"></i> اشتر الآن
-    </button>
-    <button class="add-to-cart-btn" id="add-btn" onclick="addToCart()" disabled>
-        <i class="fas fa-cart-plus"></i> أضف إلى السلة
-    </button>
-</div>
-    `;
+    <!-- أضف هذا -->
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <button id="btn-mru" onclick="selectCurrency('MRU')"
+            style="flex:1; padding:12px; border-radius:10px; border:2px solid #f97316;
+                   background:#f97316; color:white; font-size:15px; font-weight:bold; cursor:pointer;">
+            🇲🇷 MRU
+        </button>
+        <button id="btn-usdt" onclick="selectCurrency('USDT')"
+            style="flex:1; padding:12px; border-radius:10px; border:2px solid #334155;
+                   background:transparent; color:#94a3b8; font-size:15px; font-weight:bold; cursor:pointer;">
+            💵 USDT
+        </button>
+    </div>
+
+    <h2 class="prices-title">اختر الفئة:</h2>
+    <div class="prices-grid" id="prices-grid">${renderPrices(prices, 'MRU')}</div>
+
+    <div class="action-buttons">
+        <button class="add-to-cart-btn" id="buy-btn" onclick="buyNow()" disabled>
+            <i class="fas fa-bolt"></i> اشتر الآن
+        </button>
+        <button class="add-to-cart-btn" id="add-btn" onclick="addToCart()" disabled>
+            <i class="fas fa-cart-plus"></i> أضف إلى السلة
+        </button>
+    </div>
+`;
 }
 
-window.selectPrice = function(index, value) {
-    document.querySelectorAll('.price-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById(`price-${index}`).classList.add('selected');
-    selectedPrice = { index, value, label: currentProduct.prices[index].label };
-    document.getElementById('add-btn').disabled = false;
-    document.getElementById('buy-btn').disabled = false;
-};
 
 window.buyNow = function() {
     if (!selectedPrice) return;
@@ -149,6 +157,7 @@ window.buyNow = function() {
             image: currentProduct.image,
             label: selectedPrice.label,
             price: selectedPrice.value,
+            currency: selectedPrice.currency,
             quantity: 1
         });
         localStorage.setItem('cart', JSON.stringify(cart));
@@ -177,6 +186,7 @@ window.addToCart = function() {
         image: currentProduct.image,
         label: selectedPrice.label,
         price: selectedPrice.value,
+        currency: selectedPrice.currency,
         quantity: 1
     });
 
@@ -271,3 +281,67 @@ function updateCartBadge() {
     badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }
+
+
+
+let selectedCurrency = 'MRU';
+
+function renderPrices(prices, currency) {
+    return prices.map((p) => {
+        const i = p._originalIndex;
+        const displayPrice = currency === 'USDT' 
+            ? (p.usdt_price ? `${p.usdt_price} USDT` : null)
+            : `${p.value} MRU`;
+
+        if (!displayPrice) return ''; // إخفاء إذا لا يوجد سعر USDT
+
+        if (p.active === false) {
+            return `
+                <div class="price-card disabled" style="opacity:0.4; cursor:not-allowed; pointer-events:none; position:relative;">
+                    <div class="label">${p.label}</div>
+                    <div class="value">${displayPrice}</div>
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:12px; color:#ef4444; font-weight:bold;">غير متاح</div>
+                </div>`;
+        }
+        return `
+            <div class="price-card" onclick="selectPrice(${i}, ${currency === 'USDT' ? p.usdt_price : p.value}, '${currency}')" id="price-${i}">
+                <div class="label">${p.label}</div>
+                <div class="value">${displayPrice}</div>
+            </div>`;
+    }).join('');
+}
+
+window.selectCurrency = function(currency) {
+    selectedCurrency = currency;
+    selectedPrice = null;
+    document.getElementById('add-btn').disabled = true;
+    document.getElementById('buy-btn').disabled = true;
+
+    // تحديث أزرار الاختيار
+    document.getElementById('btn-mru').style.background  = currency === 'MRU'  ? '#f97316' : 'transparent';
+    document.getElementById('btn-mru').style.color       = currency === 'MRU'  ? 'white'   : '#94a3b8';
+    document.getElementById('btn-usdt').style.background = currency === 'USDT' ? '#f97316' : 'transparent';
+    document.getElementById('btn-usdt').style.color      = currency === 'USDT' ? 'white'   : '#94a3b8';
+
+    // إعادة رسم الأسعار
+    const prices = (Array.isArray(currentProduct.prices) ? currentProduct.prices : [])
+        .map((p, i) => ({ ...p, _originalIndex: i }))
+        .sort((a, b) => (a.value || 0) - (b.value || 0));
+    document.getElementById('prices-grid').innerHTML = renderPrices(prices, currency);
+
+    // حفظ العملة
+    localStorage.setItem('selectedCurrency', currency);
+};
+
+window.selectPrice = function(index, value, currency) {
+    document.querySelectorAll('.price-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById(`price-${index}`).classList.add('selected');
+    selectedPrice = { 
+        index, 
+        value, 
+        label: currentProduct.prices[index].label,
+        currency: currency || selectedCurrency
+    };
+    document.getElementById('add-btn').disabled = false;
+    document.getElementById('buy-btn').disabled = false;
+};

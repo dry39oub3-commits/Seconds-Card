@@ -29,16 +29,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== جلب بوابات الدفع =====
 async function loadPaymentMethods() {
+    // اقرأ العملة من السلة
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const currency = cart[0]?.currency || 'MRU';
+    const isCrypto = currency === 'USDT';
+
     const { data: methods, error } = await supabase
         .from('payment_methods')
         .select('*')
         .eq('is_active', true)
         .eq('show_in_checkout', true)
+        .eq('is_crypto', isCrypto) // أضف هذا
         .order('created_at', { ascending: true });
 
     const list = document.getElementById('payment-methods-list');
     if (!list) return;
 
+    // المحفظة تظهر دائماً
     const walletCard = `
         <div class="payment-method-card" id="pm-wallet" onclick="selectMethod('wallet', '', 'المحفظة')">
             <i class="fas fa-wallet" style="font-size:26px; color:#22c55e;"></i>
@@ -118,11 +125,14 @@ async function checkAuthAndLoadData() {
     cart = JSON.parse(localStorage.getItem('cart')) || [];
     totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
 
+    // ← تحديد العملة من السلة
+    const currency = cart[0]?.currency || 'MRU';
+
     const totalElem = document.getElementById('checkout-total');
-    if (totalElem) totalElem.textContent = `${totalAmount} MRU`;
+    if (totalElem) totalElem.textContent = `${totalAmount} ${currency}`;
 
     const totalDisplay = document.getElementById('checkout-total-display');
-    if (totalDisplay) totalDisplay.textContent = `${totalAmount} MRU`;
+    if (totalDisplay) totalDisplay.textContent = `${totalAmount} ${currency}`;
 
     if (!user) return;
 
@@ -252,6 +262,9 @@ async function executePayment() {
 
     if (totalAmount <= 0) return;
 
+    // ← العملة من السلة
+    const currency = cart[0]?.currency || 'MRU';
+
     // فحص الحظر قبل الدفع
     const { data: userCheck } = await supabase
         .from('users')
@@ -275,14 +288,12 @@ async function executePayment() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
         try {
-            // فحص المخزون لكل عنصر في السلة
             const stockResults = [];
             for (const item of cart) {
                 const result = await pullFromStock(item);
                 stockResults.push(result);
             }
 
-            // خصم الرصيد
             const newBalance = userBalance - totalAmount;
             const { error: balanceError } = await supabase
                 .from('users')
@@ -291,10 +302,7 @@ async function executePayment() {
 
             if (balanceError) throw balanceError;
 
-            // رقم طلب واحد مشترك لكل عناصر السلة
             const sharedOrderNumber = generateOrderNumber();
-
-            // إذا لم يتوفر مخزون لأي عنصر → جميع الطلبات قيد الانتظار
             const allHaveStock = stockResults.every(r => r !== null);
 
             const ordersToInsert = cart.map((item, i) => {
@@ -309,6 +317,7 @@ async function executePayment() {
                     product_name:      item.name,
                     label:             item.label || null,
                     price:             item.price,
+                    currency:          item.currency || 'MRU', // ← إضافة
                     quantity:          item.quantity || 1,
                     user_id:           user.id,
                     paymentMethod:     'المحفظة',
@@ -329,7 +338,6 @@ async function executePayment() {
 
             if (insertError) throw insertError;
 
-            // تحديث المخزون فقط إذا الكل مكتمل
             if (allHaveStock) {
                 for (let i = 0; i < cart.length; i++) {
                     const stockResult = stockResults[i];
@@ -340,15 +348,14 @@ async function executePayment() {
                 }
             }
 
-            // تسجيل عملية السحب من المحفظة
             await supabase.from('wallet_transactions').insert({
-                user_id: user.id,
-                type: 'purchase',
-                amount: totalAmount,
+                user_id:        user.id,
+                type:           'purchase',
+                amount:         totalAmount,
                 payment_method: 'المحفظة',
-                product_name: cart.map(i => i.name).join('، '), // ✅
-                label: cart.map(i => i.label || '').join('، '),  // ✅
-                status: 'مكتمل'
+                product_name:   cart.map(i => i.name).join('، '),
+                label:          cart.map(i => i.label || '').join('، '),
+                status:         'مكتمل'
             });
 
             localStorage.removeItem('cart');
@@ -359,9 +366,7 @@ async function executePayment() {
                 showToast('✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
             }
 
-            setTimeout(() => {
-                window.location.href = 'orders.html';
-            }, 1500);
+            setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
         } catch (error) {
             console.error('Payment Error:', error);
@@ -404,6 +409,7 @@ async function executePayment() {
             product_name:   item.name,
             label:          item.label || null,
             price:          item.price,
+            currency:       item.currency || 'MRU', // ← إضافة
             quantity:       item.quantity || 1,
             status:         'قيد الانتظار',
             receiptUrl:     receiptUrl,
@@ -417,9 +423,7 @@ async function executePayment() {
         localStorage.removeItem('cart');
         showToast('✅ تمت عملية الدفع بنجاح!', 'success');
 
-        setTimeout(() => {
-            window.location.href = 'orders.html';
-        }, 1500);
+        setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
     } catch (error) {
         console.error('Payment Error:', error);
