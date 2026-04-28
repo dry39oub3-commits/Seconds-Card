@@ -12,39 +12,42 @@
                     return;
                 }
 
-                list.innerHTML = data.map(m => `
-                    <div class="method-card">
-                        <img src="${m.logo_url || 'https://via.placeholder.com/55'}" 
-                            onerror="this.src='https://via.placeholder.com/55'" alt="${m.name}">
-                        <div class="method-info">
-                            <h3>${m.name}</h3>
-                            <p><i class="fas fa-hashtag"></i> ${m.account_number || 'لا يوجد رقم حساب'}</p>
-                        </div>
-                        <div class="method-actions">
-                            <button class="toggle-btn ${m.is_active ? 'active' : 'inactive'}" 
-                                    data-id="${m.id}" data-active="${m.is_active}">
-                                ${m.is_active ? '✅ مفعّل' : '⏸ معطّل'}
-<button onclick="toggleMethodVisibility('${m.id}', 'show_in_checkout', ${m.show_in_checkout})"
-    style="background:${m.show_in_checkout ? 'rgba(249,115,22,0.15)' : 'rgba(100,116,139,0.15)'};
-           color:${m.show_in_checkout ? '#f97316' : '#64748b'};
-           border:1px solid ${m.show_in_checkout ? '#f97316' : '#475569'};
-           padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">
-    🛒 ${m.show_in_checkout ? 'ظاهر في الدفع' : 'مخفي في الدفع'}
-</button>
-<button onclick="toggleMethodVisibility('${m.id}', 'show_in_wallet', ${m.show_in_wallet})"
-    style="background:${m.show_in_wallet ? 'rgba(34,197,94,0.15)' : 'rgba(100,116,139,0.15)'};
-           color:${m.show_in_wallet ? '#22c55e' : '#64748b'};
-           border:1px solid ${m.show_in_wallet ? '#22c55e' : '#475569'};
-           padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">
-    👛 ${m.show_in_wallet ? 'ظاهر في المحفظة' : 'مخفي في المحفظة'}
-</button>
-                            </button>
-                            <button class="delete-btn" data-id="${m.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+list.innerHTML = data.map(m => `
+    <div class="method-card">
+        <img src="${m.logo_url || 'https://via.placeholder.com/55'}" 
+             onerror="this.src='https://via.placeholder.com/55'" alt="${m.name}">
+        <div class="method-info">
+            <h3>${m.name}</h3>
+            <p><i class="fas fa-hashtag"></i> ${m.account_number || 'لا يوجد رقم حساب'}</p>
+        </div>
+        <div class="method-actions">
+            <button class="toggle-btn ${m.is_active ? 'active' : 'inactive'}" 
+                    data-id="${m.id}" data-active="${m.is_active}">
+                ${m.is_active ? '✅ مفعّل' : '⏸ معطّل'}
+            </button>
+
+            <button onclick="toggleMethodVisibility('${m.id}', 'show_in_checkout', ${m.show_in_checkout})"
+                style="background:${m.show_in_checkout ? 'rgba(249,115,22,0.15)' : 'rgba(100,116,139,0.15)'};
+                       color:${m.show_in_checkout ? '#f97316' : '#64748b'};
+                       border:1px solid ${m.show_in_checkout ? '#f97316' : '#475569'};
+                       padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">
+                🛒 ${m.show_in_checkout ? 'ظاهر في الدفع' : 'مخفي في الدفع'}
+            </button>
+
+            <button onclick="toggleMethodVisibility('${m.id}', 'show_in_wallet', ${m.show_in_wallet})"
+                style="background:${m.show_in_wallet ? 'rgba(34,197,94,0.15)' : 'rgba(100,116,139,0.15)'};
+                       color:${m.show_in_wallet ? '#22c55e' : '#64748b'};
+                       border:1px solid ${m.show_in_wallet ? '#22c55e' : '#475569'};
+                       padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">
+                👛 ${m.show_in_wallet ? 'ظاهر في المحفظة' : 'مخفي في المحفظة'}
+            </button>
+
+            <button class="delete-btn" data-id="${m.id}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+`).join('');
 
                 // ربط أحداث الأزرار
                 document.querySelectorAll('.toggle-btn').forEach(btn => {
