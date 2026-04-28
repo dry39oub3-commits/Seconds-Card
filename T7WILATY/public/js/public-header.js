@@ -8,7 +8,7 @@ function buildHeader() {
         <div class="header-container">
             <a href="index.html" class="logo-link" style="text-decoration:none;">
                 <div class="logo" style="display:flex; align-items:center; gap:10px;">
-                    <img src="assets/logo.png" alt="StoreCard"
+                    <img src="assets/Icon.png" alt="StoreCard"
                          style="height:40px; width:40px; object-fit:contain;">
                     <div style="display:flex; flex-direction:column; line-height:1.1;">
                         <span style="font-size:18px; font-weight:800; color:white;">
