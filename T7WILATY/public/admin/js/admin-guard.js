@@ -49,7 +49,7 @@ async function initGuard() {
         return;
     }
 
-    if (!u?.is_admin && u?.is_active === false) {
+    if (!u?.is_admin && (!u?.is_staff || u?.is_active === false)) {
     await supabase.auth.signOut();
     window.location.replace('login.html');
     return;
