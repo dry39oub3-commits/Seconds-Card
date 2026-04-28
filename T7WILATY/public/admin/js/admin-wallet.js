@@ -89,7 +89,7 @@ function updateStats() {
     // ===== تحديث عنوان التبويب بعدد الطلبات المعلقة =====
     document.title = pending.length > 0
         ? `(${pending.length}) قيد المراجعة | إدارة المحافظ`
-        : 'إدارة المحافظ | SecondsCard';
+        : 'إدارة المحافظ | StoreCard';
 }
 
 // ==================== RENDER TRANSACTIONS ====================

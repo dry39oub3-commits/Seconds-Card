@@ -847,7 +847,7 @@ async function checkNewOrders() {
     const count = new Set((orders || []).map(o => o.order_number || o.id)).size;
     const badge = document.getElementById('orders-badge');
     if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
-    document.title = count > 0 ? `(${count}) طلب جديد | إدارة الطلبات` : 'إدارة الطلبات | SecondsCard';
+    document.title = count > 0 ? `(${count}) طلب جديد | إدارة الطلبات` : 'إدارة الطلبات | StoreCard';
 }
 
 window.filterOrders = () => {

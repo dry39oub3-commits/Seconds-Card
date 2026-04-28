@@ -7,9 +7,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
         persistSession: true,
         autoRefreshToken: true,
-        storageKey: 'sb-secondscard-auth',
+        storageKey: 'sb-Storecard-auth',
         detectSessionInUrl: true
     }
 });
 
-console.log("Supabase SecondsCard Connected Successfully!");
+console.log("Supabase StoreCard Connected Successfully!");

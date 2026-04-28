@@ -1,6 +1,6 @@
 {
-  "name": "SecondsCard",
-  "short_name": "SecondsCard",
+  "name": "StoreCard",
+  "short_name": "StoreCard",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#1a1a2e",

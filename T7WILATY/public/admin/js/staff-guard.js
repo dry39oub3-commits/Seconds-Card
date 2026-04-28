@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="drawer-header">
                 <div style="display:flex;align-items:center;gap:8px;">
                     <img src="../assets/logo.png" style="height:32px;width:32px;object-fit:contain;">
-                    <span style="font-size:16px;font-weight:800;color:white;">Seconds<span style="color:#f97316;">Card</span></span>
+                    <span style="font-size:16px;font-weight:800;color:white;">Store<span style="color:#f97316;">Card</span></span>
                 </div>
                 <button class="drawer-close" id="drawer-close"><i class="fas fa-times"></i></button>
             </div>
