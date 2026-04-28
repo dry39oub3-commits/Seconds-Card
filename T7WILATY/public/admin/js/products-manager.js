@@ -275,11 +275,12 @@ window.savePriceData = async (productId) => {
     if (!product) return;
 
     const updatedPrices = product.prices.map((item, index) => {
-        const container   = document.getElementById(`sup-container-${productId}-${index}`);
-        const newValue    = parseFloat(document.getElementById(`price-input-${productId}-${index}`)?.value)  || item.value;
-        const newCost     = parseFloat(document.getElementById(`cost-input-${productId}-${index}`)?.value)   || null;
-        const newProfit   = parseFloat(document.getElementById(`profit-input-${productId}-${index}`)?.value) || null;
-        const newRate     = parseFloat(document.getElementById(`rate-input-${productId}-${index}`)?.value)   || 43;
+        const container = document.getElementById(`sup-container-${productId}-${index}`);
+        const newValue  = parseFloat(document.getElementById(`price-input-${productId}-${index}`)?.value) || item.value;
+        const newCost   = parseFloat(document.getElementById(`cost-input-${productId}-${index}`)?.value)  || null;
+        const newProfit = parseFloat(document.getElementById(`profit-input-${productId}-${index}`)?.value)|| null;
+        const newRate   = parseFloat(document.getElementById(`rate-input-${productId}-${index}`)?.value)  || 43;
+        const newUSDT   = parseFloat(document.getElementById(`usdt-input-${productId}-${index}`)?.value)  || null; // ← داخل الـ map
 
         const suppliers = container
             ? [...container.querySelectorAll('.supplier-row')].map(row => ({
@@ -288,12 +289,16 @@ window.savePriceData = async (productId) => {
               }))
             : item.suppliers;
 
-        return { ...item, value: newValue, cost_usd: newCost, profit_per_usd: newProfit, exchange_rate: newRate, suppliers };
+        return { 
+            ...item, 
+            value:          newValue, 
+            cost_usd:       newCost, 
+            profit_per_usd: newProfit, 
+            exchange_rate:  newRate, 
+            usdt_price:     newUSDT, // ← إضافة
+            suppliers 
+        };
     });
-
-    const newUSDT = parseFloat(document.getElementById(`usdt-input-${productId}-${index}`)?.value) || null;
-
-    return { ...item, value: newValue, cost_usd: newCost, profit_per_usd: newProfit, exchange_rate: newRate, usdt_price: newUSDT, suppliers };
 
     const { error } = await supabase.from('products').update({ prices: updatedPrices }).eq('id', productId);
     if (error) showToast('❌ خطأ في الحفظ: ' + error.message, true);
