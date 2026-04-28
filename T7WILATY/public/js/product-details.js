@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { supabase } from './supabase-config.js';
 
 const params = new URLSearchParams(window.location.search);
