@@ -22,7 +22,19 @@ const loadProducts = async () => {
     }
 
     allProducts = products;
-    container.innerHTML = products.map(p => `
+
+    // ✅ زر تحديث USDT يظهر فوق القائمة
+    container.innerHTML = `
+        <div style="margin-bottom:16px;">
+            <button onclick="saveAllUSDTPrices()"
+                style="background:#f59e0b; color:white; border:none; padding:10px 24px;
+                       border-radius:10px; cursor:pointer; font-size:14px; font-weight:bold;
+                       box-shadow:0 4px 14px rgba(245,158,11,0.3); transition:opacity 0.2s;"
+                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                💾 تحديث كل أسعار USDT
+            </button>
+        </div>
+        ${products.map(p => `
         <div class="product-row-item">
             <div class="product-main-info" onclick="toggleDetails('${p.id}')">
                 <div class="p-identity">
@@ -56,10 +68,12 @@ const loadProducts = async () => {
                 </div>
             </div>
         </div>
-    `).join('');
+    `).join('')}`;
+
     setTimeout(recalcAllUSDT, 100);
 };
-// ✅ حساب USDT للمنتجات المعروضة فقط (بدون حفظ)
+
+// ==================== حساب USDT للمنتجات بدون سعر محفوظ ====================
 function recalcAllUSDT() {
     allProducts.forEach(product => {
         if (!product.prices) return;
@@ -74,13 +88,13 @@ function recalcAllUSDT() {
     });
 }
 
-// ✅ حفظ كل أسعار USDT في قاعدة البيانات
+// ==================== حفظ كل أسعار USDT في قاعدة البيانات ====================
 window.saveAllUSDTPrices = async () => {
     let count = 0;
     for (const product of allProducts) {
         if (!product.prices) continue;
 
-        const updatedPrices = product.prices.map((item, index) => {
+        const updatedPrices = product.prices.map((item) => {
             const rate      = item.exchange_rate || 43;
             const sellPrice = item.value || 0;
             const usdt      = (item.usdt_price && item.usdt_price > 0)
@@ -99,26 +113,8 @@ window.saveAllUSDTPrices = async () => {
     showToast(`✅ تم تحديث ${count} منتج بأسعار USDT!`);
     loadProducts();
 };
-// ✅ أضف هذه الدالة
-function recalcAllUSDT() {
-    allProducts.forEach(product => {
-        if (!product.prices) return;
-        product.prices.forEach((item, index) => {
-            const rate      = parseFloat(document.getElementById(`rate-input-${product.id}-${index}`)?.value) || item.exchange_rate || 43;
-            const sellPrice = parseFloat(document.getElementById(`price-input-${product.id}-${index}`)?.value) || item.value || 0;
-            const usdtInput = document.getElementById(`usdt-input-${product.id}-${index}`);
-            
-            if (usdtInput && sellPrice > 0 && rate > 0) {
-                // إذا مفيش سعر USDT محفوظ → احسبه تلقائياً
-                if (!item.usdt_price || item.usdt_price === 0) {
-                    usdtInput.value = (sellPrice / rate).toFixed(2);
-                }
-            }
-        });
-    });
-}
 
-// ==================== تحديث معاينة الربح فقط (دالة مشتركة) ====================
+// ==================== تحديث معاينة الربح + USDT تلقائياً ====================
 function updateProfitPreview(productId, priceIndex) {
     const cost      = parseFloat(document.getElementById(`cost-input-${productId}-${priceIndex}`)?.value)  || 0;
     const rate      = parseFloat(document.getElementById(`rate-input-${productId}-${priceIndex}`)?.value)  || 43;
@@ -146,12 +142,11 @@ function updateProfitPreview(productId, priceIndex) {
     }
 }
 
-// ==================== تغيير سعر المورد / ربح/دولار / سعر الصرف ====================
-// → يحسب سعر البيع ويحدّث المعاينة
+// ==================== تغيير سعر المورد / ربح / سعر الصرف ====================
 window.calcAutoPrice = (productId, priceIndex) => {
-    const cost   = parseFloat(document.getElementById(`cost-input-${productId}-${priceIndex}`)?.value)   || 0;
-    const profit = parseFloat(document.getElementById(`profit-input-${productId}-${priceIndex}`)?.value) || 0;
-    const rate   = parseFloat(document.getElementById(`rate-input-${productId}-${priceIndex}`)?.value)   || 43;
+    const cost       = parseFloat(document.getElementById(`cost-input-${productId}-${priceIndex}`)?.value)   || 0;
+    const profit     = parseFloat(document.getElementById(`profit-input-${productId}-${priceIndex}`)?.value) || 0;
+    const rate       = parseFloat(document.getElementById(`rate-input-${productId}-${priceIndex}`)?.value)   || 43;
     const priceInput = document.getElementById(`price-input-${productId}-${priceIndex}`);
 
     if (cost > 0 && rate > 0 && priceInput) {
@@ -162,7 +157,6 @@ window.calcAutoPrice = (productId, priceIndex) => {
 };
 
 // ==================== تغيير سعر البيع يدوياً ====================
-// → ربح/دولار يبقى ثابت تماماً، فقط المعاينة تتحدث
 window.calcProfitFromPrice = (productId, priceIndex) => {
     updateProfitPreview(productId, priceIndex);
 };
@@ -180,16 +174,13 @@ function generatePriceCards(product) {
 
         return `
         <div class="sub-card-item">
-            <!-- الصف الأول: تفعيل + اسم الفئة + حذف -->
             <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
                 <label class="toggle-switch" style="flex-shrink:0;">
                     <input type="checkbox" ${item.active !== false ? 'checked' : ''}
                            onchange="togglePriceActive('${product.id}', ${index}, this.checked)">
                     <span class="slider"></span>
                 </label>
-
                 <strong style="font-size:15px; color:var(--text-primary); min-width:70px;">${item.label || 'فئة'}</strong>
-
                 <button onclick="deletePriceItem('${product.id}', ${index})"
                     style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3);
                            padding:5px 10px; border-radius:7px; cursor:pointer; font-size:12px;
@@ -198,10 +189,7 @@ function generatePriceCards(product) {
                 </button>
             </div>
 
-            <!-- حقول الحساب -->
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:10px;">
-
-                <!-- سعر المورد -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <label style="font-size:11px; color:var(--text-muted); font-weight:600;">💲 سعر المورد ($)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
@@ -214,7 +202,6 @@ function generatePriceCards(product) {
                     </div>
                 </div>
 
-                <!-- ربح / دولار -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <label style="font-size:11px; color:var(--text-muted); font-weight:600;">📈 ربح / دولار (MRU)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
@@ -227,7 +214,6 @@ function generatePriceCards(product) {
                     </div>
                 </div>
 
-                <!-- سعر الصرف -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <label style="font-size:11px; color:var(--text-muted); font-weight:600;">💱 سعر الصرف ($ → MRU)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
@@ -240,7 +226,6 @@ function generatePriceCards(product) {
                     </div>
                 </div>
 
-                <!-- سعر البيع -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <label style="font-size:11px; color:var(--text-muted); font-weight:600;">🏷️ سعر البيع (MRU)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
@@ -253,7 +238,6 @@ function generatePriceCards(product) {
                     </div>
                 </div>
 
-                <!-- سعر USDT - أضف هذا -->
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <label style="font-size:11px; color:var(--text-muted); font-weight:600;">💵 سعر البيع (USDT)</label>
                     <div style="display:flex; align-items:center; gap:5px;">
@@ -266,10 +250,8 @@ function generatePriceCards(product) {
                 </div>
             </div>
 
-            <!-- معاينة الربح -->
             <div id="profit-preview-${product.id}-${index}" style="min-height:18px; margin-bottom:8px;"></div>
 
-            <!-- الموردون -->
             <div>
                 <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px; font-weight:600;">🏪 الموردون</div>
                 <div style="display:flex; flex-direction:column; gap:6px;" id="sup-container-${product.id}-${index}">
@@ -277,7 +259,6 @@ function generatePriceCards(product) {
                 </div>
             </div>
 
-            <!-- أزرار -->
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
                 <button class="add-sup-btn" style="padding:7px 14px; white-space:nowrap;"
                         onclick="addSupplier('${product.id}', ${index})">
@@ -291,8 +272,6 @@ function generatePriceCards(product) {
         </div>`;
     }).join('');
 }
-
-
 
 function renderSupplier(pId, priceIdx, sIdx, name = '', url = '') {
     return `
@@ -345,7 +324,7 @@ window.savePriceData = async (productId) => {
         const newCost   = parseFloat(document.getElementById(`cost-input-${productId}-${index}`)?.value)  || null;
         const newProfit = parseFloat(document.getElementById(`profit-input-${productId}-${index}`)?.value)|| null;
         const newRate   = parseFloat(document.getElementById(`rate-input-${productId}-${index}`)?.value)  || 43;
-        const newUSDT   = parseFloat(document.getElementById(`usdt-input-${productId}-${index}`)?.value)  || null; // ← داخل الـ map
+        const newUSDT   = parseFloat(document.getElementById(`usdt-input-${productId}-${index}`)?.value)  || null;
 
         const suppliers = container
             ? [...container.querySelectorAll('.supplier-row')].map(row => ({
@@ -354,14 +333,14 @@ window.savePriceData = async (productId) => {
               }))
             : item.suppliers;
 
-        return { 
-            ...item, 
-            value:          newValue, 
-            cost_usd:       newCost, 
-            profit_per_usd: newProfit, 
-            exchange_rate:  newRate, 
-            usdt_price:     newUSDT, // ← إضافة
-            suppliers 
+        return {
+            ...item,
+            value:          newValue,
+            cost_usd:       newCost,
+            profit_per_usd: newProfit,
+            exchange_rate:  newRate,
+            usdt_price:     newUSDT,
+            suppliers
         };
     });
 
