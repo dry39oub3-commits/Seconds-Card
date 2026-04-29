@@ -59,6 +59,25 @@ const loadProducts = async () => {
     `).join('');
 };
 
+// ✅ أضف هذه الدالة
+function recalcAllUSDT() {
+    allProducts.forEach(product => {
+        if (!product.prices) return;
+        product.prices.forEach((item, index) => {
+            const rate      = parseFloat(document.getElementById(`rate-input-${product.id}-${index}`)?.value) || item.exchange_rate || 43;
+            const sellPrice = parseFloat(document.getElementById(`price-input-${product.id}-${index}`)?.value) || item.value || 0;
+            const usdtInput = document.getElementById(`usdt-input-${product.id}-${index}`);
+            
+            if (usdtInput && sellPrice > 0 && rate > 0) {
+                // إذا مفيش سعر USDT محفوظ → احسبه تلقائياً
+                if (!item.usdt_price || item.usdt_price === 0) {
+                    usdtInput.value = (sellPrice / rate).toFixed(2);
+                }
+            }
+        });
+    });
+}
+
 // ==================== تحديث معاينة الربح فقط (دالة مشتركة) ====================
 function updateProfitPreview(productId, priceIndex) {
     const cost      = parseFloat(document.getElementById(`cost-input-${productId}-${priceIndex}`)?.value)  || 0;
