@@ -34,8 +34,7 @@ async function loadPaymentMethods() {
     const isCrypto = currency === 'USDT';
     const rate = 43;
 
-    // حساب الرصيد حسب العملة
-    const displayBalance = isCrypto 
+    const displayBalance = isCrypto
         ? `${(userBalance / rate).toFixed(2)} USDT`
         : `${userBalance} MRU`;
 
@@ -44,14 +43,13 @@ async function loadPaymentMethods() {
         .select('*')
         .eq('is_active', true)
         .eq('show_in_checkout', true)
-        .eq('is_crypto', isCrypto) // أضف هذا
+        .eq('is_crypto', isCrypto)
         .order('created_at', { ascending: true });
 
     const list = document.getElementById('payment-methods-list');
     if (!list) return;
 
-    // المحفظة تظهر دائماً
-        const walletCard = `
+    const walletCard = `
         <div class="payment-method-card" id="pm-wallet" onclick="selectMethod('wallet', '', 'المحفظة')">
             <i class="fas fa-wallet" style="font-size:26px; color:#22c55e;"></i>
             <div class="payment-method-info">
@@ -69,8 +67,8 @@ async function loadPaymentMethods() {
 
     list.innerHTML = walletCard + methods.map(m => `
         <div class="payment-method-card" id="pm-${m.id}" onclick="selectMethod('${m.id}', '${m.account_number}', '${m.name}')">
-            <img src="${m.logo_url || ''}" alt="${m.name}" 
-                 style="width:42px; height:42px; object-fit:contain; border-radius:8px;" 
+            <img src="${m.logo_url || ''}" alt="${m.name}"
+                 style="width:42px; height:42px; object-fit:contain; border-radius:8px;"
                  onerror="this.style.display='none'">
             <div class="payment-method-info">
                 <div class="payment-method-name">${m.name}</div>
@@ -85,14 +83,11 @@ window.selectMethod = function(id, account, name) {
     document.querySelectorAll('.payment-method-card').forEach(c => {
         c.style.borderColor = '#334155';
         c.style.background = '';
+        c.classList.remove('selected');
     });
-document.querySelectorAll('.payment-method-card').forEach(c => {
-    c.classList.remove('selected');
-});
+
     const card = document.getElementById(`pm-${id}`);
-    if (card) {
-        card.classList.add('selected');
-    }
+    if (card) card.classList.add('selected');
 
     selectedPaymentMethod = { id, account, name };
 
@@ -102,26 +97,23 @@ document.querySelectorAll('.payment-method-card').forEach(c => {
     const statusMsg      = document.getElementById('payment-status-msg');
 
     if (id === 'wallet') {
-    if (infoDiv) infoDiv.style.display = 'none';
-    if (receiptSection) receiptSection.style.display = 'none';
-    
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const currency = cart[0]?.currency || 'MRU';
-    const rate = 43;
-    
-    // تحويل الرصيد حسب العملة للمقارنة
-    const balanceInCurrency = currency === 'USDT' 
-        ? userBalance / rate 
-        : userBalance;
-    
-    if (balanceInCurrency < totalAmount) {
-        statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
+        if (infoDiv) infoDiv.style.display = 'none';
+        if (receiptSection) receiptSection.style.display = 'none';
+
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const currency = cart[0]?.currency || 'MRU';
+        const rate = 43;
+
+        const balanceInCurrency = currency === 'USDT'
+            ? userBalance / rate
+            : userBalance;
+
+        if (balanceInCurrency < totalAmount) {
+            statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
+        } else {
+            statusMsg.innerHTML = '';
+        }
     } else {
-        statusMsg.innerHTML = '';
-    }
-}
-    
-    else {
         if (infoDiv && accountElem) {
             infoDiv.style.display = 'block';
             accountElem.textContent = account || 'غير متوفر';
@@ -142,9 +134,8 @@ async function checkAuthAndLoadData() {
     cart = JSON.parse(localStorage.getItem('cart')) || [];
     totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
 
-    // ← تحديد العملة من السلة
     const currency = cart[0]?.currency || 'MRU';
-localStorage.setItem('lastCurrency', currency)
+    localStorage.setItem('lastCurrency', currency);
 
     const totalElem = document.getElementById('checkout-total');
     if (totalElem) totalElem.textContent = `${totalAmount} ${currency}`;
@@ -185,10 +176,8 @@ localStorage.setItem('lastCurrency', currency)
         const balanceElem = document.getElementById('current-wallet-balance');
         if (balanceElem) {
             if (currency === 'USDT') {
-                // تحويل الرصيد من MRU إلى USDT
-                const rate = 43; // سعر الصرف
-                const balanceUSDT = (userBalance / rate).toFixed(2);
-                balanceElem.textContent = `${balanceUSDT} USDT`;
+                const rate = 43;
+                balanceElem.textContent = `${(userBalance / rate).toFixed(2)} USDT`;
             } else {
                 balanceElem.textContent = `${userBalance} MRU`;
             }
@@ -258,14 +247,7 @@ async function pullFromStock(item) {
         }
     });
 
-    return {
-        codes,
-        stockIds,
-        costPerCode,
-        supplierName,
-        supplierOrderId,
-        suppliersDetails: Object.values(suppliersMap)
-    };
+    return { codes, stockIds, costPerCode, supplierName, supplierOrderId, suppliersDetails: Object.values(suppliersMap) };
 }
 
 // ==================== تنفيذ السحب وتحديث المخزون ====================
@@ -289,10 +271,8 @@ async function executePayment() {
 
     if (totalAmount <= 0) return;
 
-    // ← العملة من السلة
     const currency = cart[0]?.currency || 'MRU';
 
-    // فحص الحظر قبل الدفع
     const { data: userCheck } = await supabase
         .from('users')
         .select('is_blocked')
@@ -306,7 +286,10 @@ async function executePayment() {
 
     // ===== دفع بالمحفظة =====
     if (selectedPaymentMethod.id === 'wallet') {
-        if (userBalance < totalAmount) {
+        const rate = 43;
+        const balanceInCurrency = currency === 'USDT' ? userBalance / rate : userBalance;
+
+        if (balanceInCurrency < totalAmount) {
             showToast('⚠️ رصيدك غير كافٍ! اشحن محفظتك أولاً.', 'error');
             return;
         }
@@ -335,7 +318,6 @@ async function executePayment() {
             const ordersToInsert = cart.map((item, i) => {
                 const stockResult = stockResults[i];
                 const hasStock    = stockResult !== null;
-
                 return {
                     order_number:      sharedOrderNumber,
                     customer_name:     user?.user_metadata?.full_name || 'مستخدم',
@@ -344,7 +326,7 @@ async function executePayment() {
                     product_name:      item.name,
                     label:             item.label || null,
                     price:             item.price,
-                    currency:          item.currency || 'MRU', // ← إضافة
+                    currency:          item.currency || 'MRU',
                     quantity:          item.quantity || 1,
                     user_id:           user.id,
                     paymentMethod:     'المحفظة',
@@ -359,18 +341,13 @@ async function executePayment() {
             });
 
             const { data: insertedOrders, error: insertError } = await supabase
-                .from('orders')
-                .insert(ordersToInsert)
-                .select();
-
+                .from('orders').insert(ordersToInsert).select();
             if (insertError) throw insertError;
 
             if (allHaveStock) {
                 for (let i = 0; i < cart.length; i++) {
-                    const stockResult = stockResults[i];
-                    const order       = insertedOrders[i];
-                    if (stockResult && order) {
-                        await commitStockPull(stockResult, order.id);
+                    if (stockResults[i] && insertedOrders[i]) {
+                        await commitStockPull(stockResults[i], insertedOrders[i].id);
                     }
                 }
             }
@@ -386,13 +363,7 @@ async function executePayment() {
             });
 
             localStorage.removeItem('cart');
-
-            if (allHaveStock) {
-                showToast('✅ تم الدفع وتسليم جميع بطاقاتك بنجاح!', 'success');
-            } else {
-                showToast('✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
-            }
-
+            showToast(allHaveStock ? '✅ تم الدفع وتسليم جميع بطاقاتك بنجاح!' : '✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
             setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
         } catch (error) {
@@ -404,8 +375,7 @@ async function executePayment() {
         return;
     }
 
-    // ===== دفع بالإيصال =====
-// ===== دفع بالكريبتو (NOWPayments) =====
+    // ===== دفع بالكريبتو (NOWPayments) =====
     if (currency === 'USDT') {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء فاتورة الدفع...';
@@ -413,7 +383,6 @@ async function executePayment() {
         try {
             const sharedOrderNumber = generateOrderNumber();
 
-            // إنشاء الطلبات في قاعدة البيانات أولاً
             const orders = cart.map(item => ({
                 order_number:   sharedOrderNumber,
                 customer_name:  user?.user_metadata?.full_name || 'مستخدم',
@@ -433,8 +402,6 @@ async function executePayment() {
                 .from('orders').insert(orders).select();
             if (insertError) throw insertError;
 
-            // استدعاء create-invoice Edge Function
-            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(
                 'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/create-invoice',
                 {
@@ -482,8 +449,7 @@ async function executePayment() {
     try {
         const filePath = `receipts/${Date.now()}`;
         const { error: uploadError } = await supabase.storage
-            .from('receipts')
-            .upload(filePath, receiptFile);
+            .from('receipts').upload(filePath, receiptFile);
 
         let receiptUrl = '';
         if (!uploadError) {
@@ -522,34 +488,24 @@ async function executePayment() {
         btn.disabled = false;
         btn.innerHTML = 'تأكيد الدفع الآن';
     }
+}
 
 // ===== Toast Notification =====
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.textContent = message;
     toast.style.cssText = `
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
+        position: fixed; bottom: 30px; left: 50%;
         transform: translateX(-50%);
         background: ${type === 'success' ? '#22c55e' : '#ef4444'};
-        color: white;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-size: 16px;
-        z-index: 9999;
+        color: white; padding: 14px 28px; border-radius: 12px;
+        font-size: 16px; z-index: 9999;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        transition: opacity 0.5s;
-        font-family: 'Cairo', sans-serif;
-        text-align: center;
-        max-width: 320px;
-        width: 90%;
+        transition: opacity 0.5s; font-family: 'Cairo', sans-serif;
+        text-align: center; max-width: 320px; width: 90%;
     `;
     document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 500);
-    }, 2000);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2000);
 }
 
 // ===== Dark Mode =====
