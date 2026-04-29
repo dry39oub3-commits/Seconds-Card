@@ -300,11 +300,15 @@ async function tryAutoApproveFromStock(order) {
 }
 
 function buildStockSection({ suffix = '', productId, label, quantity, orderPrice, prices = [], currency = 'MRU' }) {
-     oninput="calcProfit${suffix === '' ? '(' + orderPrice + ', \'' + currency + '\')' : 'Item(' + suffix + ',' + orderPrice + ')'}"
     const c          = getThemeColors();
     const priceObj   = (prices || []).find(p => p.label === label) || prices[0] || {};
     const suppliers  = priceObj.suppliers || [];
     const inputStyle = `width:100%; padding:9px 12px; background:${c.inputBg}; border:1px solid ${c.inputBorder}; border-radius:8px; color:${c.inputColor}; font-family:inherit; font-size:13px;`;
+
+    // ✅ استخدم currency مباشرة بدل order?.currency
+    const calcCall = suffix === '' 
+        ? `calcProfit(${orderPrice}, '${currency}')` 
+        : `calcProfitItem(${suffix}, ${orderPrice})`;
 
     const suppliersSelectHTML = suppliers.length > 0 ? `
         <div id="supplier-select-wrap${suffix}" style="margin-top:10px; display:none;">
@@ -331,7 +335,7 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
         <div>
             <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
             <input type="number" id="modal-cost${suffix}" placeholder="0.00" step="0.01"
-                oninput="calcProfit${suffix === '' ? '(' + orderPrice + ', \'' + (order?.currency || 'MRU') + '\')' : 'Item(' + suffix + ',' + orderPrice + ')'}"
+                oninput="calcProfit${suffix === '' ? '(' + orderPrice + ', \'' + (currency || 'MRU') + '\')' : 'Item(' + suffix + ',' + orderPrice + ')'}"
                 style="${inputStyle} width:100%; box-sizing:border-box;">
 
             <button onclick="loadFromStock${suffix === '' ? '(\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')' : 'ForItem(' + suffix + ',\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')'}"
