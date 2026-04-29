@@ -57,8 +57,48 @@ const loadProducts = async () => {
             </div>
         </div>
     `).join('');
+    setTimeout(recalcAllUSDT, 100);
 };
+// ✅ حساب USDT للمنتجات المعروضة فقط (بدون حفظ)
+function recalcAllUSDT() {
+    allProducts.forEach(product => {
+        if (!product.prices) return;
+        product.prices.forEach((item, index) => {
+            const rate      = parseFloat(document.getElementById(`rate-input-${product.id}-${index}`)?.value) || item.exchange_rate || 43;
+            const sellPrice = parseFloat(document.getElementById(`price-input-${product.id}-${index}`)?.value) || item.value || 0;
+            const usdtInput = document.getElementById(`usdt-input-${product.id}-${index}`);
+            if (usdtInput && sellPrice > 0 && rate > 0 && (!item.usdt_price || item.usdt_price === 0)) {
+                usdtInput.value = (sellPrice / rate).toFixed(2);
+            }
+        });
+    });
+}
 
+// ✅ حفظ كل أسعار USDT في قاعدة البيانات
+window.saveAllUSDTPrices = async () => {
+    let count = 0;
+    for (const product of allProducts) {
+        if (!product.prices) continue;
+
+        const updatedPrices = product.prices.map((item, index) => {
+            const rate      = item.exchange_rate || 43;
+            const sellPrice = item.value || 0;
+            const usdt      = (item.usdt_price && item.usdt_price > 0)
+                ? item.usdt_price
+                : parseFloat((sellPrice / rate).toFixed(2));
+            return { ...item, usdt_price: usdt };
+        });
+
+        const { error } = await supabase
+            .from('products')
+            .update({ prices: updatedPrices })
+            .eq('id', product.id);
+
+        if (!error) count++;
+    }
+    showToast(`✅ تم تحديث ${count} منتج بأسعار USDT!`);
+    loadProducts();
+};
 // ✅ أضف هذه الدالة
 function recalcAllUSDT() {
     allProducts.forEach(product => {
