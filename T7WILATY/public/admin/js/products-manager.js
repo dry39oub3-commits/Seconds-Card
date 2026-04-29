@@ -65,6 +65,12 @@ function updateProfitPreview(productId, priceIndex) {
     const rate      = parseFloat(document.getElementById(`rate-input-${productId}-${priceIndex}`)?.value)  || 43;
     const sellPrice = parseFloat(document.getElementById(`price-input-${productId}-${priceIndex}`)?.value) || 0;
     const preview   = document.getElementById(`profit-preview-${productId}-${priceIndex}`);
+    const usdtInput = document.getElementById(`usdt-input-${productId}-${priceIndex}`);
+
+    // ✅ حساب USDT تلقائياً = سعر البيع MRU ÷ سعر الصرف
+    if (usdtInput && sellPrice > 0 && rate > 0) {
+        usdtInput.value = (sellPrice / rate).toFixed(2);
+    }
 
     if (!preview) return;
 
