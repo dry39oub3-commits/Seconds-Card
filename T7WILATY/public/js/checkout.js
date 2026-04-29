@@ -405,6 +405,71 @@ async function executePayment() {
     }
 
     // ===== دفع بالإيصال =====
+// ===== دفع بالكريبتو (NOWPayments) =====
+    if (currency === 'USDT') {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء فاتورة الدفع...';
+
+        try {
+            const sharedOrderNumber = generateOrderNumber();
+
+            // إنشاء الطلبات في قاعدة البيانات أولاً
+            const orders = cart.map(item => ({
+                order_number:   sharedOrderNumber,
+                customer_name:  user?.user_metadata?.full_name || 'مستخدم',
+                customer_phone: user?.email || '',
+                product_id:     item.productId || null,
+                product_name:   item.name,
+                label:          item.label || null,
+                price:          item.price,
+                currency:       'USDT',
+                quantity:       item.quantity || 1,
+                status:         'قيد الانتظار',
+                paymentMethod:  selectedPaymentMethod.name,
+                user_id:        user.id
+            }));
+
+            const { data: insertedOrders, error: insertError } = await supabase
+                .from('orders').insert(orders).select();
+            if (insertError) throw insertError;
+
+            // استدعاء create-invoice Edge Function
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await fetch(
+                'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/create-invoice',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({
+                        orderId:     insertedOrders[0].id,
+                        amount:      totalAmount,
+                        description: cart.map(i => i.name).join(', ')
+                    })
+                }
+            );
+
+            const invoice = await response.json();
+
+            if (invoice.invoice_url) {
+                localStorage.removeItem('cart');
+                window.location.href = invoice.invoice_url;
+            } else {
+                throw new Error(invoice.message || 'فشل إنشاء الفاتورة');
+            }
+
+        } catch (error) {
+            console.error('Payment Error:', error);
+            showToast('❌ حدث خطأ: ' + error.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = 'تأكيد الدفع الآن';
+        }
+        return;
+    }
+
+    // ===== دفع بالإيصال (MRU) =====
     const receiptFile = document.getElementById('receipt-input')?.files[0];
     if (!receiptFile) {
         showToast('⚠️ الرجاء رفع إيصال الدفع!', 'error');
@@ -436,7 +501,7 @@ async function executePayment() {
             product_name:   item.name,
             label:          item.label || null,
             price:          item.price,
-            currency:       item.currency || 'MRU', // ← إضافة
+            currency:       item.currency || 'MRU',
             quantity:       item.quantity || 1,
             status:         'قيد الانتظار',
             receiptUrl:     receiptUrl,
@@ -449,7 +514,6 @@ async function executePayment() {
 
         localStorage.removeItem('cart');
         showToast('✅ تمت عملية الدفع بنجاح!', 'success');
-
         setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
     } catch (error) {
@@ -458,7 +522,6 @@ async function executePayment() {
         btn.disabled = false;
         btn.innerHTML = 'تأكيد الدفع الآن';
     }
-}
 
 // ===== Toast Notification =====
 function showToast(message, type = 'success') {
