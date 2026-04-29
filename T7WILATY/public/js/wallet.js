@@ -41,15 +41,11 @@ function setupUserMenu() {
 async function loadWalletData() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
-
     if (!user) {
         localStorage.setItem('redirectAfterLogin', window.location.href);
         window.location.replace('login.html');
         return;
     }
-
-    const userIcon = document.querySelector('#user-icon-btn i');
-    if (userIcon) userIcon.className = 'fas fa-user-check';
 
     const { data: userData } = await supabase
         .from('users')
@@ -58,12 +54,35 @@ async function loadWalletData() {
         .single();
 
     const balance    = userData?.balance || 0;
-    const balanceUSD = (balance / 43).toFixed(2);
+    const rate       = 43;
+
+    // ← جلب العملة المختارة من checkout
+    const currency   = localStorage.getItem('lastCurrency') || 'MRU';
+    const isUSDT     = currency === 'USDT';
 
     const mruEl = document.getElementById('mruBalance');
     const usdEl = document.getElementById('usdBalance');
+
     if (mruEl) mruEl.textContent = `MRU ${balance.toFixed(2)}`;
-    if (usdEl) usdEl.textContent = `$${balanceUSD}`;
+    if (usdEl) usdEl.textContent = `$${(balance / rate).toFixed(2)}`;
+
+    // ← تمييز العملة النشطة
+    const mruCard = document.getElementById('mru-balance-card');
+    const usdCard = document.getElementById('usd-balance-card');
+
+    if (mruCard && usdCard) {
+        if (isUSDT) {
+            usdCard.style.border  = '2px solid #f97316';
+            mruCard.style.border  = '1px solid transparent';
+            usdCard.style.boxShadow = '0 0 12px rgba(249,115,22,0.3)';
+            mruCard.style.boxShadow = 'none';
+        } else {
+            mruCard.style.border  = '2px solid #f97316';
+            usdCard.style.border  = '1px solid transparent';
+            mruCard.style.boxShadow = '0 0 12px rgba(249,115,22,0.3)';
+            usdCard.style.boxShadow = 'none';
+        }
+    }
 
     loadTransactions(user.id);
 }

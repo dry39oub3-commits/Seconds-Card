@@ -29,10 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== جلب بوابات الدفع =====
 async function loadPaymentMethods() {
-    // اقرأ العملة من السلة
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const currency = cart[0]?.currency || 'MRU';
     const isCrypto = currency === 'USDT';
+    const rate = 43;
+
+    // حساب الرصيد حسب العملة
+    const displayBalance = isCrypto 
+        ? `${(userBalance / rate).toFixed(2)} USDT`
+        : `${userBalance} MRU`;
 
     const { data: methods, error } = await supabase
         .from('payment_methods')
@@ -46,12 +51,12 @@ async function loadPaymentMethods() {
     if (!list) return;
 
     // المحفظة تظهر دائماً
-    const walletCard = `
+        const walletCard = `
         <div class="payment-method-card" id="pm-wallet" onclick="selectMethod('wallet', '', 'المحفظة')">
             <i class="fas fa-wallet" style="font-size:26px; color:#22c55e;"></i>
             <div class="payment-method-info">
                 <div class="payment-method-name">محفظتي</div>
-                <div class="payment-method-desc">رصيدك: ${userBalance} MRU</div>
+                <div class="payment-method-desc">رصيدك: ${displayBalance}</div>
             </div>
             <div class="payment-method-radio"></div>
         </div>
@@ -97,14 +102,26 @@ document.querySelectorAll('.payment-method-card').forEach(c => {
     const statusMsg      = document.getElementById('payment-status-msg');
 
     if (id === 'wallet') {
-        if (infoDiv) infoDiv.style.display = 'none';
-        if (receiptSection) receiptSection.style.display = 'none';
-        if (userBalance < totalAmount) {
-            statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
-        } else {
-            statusMsg.innerHTML = '';
-        }
+    if (infoDiv) infoDiv.style.display = 'none';
+    if (receiptSection) receiptSection.style.display = 'none';
+    
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const currency = cart[0]?.currency || 'MRU';
+    const rate = 43;
+    
+    // تحويل الرصيد حسب العملة للمقارنة
+    const balanceInCurrency = currency === 'USDT' 
+        ? userBalance / rate 
+        : userBalance;
+    
+    if (balanceInCurrency < totalAmount) {
+        statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
     } else {
+        statusMsg.innerHTML = '';
+    }
+}
+    
+    else {
         if (infoDiv && accountElem) {
             infoDiv.style.display = 'block';
             accountElem.textContent = account || 'غير متوفر';
@@ -127,6 +144,7 @@ async function checkAuthAndLoadData() {
 
     // ← تحديد العملة من السلة
     const currency = cart[0]?.currency || 'MRU';
+localStorage.setItem('lastCurrency', currency)
 
     const totalElem = document.getElementById('checkout-total');
     if (totalElem) totalElem.textContent = `${totalAmount} ${currency}`;
@@ -165,7 +183,16 @@ async function checkAuthAndLoadData() {
         userBalance = userData?.balance || 0;
 
         const balanceElem = document.getElementById('current-wallet-balance');
-        if (balanceElem) balanceElem.textContent = `${userBalance} MRU`;
+        if (balanceElem) {
+            if (currency === 'USDT') {
+                // تحويل الرصيد من MRU إلى USDT
+                const rate = 43; // سعر الصرف
+                const balanceUSDT = (userBalance / rate).toFixed(2);
+                balanceElem.textContent = `${balanceUSDT} USDT`;
+            } else {
+                balanceElem.textContent = `${userBalance} MRU`;
+            }
+        }
 
         const confirmBtn = document.getElementById('confirm-payment-btn');
         const statusMsg  = document.getElementById('payment-status-msg');
