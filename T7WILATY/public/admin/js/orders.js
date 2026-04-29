@@ -299,7 +299,8 @@ async function tryAutoApproveFromStock(order) {
     return true;
 }
 
-function buildStockSection({ suffix = '', productId, label, quantity, orderPrice, prices = [] }) {
+function buildStockSection({ suffix = '', productId, label, quantity, orderPrice, prices = [], currency = 'MRU' }) {
+     oninput="calcProfit${suffix === '' ? '(' + orderPrice + ', \'' + currency + '\')' : 'Item(' + suffix + ',' + orderPrice + ')'}"
     const c          = getThemeColors();
     const priceObj   = (prices || []).find(p => p.label === label) || prices[0] || {};
     const suppliers  = priceObj.suppliers || [];
@@ -330,7 +331,7 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
         <div>
             <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">💵 سعر التكلفة ($) — لكود واحد</label>
             <input type="number" id="modal-cost${suffix}" placeholder="0.00" step="0.01"
-                oninput="calcProfit${suffix === '' ? '(' + orderPrice + ')' : 'Item(' + suffix + ',' + orderPrice + ')'}"
+                oninput="calcProfit${suffix === '' ? '(' + orderPrice + ', \'' + (order?.currency || 'MRU') + '\')' : 'Item(' + suffix + ',' + orderPrice + ')'}"
                 style="${inputStyle} width:100%; box-sizing:border-box;">
 
             <button onclick="loadFromStock${suffix === '' ? '(\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')' : 'ForItem(' + suffix + ',\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')'}"
@@ -386,9 +387,10 @@ window.openOrderModal = (order) => {
     `;
 
     const stockSectionHTML = buildStockSection({
-        suffix: '', productId: order.product_id, label: order.label,
-        quantity: order.quantity || 1, orderPrice: totalPrice, prices
-    });
+    suffix: '', productId: order.product_id, label: order.label,
+    quantity: order.quantity || 1, orderPrice: totalPrice, prices,
+    currency: order.currency || 'MRU' // ← إضافة
+});
 
     const inputStyle = `width:100%;padding:10px;background:${c.inputBg};border:1px solid ${c.inputBorder};border-radius:8px;color:${c.inputColor};font-size:14px;box-sizing:border-box;`;
 
@@ -407,7 +409,7 @@ window.openOrderModal = (order) => {
                     <p style="margin:0; color:${c.textMuted}; font-size:13px;">👤 ${order.customer_name || 'غير معروف'}</p>
                     <p style="margin:0; font-size:13px; color:${c.text};">🏷️ الفئة: <strong style="color:#f97316;">${order.label || '-'}</strong></p>
                     <p style="margin:0; color:${c.textMuted}; font-size:13px;">📱 ${order.customer_phone || '-'}</p>
-                    <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${totalPrice} MRU</strong></p>
+                    <p style="margin:0; font-size:13px;">💰 <strong style="color:#f97316;">${totalPrice} ${order.currency || 'MRU'}</strong></p>
                     <p style="margin:0; color:${c.textMuted}; font-size:13px;">🔢 الكمية: ${order.quantity || 1}</p>
                     <p style="margin:0; color:${c.textMuted}; font-size:13px;">💳 ${order.paymentMethod || order.payment_method || '-'}</p>
                 </div>
@@ -556,12 +558,31 @@ window.openGroupOrderModal = (items) => {
     document.body.appendChild(modal);
 };
 
-window.calcProfit = (orderPrice) => {
+window.calcProfit = (orderPrice, currency) => {
     const cost          = parseFloat(document.getElementById('modal-cost').value) || 0;
     const codesText     = document.getElementById('modal-code').value.trim();
     const quantity      = codesText ? codesText.split('\n').filter(c => c.trim() !== '').length : 1;
     const profitDisplay = document.getElementById('profit-display');
-    if (cost > 0) {
+
+    if (cost <= 0) { profitDisplay.style.display = 'none'; return; }
+
+    const isCrypto = (currency || 'MRU') === 'USDT';
+
+    if (isCrypto) {
+        // ربح الكريبتو: سعر التكلفة ($) × الكمية - المبلغ الإجمالي (USDT)
+        const totalCost = cost * quantity;
+        const profit    = orderPrice - totalCost;
+        profitDisplay.style.display = 'block';
+        profitDisplay.innerHTML = `
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">
+                التكلفة: $${cost} × ${quantity} كود = $${totalCost.toFixed(2)}
+            </div>
+            <span style="color:#94a3b8;font-size:13px;">الربح: </span>
+            <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:18px;font-weight:bold;">${profit.toFixed(2)}</span>
+            <span style="color:#94a3b8;font-size:13px;"> USDT</span>
+        `;
+    } else {
+        // ربح MRU: الطريقة القديمة
         const totalCost = cost * USD_TO_MRU * quantity;
         const profit    = orderPrice - totalCost;
         profitDisplay.style.display = 'block';
@@ -573,7 +594,7 @@ window.calcProfit = (orderPrice) => {
             <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:18px;font-weight:bold;">${profit.toFixed(0)}</span>
             <span style="color:#94a3b8;font-size:13px;"> MRU</span>
         `;
-    } else { profitDisplay.style.display = 'none'; }
+    }
 };
 
 window.calcProfitItem = (idx, orderPrice) => {
