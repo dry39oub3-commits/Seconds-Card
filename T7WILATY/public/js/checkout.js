@@ -79,7 +79,7 @@ async function loadPaymentMethods() {
 }
 
 // ===== اختيار طريقة الدفع =====
-window.selectMethod = function(id, account, name) {
+window.selectMethod = async function(id, account, name) {
     document.querySelectorAll('.payment-method-card').forEach(c => {
         c.style.borderColor = '#334155';
         c.style.background = '';
@@ -96,24 +96,118 @@ window.selectMethod = function(id, account, name) {
     const receiptSection = document.getElementById('receipt-upload-section');
     const statusMsg      = document.getElementById('payment-status-msg');
 
+    const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
+    const currency = cartData[0]?.currency || 'MRU';
+
     if (id === 'wallet') {
         if (infoDiv) infoDiv.style.display = 'none';
         if (receiptSection) receiptSection.style.display = 'none';
 
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const currency = cart[0]?.currency || 'MRU';
         const rate = 43;
-
-        const balanceInCurrency = currency === 'USDT'
-            ? userBalance / rate
-            : userBalance;
+        const balanceInCurrency = currency === 'USDT' ? userBalance / rate : userBalance;
 
         if (balanceInCurrency < totalAmount) {
             statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
         } else {
             statusMsg.innerHTML = '';
         }
+
+    } else if (currency === 'USDT') {
+        // ← إخفاء رقم الحساب والإيصال
+        if (infoDiv) infoDiv.style.display = 'none';
+        if (receiptSection) receiptSection.style.display = 'none';
+
+        // ← إظهار loading
+        if (statusMsg) statusMsg.innerHTML = `
+            <div style="text-align:center; padding:20px; color:#94a3b8;">
+                <i class="fas fa-spinner fa-spin" style="font-size:24px; color:#f97316;"></i>
+                <p style="margin-top:10px;">جاري إنشاء QR Code...</p>
+            </div>`;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const user = session?.user;
+
+            // إنشاء الطلب مؤقتاً في قاعدة البيانات
+            const sharedOrderNumber = generateOrderNumber();
+            const orders = cartData.map(item => ({
+                order_number:   sharedOrderNumber,
+                customer_name:  user?.user_metadata?.full_name || 'مستخدم',
+                customer_phone: user?.email || '',
+                product_id:     item.productId || null,
+                product_name:   item.name,
+                label:          item.label || null,
+                price:          item.price,
+                currency:       'USDT',
+                quantity:       item.quantity || 1,
+                status:         'قيد الانتظار',
+                paymentMethod:  name,
+                user_id:        user.id
+            }));
+
+            const { data: insertedOrders, error: insertError } = await supabase
+                .from('orders').insert(orders).select();
+            if (insertError) throw insertError;
+
+            // حفظ الطلب للاستخدام لاحقاً
+            window._pendingOrderId = insertedOrders[0].id;
+
+            // استدعاء create-invoice
+            const response = await fetch(
+                'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/create-invoice',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({
+                        orderId:     insertedOrders[0].id,
+                        amount:      totalAmount,
+                        description: cartData.map(i => i.name).join(', ')
+                    })
+                }
+            );
+
+            const invoice = await response.json();
+
+            if (invoice.id) {
+                // حفظ رابط الدفع
+                window._invoiceUrl = invoice.invoice_url;
+
+                // عرض QR Code
+                if (statusMsg) statusMsg.innerHTML = `
+                    <div style="text-align:center; padding:16px; background:rgba(249,115,22,0.05);
+                                border:1px solid #f97316; border-radius:12px; margin-top:10px;">
+                        <p style="color:#f97316; font-weight:bold; margin-bottom:12px;">
+                            <i class="fas fa-qrcode"></i> امسح QR Code أو اضغط على زر الدفع
+                        </p>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(invoice.invoice_url)}"
+                             style="border-radius:8px; border:4px solid #f97316; width:200px; height:200px;">
+                        <p style="color:#94a3b8; font-size:12px; margin-top:10px;">
+                            المبلغ: <strong style="color:#f97316;">${totalAmount} USDT</strong>
+                        </p>
+                        <a href="${invoice.invoice_url}" target="_blank"
+                           style="display:inline-block; margin-top:10px; padding:10px 20px;
+                                  background:#f97316; color:white; border-radius:8px;
+                                  text-decoration:none; font-weight:bold; font-size:14px;">
+                            <i class="fas fa-external-link-alt"></i> فتح صفحة الدفع
+                        </a>
+                        <p style="color:#94a3b8; font-size:11px; margin-top:8px;">
+                            بعد إتمام الدفع اضغط "تأكيد الدفع الآن"
+                        </p>
+                    </div>`;
+            } else {
+                throw new Error(invoice.message || 'فشل إنشاء الفاتورة');
+            }
+
+        } catch (error) {
+            if (statusMsg) statusMsg.innerHTML = `
+                <p style="color:#ef4444;">❌ خطأ في إنشاء QR Code: ${error.message}</p>`;
+        }
+
     } else {
+        // ← طريقة محلية MRU
         if (infoDiv && accountElem) {
             infoDiv.style.display = 'block';
             accountElem.textContent = account || 'غير متوفر';
@@ -375,63 +469,14 @@ async function executePayment() {
         return;
     }
 
-    // ===== دفع بالكريبتو (NOWPayments) =====
+   // ===== دفع بالكريبتو (NOWPayments) =====
     if (currency === 'USDT') {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء فاتورة الدفع...';
-
-        try {
-            const sharedOrderNumber = generateOrderNumber();
-
-            const orders = cart.map(item => ({
-                order_number:   sharedOrderNumber,
-                customer_name:  user?.user_metadata?.full_name || 'مستخدم',
-                customer_phone: user?.email || '',
-                product_id:     item.productId || null,
-                product_name:   item.name,
-                label:          item.label || null,
-                price:          item.price,
-                currency:       'USDT',
-                quantity:       item.quantity || 1,
-                status:         'قيد الانتظار',
-                paymentMethod:  selectedPaymentMethod.name,
-                user_id:        user.id
-            }));
-
-            const { data: insertedOrders, error: insertError } = await supabase
-                .from('orders').insert(orders).select();
-            if (insertError) throw insertError;
-
-            const response = await fetch(
-                'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/create-invoice',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session?.access_token}`
-                    },
-                    body: JSON.stringify({
-                        orderId:     insertedOrders[0].id,
-                        amount:      totalAmount,
-                        description: cart.map(i => i.name).join(', ')
-                    })
-                }
-            );
-
-            const invoice = await response.json();
-
-            if (invoice.invoice_url) {
-                localStorage.removeItem('cart');
-                window.location.href = invoice.invoice_url;
-            } else {
-                throw new Error(invoice.message || 'فشل إنشاء الفاتورة');
-            }
-
-        } catch (error) {
-            console.error('Payment Error:', error);
-            showToast('❌ حدث خطأ: ' + error.message, 'error');
-            btn.disabled = false;
-            btn.innerHTML = 'تأكيد الدفع الآن';
+        // الطلب تم إنشاؤه مسبقاً عند اختيار Bybit
+        if (window._invoiceUrl) {
+            localStorage.removeItem('cart');
+            window.location.href = window._invoiceUrl;
+        } else {
+            showToast('⚠️ الرجاء اختيار Bybit أولاً لإنشاء QR Code', 'error');
         }
         return;
     }
