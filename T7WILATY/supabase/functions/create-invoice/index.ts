@@ -20,14 +20,14 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        price_amount:      amount,
-        price_currency:    'usdt',
-        pay_currency:      'usdttrc20',
-        order_id:          orderId,
-        order_description: description,
-        ipn_callback_url:  'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/nowpayments-ipn',
-        success_url:       'https://storecard.online/orders.html',
-        cancel_url:        'https://storecard.online/checkout.html'
+          price_amount:      amount,
+          price_currency:    'usd',
+          // احذف pay_currency ← العميل يختار
+          order_id:          orderId,
+          order_description: description,
+          ipn_callback_url:  'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/nowpayments-ipn',
+          success_url:       'https://storecard.online/orders.html',
+          cancel_url:        'https://storecard.online/checkout.html'
       })
     })
 
