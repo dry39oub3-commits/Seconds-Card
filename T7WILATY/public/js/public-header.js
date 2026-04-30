@@ -53,8 +53,6 @@ function buildHeader() {
             </div>
         </div>
     `;
-
-    // أضف الهيدر في أول الـ body
     document.body.insertAdjacentElement('afterbegin', header);
 }
 
@@ -106,7 +104,6 @@ async function initUserIcon() {
             userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
         }
 
-        // dropdown
         userBtn.onclick = (e) => {
             e.stopPropagation();
             userDropdown?.classList.toggle('show');
@@ -119,7 +116,6 @@ async function initUserIcon() {
         });
 
     } else {
-        // غير مسجل
         userBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i>';
         userBtn.title     = 'تسجيل الدخول';
         userBtn.onclick   = () => { window.location.href = 'login.html'; };
@@ -138,25 +134,15 @@ function updateCartBadge() {
         badge = document.createElement('span');
         badge.className = 'cart-badge';
         badge.style.cssText = `
-            position: absolute;
-            top: -8px;
-            left: -8px;
-            background: #f97316;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            pointer-events: none;
+            position:absolute; top:-8px; left:-8px;
+            background:#f97316; color:white; border-radius:50%;
+            width:18px; height:18px; font-size:11px;
+            display:flex; align-items:center; justify-content:center;
+            font-weight:bold; pointer-events:none;
         `;
         cartLink.appendChild(badge);
     }
-
-    badge.textContent  = totalItems;
+    badge.textContent   = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }
 
@@ -178,7 +164,6 @@ window.updateHeaderAvatar = function(photoUrl) {
     } else {
         userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
     }
-
     userBtn.onclick = (e) => {
         e.stopPropagation();
         userDropdown?.classList.toggle('show');
@@ -203,7 +188,6 @@ function initSearch() {
     const doSearch = () => {
         const q = input.value.trim();
         if (!q) return;
-        // إذا لم تكن في index.html انتقل إليها مع query
         if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
             window.location.href = `index.html?q=${encodeURIComponent(q)}`;
         } else {
@@ -214,7 +198,6 @@ function initSearch() {
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
     btnSrh?.addEventListener('click', doSearch);
 
-    // لو جاء من صفحة أخرى بـ query
     const urlQ = new URLSearchParams(window.location.search).get('q');
     if (urlQ) {
         input.value = urlQ;
@@ -224,25 +207,127 @@ function initSearch() {
 
 // ==================== تشغيل الكل ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // بناء الهيدر فقط إذا لم يكن موجوداً
-    if (!document.querySelector('.main-header')) {
-        buildHeader();
-    }
-
+    if (!document.querySelector('.main-header')) buildHeader();
     initTheme();
     initUserIcon();
     updateCartBadge();
     initSearch();
+    applyStoredSettings(); // ✅ تطبيق اللغة والاتجاه عند كل تحميل
 });
 
+// ==================== تطبيق الإعدادات المخزنة ====================
+function applyStoredSettings() {
+    const lang = localStorage.getItem('lang') || 'ar';
+    const dir  = ALL_LANGUAGES.find(l => l.code === lang)?.dir || 'rtl';
+    document.documentElement.setAttribute('dir',  dir);
+    document.documentElement.setAttribute('lang', lang);
 
+    // ✅ إذا كانت اللغة مخزنة وليست عربية → طبّق الترجمة
+    if (lang !== 'ar') {
+        // نترجم بعد تحميل DOM كاملاً
+        setTimeout(() => translatePage(lang), 300);
+    }
+}
 
+// ==================== نظام الترجمة — MyMemory API مجاني ====================
+const translationCache = {};
 
+// ترجمة نص واحد
+async function translateText(text, targetLang) {
+    if (!text?.trim() || targetLang === 'ar') return text;
+    const key = `${targetLang}:${text}`;
+    if (translationCache[key]) return translationCache[key];
 
+    try {
+        const res  = await fetch(
+            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ar|${targetLang}`
+        );
+        const data = await res.json();
+        const translated = data?.responseData?.translatedText || text;
+        translationCache[key] = translated;
+        return translated;
+    } catch {
+        return text;
+    }
+}
 
-// ===== إعدادات اللغة والعملة =====
+// ترجمة الصفحة كاملة — دفعات لتسريع العملية
+async function translatePage(targetLang) {
+    if (targetLang === 'ar') return;
 
-// ===== إعدادات اللغة والعملة =====
+    // عناصر نصية مباشرة (لا تحتوي على عناصر فرعية)
+    const selector = [
+        'h1','h2','h3','h4','h5','h6',
+        'p','span','a','button','label',
+        'td','th','li',
+        '[data-translate]'
+    ].join(',');
+
+    const elements = [...document.querySelectorAll(selector)].filter(el => {
+        const text = el.childNodes[0]?.textContent?.trim();
+        return (
+            text &&
+            text.length > 1 &&
+            el.childNodes.length === 1 &&
+            el.childNodes[0].nodeType === Node.TEXT_NODE &&
+            !el.closest('script, style, [data-no-translate]')
+        );
+    });
+
+    // دفعات بحجم 10 لتجنب تجاوز حد MyMemory
+    const BATCH = 10;
+    for (let i = 0; i < elements.length; i += BATCH) {
+        const batch = elements.slice(i, i + BATCH);
+        const texts = batch.map(el => el.childNodes[0].textContent.trim());
+
+        // MyMemory لا يدعم batch مباشرة → نستدعيها بالتوازي
+        const translated = await Promise.all(
+            texts.map(t => translateText(t, targetLang))
+        );
+
+        batch.forEach((el, idx) => {
+            if (translated[idx] && translated[idx] !== texts[idx]) {
+                el.childNodes[0].textContent = translated[idx];
+            }
+        });
+
+        // استراحة قصيرة بين الدفعات لتجنب rate limit
+        if (i + BATCH < elements.length) {
+            await new Promise(r => setTimeout(r, 200));
+        }
+    }
+}
+
+// ==================== تحويل العملة ====================
+// أسعار الصرف تقريبية نسبةً إلى MRU
+const EXCHANGE_RATES = {
+    MRU:  1,
+    USDT: 1/43,   USD:  1/43,   EUR:  1/47,
+    GBP:  1/54,   SAR:  1/11.5, AED:  1/11.7,
+    KWD:  1/140,  QAR:  1/11.8, BHD:  1/114,
+    OMR:  1/112,  JOD:  1/61,   EGP:  1/1.4,
+    MAD:  1/4.3,  TND:  1/13.8, DZD:  1/0.32,
+    LYD:  1/8.9,  SDG:  1/0.07, IQD:  1/0.033,
+    JPY:  1/0.29, CNY:  1/5.9,  KRW:  1/0.032,
+    INR:  1/0.52, TRY:  1/1.3,  RUB:  1/0.47,
+    BRL:  1/8.6,  CAD:  1/31.7, AUD:  1/27.8,
+    CHF:  1/48.5, NGN:  1/0.03, ZAR:  1/2.4,
+};
+
+// تحويل سعر بـ MRU إلى العملة المختارة
+window.convertPrice = function(priceMRU) {
+    const currency = localStorage.getItem('currency') || 'MRU';
+    const rate     = EXCHANGE_RATES[currency] ?? EXCHANGE_RATES['MRU'];
+    const converted = (priceMRU * rate);
+    // تنسيق الأرقام
+    const formatted = converted >= 1
+        ? converted.toFixed(2)
+        : converted.toFixed(4);
+    const symbol = ALL_CURRENCIES.find(c => c.code === currency)?.symbol || currency;
+    return `${formatted} ${symbol}`;
+};
+
+// ==================== قوائم اللغات والعملات ====================
 
 const ALL_LANGUAGES = [
     { code:'ar',  flag:'🇸🇦', name:'العربية',           native:'العربية',             dir:'rtl' },
@@ -295,11 +380,8 @@ const ALL_LANGUAGES = [
 ];
 
 const ALL_CURRENCIES = [
-    // ── العملات الأكثر استخداماً أولاً ──
     { code:'MRU',  flag:'🇲🇷', name:'أوقية موريتانية',       symbol:'MRU'  },
     { code:'USDT', flag:'🔵',  name:'تيثر (USDT)',            symbol:'USDT' },
-    { code:'BTC',  flag:'🟠',  name:'بيتكوين',               symbol:'BTC'  },
-    { code:'ETH',  flag:'🔷',  name:'إيثيريوم',              symbol:'ETH'  },
     { code:'USD',  flag:'🇺🇸', name:'دولار أمريكي',          symbol:'$'    },
     { code:'EUR',  flag:'🇪🇺', name:'يورو',                  symbol:'€'    },
     { code:'GBP',  flag:'🇬🇧', name:'جنيه إسترليني',        symbol:'£'    },
@@ -315,11 +397,7 @@ const ALL_CURRENCIES = [
     { code:'TND',  flag:'🇹🇳', name:'دينار تونسي',           symbol:'د.ت'  },
     { code:'DZD',  flag:'🇩🇿', name:'دينار جزائري',          symbol:'د.ج'  },
     { code:'LYD',  flag:'🇱🇾', name:'دينار ليبي',            symbol:'د.ل'  },
-    { code:'SDG',  flag:'🇸🇩', name:'جنيه سوداني',           symbol:'ج.س'  },
-    { code:'SYP',  flag:'🇸🇾', name:'ليرة سورية',            symbol:'ل.س'  },
     { code:'IQD',  flag:'🇮🇶', name:'دينار عراقي',           symbol:'ع.د'  },
-    { code:'YER',  flag:'🇾🇪', name:'ريال يمني',             symbol:'ر.ي'  },
-    { code:'LBP',  flag:'🇱🇧', name:'ليرة لبنانية',          symbol:'ل.ل'  },
     { code:'JPY',  flag:'🇯🇵', name:'ين ياباني',             symbol:'¥'    },
     { code:'CNY',  flag:'🇨🇳', name:'يوان صيني',             symbol:'¥'    },
     { code:'KRW',  flag:'🇰🇷', name:'وون كوري',              symbol:'₩'    },
@@ -327,132 +405,16 @@ const ALL_CURRENCIES = [
     { code:'TRY',  flag:'🇹🇷', name:'ليرة تركية',            symbol:'₺'    },
     { code:'RUB',  flag:'🇷🇺', name:'روبل روسي',             symbol:'₽'    },
     { code:'BRL',  flag:'🇧🇷', name:'ريال برازيلي',          symbol:'R$'   },
-    { code:'MXN',  flag:'🇲🇽', name:'بيزو مكسيكي',           symbol:'$'    },
     { code:'CAD',  flag:'🇨🇦', name:'دولار كندي',            symbol:'C$'   },
     { code:'AUD',  flag:'🇦🇺', name:'دولار أسترالي',         symbol:'A$'   },
     { code:'CHF',  flag:'🇨🇭', name:'فرنك سويسري',           symbol:'Fr'   },
-    { code:'SEK',  flag:'🇸🇪', name:'كرون سويدي',            symbol:'kr'   },
-    { code:'NOK',  flag:'🇳🇴', name:'كرون نرويجي',           symbol:'kr'   },
-    { code:'DKK',  flag:'🇩🇰', name:'كرون دنماركي',          symbol:'kr'   },
-    { code:'PLN',  flag:'🇵🇱', name:'زلوتي بولندي',          symbol:'zł'   },
-    { code:'CZK',  flag:'🇨🇿', name:'كورونة تشيكية',         symbol:'Kč'   },
-    { code:'HUF',  flag:'🇭🇺', name:'فورنت هنغاري',          symbol:'Ft'   },
-    { code:'RON',  flag:'🇷🇴', name:'لي روماني',             symbol:'lei'  },
-    { code:'BGN',  flag:'🇧🇬', name:'ليف بلغاري',            symbol:'лв'   },
-    { code:'HRK',  flag:'🇭🇷', name:'كونا كرواتية',          symbol:'kn'   },
     { code:'ZAR',  flag:'🇿🇦', name:'راند جنوب أفريقي',      symbol:'R'    },
     { code:'NGN',  flag:'🇳🇬', name:'نيرة نيجيرية',          symbol:'₦'    },
-    { code:'KES',  flag:'🇰🇪', name:'شلن كيني',              symbol:'KSh'  },
-    { code:'GHS',  flag:'🇬🇭', name:'سيدي غاني',             symbol:'₵'    },
-    { code:'ETB',  flag:'🇪🇹', name:'بر إثيوبي',             symbol:'Br'   },
-    { code:'TZS',  flag:'🇹🇿', name:'شلن تنزاني',            symbol:'TSh'  },
-    { code:'UGX',  flag:'🇺🇬', name:'شلن أوغندي',            symbol:'USh'  },
-    { code:'XOF',  flag:'🌍',  name:'فرنك CFA غرب أفريقيا', symbol:'Fr'   },
-    { code:'XAF',  flag:'🌍',  name:'فرنك CFA وسط أفريقيا', symbol:'Fr'   },
-    { code:'IDR',  flag:'🇮🇩', name:'روبية إندونيسية',       symbol:'Rp'   },
-    { code:'MYR',  flag:'🇲🇾', name:'رينجت ماليزي',          symbol:'RM'   },
-    { code:'THB',  flag:'🇹🇭', name:'بات تايلاندي',          symbol:'฿'    },
-    { code:'PHP',  flag:'🇵🇭', name:'بيزو فلبيني',           symbol:'₱'    },
-    { code:'VND',  flag:'🇻🇳', name:'دونغ فيتنامي',          symbol:'₫'    },
-    { code:'PKR',  flag:'🇵🇰', name:'روبية باكستانية',       symbol:'₨'    },
-    { code:'BDT',  flag:'🇧🇩', name:'تاكا بنغلاديشية',       symbol:'৳'    },
-    { code:'LKR',  flag:'🇱🇰', name:'روبية سريلانكية',       symbol:'Rs'   },
-    { code:'NPR',  flag:'🇳🇵', name:'روبية نيبالية',         symbol:'Rs'   },
-    { code:'MMK',  flag:'🇲🇲', name:'كيات بورمي',            symbol:'K'    },
-    { code:'KHR',  flag:'🇰🇭', name:'رييل كمبودي',           symbol:'៛'    },
-    { code:'UAH',  flag:'🇺🇦', name:'هريفنيا أوكرانية',      symbol:'₴'    },
-    { code:'GEL',  flag:'🇬🇪', name:'لاري جيورجي',           symbol:'₾'    },
-    { code:'AMD',  flag:'🇦🇲', name:'درام أرميني',           symbol:'֏'    },
-    { code:'AZN',  flag:'🇦🇿', name:'مانات أذربيجاني',       symbol:'₼'    },
-    { code:'KZT',  flag:'🇰🇿', name:'تنغي كازاخستاني',       symbol:'₸'    },
-    { code:'UZS',  flag:'🇺🇿', name:'سوم أوزبكستاني',        symbol:'сум'  },
-    { code:'IRR',  flag:'🇮🇷', name:'ريال إيراني',           symbol:'﷼'    },
-    { code:'AFN',  flag:'🇦🇫', name:'أفغاني',                symbol:'؋'    },
-    { code:'ILS',  flag:'🇮🇱', name:'شيكل إسرائيلي',         symbol:'₪'    },
-    { code:'NZD',  flag:'🇳🇿', name:'دولار نيوزيلندي',       symbol:'NZ$'  },
-    { code:'SGD',  flag:'🇸🇬', name:'دولار سنغافوري',        symbol:'S$'   },
-    { code:'HKD',  flag:'🇭🇰', name:'دولار هونغ كونغ',       symbol:'HK$'  },
-    { code:'TWD',  flag:'🇹🇼', name:'دولار تايواني',         symbol:'NT$'  },
-    { code:'CLP',  flag:'🇨🇱', name:'بيزو تشيلي',            symbol:'$'    },
-    { code:'COP',  flag:'🇨🇴', name:'بيزو كولومبي',          symbol:'$'    },
-    { code:'PEN',  flag:'🇵🇪', name:'سول بيروفي',            symbol:'S/'   },
-    { code:'ARS',  flag:'🇦🇷', name:'بيزو أرجنتيني',         symbol:'$'    },
-    { code:'VEF',  flag:'🇻🇪', name:'بوليفار فنزويلي',       symbol:'Bs'   },
-    { code:'CRC',  flag:'🇨🇷', name:'كولون كوستاريكي',       symbol:'₡'    },
-    { code:'DOP',  flag:'🇩🇴', name:'بيزو دومينيكاني',       symbol:'RD$'  },
-    { code:'GTQ',  flag:'🇬🇹', name:'كيتزال غواتيمالي',      symbol:'Q'    },
-    { code:'HNL',  flag:'🇭🇳', name:'ليمبيرا هندوراسي',      symbol:'L'    },
-    { code:'NIO',  flag:'🇳🇮', name:'كوردوبا نيكاراغوي',     symbol:'C$'   },
-    { code:'PAB',  flag:'🇵🇦', name:'بالبوا بنمي',           symbol:'B/.'  },
-    { code:'PYG',  flag:'🇵🇾', name:'غواراني باراغوياني',    symbol:'₲'    },
-    { code:'UYU',  flag:'🇺🇾', name:'بيزو أوروغواياني',      symbol:'$U'   },
-    { code:'BOB',  flag:'🇧🇴', name:'بوليفيانو بوليفي',      symbol:'Bs'   },
-    { code:'JMD',  flag:'🇯🇲', name:'دولار جامايكي',         symbol:'J$'   },
-    { code:'TTD',  flag:'🇹🇹', name:'دولار ترينيداد',        symbol:'TT$'  },
-    { code:'BBD',  flag:'🇧🇧', name:'دولار بربادوس',         symbol:'Bds$' },
-    { code:'MAD',  flag:'🇲🇦', name:'درهم مغربي',            symbol:'د.م'  },
-    { code:'MZN',  flag:'🇲🇿', name:'متيكال موزمبيقي',       symbol:'MT'   },
-    { code:'BWP',  flag:'🇧🇼', name:'بولا بوتسواني',         symbol:'P'    },
-    { code:'ZMW',  flag:'🇿🇲', name:'كواتشا زامبي',          symbol:'ZK'   },
-    { code:'MWK',  flag:'🇲🇼', name:'كواتشا ملاوي',          symbol:'MK'   },
-    { code:'RWF',  flag:'🇷🇼', name:'فرنك رواندي',           symbol:'Fr'   },
-    { code:'BIF',  flag:'🇧🇮', name:'فرنك بوروندي',          symbol:'Fr'   },
-    { code:'DJF',  flag:'🇩🇯', name:'فرنك جيبوتي',           symbol:'Fr'   },
-    { code:'ERN',  flag:'🇪🇷', name:'ناكفا إريتري',          symbol:'Nfk'  },
-    { code:'GMD',  flag:'🇬🇲', name:'دالاسي غامبي',          symbol:'D'    },
-    { code:'GNF',  flag:'🇬🇳', name:'فرنك غيني',             symbol:'Fr'   },
-    { code:'MGA',  flag:'🇲🇬', name:'أرياري مدغشقري',        symbol:'Ar'   },
-    { code:'SCR',  flag:'🇸🇨', name:'روبية سيشيلية',         symbol:'₨'    },
-    { code:'SLL',  flag:'🇸🇱', name:'ليون سيراليوني',        symbol:'Le'   },
-    { code:'SOS',  flag:'🇸🇴', name:'شلن صومالي',            symbol:'Sh'   },
-    { code:'STN',  flag:'🇸🇹', name:'دوبرا ساو تومي',        symbol:'Db'   },
-    { code:'SZL',  flag:'🇸🇿', name:'ليلانجيني سوازيلاندي',  symbol:'L'    },
-    { code:'LSL',  flag:'🇱🇸', name:'لوتي ليسوتو',           symbol:'L'    },
-    { code:'NAD',  flag:'🇳🇦', name:'دولار ناميبي',          symbol:'N$'   },
-    { code:'AOA',  flag:'🇦🇴', name:'كوانزا أنغولي',         symbol:'Kz'   },
-    { code:'CDF',  flag:'🇨🇩', name:'فرنك كونغولي',          symbol:'Fr'   },
-    { code:'CMF',  flag:'🇨🇲', name:'فرنك كاميروني',         symbol:'Fr'   },
-    { code:'MNT',  flag:'🇲🇳', name:'توغروغ منغولي',         symbol:'₮'    },
-    { code:'KPW',  flag:'🇰🇵', name:'وون كوري شمالي',        symbol:'₩'    },
-    { code:'LAK',  flag:'🇱🇦', name:'كيب لاوسي',             symbol:'₭'    },
-    { code:'MVR',  flag:'🇲🇻', name:'روفية مالديفية',        symbol:'Rf'   },
-    { code:'BTN',  flag:'🇧🇹', name:'نغولتروم بوتاني',       symbol:'Nu'   },
-    { code:'FJD',  flag:'🇫🇯', name:'دولار فيجي',            symbol:'FJ$'  },
-    { code:'PGK',  flag:'🇵🇬', name:'كينا بابوا غينيا',      symbol:'K'    },
-    { code:'SBD',  flag:'🇸🇧', name:'دولار جزر سليمان',      symbol:'SI$'  },
-    { code:'TOP',  flag:'🇹🇴', name:'باانغا تونغي',          symbol:'T$'   },
-    { code:'VUV',  flag:'🇻🇺', name:'فاتو فانواتو',          symbol:'Vt'   },
-    { code:'WST',  flag:'🇼🇸', name:'تالا ساموا',            symbol:'T'    },
-    { code:'XPF',  flag:'🇵🇫', name:'فرنك بولينيزيا',        symbol:'Fr'   },
-    { code:'ISK',  flag:'🇮🇸', name:'كرونة آيسلندية',        symbol:'kr'   },
-    { code:'MKD',  flag:'🇲🇰', name:'دينار مقدوني',          symbol:'den'  },
-    { code:'ALL',  flag:'🇦🇱', name:'ليك ألباني',            symbol:'L'    },
-    { code:'BAM',  flag:'🇧🇦', name:'مارك بوسني',            symbol:'KM'   },
-    { code:'RSD',  flag:'🇷🇸', name:'دينار صربي',            symbol:'din'  },
-    { code:'MDL',  flag:'🇲🇩', name:'ليو مولدوفي',           symbol:'L'    },
-    { code:'BYN',  flag:'🇧🇾', name:'روبل بيلاروسي',         symbol:'Br'   },
-    { code:'TJS',  flag:'🇹🇯', name:'سوموني طاجيكي',         symbol:'SM'   },
-    { code:'TMT',  flag:'🇹🇲', name:'مانات تركمانستاني',     symbol:'T'    },
-    { code:'KGS',  flag:'🇰🇬', name:'سوم قيرغيزستاني',       symbol:'с'    },
-    { code:'GIP',  flag:'🇬🇮', name:'جنيه جبل طارق',         symbol:'£'    },
-    { code:'FKP',  flag:'🇫🇰', name:'جنيه جزر فوكلاند',      symbol:'£'    },
-    { code:'SHP',  flag:'🇸🇭', name:'جنيه سانت هيلينا',      symbol:'£'    },
-    { code:'KYD',  flag:'🇰🇾', name:'دولار جزر كايمان',      symbol:'CI$'  },
-    { code:'BMD',  flag:'🇧🇲', name:'دولار برمودا',           symbol:'BD$'  },
-    { code:'BSD',  flag:'🇧🇸', name:'دولار باهامي',           symbol:'B$'   },
-    { code:'BZD',  flag:'🇧🇿', name:'دولار بليز',             symbol:'BZ$'  },
-    { code:'GYD',  flag:'🇬🇾', name:'دولار غياني',           symbol:'GY$'  },
-    { code:'SRD',  flag:'🇸🇷', name:'دولار سورينامي',        symbol:'$'    },
-    { code:'AWG',  flag:'🇦🇼', name:'فلورن أروبي',           symbol:'ƒ'    },
-    { code:'ANG',  flag:'🇨🇼', name:'غيلدر أنتيلي',          symbol:'ƒ'    },
-    { code:'HTG',  flag:'🇭🇹', name:'غورد هايتي',            symbol:'G'    },
-    { code:'CUP',  flag:'🇨🇺', name:'بيزو كوبي',             symbol:'₱'    },
-    { code:'MOP',  flag:'🇲🇴', name:'باتاكا ماكاو',          symbol:'P'    },
-    { code:'BND',  flag:'🇧🇳', name:'دولار بروناي',           symbol:'B$'   },
-    { code:'XCD',  flag:'🌎',  name:'دولار كاريبي شرقي',     symbol:'EC$'  },
+    { code:'BTC',  flag:'🟠',  name:'بيتكوين',               symbol:'BTC'  },
+    { code:'ETH',  flag:'🔷',  name:'إيثيريوم',              symbol:'ETH'  },
 ];
 
-// ===== فتح modal الإعدادات =====
+// ==================== Modal الإعدادات ====================
 window.openSettingsModal = function () {
     document.getElementById('settings-modal')?.remove();
 
@@ -465,10 +427,10 @@ window.openSettingsModal = function () {
     const modal = document.createElement('div');
     modal.id = 'settings-modal';
     modal.style.cssText = `
-        position: fixed; inset: 0;
-        background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-        z-index: 99999; display: flex; align-items: center; justify-content: center;
-        padding: 20px; animation: settingsFadeIn 0.2s ease;
+        position:fixed; inset:0;
+        background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+        z-index:99999; display:flex; align-items:center; justify-content:center;
+        padding:20px; animation:settingsFadeIn 0.2s ease;
     `;
 
     modal.innerHTML = `
@@ -476,71 +438,51 @@ window.openSettingsModal = function () {
             @keyframes settingsFadeIn  { from{opacity:0} to{opacity:1} }
             @keyframes settingsSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
             @keyframes dropdownOpen    { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-
-            /* ===== Custom Select shared ===== */
             .custom-select-trigger {
-                display: flex; align-items: center; gap: 10px;
-                padding: 12px 14px; border-radius: 10px;
-                border: 2px solid #1e293b; background: #0f172a;
-                color: #e2e8f0; cursor: pointer;
-                transition: border-color 0.2s; user-select: none;
-                font-family: 'Tajawal','Segoe UI',sans-serif;
+                display:flex; align-items:center; gap:10px; padding:12px 14px;
+                border-radius:10px; border:2px solid #1e293b; background:#0f172a;
+                color:#e2e8f0; cursor:pointer; transition:border-color 0.2s;
+                user-select:none; font-family:'Tajawal','Segoe UI',sans-serif;
             }
-            .custom-select-trigger:hover,
-            .custom-select-trigger.open { border-color: #f97316; }
-            .custom-select-trigger .chevron {
-                color: #64748b; font-size: 12px;
-                transition: transform 0.2s; margin-right: auto;
-            }
-            .custom-select-trigger.open .chevron { transform: rotate(180deg); }
-
+            .custom-select-trigger:hover, .custom-select-trigger.open { border-color:#f97316; }
+            .custom-select-trigger .chevron { color:#64748b; font-size:12px; transition:transform 0.2s; margin-right:auto; }
+            .custom-select-trigger.open .chevron { transform:rotate(180deg); }
             .custom-dropdown {
-                position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-                background: #0f172a; border: 2px solid #f97316;
-                border-radius: 12px; z-index: 999999;
-                max-height: 260px; display: none; flex-direction: column;
-                overflow: hidden; animation: dropdownOpen 0.15s ease;
+                position:absolute; top:calc(100% + 6px); left:0; right:0;
+                background:#0f172a; border:2px solid #f97316; border-radius:12px;
+                z-index:999999; max-height:260px; display:none; flex-direction:column;
+                overflow:hidden; animation:dropdownOpen 0.15s ease;
             }
-            .custom-dropdown.open { display: flex; }
-
+            .custom-dropdown.open { display:flex; }
             .custom-search-wrapper {
-                padding: 10px 12px; border-bottom: 1px solid #1e293b;
-                display: flex; align-items: center; gap: 8px;
-                background: #0f172a; flex-shrink: 0;
+                padding:10px 12px; border-bottom:1px solid #1e293b;
+                display:flex; align-items:center; gap:8px; background:#0f172a; flex-shrink:0;
             }
-            .custom-search-wrapper i { color: #64748b; font-size: 13px; }
+            .custom-search-wrapper i { color:#64748b; font-size:13px; }
             .custom-search-input {
-                background: transparent; border: none; outline: none;
-                color: #e2e8f0; font-size: 13px; flex: 1;
-                font-family: 'Tajawal','Segoe UI',sans-serif; direction: rtl;
+                background:transparent; border:none; outline:none;
+                color:#e2e8f0; font-size:13px; flex:1;
+                font-family:'Tajawal','Segoe UI',sans-serif; direction:rtl;
             }
-            .custom-search-input::placeholder { color: #475569; }
-
-            .custom-options-list {
-                overflow-y: auto; flex: 1;
-                scrollbar-width: thin; scrollbar-color: #f97316 #0f172a;
-            }
-            .custom-options-list::-webkit-scrollbar { width: 4px; }
-            .custom-options-list::-webkit-scrollbar-track { background: #0f172a; }
-            .custom-options-list::-webkit-scrollbar-thumb { background: #f97316; border-radius: 4px; }
-
+            .custom-search-input::placeholder { color:#475569; }
+            .custom-options-list { overflow-y:auto; flex:1; scrollbar-width:thin; scrollbar-color:#f97316 #0f172a; }
+            .custom-options-list::-webkit-scrollbar { width:4px; }
+            .custom-options-list::-webkit-scrollbar-thumb { background:#f97316; border-radius:4px; }
             .custom-option {
-                display: flex; align-items: center; gap: 10px;
-                padding: 9px 14px; cursor: pointer;
-                transition: background 0.15s; font-size: 13px; color: #e2e8f0;
+                display:flex; align-items:center; gap:10px; padding:9px 14px;
+                cursor:pointer; transition:background 0.15s; font-size:13px; color:#e2e8f0;
             }
-            .custom-option:hover { background: #1e293b; }
-            .custom-option.active { background: rgba(249,115,22,0.12); color: #f97316; }
-            .custom-option .opt-icon { font-size: 18px; flex-shrink: 0; }
-            .custom-option .opt-name { flex: 1; }
-            .custom-option .opt-sub  { color: #64748b; font-size: 11px; font-family: monospace; }
-            .custom-option .opt-check { color: #f97316; font-size: 12px; }
-            .custom-no-results { padding: 20px; text-align: center; color: #64748b; font-size: 13px; }
+            .custom-option:hover { background:#1e293b; }
+            .custom-option.active { background:rgba(249,115,22,0.12); color:#f97316; }
+            .custom-option .opt-icon { font-size:18px; flex-shrink:0; }
+            .custom-option .opt-name { flex:1; }
+            .custom-option .opt-sub  { color:#64748b; font-size:11px; font-family:monospace; }
+            .custom-option .opt-check { color:#f97316; font-size:12px; }
+            .custom-no-results { padding:20px; text-align:center; color:#64748b; font-size:13px; }
         </style>
 
         <div style="background:#111827;border:1px solid #1e293b;border-radius:20px;padding:28px;width:100%;max-width:420px;color:#e2e8f0;animation:settingsSlideUp 0.25s ease;font-family:'Tajawal','Segoe UI',sans-serif;max-height:90vh;overflow-y:auto;">
 
-            <!-- Header -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                 <h3 style="margin:0;font-size:17px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px;">
                     <i class="fas fa-globe" style="color:#f97316;"></i> اللغة والعملة
@@ -553,7 +495,7 @@ window.openSettingsModal = function () {
 
             <!-- اللغة -->
             <div style="margin-bottom:20px;">
-                <label style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:10px;">
+                <label style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:1px;display:block;margin-bottom:10px;">
                     <i class="fas fa-language" style="color:#f97316;margin-left:4px;"></i> اللغة
                 </label>
                 <div style="position:relative;" id="lang-select-wrapper">
@@ -574,7 +516,7 @@ window.openSettingsModal = function () {
 
             <!-- العملة -->
             <div style="margin-bottom:24px;">
-                <label style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:10px;">
+                <label style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:1px;display:block;margin-bottom:10px;">
                     <i class="fas fa-coins" style="color:#f97316;margin-left:4px;"></i> العملة
                 </label>
                 <div style="position:relative;" id="currency-select-wrapper">
@@ -594,7 +536,6 @@ window.openSettingsModal = function () {
                 </div>
             </div>
 
-            <!-- زر الحفظ -->
             <button onclick="saveSettings()"
                 style="width:100%;padding:13px;background:#f97316;color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Tajawal','Segoe UI',sans-serif;box-shadow:0 4px 14px rgba(249,115,22,0.35);">
                 <i class="fas fa-check-circle"></i> حفظ الإعدادات
@@ -610,18 +551,16 @@ window.openSettingsModal = function () {
 
     _renderOptions('lang', '');
     _renderOptions('currency', '');
-
     document.addEventListener('click', _outsideClick);
 };
 
-// ===== Toggle Dropdown =====
+// ==================== Toggle / Filter / Select ====================
 window._toggleDropdown = function (type) {
     const trigger  = document.getElementById(`${type}-select-trigger`);
     const dropdown = document.getElementById(`${type}-dropdown`);
     const input    = document.getElementById(`${type}-search-input`);
     if (!trigger || !dropdown) return;
 
-    // إغلاق الآخر
     const other = type === 'lang' ? 'currency' : 'lang';
     document.getElementById(`${other}-dropdown`)?.classList.remove('open');
     document.getElementById(`${other}-select-trigger`)?.classList.remove('open');
@@ -649,9 +588,7 @@ window._outsideClick = function (e) {
     });
 };
 
-window._filterOptions = function (type, query) {
-    _renderOptions(type, query);
-};
+window._filterOptions = (type, query) => _renderOptions(type, query);
 
 window._renderOptions = function (type, query) {
     const list = document.getElementById(`${type}-options-list`);
@@ -677,7 +614,7 @@ window._renderOptions = function (type, query) {
     list.innerHTML = filtered.map(item => `
         <div class="custom-option ${item.code === curr ? 'active' : ''}"
              onclick="_selectOption('${type}', '${item.code}')">
-            <span class="opt-icon">${item.flag || item.icon || '💱'}</span>
+            <span class="opt-icon">${item.flag || '💱'}</span>
             <span class="opt-name">${item.name}</span>
             ${type === 'currency'
                 ? `<span class="opt-sub">${item.symbol}</span>`
@@ -708,8 +645,8 @@ window._selectOption = function (type, code) {
     document.getElementById(`${type}-select-trigger`)?.classList.remove('open');
 };
 
-// ===== حفظ الإعدادات =====
-window.saveSettings = function () {
+// ==================== حفظ الإعدادات + ترجمة ====================
+window.saveSettings = async function () {
     const lang     = window._tempLang     || 'ar';
     const currency = window._tempCurrency || 'MRU';
 
@@ -724,16 +661,41 @@ window.saveSettings = function () {
     document.removeEventListener('click', _outsideClick);
     closeSettingsModal();
 
+    // ✅ Toast التحميل
     const toast = document.createElement('div');
-    toast.textContent = '✅ تم حفظ الإعدادات';
-    toast.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#22c55e;color:white;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.3);pointer-events:none;font-family:'Tajawal','Segoe UI',sans-serif;`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+    toast.id = '_settings-toast';
+    toast.style.cssText = `
+        position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+        background:#3b82f6; color:white; padding:12px 24px; border-radius:10px;
+        font-size:14px; font-weight:700; z-index:99999;
+        box-shadow:0 4px 20px rgba(0,0,0,0.3); pointer-events:none;
+        font-family:'Tajawal','Segoe UI',sans-serif; white-space:nowrap;
+    `;
 
-    setTimeout(() => location.reload(), 500);
+    if (lang === 'ar') {
+        // العربية → إعادة تحميل لاسترجاع النصوص الأصلية
+        toast.textContent = '✅ تم حفظ الإعدادات';
+        toast.style.background = '#22c55e';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1500);
+        setTimeout(() => location.reload(), 600);
+    } else {
+        // لغة أخرى → ترجمة الصفحة بدون reload
+        toast.textContent = '⏳ جاري الترجمة...';
+        document.body.appendChild(toast);
+
+        await translatePage(lang);
+
+        toast.textContent      = '✅ تمت الترجمة!';
+        toast.style.background = '#22c55e';
+        setTimeout(() => toast.remove(), 2000);
+    }
+
+    // ✅ إطلاق حدث لتحديث الأسعار في الصفحة
+    window.dispatchEvent(new CustomEvent('currency-changed', { detail: currency }));
 };
 
-// ===== إغلاق الـ modal =====
+// ==================== إغلاق Modal ====================
 window.closeSettingsModal = function () {
     document.removeEventListener('click', _outsideClick);
     const modal = document.getElementById('settings-modal');
@@ -743,11 +705,3 @@ window.closeSettingsModal = function () {
         setTimeout(() => modal.remove(), 200);
     }
 };
-
-// ===== تطبيق الإعدادات عند تحميل الصفحة =====
-document.addEventListener('DOMContentLoaded', () => {
-    const lang = localStorage.getItem('lang') || 'ar';
-    const dir  = ALL_LANGUAGES.find(l => l.code === lang)?.dir || 'rtl';
-    document.documentElement.setAttribute('dir',  dir);
-    document.documentElement.setAttribute('lang', lang);
-});
