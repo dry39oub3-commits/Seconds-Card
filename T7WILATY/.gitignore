@@ -5,3 +5,7 @@
 
 # Other
 *.lnk
+node_modules/
+.env
+.env.local
+.env.*
