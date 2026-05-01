@@ -1,5 +1,12 @@
 import { supabase } from './supabase-config.js';
 
+// ===== مسح الـ Cache إجبارياً =====
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+        .then(reg => reg.update())
+        .catch(() => {});
+}
+
 // ==================== بناء الهيدر ====================
 function buildHeader() {
     const header = document.createElement('header');
