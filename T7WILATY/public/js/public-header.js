@@ -1,11 +1,5 @@
 import { supabase } from './supabase-config.js';
 
-// ===== مسح الـ Cache إجبارياً =====
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(reg => reg.update())
-        .catch(() => {});
-}
 
 // ==================== بناء الهيدر ====================
 function buildHeader() {
@@ -308,17 +302,8 @@ async function translatePage(targetLang) {
 // ==================== تحويل العملة ====================
 // أسعار الصرف تقريبية نسبةً إلى MRU
 const EXCHANGE_RATES = {
-    MRU:  1,
-    USDT: 1/43,   USD:  1/43,   EUR:  1/47,
-    GBP:  1/54,   SAR:  1/11.5, AED:  1/11.7,
-    KWD:  1/140,  QAR:  1/11.8, BHD:  1/114,
-    OMR:  1/112,  JOD:  1/61,   EGP:  1/1.4,
-    MAD:  1/4.3,  TND:  1/13.8, DZD:  1/0.32,
-    LYD:  1/8.9,  SDG:  1/0.07, IQD:  1/0.033,
-    JPY:  1/0.29, CNY:  1/5.9,  KRW:  1/0.032,
-    INR:  1/0.52, TRY:  1/1.3,  RUB:  1/0.47,
-    BRL:  1/8.6,  CAD:  1/31.7, AUD:  1/27.8,
-    CHF:  1/48.5, NGN:  1/0.03, ZAR:  1/2.4,
+    MRU: 1,
+    USD: 1/43,
 };
 
 // تحويل سعر بـ MRU إلى العملة المختارة
@@ -337,88 +322,15 @@ window.convertPrice = function(priceMRU) {
 // ==================== قوائم اللغات والعملات ====================
 
 const ALL_LANGUAGES = [
-    { code:'ar',  flag:'🇸🇦', name:'العربية',           native:'العربية',             dir:'rtl' },
-    { code:'fr',  flag:'🇫🇷', name:'Français',           native:'Français',            dir:'ltr' },
-    { code:'en',  flag:'🇺🇸', name:'English',             native:'English',             dir:'ltr' },
-    { code:'es',  flag:'🇪🇸', name:'Español',             native:'Español',             dir:'ltr' },
-    { code:'de',  flag:'🇩🇪', name:'Deutsch',              native:'Deutsch',             dir:'ltr' },
-    { code:'it',  flag:'🇮🇹', name:'Italiano',             native:'Italiano',            dir:'ltr' },
-    { code:'pt',  flag:'🇧🇷', name:'Português',            native:'Português',           dir:'ltr' },
-    { code:'ru',  flag:'🇷🇺', name:'Русский',              native:'Русский',             dir:'ltr' },
-    { code:'zh',  flag:'🇨🇳', name:'中文',                 native:'中文 (普通话)',        dir:'ltr' },
-    { code:'ja',  flag:'🇯🇵', name:'日本語',                native:'日本語',              dir:'ltr' },
-    { code:'ko',  flag:'🇰🇷', name:'한국어',                native:'한국어',              dir:'ltr' },
-    { code:'tr',  flag:'🇹🇷', name:'Türkçe',               native:'Türkçe',              dir:'ltr' },
-    { code:'fa',  flag:'🇮🇷', name:'فارسی',                native:'فارسی',               dir:'rtl' },
-    { code:'ur',  flag:'🇵🇰', name:'اردو',                 native:'اردو',                dir:'rtl' },
-    { code:'hi',  flag:'🇮🇳', name:'हिन्दी',               native:'हिन्दी',              dir:'ltr' },
-    { code:'bn',  flag:'🇧🇩', name:'বাংলা',                native:'বাংলা',               dir:'ltr' },
-    { code:'vi',  flag:'🇻🇳', name:'Tiếng Việt',           native:'Tiếng Việt',          dir:'ltr' },
-    { code:'th',  flag:'🇹🇭', name:'ภาษาไทย',              native:'ภาษาไทย',             dir:'ltr' },
-    { code:'id',  flag:'🇮🇩', name:'Bahasa Indonesia',     native:'Bahasa Indonesia',    dir:'ltr' },
-    { code:'ms',  flag:'🇲🇾', name:'Bahasa Melayu',        native:'Bahasa Melayu',       dir:'ltr' },
-    { code:'nl',  flag:'🇳🇱', name:'Nederlands',           native:'Nederlands',          dir:'ltr' },
-    { code:'pl',  flag:'🇵🇱', name:'Polski',               native:'Polski',              dir:'ltr' },
-    { code:'sv',  flag:'🇸🇪', name:'Svenska',              native:'Svenska',             dir:'ltr' },
-    { code:'da',  flag:'🇩🇰', name:'Dansk',                native:'Dansk',               dir:'ltr' },
-    { code:'no',  flag:'🇳🇴', name:'Norsk',                native:'Norsk',               dir:'ltr' },
-    { code:'fi',  flag:'🇫🇮', name:'Suomi',                native:'Suomi',               dir:'ltr' },
-    { code:'cs',  flag:'🇨🇿', name:'Čeština',              native:'Čeština',             dir:'ltr' },
-    { code:'hu',  flag:'🇭🇺', name:'Magyar',               native:'Magyar',              dir:'ltr' },
-    { code:'ro',  flag:'🇷🇴', name:'Română',               native:'Română',              dir:'ltr' },
-    { code:'el',  flag:'🇬🇷', name:'Ελληνικά',             native:'Ελληνικά',            dir:'ltr' },
-    { code:'he',  flag:'🇮🇱', name:'עברית',                native:'עברית',               dir:'rtl' },
-    { code:'sw',  flag:'🇰🇪', name:'Kiswahili',            native:'Kiswahili',           dir:'ltr' },
-    { code:'tl',  flag:'🇵🇭', name:'Filipino',             native:'Filipino',            dir:'ltr' },
-    { code:'uk',  flag:'🇺🇦', name:'Українська',           native:'Українська',          dir:'ltr' },
-    { code:'bg',  flag:'🇧🇬', name:'Български',            native:'Български',           dir:'ltr' },
-    { code:'hr',  flag:'🇭🇷', name:'Hrvatski',             native:'Hrvatski',            dir:'ltr' },
-    { code:'sk',  flag:'🇸🇰', name:'Slovenčina',           native:'Slovenčina',          dir:'ltr' },
-    { code:'ka',  flag:'🇬🇪', name:'ქართული',              native:'ქართული',             dir:'ltr' },
-    { code:'hy',  flag:'🇦🇲', name:'Հայերեն',              native:'Հայերեն',             dir:'ltr' },
-    { code:'az',  flag:'🇦🇿', name:'Azərbaycan',           native:'Azərbaycan',          dir:'ltr' },
-    { code:'kk',  flag:'🇰🇿', name:'Қазақша',              native:'Қазақша',             dir:'ltr' },
-    { code:'ps',  flag:'🇦🇫', name:'پښتو',                 native:'پښتو',                dir:'rtl' },
-    { code:'ku',  flag:'🇮🇶', name:'Kurdî',                native:'Kurdî',               dir:'ltr' },
-    { code:'so',  flag:'🇸🇴', name:'Soomaali',             native:'Soomaali',            dir:'ltr' },
-    { code:'am',  flag:'🇪🇹', name:'አማርኛ',                native:'አማርኛ',               dir:'ltr' },
-    { code:'ha',  flag:'🇳🇬', name:'Hausa',                native:'Hausa',               dir:'ltr' },
-    { code:'eo',  flag:'🌍',  name:'Esperanto',            native:'Esperanto',           dir:'ltr' },
+    { code:'ar', flag:'🇸🇦', name:'العربية',  native:'العربية', dir:'rtl' },
+    { code:'en', flag:'🇺🇸', name:'English',  native:'English',  dir:'ltr' },
+    { code:'fr', flag:'🇫🇷', name:'Français', native:'Français', dir:'ltr' },
+    { code:'es', flag:'🇪🇸', name:'Español',  native:'Español',  dir:'ltr' },
 ];
 
 const ALL_CURRENCIES = [
-    { code:'MRU',  flag:'🇲🇷', name:'أوقية موريتانية',       symbol:'MRU'  },
-    { code:'USDT', flag:'🔵',  name:'تيثر (USDT)',            symbol:'USDT' },
-    { code:'USD',  flag:'🇺🇸', name:'دولار أمريكي',          symbol:'$'    },
-    { code:'EUR',  flag:'🇪🇺', name:'يورو',                  symbol:'€'    },
-    { code:'GBP',  flag:'🇬🇧', name:'جنيه إسترليني',        symbol:'£'    },
-    { code:'SAR',  flag:'🇸🇦', name:'ريال سعودي',            symbol:'ر.س'  },
-    { code:'AED',  flag:'🇦🇪', name:'درهم إماراتي',          symbol:'د.إ'  },
-    { code:'KWD',  flag:'🇰🇼', name:'دينار كويتي',           symbol:'د.ك'  },
-    { code:'QAR',  flag:'🇶🇦', name:'ريال قطري',             symbol:'ر.ق'  },
-    { code:'BHD',  flag:'🇧🇭', name:'دينار بحريني',          symbol:'د.ب'  },
-    { code:'OMR',  flag:'🇴🇲', name:'ريال عماني',            symbol:'ر.ع'  },
-    { code:'JOD',  flag:'🇯🇴', name:'دينار أردني',           symbol:'د.أ'  },
-    { code:'EGP',  flag:'🇪🇬', name:'جنيه مصري',             symbol:'ج.م'  },
-    { code:'MAD',  flag:'🇲🇦', name:'درهم مغربي',            symbol:'د.م'  },
-    { code:'TND',  flag:'🇹🇳', name:'دينار تونسي',           symbol:'د.ت'  },
-    { code:'DZD',  flag:'🇩🇿', name:'دينار جزائري',          symbol:'د.ج'  },
-    { code:'LYD',  flag:'🇱🇾', name:'دينار ليبي',            symbol:'د.ل'  },
-    { code:'IQD',  flag:'🇮🇶', name:'دينار عراقي',           symbol:'ع.د'  },
-    { code:'JPY',  flag:'🇯🇵', name:'ين ياباني',             symbol:'¥'    },
-    { code:'CNY',  flag:'🇨🇳', name:'يوان صيني',             symbol:'¥'    },
-    { code:'KRW',  flag:'🇰🇷', name:'وون كوري',              symbol:'₩'    },
-    { code:'INR',  flag:'🇮🇳', name:'روبية هندية',           symbol:'₹'    },
-    { code:'TRY',  flag:'🇹🇷', name:'ليرة تركية',            symbol:'₺'    },
-    { code:'RUB',  flag:'🇷🇺', name:'روبل روسي',             symbol:'₽'    },
-    { code:'BRL',  flag:'🇧🇷', name:'ريال برازيلي',          symbol:'R$'   },
-    { code:'CAD',  flag:'🇨🇦', name:'دولار كندي',            symbol:'C$'   },
-    { code:'AUD',  flag:'🇦🇺', name:'دولار أسترالي',         symbol:'A$'   },
-    { code:'CHF',  flag:'🇨🇭', name:'فرنك سويسري',           symbol:'Fr'   },
-    { code:'ZAR',  flag:'🇿🇦', name:'راند جنوب أفريقي',      symbol:'R'    },
-    { code:'NGN',  flag:'🇳🇬', name:'نيرة نيجيرية',          symbol:'₦'    },
-    { code:'BTC',  flag:'🟠',  name:'بيتكوين',               symbol:'BTC'  },
-    { code:'ETH',  flag:'🔷',  name:'إيثيريوم',              symbol:'ETH'  },
+    { code:'MRU', flag:'🇲🇷', name:'أوقية موريتانية', symbol:'MRU' },
+    { code:'USD', flag:'🇺🇸', name:'دولار أمريكي',    symbol:'$'   },
 ];
 
 // ==================== Modal الإعدادات ====================
