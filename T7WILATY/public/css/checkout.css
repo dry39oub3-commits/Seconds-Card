@@ -1,24 +1,45 @@
+/* ── Checkout Container ── */
 .checkout-container {
     display: flex;
     justify-content: center;
-    padding: 50px 20px;
+    padding: 40px 20px;
 }
 
 .checkout-card {
-    background: var(--card-bg);
+    background: var(--card-bg, #1e293b);
     width: 100%;
-    max-width: 500px;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    text-align: center;
+    max-width: 480px;
+    padding: 32px 28px;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 
+.checkout-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text, #f1f5f9);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkout-title::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 20px;
+    background: #f97316;
+    border-radius: 4px;
+}
+
+/* ── طرق الدفع ── */
 #payment-methods-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin: 20px 0;
+    margin: 0 0 24px;
 }
 
 .payment-method-card {
@@ -26,20 +47,47 @@
     align-items: center;
     gap: 14px;
     padding: 14px 18px;
-    border-radius: 12px;
-    border: 2px solid #334155;
-    background: var(--card-bg);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
     cursor: pointer;
-    transition: 0.2s;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
 }
 
 .payment-method-card:hover {
-    border-color: var(--primary);
+    border-color: rgba(249,115,22,0.4);
+    background: rgba(249,115,22,0.04);
+    transform: translateY(-1px);
 }
 
 .payment-method-card.selected {
-    border-color: var(--primary);
-    background: rgba(249, 115, 22, 0.08);
+    border-color: #f97316;
+    background: rgba(249,115,22,0.08);
+}
+
+/* خط برتقالي في اليمين عند الاختيار */
+.payment-method-card.selected::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 3px;
+    background: #f97316;
+    border-radius: 4px 0 0 4px;
+}
+
+.payment-method-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: rgba(255,255,255,0.06);
+    padding: 6px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.06);
 }
 
 .payment-method-info {
@@ -48,101 +96,197 @@
 }
 
 .payment-method-name {
-    font-size: 15px;
-    font-weight: bold;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text, #f1f5f9);
+    margin-bottom: 3px;
 }
 
 .payment-method-desc {
     font-size: 12px;
-    color: #94a3b8;
-    margin-top: 3px;
+    color: #64748b;
 }
 
+/* Radio */
 .payment-method-radio {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: 2px solid #94a3b8;
+    border: 2px solid #334155;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: border-color 0.2s, background 0.2s;
 }
 
 .payment-method-card.selected .payment-method-radio {
-    border-color: var(--primary);
-    background: var(--primary);
+    border-color: #f97316;
+    background: #f97316;
 }
 
 .payment-method-card.selected .payment-method-radio::after {
     content: '';
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: white;
-    display: block;
+}
+
+/* ── ملخص الطلب ── */
+.order-summary {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
 }
 
 .summary-line {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
+    align-items: center;
+    font-size: 14px;
+    color: #94a3b8;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.summary-line:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.summary-line .summary-val {
+    font-weight: 600;
+    color: var(--text, #f1f5f9);
+}
+
+.summary-line.total-line {
     font-size: 16px;
+    font-weight: 700;
+    color: var(--text, #f1f5f9);
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: none;
+}
+
+.summary-line.total-line .summary-val {
+    color: #f97316;
+    font-size: 18px;
 }
 
 .wallet-balance-line {
-    color: var(--primary);
-    font-weight: bold;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 10px;
+    background: rgba(249,115,22,0.06);
+    border: 1px solid rgba(249,115,22,0.15);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #f97316;
+    font-weight: 600;
+    margin-bottom: 16px;
 }
 
+/* ── زر الدفع ── */
 .pay-now-btn {
     width: 100%;
     padding: 15px;
-    border-radius: 12px;
+    border-radius: 14px;
     border: none;
-    background: #4caf50;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
-    transition: 0.3s;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 4px 20px rgba(34,197,94,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    letter-spacing: 0.3px;
+}
+
+.pay-now-btn:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(34,197,94,0.4);
+}
+
+.pay-now-btn:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .pay-now-btn:disabled {
-    background: #64748b;
+    background: #334155;
+    color: #64748b;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
-.status-error { color: #ef4444; margin-bottom: 15px; font-weight: bold; }
-.security-note { font-size: 12px; color: #94a3b8; margin-top: 20px; }
+/* ── رسائل الحالة ── */
+.status-error {
+    color: #f87171;
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
+.security-note {
+    font-size: 12px;
+    color: #475569;
+    margin-top: 18px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
 
-
-/* إصلاح موضع قائمة البروفيل */
+/* ── User Dropdown ── */
 #user-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 8px);
+    left: 0;
     right: auto;
-    left: 0;        /* يظهر لليسار بدل اليمين */
-    min-width: 160px;
+    min-width: 180px;
     z-index: 9999;
-    background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    padding: 8px 0;
+    background: var(--card-bg, #1e293b);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    padding: 6px;
     display: none;
+    animation: dropDown 0.2s ease;
 }
 
-#user-dropdown.show {
-    display: block;
+@keyframes dropDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* الحاوية تكون relative */
+#user-dropdown.show { display: block; }
+
 .user-menu-wrapper,
 .nav-icons,
-header {
-    position: relative;
+header { position: relative; }
+
+/* ── موبايل ── */
+@media (max-width: 520px) {
+    .checkout-card { padding: 22px 16px; border-radius: 18px; }
+    .payment-method-card { padding: 12px 14px; }
+    .pay-now-btn { font-size: 15px; padding: 14px; }
 }

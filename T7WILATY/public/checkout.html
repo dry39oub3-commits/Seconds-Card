@@ -17,10 +17,12 @@
 <body>
     <header class="main-header">
         <div class="header-container">
-            <a href="index.html" class="logo-link">
-    <div class="logo">
-        <img src="assets/Icon.png" alt="StoreCard" style="height:40px; width:40px; object-fit:contain; border-radius:8px; margin-right:8px; vertical-align:middle;">
-        Store<span>Card</span>
+<a href="index.html" class="logo-link" style="text-decoration:none;">
+    <div class="logo" style="display:flex; align-items:center; gap:10px;">
+        <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
+        <div style="display:flex; flex-direction:column; line-height:1.1;">
+            <span style="font-size:18px; font-weight:800; color:white;">Store<span style="color:#f97316;">Card</span></span>
+        </div>
     </div>
 </a>
             
@@ -32,15 +34,16 @@
             </div>
 
             <div class="header-actions">
+                <button id="settings-btn" class="action-btn" onclick="openSettingsModal()">
+                    <i class="fas fa-globe"></i>
+                </button>
                 <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
-                
                 <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
 
                 <div class="user-menu-container">
                     <button class="action-btn" id="user-icon-btn">
                         <i class="fas fa-user-circle"></i>
                     </button>
-
                     <div class="dropdown-menu" id="user-dropdown">
                         <nav class="dropdown-nav">
                             <a href="orders.html"><i class="fas fa-box"></i> طلباتي</a>

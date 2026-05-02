@@ -1,6 +1,5 @@
 import { supabase } from './supabase-config.js';
 
-
 // ==================== بناء الهيدر ====================
 function buildHeader() {
     const header = document.createElement('header');
@@ -213,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initUserIcon();
     updateCartBadge();
     initSearch();
-    applyStoredSettings(); // ✅ تطبيق اللغة والاتجاه عند كل تحميل
+    applyStoredSettings();
 });
 
 // ==================== تطبيق الإعدادات المخزنة ====================
@@ -223,17 +222,14 @@ function applyStoredSettings() {
     document.documentElement.setAttribute('dir',  dir);
     document.documentElement.setAttribute('lang', lang);
 
-    // ✅ إذا كانت اللغة مخزنة وليست عربية → طبّق الترجمة
     if (lang !== 'ar') {
-        // نترجم بعد تحميل DOM كاملاً
         setTimeout(() => translatePage(lang), 300);
     }
 }
 
-// ==================== نظام الترجمة — MyMemory API مجاني ====================
+// ==================== نظام الترجمة ====================
 const translationCache = {};
 
-// ترجمة نص واحد
 async function translateText(text, targetLang) {
     if (!text?.trim() || targetLang === 'ar') return text;
     const key = `${targetLang}:${text}`;
@@ -252,39 +248,30 @@ async function translateText(text, targetLang) {
     }
 }
 
-// ترجمة الصفحة كاملة — دفعات لتسريع العملية
 async function translatePage(targetLang) {
     if (targetLang === 'ar') return;
 
-    // عناصر نصية مباشرة (لا تحتوي على عناصر فرعية)
     const selector = [
         'h1','h2','h3','h4','h5','h6',
         'p','span','a','button','label',
-        'td','th','li',
-        '[data-translate]'
+        'td','th','li','[data-translate]'
     ].join(',');
 
     const elements = [...document.querySelectorAll(selector)].filter(el => {
         const text = el.childNodes[0]?.textContent?.trim();
         return (
-            text &&
-            text.length > 1 &&
+            text && text.length > 1 &&
             el.childNodes.length === 1 &&
             el.childNodes[0].nodeType === Node.TEXT_NODE &&
             !el.closest('script, style, [data-no-translate]')
         );
     });
 
-    // دفعات بحجم 10 لتجنب تجاوز حد MyMemory
     const BATCH = 10;
     for (let i = 0; i < elements.length; i += BATCH) {
-        const batch = elements.slice(i, i + BATCH);
-        const texts = batch.map(el => el.childNodes[0].textContent.trim());
-
-        // MyMemory لا يدعم batch مباشرة → نستدعيها بالتوازي
-        const translated = await Promise.all(
-            texts.map(t => translateText(t, targetLang))
-        );
+        const batch      = elements.slice(i, i + BATCH);
+        const texts      = batch.map(el => el.childNodes[0].textContent.trim());
+        const translated = await Promise.all(texts.map(t => translateText(t, targetLang)));
 
         batch.forEach((el, idx) => {
             if (translated[idx] && translated[idx] !== texts[idx]) {
@@ -292,7 +279,6 @@ async function translatePage(targetLang) {
             }
         });
 
-        // استراحة قصيرة بين الدفعات لتجنب rate limit
         if (i + BATCH < elements.length) {
             await new Promise(r => setTimeout(r, 200));
         }
@@ -300,27 +286,18 @@ async function translatePage(targetLang) {
 }
 
 // ==================== تحويل العملة ====================
-// أسعار الصرف تقريبية نسبةً إلى MRU
-const EXCHANGE_RATES = {
-    MRU: 1,
-    USD: 1/43,
-};
+const EXCHANGE_RATES = { MRU: 1, USD: 1/43 };
 
-// تحويل سعر بـ MRU إلى العملة المختارة
 window.convertPrice = function(priceMRU) {
-    const currency = localStorage.getItem('currency') || 'MRU';
-    const rate     = EXCHANGE_RATES[currency] ?? EXCHANGE_RATES['MRU'];
-    const converted = (priceMRU * rate);
-    // تنسيق الأرقام
-    const formatted = converted >= 1
-        ? converted.toFixed(2)
-        : converted.toFixed(4);
-    const symbol = ALL_CURRENCIES.find(c => c.code === currency)?.symbol || currency;
+    const currency  = localStorage.getItem('currency') || 'MRU';
+    const rate      = EXCHANGE_RATES[currency] ?? 1;
+    const converted = priceMRU * rate;
+    const formatted = converted >= 1 ? converted.toFixed(2) : converted.toFixed(4);
+    const symbol    = ALL_CURRENCIES.find(c => c.code === currency)?.symbol || currency;
     return `${formatted} ${symbol}`;
 };
 
 // ==================== قوائم اللغات والعملات ====================
-
 const ALL_LANGUAGES = [
     { code:'ar', flag:'🇸🇦', name:'العربية',  native:'العربية', dir:'rtl' },
     { code:'en', flag:'🇺🇸', name:'English',  native:'English',  dir:'ltr' },
@@ -329,8 +306,9 @@ const ALL_LANGUAGES = [
 ];
 
 const ALL_CURRENCIES = [
-    { code:'MRU', flag:'🇲🇷', name:'أوقية موريتانية', symbol:'MRU' },
-    { code:'USD', flag:'🇺🇸', name:'دولار أمريكي',    symbol:'$'   },
+    { code:'MRU',  flag:'🇲🇷', name:'أوقية موريتانية', symbol:'MRU'  },
+    { code:'USD',  flag:'🇺🇸', name:'دولار أمريكي',    symbol:'$'    },
+    { code:'USDT', flag:'💵',  name:'USDT',            symbol:'USDT' },
 ];
 
 // ==================== Modal الإعدادات ====================
@@ -400,14 +378,18 @@ window.openSettingsModal = function () {
             .custom-no-results { padding:20px; text-align:center; color:#64748b; font-size:13px; }
         </style>
 
-        <div style="background:#111827;border:1px solid #1e293b;border-radius:20px;padding:28px;width:100%;max-width:420px;color:#e2e8f0;animation:settingsSlideUp 0.25s ease;font-family:'Tajawal','Segoe UI',sans-serif;max-height:90vh;overflow-y:auto;">
+        <div style="background:#111827;border:1px solid #1e293b;border-radius:20px;padding:28px;
+                    width:100%;max-width:420px;color:#e2e8f0;animation:settingsSlideUp 0.25s ease;
+                    font-family:'Tajawal','Segoe UI',sans-serif;max-height:90vh;overflow-y:auto;">
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                 <h3 style="margin:0;font-size:17px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px;">
                     <i class="fas fa-globe" style="color:#f97316;"></i> اللغة والعملة
                 </h3>
                 <button onclick="closeSettingsModal()"
-                    style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">
+                    style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);
+                           border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;
+                           display:flex;align-items:center;justify-content:center;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -426,7 +408,9 @@ window.openSettingsModal = function () {
                     <div class="custom-dropdown" id="lang-dropdown">
                         <div class="custom-search-wrapper">
                             <i class="fas fa-search"></i>
-                            <input class="custom-search-input" id="lang-search-input" placeholder="ابحث عن لغة..." autocomplete="off" oninput="_filterOptions('lang', this.value)">
+                            <input class="custom-search-input" id="lang-search-input"
+                                   placeholder="ابحث عن لغة..." autocomplete="off"
+                                   oninput="_filterOptions('lang', this.value)">
                         </div>
                         <div class="custom-options-list" id="lang-options-list"></div>
                     </div>
@@ -442,13 +426,17 @@ window.openSettingsModal = function () {
                     <div class="custom-select-trigger" id="currency-select-trigger" onclick="_toggleDropdown('currency')">
                         <span id="settings-selected-currency-flag" style="font-size:20px;">${currentCurrency.flag}</span>
                         <span id="settings-selected-currency-name" style="flex:1;font-size:14px;">${currentCurrency.name}</span>
-                        <span style="font-family:monospace;font-size:12px;color:#f97316;background:rgba(249,115,22,0.1);padding:2px 8px;border-radius:6px;">${currentCurrency.symbol}</span>
+                        <span style="font-family:monospace;font-size:12px;color:#f97316;background:rgba(249,115,22,0.1);padding:2px 8px;border-radius:6px;">
+                            ${currentCurrency.symbol}
+                        </span>
                         <i class="fas fa-chevron-down chevron"></i>
                     </div>
                     <div class="custom-dropdown" id="currency-dropdown">
                         <div class="custom-search-wrapper">
                             <i class="fas fa-search"></i>
-                            <input class="custom-search-input" id="currency-search-input" placeholder="ابحث عن عملة..." autocomplete="off" oninput="_filterOptions('currency', this.value)">
+                            <input class="custom-search-input" id="currency-search-input"
+                                   placeholder="ابحث عن عملة..." autocomplete="off"
+                                   oninput="_filterOptions('currency', this.value)">
                         </div>
                         <div class="custom-options-list" id="currency-options-list"></div>
                     </div>
@@ -456,7 +444,10 @@ window.openSettingsModal = function () {
             </div>
 
             <button onclick="saveSettings()"
-                style="width:100%;padding:13px;background:#f97316;color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Tajawal','Segoe UI',sans-serif;box-shadow:0 4px 14px rgba(249,115,22,0.35);">
+                style="width:100%;padding:13px;background:#f97316;color:white;border:none;
+                       border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;
+                       font-family:'Tajawal','Segoe UI',sans-serif;
+                       box-shadow:0 4px 14px rgba(249,115,22,0.35);">
                 <i class="fas fa-check-circle"></i> حفظ الإعدادات
             </button>
         </div>
@@ -556,7 +547,8 @@ window._selectOption = function (type, code) {
         window._tempCurrency = code;
         document.getElementById('settings-selected-currency-flag').textContent = item.flag || '💱';
         document.getElementById('settings-selected-currency-name').textContent = item.name;
-        const symEl = document.getElementById('currency-select-trigger').querySelector('span[style*="monospace"]');
+        const symEl = document.getElementById('currency-select-trigger')
+            .querySelector('span[style*="monospace"]');
         if (symEl) symEl.textContent = item.symbol;
     }
 
@@ -564,15 +556,17 @@ window._selectOption = function (type, code) {
     document.getElementById(`${type}-select-trigger`)?.classList.remove('open');
 };
 
-// ==================== حفظ الإعدادات + ترجمة ====================
+// ==================== حفظ الإعدادات ====================
 window.saveSettings = async function () {
     const lang     = window._tempLang     || 'ar';
     const currency = window._tempCurrency || 'MRU';
 
+    // ✅ 1. حفظ في localStorage
     localStorage.setItem('lang',         lang);
     localStorage.setItem('currency',     currency);
     localStorage.setItem('lastCurrency', currency);
 
+    // ✅ 2. تطبيق الاتجاه واللغة
     const dir = ALL_LANGUAGES.find(l => l.code === lang)?.dir || 'rtl';
     document.documentElement.setAttribute('dir',  dir);
     document.documentElement.setAttribute('lang', lang);
@@ -580,7 +574,20 @@ window.saveSettings = async function () {
     document.removeEventListener('click', _outsideClick);
     closeSettingsModal();
 
-    // ✅ Toast التحميل
+    // ✅ 3. إطلاق currency-changed للصفحة الحالية (إذا تستخدم header.js)
+    window.dispatchEvent(new CustomEvent('currency-changed', { detail: currency }));
+
+    // ✅ 4. إطلاق StorageEvent يدوي — يصل لـ product-details.js وأي صفحة تستمع لـ storage
+    //    (storage event لا يُطلق تلقائياً في نفس التبويب — نطلقه يدوياً)
+    window.dispatchEvent(new StorageEvent('storage', {
+        key:        'currency',
+        oldValue:   localStorage.getItem('currency'),
+        newValue:   currency,
+        storageArea: localStorage,
+        url:         window.location.href
+    }));
+
+    // ✅ 5. Toast + ترجمة أو reload
     const toast = document.createElement('div');
     toast.id = '_settings-toast';
     toast.style.cssText = `
@@ -592,26 +599,19 @@ window.saveSettings = async function () {
     `;
 
     if (lang === 'ar') {
-        // العربية → إعادة تحميل لاسترجاع النصوص الأصلية
-        toast.textContent = '✅ تم حفظ الإعدادات';
+        toast.textContent      = '✅ تم حفظ الإعدادات';
         toast.style.background = '#22c55e';
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 1500);
         setTimeout(() => location.reload(), 600);
     } else {
-        // لغة أخرى → ترجمة الصفحة بدون reload
         toast.textContent = '⏳ جاري الترجمة...';
         document.body.appendChild(toast);
-
         await translatePage(lang);
-
         toast.textContent      = '✅ تمت الترجمة!';
         toast.style.background = '#22c55e';
         setTimeout(() => toast.remove(), 2000);
     }
-
-    // ✅ إطلاق حدث لتحديث الأسعار في الصفحة
-    window.dispatchEvent(new CustomEvent('currency-changed', { detail: currency }));
 };
 
 // ==================== إغلاق Modal ====================
