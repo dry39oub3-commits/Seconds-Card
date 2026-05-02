@@ -6,8 +6,6 @@ let selectedPaymentMethod = null;
 let cart = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    setupUserMenu();
     checkAuthAndLoadData();
 
     document.getElementById('confirm-payment-btn')?.addEventListener('click', executePayment);
@@ -553,32 +551,7 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2000);
 }
 
-// ===== Dark Mode =====
-function initTheme() {
-    const themeToggle = document.getElementById('theme-toggle');
-    if (!themeToggle) return;
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    themeToggle.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-    });
-}
 
-// ===== User Menu =====
-function setupUserMenu() {
-    const userBtn      = document.getElementById('user-icon-btn');
-    const userDropdown = document.getElementById('user-dropdown');
-    if (userBtn && userDropdown) {
-        userBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-        });
-        window.addEventListener('click', () => userDropdown.classList.remove('show'));
-    }
-}
 
 // ===== Logout =====
 window.handleLogout = async () => {
