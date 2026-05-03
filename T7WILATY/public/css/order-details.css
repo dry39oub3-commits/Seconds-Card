@@ -37,9 +37,26 @@ body {
     padding: 20px;
 }
 
+.order-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.order-summary-col {
+    position: sticky;
+    top: 20px;
+}
+
+/* ==================== Error State ==================== */
+.order-not-found {
+    text-align: center;
+    color: #ef4444;
+}
+
 /* ==================== Back Button ==================== */
-.back-btn,
-button[onclick*="orders.html"] {
+.back-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -55,90 +72,334 @@ button[onclick*="orders.html"] {
     transition: border-color 0.2s, color 0.2s;
 }
 
-.back-btn:hover,
-button[onclick*="orders.html"]:hover {
+.back-btn:hover {
     border-color: #f97316;
     color: #f97316;
 }
 
 /* ==================== Cards ==================== */
 .detail-card {
-    background: var(--card-bg) !important;
+    background: var(--card-bg);
     border-radius: 16px;
     padding: 20px;
     margin-bottom: 16px;
-    border: 1px solid var(--border) !important;
+    border: 1px solid var(--border);
     color: var(--text);
 }
 
-/* ==================== Summary Card (يسار) ==================== */
+.product-card {
+    padding: 16px;
+    border-radius: 14px;
+}
+
+/* ==================== Product Row ==================== */
+.product-row-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-img {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    background: white;
+    border-radius: 9px;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.product-img-placeholder {
+    width: 56px;
+    height: 56px;
+    background: var(--deep-bg);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-soft);
+}
+
+.product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.product-name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+}
+
+.product-label {
+    font-size: 12px;
+    color: #f97316;
+    margin-bottom: 2px;
+}
+
+.product-qty {
+    font-size: 12px;
+    color: var(--text-soft);
+}
+
+.product-price-col {
+    text-align: left;
+    flex-shrink: 0;
+}
+
+.product-price {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+/* ==================== Codes Section ==================== */
+.codes-section {
+    margin-top: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+}
+
+.codes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.codes-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #f97316;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.codes-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* زر تعليمات الاسترداد */
+.btn-instructions {
+    background: rgba(59,130,246,0.12);
+    color: #60a5fa;
+    border: 1px solid rgba(59,130,246,0.25);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.btn-instructions:hover {
+    background: rgba(59,130,246,0.22);
+}
+
+/* زر عرض/إخفاء */
+.btn-eye {
+    background: var(--card-bg2);
+    color: var(--text-soft);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.btn-eye--active {
+    color: #22c55e !important;
+    border-color: #22c55e !important;
+}
+
+/* ==================== Code Box ==================== */
+.code-box {
+    background: var(--deep-bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(249,115,22,0.12);
+}
+
+.code-num {
+    color: var(--text-soft);
+    font-size: 11px;
+    min-width: 16px;
+}
+
+.code-text {
+    font-family: monospace;
+    font-size: 14px;
+    color: #f97316;
+    font-weight: bold;
+    flex: 1;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.code-hidden {
+    user-select: none;
+}
+
+.code-visible {
+    user-select: text;
+}
+
+/* ==================== Buttons ==================== */
+.copy-all-btn {
+    background: rgba(249,115,22,0.12);
+    color: #f97316;
+    border: 1px solid rgba(249,115,22,0.25);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s;
+}
+
+.copy-all-btn:hover {
+    background: rgba(249,115,22,0.22);
+}
+
+.copy-btn-sm {
+    background: var(--card-bg);
+    color: var(--text-soft);
+    border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.copy-btn-sm:hover {
+    color: #f97316;
+}
+
+.copy-btn-sm--success {
+    color: #22c55e !important;
+}
+
+/* ==================== Summary Card ==================== */
+.summary-card {
+    padding: 20px;
+    border-radius: 14px;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.summary-title {
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--text);
+}
+
 .detail-summary-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--border);
     font-size: 13px;
 }
 
-.detail-summary-row:last-child { border-bottom: none !important; }
+.detail-summary-row:last-child {
+    border-bottom: none;
+}
 
 .summary-label {
-    color: var(--text-soft) !important;
+    color: var(--text-soft);
     font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.summary-icon {
+    margin-left: 6px;
+    color: var(--text-soft);
+}
+
+.summary-icon.orange {
+    color: #f97316;
 }
 
 .summary-value {
-    color: var(--text) !important;
+    color: var(--text);
     font-weight: 700;
     text-align: left;
 }
 
-/* Total Amount Box */
+.summary-date {
+    font-size: 12px;
+}
+
+.summary-order-num {
+    font-family: monospace;
+    color: #f97316;
+    font-weight: 800;
+}
+
+/* ==================== Total Amount Box ==================== */
 .total-amount-box {
-    background: var(--deep-bg) !important;
-    border: 1px solid rgba(34,197,94,0.2) !important;
+    background: var(--deep-bg);
+    border: 1px solid rgba(34,197,94,0.2);
     border-radius: 10px;
     padding: 14px;
     text-align: center;
     margin-top: 14px;
 }
 
-/* ==================== Product Row ==================== */
-.product-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
+.total-label {
+    font-size: 11px;
+    color: var(--text-soft);
+    margin-bottom: 4px;
 }
 
-.product-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+.total-value {
+    font-size: 22px;
+    font-weight: 900;
+    color: #22c55e;
 }
 
-.product-row img {
-    width: 50px;
-    height: 50px;
-    object-fit: contain;
-    background: white;
-    border-radius: 8px;
-    padding: 4px;
-    flex-shrink: 0;
-    border: 1px solid rgba(0,0,0,0.06);
-}
-
-/* ==================== Code Box ==================== */
-.code-box {
-    background: var(--deep-bg) !important;
-    border-radius: 10px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-    border: 1px solid rgba(249,115,22,0.15) !important;
+.total-currency {
+    font-size: 13px;
 }
 
 /* ==================== Status Badges ==================== */
@@ -160,171 +421,235 @@ button[onclick*="orders.html"]:hover {
 [data-theme="dark"] .status-cancelled { color: #f87171; }
 [data-theme="dark"] .status-refunded  { color: #60a5fa; }
 
-/* ==================== Step Items (تعليمات) ==================== */
-.step-item {
-    display: flex;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
+/* ==================== Reject / Refund Blocks ==================== */
+.reject-block {
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
 }
 
-.step-item:last-child { border-bottom: none; }
+.reject-inner {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
 
-.step-num {
+.reject-icon {
+    color: #ef4444;
+    margin-top: 2px;
+}
+
+.reject-title {
+    font-weight: 700;
+    color: #ef4444;
+    margin-bottom: 4px;
+}
+
+.reject-text {
+    font-size: 13px;
+    color: #fca5a5;
+}
+
+.refund-receipt-block {
+    background: var(--card-bg);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.refund-title {
+    font-weight: 700;
+    color: #f59e0b;
+    margin-bottom: 12px;
+}
+
+.refund-img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+/* ==================== Toast ==================== */
+.order-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #22c55e;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 99999;
+    font-family: 'Cairo', sans-serif;
+    pointer-events: none;
+}
+
+/* ==================== Instructions Modal ==================== */
+@keyframes instFadeIn  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes instSlideUp { from { transform: translateY(24px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+.inst-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: instFadeIn 0.2s ease;
+}
+
+.inst-modal-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px;
+    width: 100%;
+    max-width: 480px;
+    color: var(--text);
+    font-family: 'Tajawal', 'Segoe UI', sans-serif;
+    animation: instSlideUp 0.25s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.inst-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.inst-modal-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inst-modal-title i {
+    color: #60a5fa;
+}
+
+.inst-close-btn {
+    background: rgba(239,68,68,0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.inst-close-btn:hover {
+    background: rgba(239,68,68,0.22);
+}
+
+.inst-product-name {
+    background: rgba(96,165,250,0.08);
+    border: 1px solid rgba(96,165,250,0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #60a5fa;
+}
+
+.inst-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.inst-step-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    background: var(--deep-bg);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.inst-step-num {
     width: 26px;
     height: 26px;
-    background: rgba(249,115,22,0.12);
-    color: #f97316;
+    min-width: 26px;
+    background: rgba(96,165,250,0.15);
+    color: #60a5fa;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     font-weight: 800;
-    flex-shrink: 0;
 }
 
-/* ==================== Buttons ==================== */
-.copy-all-btn {
-    background: rgba(249,115,22,0.12);
+.inst-step-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    padding-top: 3px;
+}
+
+.inst-link {
     color: #f97316;
-    border: 1px solid rgba(249,115,22,0.3);
-    padding: 6px 14px;
-    border-radius: 8px;
+    text-decoration: underline;
+}
+
+.inst-empty {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-soft);
+}
+
+.inst-empty i {
+    font-size: 30px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.inst-close-footer-btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px;
+    background: var(--card-bg2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
-    font-family: inherit;
+    font-family: 'Tajawal', 'Segoe UI', sans-serif;
     transition: background 0.2s;
 }
 
-.copy-all-btn:hover { background: rgba(249,115,22,0.22); }
-
-.eye-btn, .copy-btn-sm {
-    background: var(--card-bg2) !important;
-    color: var(--text-muted) !important;
-    border: none;
-    padding: 6px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: background 0.15s;
-}
-
-.eye-btn:hover, .copy-btn-sm:hover {
-    background: var(--deep-bg) !important;
-    color: #f97316 !important;
-}
-
-/* ==================== Reject / Refund Blocks ==================== */
-.reject-block {
-    background: rgba(239,68,68,0.05) !important;
-    border: 1px solid rgba(239,68,68,0.2) !important;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
-}
-
-.refund-receipt-block {
-    background: var(--card-bg) !important;
-    border: 1px solid rgba(245,158,11,0.2) !important;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
-}
-
-/* ==================== Inline Style Overrides (Light Mode) ==================== */
-
-/* خلفيات داكنة مبنية بـ JS */
-[data-theme="light"] [style*="background:#1e293b"],
-[data-theme="light"] [style*="background: #1e293b"] {
-    background: var(--card-bg) !important;
-    color: var(--text) !important;
-}
-
-[data-theme="light"] [style*="background:#0f172a"],
-[data-theme="light"] [style*="background: #0f172a"] {
-    background: var(--card-bg2) !important;
-}
-
-[data-theme="light"] [style*="background:#111827"],
-[data-theme="light"] [style*="background: #111827"] {
-    background: var(--card-bg) !important;
-}
-
-/* نصوص فاتحة */
-[data-theme="light"] [style*="color:#e2e8f0"],
-[data-theme="light"] [style*="color: #e2e8f0"],
-[data-theme="light"] [style*="color:#f1f5f9"],
-[data-theme="light"] [style*="color: #f1f5f9"],
-[data-theme="light"] [style*="color:#cbd5e1"],
-[data-theme="light"] [style*="color: #cbd5e1"] {
-    color: var(--text) !important;
-}
-
-[data-theme="light"] [style*="color:#94a3b8"],
-[data-theme="light"] [style*="color: #94a3b8"],
-[data-theme="light"] [style*="color:#64748b"],
-[data-theme="light"] [style*="color: #64748b"],
-[data-theme="light"] [style*="color:#475569"],
-[data-theme="light"] [style*="color: #475569"] {
-    color: var(--text-muted) !important;
-}
-
-/* حدود داكنة */
-[data-theme="light"] [style*="border:1px solid #334155"],
-[data-theme="light"] [style*="border: 1px solid #334155"],
-[data-theme="light"] [style*="border-color:#334155"],
-[data-theme="light"] [style*="border-color: #334155"] {
-    border-color: var(--border) !important;
-}
-
-[data-theme="light"] [style*="border:1px solid #1e293b"],
-[data-theme="light"] [style*="border: 1px solid #1e293b"] {
-    border-color: var(--border) !important;
-}
-
-/* Code boxes */
-[data-theme="light"] [style*="background:#0f172a"][style*="border-radius"] {
-    background: #f1f5f9 !important;
-}
-
-[data-theme="light"] [style*="background:#1e293b"][style*="border-radius"] {
-    background: #f8fafc !important;
-}
-
-/* أزرار النسخ/العين */
-[data-theme="light"] [style*="background:#334155"] {
-    background: #e2e8f0 !important;
-    color: #475569 !important;
-}
-
-/* Sticky summary card */
-[data-theme="light"] [style*="position:sticky"],
-[data-theme="light"] [style*="position: sticky"] {
-    background: transparent !important;
-}
-
-/* border-top فواصل */
-[data-theme="light"] [style*="border-top:1px solid rgba(255,255,255,0.06)"],
-[data-theme="light"] [style*="border-top: 1px solid rgba(255,255,255,0.06)"] {
-    border-top-color: rgba(0,0,0,0.07) !important;
-}
-
-[data-theme="light"] [style*="border-bottom:1px solid rgba(255,255,255,0.06)"],
-[data-theme="light"] [style*="border-bottom: 1px solid rgba(255,255,255,0.06)"] {
-    border-bottom-color: rgba(0,0,0,0.07) !important;
-}
-
-/* Total amount box */
-[data-theme="light"] [style*="background:#0f172a"][style*="text-align:center"] {
-    background: #f1f5f9 !important;
-    border-color: rgba(34,197,94,0.2) !important;
+.inst-close-footer-btn:hover {
+    background: var(--deep-bg);
 }
 
 /* ==================== Responsive ==================== */
 @media (max-width: 768px) {
-    #order-details-content > div[style*="grid-template-columns"] {
+    .order-layout {
         grid-template-columns: 1fr !important;
+    }
+
+    .order-summary-col {
+        position: static;
+        order: -1;
     }
 }
