@@ -415,7 +415,7 @@ async function executePayment() {
                 return {
                     order_number:      sharedOrderNumber,
                     customer_name:     user?.user_metadata?.full_name || 'مستخدم',
-                    customer_phone:    user?.email || '',
+                    customer_phone: window._userPhone || '',
                     product_id:        item.productId || null,
                     product_name:      item.name,
                     label:             item.label || null,
