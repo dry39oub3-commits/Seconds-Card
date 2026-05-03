@@ -656,12 +656,58 @@ body::before {
 
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
-    .header-container { padding: 0 14px; height: 60px; gap: 12px; }
-    .logo { font-size: 17px; min-width: auto; }
-    .search-container { order: 3; width: 100%; flex-grow: unset; padding: 0 0 10px; }
-    .search-bar { max-width: 100%; }
-    .header-actions { gap: 6px; min-width: auto; }
-    .action-btn { width: 36px; height: 36px; font-size: 15px; }
+    .header-container {
+        display: flex;
+        flex-direction: row; /* لضمان أن العناصر بجانب بعضها */
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        height: 60px; /* أو auto */
+        gap: 8px;    /* تقليل الفراغات ليناسب السطر الواحد */
+        flex-wrap: nowrap; /* منع العناصر من النزول لسطر جديد */
+    }
+
+    /* 1. اللوجو على اليسار */
+    .logo-link { 
+        order: 1; 
+        flex-shrink: 0; /* منع اللوجو من الصغر */
+    }
+
+    /* 2. البحث في الوسط */
+    .search-container {
+        order: 2;
+        flex-grow: 1; /* جعل البحث يأخذ أكبر مساحة متوفرة في الوسط */
+        width: auto;  /* إلغاء عرض 100% */
+        padding: 0;   /* إزالة البادينج الزائد */
+        display: flex;
+        justify-content: center;
+    }
+
+    .search-bar {
+        max-width: 100%;
+        width: 100%; /* ليمتد داخل الحاوية الخاصة به */
+        border-radius: 12px;
+        height: 38px; /* تقليل الارتفاع ليناسب الهيدر */
+    }
+
+    .search-bar button {
+        display: none; /* إخفاء أيقونة البحث كما طلبت سابقاً */
+    }
+
+    /* 3. الأيقونات على اليمين */
+    .header-actions { 
+        order: 3; 
+        gap: 6px; 
+        min-width: auto; 
+        flex-shrink: 0; /* منع الأيقونات من الصغر */
+    }
+
+    .action-btn { 
+        width: 32px; 
+        height: 32px; 
+        font-size: 14px; 
+    }
+
 
     .slide { height: 260px; }
     .slide h2 { font-size: 1.4rem; }
