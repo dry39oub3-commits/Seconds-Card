@@ -124,10 +124,12 @@ function renderPage(page) {
         return `
             <tr id="order-row-${group.order_number || group.id}">
                 <td style="color:#f97316;font-weight:bold;">${group.order_number || '#' + group.id.substring(0,7)}</td>
-                <td>${group.customer_name || 'غير معروف'}</td>
+                <td>
+                    <div style="font-weight:700;font-size:13px;">${group.customer_name || 'غير معروف'}</div>
+                    ${group.customer_phone ? `<div style="font-size:11px;color:#64748b;font-family:monospace;margin-top:2px;direction:ltr;">${group.customer_phone}</div>` : ''}
+                </td>
                 <td>${imagesCell || '-'}</td>
                 <td>${productsCell}</td>
-                <td>—</td>
                 <td><strong>${group.totalPrice} ${group.items[0]?.currency || 'MRU'}</strong></td>
                 <td>${totalQty}</td>
                 <td><small>${date}</small></td>
@@ -1379,7 +1381,10 @@ const statusBadge = `
         return `
         <tr>
             <td style="color:#f97316;font-weight:bold;font-size:12px;">${orderNum}</td>
-            <td style="font-size:12px;">${group.customer_name || '—'}</td>
+            <td>
+                <div style="font-size:12px;font-weight:700;">${group.customer_name || '—'}</div>
+                ${group.customer_phone ? `<div style="font-size:11px;color:#64748b;font-family:monospace;direction:ltr;">${group.customer_phone}</div>` : ''}
+            </td>
             <td>${imagesCell || '—'}</td>
             <td>${productsCell}</td>
             <td><strong>${group.totalPrice} ${group.items[0]?.currency || 'MRU'}</strong></td>
