@@ -76,7 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 email,
                 password: pass,
                 options: {
-                    data: { full_name: name }
+                    data: {
+                        full_name: name,
+                        phone: fullPhone
+                    }
                 }
             });
 
@@ -94,13 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // حفظ بيانات المستخدم مع الهاتف
             if (data.user) {
                 await supabase.from('users').upsert({
-                    id:       data.user.id,
-                    fullName: name,
-                    phone:    fullPhone,
-                    balance:  0,
-                    role:     'user'
-                });
-            }
+                id:        data.user.id,
+                full_name: name,       // ← اسم الحقل الصحيح
+                fullName:  name,       // ← للتوافق مع القديم
+                phone:     fullPhone,
+                balance:   0,
+                role:      'user'
+            });
+          }
 
             showToast(`✅ تم إنشاء حسابك بنجاح! مرحباً بك يا ${name}`);
             setTimeout(() => window.location.href = 'index.html', 1500);
