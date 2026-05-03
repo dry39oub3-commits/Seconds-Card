@@ -131,7 +131,7 @@ window.selectMethod = async function(id, account, name) {
             const orders = cartData.map(item => ({
                 order_number:   sharedOrderNumber,
                 customer_name:  user?.user_metadata?.full_name || 'مستخدم',
-                customer_phone: user?.email || '',
+                customer_phone: window._userPhone || '',
                 product_id:     item.productId || null,
                 product_name:   item.name,
                 label:          item.label || null,
@@ -240,7 +240,7 @@ async function checkAuthAndLoadData() {
     try {
         const { data: userData, error } = await supabase
             .from('users')
-            .select('balance, is_blocked')
+            .select('balance, is_blocked, phone')
             .eq('id', user.id)
             .single();
 
@@ -264,6 +264,8 @@ async function checkAuthAndLoadData() {
         }
 
         userBalance = userData?.balance || 0;
+
+        window._userPhone = userData?.phone || '';
 
         const balanceElem = document.getElementById('current-wallet-balance');
         if (balanceElem) {
@@ -505,7 +507,7 @@ async function executePayment() {
         const orders = cart.map(item => ({
             order_number:   sharedOrderNumber,
             customer_name:  user?.user_metadata?.full_name || 'مستخدم',
-            customer_phone: user?.email || '',
+            customer_phone: window._userPhone || '',
             product_id:     item.productId || null,
             product_name:   item.name,
             label:          item.label || null,
