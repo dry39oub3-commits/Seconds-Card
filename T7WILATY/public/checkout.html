@@ -60,52 +60,108 @@
         </div>
     </header>
 
-<main class="checkout-container">
-    <div class="checkout-card">
-        <h2><i class="fas fa-shield-alt"></i> مراجعة الدفع</h2>
-        
-        <div class="payment-summary">
-            <div class="summary-line">
-                <span>إجمالي المشتريات:</span>
-                <span id="checkout-total">0 MRU</span>
+ <main class="checkout-container">
+        <div class="checkout-card">
+ 
+            <!-- ── العنوان ── -->
+            <div class="checkout-title">
+                <i class="fas fa-shield-alt" style="color:#f97316;"></i>
+                مراجعة الدفع
             </div>
-            <div class="summary-line wallet-balance-line">
-                <span>رصيد محفظتك الحالي:</span>
-                <span id="current-wallet-balance">0 MRU</span>
+ 
+            <!-- ── ملخص الطلب ── -->
+            <div class="order-summary">
+                <div class="summary-line">
+                    <span>إجمالي المشتريات</span>
+                    <span class="summary-val" id="checkout-total">0 MRU</span>
+                </div>
             </div>
+ 
+            <!-- ── رصيد المحفظة ── -->
+            <div class="wallet-balance-line">
+                <span style="display:flex;align-items:center;gap:6px;">
+                    <i class="fas fa-wallet"></i>
+                    رصيد محفظتك الحالي
+                </span>
+                <span id="current-wallet-balance" style="font-weight:800;">0 MRU</span>
+            </div>
+ 
+            <!-- ── طرق الدفع ── -->
+            <div style="margin-bottom:20px;">
+                <div style="font-size:14px;font-weight:700;color:#94a3b8;
+                            margin-bottom:12px;display:flex;align-items:center;gap:7px;">
+                    <i class="fas fa-credit-card" style="color:#f97316;"></i>
+                    اختر طريقة الدفع
+                </div>
+                <div id="payment-methods-list">
+                    <div style="text-align:center;color:#475569;padding:20px;font-size:13px;">
+                        <i class="fas fa-spinner fa-spin"></i> جاري تحميل طرق الدفع...
+                    </div>
+                </div>
+            </div>
+ 
+            <!-- ── معلومات الطريقة المختارة ── -->
+            <div id="selected-method-info" style="display:none; margin-bottom:16px;
+                 background:rgba(249,115,22,0.06); border:1px solid rgba(249,115,22,0.2);
+                 border-radius:12px; padding:14px 16px;">
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">
+                    <i class="fas fa-hashtag" style="color:#f97316;"></i> رقم الحساب
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                    <span id="selected-account"
+                          style="font-size:17px;font-weight:800;color:#f97316;
+                                 font-family:monospace;letter-spacing:1px;"></span>
+                    <button onclick="copyAccount()"
+                        style="background:#1e293b;color:#94a3b8;border:1px solid #334155;
+                               padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;
+                               display:flex;align-items:center;gap:5px;transition:all 0.2s;"
+                        onmouseover="this.style.color='#f97316';this.style.borderColor='#f97316'"
+                        onmouseout="this.style.color='#94a3b8';this.style.borderColor='#334155'">
+                        <i class="fas fa-copy"></i> نسخ
+                    </button>
+                </div>
+            </div>
+ 
+            <!-- ── رفع الإيصال ── -->
+            <div id="receipt-upload-section" style="display:none; margin-bottom:16px;">
+                <div style="font-size:13px;font-weight:700;color:#94a3b8;
+                            margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                    <i class="fas fa-receipt" style="color:#f97316;"></i>
+                    ارفع إيصال الدفع
+                </div>
+                <input type="file" id="receipt-input" accept="image/*" style="display:none">
+                <div onclick="document.getElementById('receipt-input').click()"
+                     style="border:2px dashed rgba(249,115,22,0.35);border-radius:12px;
+                            padding:22px;text-align:center;cursor:pointer;
+                            background:rgba(249,115,22,0.03);transition:all 0.2s;"
+                     onmouseover="this.style.borderColor='#f97316';this.style.background='rgba(249,115,22,0.07)'"
+                     onmouseout="this.style.borderColor='rgba(249,115,22,0.35)';this.style.background='rgba(249,115,22,0.03)'">
+                    <i class="fas fa-cloud-upload-alt"
+                       style="font-size:26px;color:#f97316;margin-bottom:8px;display:block;"></i>
+                    <span style="font-size:13px;color:#64748b;">اضغط لرفع صورة الإيصال</span>
+                </div>
+                <img id="receipt-preview" src=""
+                     style="display:none;width:100%;border-radius:10px;margin-top:10px;
+                            border:1px solid rgba(255,255,255,0.06);">
+            </div>
+ 
+            <!-- ── رسائل الحالة ── -->
+            <div id="payment-status-msg"></div>
+ 
+            <!-- ── زر الدفع ── -->
+            <button id="confirm-payment-btn" class="pay-now-btn" disabled>
+                <i class="fas fa-bolt"></i>
+                تأكيد الدفع الآن
+            </button>
+ 
+            <!-- ── ملاحظة الأمان ── -->
+            <p class="security-note">
+                <i class="fas fa-lock" style="color:#22c55e;"></i>
+                سيتم خصم المبلغ من محفظتك فوراً وتصلك أكواد البطاقات في "طلباتي"
+            </p>
+ 
         </div>
-
-        <!-- طرق الدفع -->
-        <div id="payment-methods-section" style="margin: 20px 0;">
-            <h3 style="margin-bottom: 12px; font-size: 16px;"><i class="fas fa-wallet"></i> اختر طريقة الدفع</h3>
-            <div id="payment-methods-list" style="display:flex; flex-wrap:wrap; gap:12px;">
-                <p style="color:#888;">جاري تحميل طرق الدفع...</p>
-            </div>
-            <div id="selected-method-info" style="display:none; margin-top:15px; background:#1e293b; border-radius:10px; padding:15px;">
-                <p style="margin:0; color:#94a3b8; font-size:14px;">رقم الحساب:</p>
-                <p id="selected-account" style="margin:5px 0 0; font-size:18px; font-weight:bold; color:#f97316;"></p>
-            </div>
-        </div>
-
-        <div id="receipt-upload-section" style="display:none; margin-top:15px;">
-    <h3 style="font-size:15px; margin-bottom:10px;"><i class="fas fa-receipt"></i> ارفع إيصال الدفع</h3>
-    <input type="file" id="receipt-input" accept="image/*" style="display:none">
-    <div onclick="document.getElementById('receipt-input').click()" 
-         style="border:2px dashed #f97316; border-radius:12px; padding:20px; text-align:center; cursor:pointer;">
-        <i class="fas fa-upload" style="font-size:24px; color:#f97316;"></i>
-        <p style="margin:8px 0 0; color:#94a3b8;">اضغط لرفع صورة الإيصال</p>
-    </div>
-    <img id="receipt-preview" src="" style="display:none; width:100%; border-radius:10px; margin-top:10px;">
-</div>
-
-        <div id="payment-status-msg"></div>
-        <button id="confirm-payment-btn" class="pay-now-btn">
-    تأكيد الدفع الآن
-</button>
-        
-        <p class="security-note"><i class="fas fa-lock"></i> سيتم خصم المبلغ من محفظتك فوراً وتصلك أكواد البطاقات في "طلباتي".</p>
-    </div>
-</main>
+    </main>
  <!-- زر الدردشة العائم -->
    <div id="chat-float-btn" 
      onclick="toggleChatWidget()" 

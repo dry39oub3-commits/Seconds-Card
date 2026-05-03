@@ -33,7 +33,7 @@
     height: 110px;
     object-fit: cover;
     border-radius: 14px;
-    background: #0f172a;
+    background: var(--surface, #0f172a);
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     flex-shrink: 0;
 }
@@ -146,12 +146,7 @@
     line-height: 1;
 }
 
-.price-card .label {
-    font-size: 13px;
-    color: #94a3b8;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
+.price-card .label { color: var(--label-color, #94a3b8); }
 
 .price-card .value {
     font-size: 24px;
@@ -276,6 +271,114 @@
     .add-to-cart-btn, .buy-now-btn { padding: 14px; }
 }
 
+/* =============================================
+   إصلاح وضع النهار لصفحة product-details
+   أضف هذا في نهاية ملف CSS الصفحة
+============================================= */
+
+/* ─── متغيرات البطاقة حسب الثيم ─── */
+:root {
+    --card-bg: #1e293b;
+    --card-border: rgba(255,255,255,0.07);
+    --label-color: #94a3b8;
+}
+
+[data-theme="light"] {
+    --card-bg: #ffffff;
+    --card-border: rgba(0,0,0,0.08);
+    --label-color: #64748b;
+}
+
+/* ─── بطاقة المنتج الرئيسية ─── */
+[data-theme="light"] .product-header {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .product-header img {
+    background: #f1f5f9;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+}
+
+[data-theme="light"] .product-header h1 {
+    color: #0f172a;
+}
+
+[data-theme="light"] .product-header .country {
+    color: #64748b;
+}
+
+/* ─── بطاقات الأسعار ─── */
+[data-theme="light"] .price-card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .price-card:hover {
+    background: rgba(249,115,22,0.04);
+    border-color: rgba(249,115,22,0.4);
+    box-shadow: 0 6px 20px rgba(249,115,22,0.12);
+}
+
+[data-theme="light"] .price-card.selected {
+    background: rgba(249,115,22,0.06);
+}
+
+[data-theme="light"] .price-card .label {
+    color: #64748b;
+}
+
+[data-theme="light"] .price-card .currency {
+    color: #94a3b8;
+}
+
+/* ─── عنوان اختر الفئة ─── */
+[data-theme="light"] .prices-title {
+    color: #475569;
+}
+
+/* ─── زر أضف للسلة ─── */
+[data-theme="light"] .add-to-cart-btn {
+    background: #f1f5f9;
+    border-color: rgba(0,0,0,0.1);
+    color: #1e293b;
+}
+
+[data-theme="light"] .add-to-cart-btn:hover:not(:disabled) {
+    background: #e2e8f0;
+    border-color: rgba(0,0,0,0.15);
+}
+
+/* ─── صندوق الخطوات ─── */
+[data-theme="light"] .steps-box {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.07);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+[data-theme="light"] .steps-title {
+    color: #475569;
+}
+
+/* ─── نص الوصف ─── */
+[data-theme="light"] .product-page p,
+[data-theme="light"] .product-page span {
+    color: #334155;
+}
+
+/* ─── قسم وصف البطاقة ─── */
+[data-theme="light"] #product-description-box {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.07);
+    color: #334155;
+}
+
+/* ─── الخلفية العامة للصفحة ─── */
+[data-theme="light"] .product-page {
+    color: #0f172a;
+}
             </style>
 </head>
 <body>

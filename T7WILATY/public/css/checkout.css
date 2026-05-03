@@ -6,12 +6,12 @@
 }
 
 .checkout-card {
-    background: var(--card-bg, #1e293b);
+    background: var(--surface, #111827);
     width: 100%;
     max-width: 480px;
     padding: 32px 28px;
     border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--border, rgba(255,255,255,0.06));
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 
@@ -48,8 +48,8 @@
     gap: 14px;
     padding: 14px 18px;
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    background: var(--surface-2, rgba(255,255,255,0.03));
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s, transform 0.15s;
     position: relative;
@@ -67,7 +67,6 @@
     background: rgba(249,115,22,0.08);
 }
 
-/* خط برتقالي في اليمين عند الاختيار */
 .payment-method-card.selected::before {
     content: '';
     position: absolute;
@@ -87,7 +86,7 @@
     background: rgba(255,255,255,0.06);
     padding: 6px;
     flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--border, rgba(255,255,255,0.06));
 }
 
 .payment-method-info {
@@ -104,10 +103,9 @@
 
 .payment-method-desc {
     font-size: 12px;
-    color: #64748b;
+    color: var(--text-muted, #64748b);
 }
 
-/* Radio */
 .payment-method-radio {
     width: 18px;
     height: 18px;
@@ -135,11 +133,11 @@
 
 /* ── ملخص الطلب ── */
 .order-summary {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: var(--surface-2, rgba(255,255,255,0.03));
+    border: 1px solid var(--border, rgba(255,255,255,0.06));
     border-radius: 14px;
     padding: 16px 18px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .summary-line {
@@ -147,9 +145,9 @@
     justify-content: space-between;
     align-items: center;
     font-size: 14px;
-    color: #94a3b8;
+    color: var(--text-soft, #94a3b8);
     padding: 7px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.05));
 }
 
 .summary-line:last-child {
@@ -168,7 +166,7 @@
     color: var(--text, #f1f5f9);
     padding-top: 12px;
     margin-top: 4px;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid var(--border, rgba(255,255,255,0.08));
     border-bottom: none;
 }
 
@@ -202,7 +200,7 @@
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
     box-shadow: 0 4px 20px rgba(34,197,94,0.3);
     display: flex;
     align-items: center;
@@ -218,9 +216,7 @@
     box-shadow: 0 6px 28px rgba(34,197,94,0.4);
 }
 
-.pay-now-btn:active:not(:disabled) {
-    transform: translateY(0);
-}
+.pay-now-btn:active:not(:disabled) { transform: translateY(0); }
 
 .pay-now-btn:disabled {
     background: #334155;
@@ -247,16 +243,17 @@
 
 .security-note {
     font-size: 12px;
-    color: #475569;
+    color: var(--text-muted, #475569);
     margin-top: 18px;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    line-height: 1.6;
 }
 
-/* ── User Dropdown ── */
+/* ── Dropdown ── */
 #user-dropdown {
     position: absolute;
     top: calc(100% + 8px);
@@ -264,8 +261,8 @@
     right: auto;
     min-width: 180px;
     z-index: 9999;
-    background: var(--card-bg, #1e293b);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--surface, #1e293b);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
     border-radius: 14px;
     box-shadow: 0 16px 40px rgba(0,0,0,0.35);
     padding: 6px;
@@ -279,14 +276,90 @@
 }
 
 #user-dropdown.show { display: block; }
-
-.user-menu-wrapper,
-.nav-icons,
-header { position: relative; }
+.user-menu-wrapper, .nav-icons, header { position: relative; }
 
 /* ── موبايل ── */
 @media (max-width: 520px) {
     .checkout-card { padding: 22px 16px; border-radius: 18px; }
     .payment-method-card { padding: 12px 14px; }
     .pay-now-btn { font-size: 15px; padding: 14px; }
+}
+
+/* ══════════════════════════════════════
+   وضع النهار
+══════════════════════════════════════ */
+[data-theme="light"] .checkout-card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.07);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .checkout-title { color: #0f172a; }
+
+[data-theme="light"] .order-summary {
+    background: #f8fafc;
+    border-color: rgba(0,0,0,0.07);
+}
+
+[data-theme="light"] .summary-line {
+    color: #475569;
+    border-bottom-color: rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .summary-line .summary-val { color: #0f172a; }
+
+[data-theme="light"] .summary-line.total-line {
+    color: #0f172a;
+    border-top-color: rgba(0,0,0,0.07);
+}
+
+[data-theme="light"] .payment-method-card {
+    background: #f8fafc;
+    border-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .payment-method-card:hover {
+    background: rgba(249,115,22,0.04);
+    border-color: rgba(249,115,22,0.35);
+}
+
+[data-theme="light"] .payment-method-card.selected {
+    background: rgba(249,115,22,0.06);
+}
+
+[data-theme="light"] .payment-method-name { color: #0f172a; }
+[data-theme="light"] .payment-method-desc { color: #64748b; }
+
+[data-theme="light"] .payment-method-radio { border-color: #cbd5e1; }
+
+[data-theme="light"] .payment-method-logo {
+    background: #f1f5f9;
+    border-color: rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .pay-now-btn:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+}
+
+[data-theme="light"] .security-note { color: #94a3b8; }
+
+[data-theme="light"] #user-dropdown {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.12);
+}
+
+
+/* ── إصلاح أزرار الهيدر في النهار ── */
+[data-theme="light"] .action-btn {
+    background: #f1f5f9;
+    border-color: rgba(0,0,0,0.08);
+    color: #475569 !important;
+}
+
+[data-theme="light"] .action-btn:hover {
+    background: rgba(249,115,22,0.08);
+    border-color: #f97316;
+    color: #f97316 !important;
 }

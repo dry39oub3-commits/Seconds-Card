@@ -43,29 +43,209 @@
     cursor: pointer; font-size: 18px;
 }
 
-/* ملخص الطلب */
+/* =============================================
+   ملخص السلة — تحسين شامل
+   استبدل .summary-card وما يتعلق بها
+============================================= */
+
+/* ─── بطاقة الملخص ─── */
 .summary-card {
-    background: var(--card-bg);
-    padding: 20px;
-    border-radius: 15px;
-    position: sticky; top: 100px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    background: var(--surface, #111827);
+    border: 1px solid var(--border, rgba(255,255,255,0.07));
+    border-radius: 20px;
+    padding: 24px;
+    position: sticky;
+    top: 88px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    overflow: hidden;
+    direction: rtl;
 }
 
+/* خط تزييني علوي */
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f97316, #fb923c, #fdba74);
+    border-radius: 20px 20px 0 0;
+}
+
+/* ─── عنوان الملخص ─── */
+.summary-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text, #f1f5f9);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+}
+
+.summary-title i {
+    color: #f97316;
+    font-size: 15px;
+}
+
+/* ─── صفوف الملخص ─── */
 .summary-item {
-    display: flex; justify-content: space-between;
-    margin: 15px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border, rgba(255,255,255,0.05));
+    font-size: 13px;
 }
 
-.total { font-size: 18px; font-weight: bold; color: var(--primary); }
+.summary-item:last-of-type {
+    border-bottom: none;
+}
 
+.summary-item .s-label {
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.summary-item .s-label i {
+    font-size: 11px;
+    color: #475569;
+}
+
+.summary-item .s-value {
+    font-weight: 700;
+    color: var(--text, #e2e8f0);
+    font-family: 'Cairo', sans-serif;
+}
+
+/* ─── صف الإجمالي ─── */
+.summary-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 18px 0 20px;
+    padding: 16px;
+    background: rgba(249,115,22,0.06);
+    border: 1px solid rgba(249,115,22,0.18);
+    border-radius: 14px;
+}
+
+.summary-total-row .t-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.summary-total-row .t-label i {
+    color: #f97316;
+}
+
+.summary-total-row .t-value {
+    font-size: 22px;
+    font-weight: 900;
+    color: #f97316;
+    font-family: 'Cairo', sans-serif;
+    letter-spacing: -0.5px;
+}
+
+.summary-total-row .t-currency {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fb923c;
+    margin-right: 4px;
+}
+
+/* ─── زر الدفع ─── */
 .checkout-btn {
-    width: 100%; background: var(--primary); color: white;
-    border: none; padding: 15px; border-radius: 10px;
-    font-size: 16px; font-weight: bold; cursor: pointer;
-    transition: 0.3s;
+    width: 100%;
+    background: linear-gradient(135deg, #f97316, #ea6c0a);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: 'Tajawal', 'Cairo', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(249,115,22,0.35);
+    letter-spacing: 0.3px;
 }
-.checkout-btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+.checkout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(249,115,22,0.45);
+    background: linear-gradient(135deg, #fb923c, #f97316);
+}
+
+.checkout-btn:active {
+    transform: translateY(0);
+}
+
+.checkout-btn i {
+    font-size: 16px;
+}
+
+/* ─── ضمان وأمان ─── */
+.summary-secure {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+    font-size: 11px;
+    color: var(--text-muted, #475569);
+    font-weight: 500;
+}
+
+.summary-secure i {
+    color: #22c55e;
+    font-size: 12px;
+}
+
+/* ─── وضع النهار ─── */
+[data-theme="light"] .summary-card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .summary-title {
+    color: #0f172a;
+    border-bottom-color: rgba(0,0,0,0.07);
+}
+
+[data-theme="light"] .summary-item {
+    border-bottom-color: rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .summary-item .s-label {
+    color: #64748b;
+}
+
+[data-theme="light"] .summary-item .s-value {
+    color: #1e293b;
+}
+
+[data-theme="light"] .summary-total-row {
+    background: rgba(249,115,22,0.05);
+    border-color: rgba(249,115,22,0.2);
+}
+
+[data-theme="light"] .summary-secure {
+    color: #94a3b8;
+}
 
 
 /* إصلاح موضع قائمة البروفيل */

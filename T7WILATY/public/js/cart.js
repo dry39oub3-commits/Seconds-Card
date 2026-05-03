@@ -124,15 +124,18 @@ function saveAndReload() {
     renderCart();
 }
 
+// استبدل دالة updateSummary في cart.js بهذه
 function updateSummary(total) {
-    const subtotalElem = document.getElementById('subtotal');
-    const finalTotalElem = document.getElementById('final-total');
-    const countElem = document.getElementById('items-count');
+    const subtotalElem     = document.getElementById('subtotal');
+    const finalTotalElem   = document.getElementById('final-total');
+    const finalTotalNum    = document.getElementById('final-total-num');
+    const countElem        = document.getElementById('items-count');
     const checkoutTotalElem = document.getElementById('checkout-total-display');
 
-    if (subtotalElem) subtotalElem.textContent = `${total} MRU`;
-    if (finalTotalElem) finalTotalElem.textContent = `${total} MRU`;
-    if (countElem) countElem.textContent = cart.length;
+    if (subtotalElem)      subtotalElem.textContent    = `${total} MRU`;
+    if (finalTotalElem)    finalTotalElem.textContent  = `${total} MRU`;
+    if (finalTotalNum)     finalTotalNum.textContent   = total;
+    if (countElem)         countElem.textContent       = cart.length;
     if (checkoutTotalElem) checkoutTotalElem.textContent = `${total} MRU`;
 }
 

@@ -412,7 +412,7 @@ window.showInstructions = async (productName) => {
                     </div>
                     <div style="font-size:13px;color:#cbd5e1;line-height:1.7;padding-top:3px;">
                         ${step.replace(/(https?:\/\/[^\s)]+)/g,
-                            '<a href="$1" target="_blank" rel="noopener" style="color:#f97316;text-decoration:underline;">رابط الاسترداد</a>')}
+                            '<a href="$1" target="_blank" rel="noopener" style="color:#f97316;text-decoration:underline;">صفحة الاسترداد</a>')}
                     </div>
                 </div>`).join('')}
             </div>` : `
