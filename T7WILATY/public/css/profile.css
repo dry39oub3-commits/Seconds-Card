@@ -280,3 +280,194 @@ body {
 header {
     position: relative;
 }
+
+
+/* ==================== إضافات profile.css ==================== */
+/* أضف هذا الكود في نهاية ملف profile.css الموجود */
+
+/* ── عناصر التفاصيل ── */
+.detail-label {
+    color: var(--text-soft);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.detail-label i {
+    color: #f97316;
+    width: 14px;
+}
+
+.detail-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.uid-value {
+    font-family: monospace;
+    color: #f97316;
+}
+
+/* حقول للعرض فقط */
+.readonly-value {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* ── مجموعة رقم الهاتف ── */
+.phone-display-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.add-phone-btn {
+    background: rgba(249,115,22,0.12);
+    color: #f97316;
+    border: 1px solid rgba(249,115,22,0.3);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.add-phone-btn:hover {
+    background: rgba(249,115,22,0.22);
+}
+
+/* ── Modal ── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0 }
+    to   { transform: translateY(0);    opacity: 1 }
+}
+
+.modal-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 360px;
+    color: var(--text);
+    animation: slideUp 0.25s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--text);
+}
+
+.modal-header i {
+    color: #f97316;
+    margin-left: 6px;
+}
+
+.modal-close-btn {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.modal-close-btn:hover { background: rgba(239,68,68,0.2); }
+
+.modal-desc {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin: 0 0 16px;
+}
+
+.phone-input-row {
+    display: flex;
+    align-items: center;
+    background: var(--deep-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+}
+
+.phone-input-row:focus-within {
+    border-color: #f97316;
+}
+
+.phone-prefix-modal {
+    padding: 12px 10px;
+    color: #f97316;
+    font-weight: 700;
+    font-size: 13px;
+    border-left: 1px solid var(--border);
+    background: rgba(249,115,22,0.08);
+    flex-shrink: 0;
+}
+
+.modal-phone-input {
+    flex: 1;
+    padding: 12px 10px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 15px;
+    letter-spacing: 1px;
+    font-family: monospace;
+}
+
+.modal-save-btn {
+    width: 100%;
+    padding: 12px;
+    background: #f97316;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+.modal-save-btn:hover    { background: #e06b0a; }
+.modal-save-btn:disabled { opacity: 0.7; cursor: not-allowed; }

@@ -8,13 +8,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // عرض البيانات الأساسية
     document.getElementById('user-uid').textContent = generateSCId(user.id);
-    document.getElementById('user-display-email').textContent = user.email || '--';
 
     // تاريخ الانضمام
     const creationDate = new Date(user.created_at);
     document.getElementById('user-joined').textContent = creationDate.toLocaleDateString('ar-SA', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
+
+    // البريد الإلكتروني — للعرض فقط (لا يمكن تعديله)
+    document.getElementById('user-display-email').textContent = user.email || '--';
 
     // جلب بيانات المستخدم من جدول users
     const { data: userData } = await supabase
@@ -23,13 +25,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         .eq('id', user.id)
         .single();
 
-    const name  = userData?.full_name || user.user_metadata?.full_name || 'مستخدم';
-
-    // ← التعديل الأول: نقرأ الصورة من جدول users أولاً، ثم metadata كـ بديل
+    const name  = userData?.full_name || userData?.fullName || user.user_metadata?.full_name || 'مستخدم';
     const photo = userData?.avatar_url || user.user_metadata?.avatar_url || '';
+    const phone = userData?.phone || '';
 
     document.getElementById('user-display-name').value = name;
-    document.getElementById('user-name').textContent   = name;
+
+    // عرض رقم الهاتف
+    const phoneEl    = document.getElementById('user-display-phone');
+    const addPhoneBtn = document.getElementById('add-phone-btn');
+    if (phone) {
+        phoneEl.textContent = phone;
+        addPhoneBtn.style.display = 'none';
+    } else {
+        phoneEl.textContent = 'لم يُضف بعد';
+        phoneEl.style.color = 'var(--text-soft)';
+        addPhoneBtn.style.display = 'inline-flex';
+    }
 
     displayUserPhoto(photo);
     updateHeaderAvatar(photo);
@@ -38,15 +50,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('user-display-name').addEventListener('input', () => {
         document.getElementById('save-profile-btn').style.display = 'block';
     });
+
+    // السماح بالأرقام فقط في حقل الهاتف بالـ modal
+    const modalPhone = document.getElementById('modal-phone-input');
+    if (modalPhone) {
+        modalPhone.addEventListener('input', () => {
+            modalPhone.value = modalPhone.value.replace(/\D/g, '');
+        });
+    }
 });
 
-// ==================== حفظ التعديلات ====================
+// ==================== حفظ الاسم ====================
 window.updateProfileData = async function() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) return;
 
     const newName = document.getElementById('user-display-name').value.trim();
+    if (!newName) { showToast('⚠️ الاسم لا يمكن أن يكون فارغاً', 'error'); return; }
 
     const { error } = await supabase
         .from('users')
@@ -56,13 +77,79 @@ window.updateProfileData = async function() {
     if (error) {
         showToast('خطأ في الحفظ: ' + error.message, 'error');
     } else {
-        showToast('✅ تم حفظ التعديلات!');
+        showToast('✅ تم حفظ الاسم!');
         document.getElementById('save-profile-btn').style.display = 'none';
-        document.getElementById('user-name').textContent = newName;
     }
 };
 
-// ==================== رفع الصورة (مُصلح بالكامل) ====================
+// ==================== Modal رقم الهاتف ====================
+window.openPhoneModal = () => {
+    document.getElementById('phone-modal').style.display = 'flex';
+    document.getElementById('modal-phone-input').focus();
+};
+
+window.closePhoneModal = (e) => {
+    if (!e || e.target === document.getElementById('phone-modal')) {
+        document.getElementById('phone-modal').style.display = 'none';
+        document.getElementById('modal-phone-input').value = '';
+    }
+};
+
+window.savePhone = async () => {
+    const phone = document.getElementById('modal-phone-input').value.trim();
+    const btn   = document.getElementById('save-phone-btn');
+
+    if (phone.length !== 8) {
+        showToast('⚠️ رقم الهاتف يجب أن يكون 8 أرقام', 'error');
+        return;
+    }
+
+    const fullPhone = '+222' + phone;
+
+    // التحقق من أن الرقم غير مسجل مسبقاً
+    const { data: existing } = await supabase
+        .from('users')
+        .select('id')
+        .eq('phone', fullPhone)
+        .single();
+
+    if (existing) {
+        showToast('⚠️ رقم الهاتف مسجل لدى حساب آخر', 'error');
+        return;
+    }
+
+    btn.innerText = 'جاري الحفظ...';
+    btn.disabled  = true;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) return;
+
+    const { error } = await supabase
+        .from('users')
+        .update({ phone: fullPhone })
+        .eq('id', user.id);
+
+    if (error) {
+        showToast('خطأ في الحفظ: ' + error.message, 'error');
+        btn.innerText = 'حفظ الرقم';
+        btn.disabled  = false;
+        return;
+    }
+
+    // تحديث الواجهة
+    document.getElementById('user-display-phone').textContent = fullPhone;
+    document.getElementById('user-display-phone').style.color = '';
+    document.getElementById('add-phone-btn').style.display = 'none';
+    document.getElementById('phone-modal').style.display   = 'none';
+    document.getElementById('modal-phone-input').value     = '';
+    btn.innerHTML = '<i class="fas fa-save"></i> حفظ الرقم';
+    btn.disabled  = false;
+
+    showToast('✅ تم حفظ رقم الهاتف!');
+};
+
+// ==================== رفع الصورة ====================
 window.triggerPhotoUpload = function() {
     document.getElementById('photo-input').click();
 };
@@ -75,7 +162,6 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
     const user = session?.user;
     if (!user) return;
 
-    // 1) رفع الملف إلى Storage
     const filePath = `avatars/${user.id}`;
     const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -86,36 +172,23 @@ document.getElementById('photo-input')?.addEventListener('change', async (e) => 
         return;
     }
 
-    // 2) الحصول على الرابط العام
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    const photoURL = data.publicUrl;
-    const freshUrl = photoURL + '?t=' + Date.now();
+    const freshUrl = data.publicUrl + '?t=' + Date.now();
 
-    // 3) ← التعديل الثاني: حفظ الرابط في جدول users (المصدر الموثوق)
     const { error: dbError } = await supabase
         .from('users')
         .update({ avatar_url: freshUrl })
         .eq('id', user.id);
 
     if (dbError) {
-        showToast('خطأ في حفظ الصورة في قاعدة البيانات', 'error');
+        showToast('خطأ في حفظ الصورة', 'error');
         return;
     }
 
-    // 4) تحديث metadata في Auth (كمصدر ثانوي)
-    const { error: metaError } = await supabase.auth.updateUser({
-        data: { avatar_url: freshUrl }
-    });
+    await supabase.auth.updateUser({ data: { avatar_url: freshUrl } });
 
-    if (metaError) {
-        console.warn('تحذير: لم يتم تحديث metadata:', metaError.message);
-        // لا نوقف العملية لأننا حفظنا في جدول users بنجاح
-    }
-
-    // 5) تحديث الواجهة فوراً
     displayUserPhoto(freshUrl);
     window.updateHeaderAvatar?.(freshUrl);
-
     showToast('✅ تم تحديث الصورة!');
 });
 
@@ -162,7 +235,7 @@ function generateSCId(uuid) {
     return `SC-${String(num + 100000).padStart(6, '0')}`;
 }
 
-// ==================== عرض الصورة في البروفيل ====================
+// ==================== عرض الصورة ====================
 function displayUserPhoto(photoUrl) {
     const imgElement  = document.getElementById('user-display-photo');
     const iconElement = document.getElementById('default-avatar-icon');

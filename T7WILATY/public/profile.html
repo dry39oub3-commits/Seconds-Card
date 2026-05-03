@@ -7,31 +7,30 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Store-Card</title>
-    <link rel="icon" type="image/png" href="assets/Icon.png">    
-
+    <link rel="icon" type="image/png" href="assets/Icon.png">
     <link rel="stylesheet" href="css/index.css?v=2">
-    <link rel="stylesheet" href="css/profile.css?v=2">
+    <link rel="stylesheet" href="css/profile.css?v=3">
     <link rel="stylesheet" href="css/chat-float.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css?v=2">
     <script>
-    (function(){
-        const t = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', t);
-    })();
-</script>
+        (function(){
+            const t = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
     <header class="main-header">
         <div class="header-container">
-<a href="index.html" class="logo-link" style="text-decoration:none;">
-    <div class="logo" style="display:flex; align-items:center; gap:10px;">
-        <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
-        <div style="display:flex; flex-direction:column; line-height:1.1;">
-            <span style="font-size:18px; font-weight:800; color:white;">Store<span style="color:#f97316;">Card</span></span>
-        </div>
-    </div>
-</a>
-            
+            <a href="index.html" class="logo-link" style="text-decoration:none;">
+                <div class="logo" style="display:flex; align-items:center; gap:10px;">
+                    <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
+                    <div style="display:flex; flex-direction:column; line-height:1.1;">
+                        <span style="font-size:18px; font-weight:800; color:white;">Store<span style="color:#f97316;">Card</span></span>
+                    </div>
+                </div>
+            </a>
+
             <div class="search-container">
                 <div class="search-bar">
                     <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
@@ -68,6 +67,8 @@
 
     <main class="profile-container">
         <div class="profile-card">
+
+            <!-- الصورة الشخصية -->
             <div class="profile-header">
                 <div class="profile-avatar-container">
                     <div class="profile-avatar" id="avatar-container">
@@ -75,33 +76,57 @@
                         <img id="user-display-photo" src="" alt="" style="display:none; border-radius:50%">
                     </div>
                     <input type="file" id="photo-input" accept="image/*" style="display:none">
-                    <button class="edit-photo-btn" onclick="triggerPhotoUpload()"><i class="fas fa-camera"></i></button>
+                    <button class="edit-photo-btn" onclick="triggerPhotoUpload()">
+                        <i class="fas fa-camera"></i>
+                    </button>
                 </div>
 
+                <!-- الاسم قابل للتعديل -->
                 <div class="edit-name-container">
                     <input type="text" id="user-display-name" class="profile-name-input" value="جاري التحميل..." required>
                     <i class="fas fa-pencil-alt edit-icon-hint"></i>
                 </div>
 
-                <p id="user-display-email">--</p>
-                <button id="save-profile-btn" class="save-btn" onclick="updateProfileData()" style="display:none;">حفظ التعديلات</button>
+                <button id="save-profile-btn" class="save-btn" onclick="updateProfileData()" style="display:none;">
+                    <i class="fas fa-check"></i> حفظ الاسم
+                </button>
             </div>
 
+            <!-- تفاصيل الحساب -->
             <div class="profile-details">
+
+                <!-- UID -->
                 <div class="detail-item">
-                    <span>رقم التعريف (UID):</span>
-                    <small id="user-uid">--</small>
+                    <span class="detail-label"><i class="fas fa-id-badge"></i> رقم التعريف</span>
+                    <span class="detail-value uid-value" id="user-uid">--</span>
                 </div>
+
+                <!-- تاريخ الانضمام -->
                 <div class="detail-item">
-                    <span>اسم المستخدم:</span>
-                    <span id="user-name">--</span>
+                    <span class="detail-label"><i class="fas fa-calendar-alt"></i> تاريخ الانضمام</span>
+                    <span class="detail-value" id="user-joined">--</span>
                 </div>
+
+                <!-- البريد الإلكتروني — للعرض فقط -->
                 <div class="detail-item">
-                    <span>تاريخ الانضمام:</span>
-                    <span id="user-joined">--</span>
+                    <span class="detail-label"><i class="fas fa-envelope"></i> البريد الإلكتروني</span>
+                    <span class="detail-value readonly-value" id="user-display-email">--</span>
                 </div>
+
+                <!-- رقم الهاتف — للعرض أو الإضافة -->
+                <div class="detail-item">
+                    <span class="detail-label"><i class="fas fa-phone"></i> رقم الهاتف</span>
+                    <div class="phone-display-group">
+                        <span class="detail-value readonly-value" id="user-display-phone">--</span>
+                        <button class="add-phone-btn" id="add-phone-btn" onclick="openPhoneModal()">
+                            <i class="fas fa-plus-circle"></i> إضافة
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
+            <!-- تسجيل الخروج -->
             <div class="profile-actions">
                 <button onclick="handleLogout()" class="logout-full-btn">
                     <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
@@ -109,16 +134,39 @@
             </div>
         </div>
     </main>
- <!-- زر الدردشة العائم -->
-   <div id="chat-float-btn" 
-     onclick="toggleChatWidget()" 
-     title="تواصل مع الدعم الفني">
-    <i class="fas fa-headset"></i>
-    <span class="chat-float-badge" id="chat-float-badge"></span>
-</div>
-<script type="module" src="js/public-header.js?v=2"></script>
-<script type="module" src="js/chat-float.js?v=2"></script>
+
+    <!-- ── Modal إضافة رقم الهاتف ── -->
+    <div id="phone-modal" class="modal-overlay" style="display:none;" onclick="closePhoneModal(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span><i class="fas fa-phone"></i> إضافة رقم الهاتف</span>
+                <button onclick="closePhoneModal()" class="modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="modal-desc">سيُستخدم رقم هاتفك لتسجيل الدخول بسهولة</p>
+            <div class="phone-input-row">
+                <span class="phone-prefix-modal">+222</span>
+                <input type="tel" id="modal-phone-input"
+                       placeholder="xxxxxxxx"
+                       maxlength="8"
+                       class="modal-phone-input">
+            </div>
+            <button onclick="savePhone()" id="save-phone-btn" class="modal-save-btn">
+                <i class="fas fa-save"></i> حفظ الرقم
+            </button>
+        </div>
+    </div>
+
+    <!-- زر الدردشة العائم -->
+    <div id="chat-float-btn" onclick="toggleChatWidget()" title="تواصل مع الدعم الفني">
+        <i class="fas fa-headset"></i>
+        <span class="chat-float-badge" id="chat-float-badge"></span>
+    </div>
+
+    <script type="module" src="js/public-header.js?v=2"></script>
+    <script type="module" src="js/chat-float.js?v=2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module" src="js/profile.js?v=2"></script>
+    <script type="module" src="js/profile.js?v=3"></script>
 </body>
 </html>
