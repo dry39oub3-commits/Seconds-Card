@@ -7,9 +7,9 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء حساب | Store-Card</title>
-    <link rel="stylesheet" href="css/login.css?v=2">
-    <link rel="stylesheet" href="css/register.css?v=2">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css?v=2">
+    <link rel="stylesheet" href="css/login.css?v=4">
+    <link rel="stylesheet" href="css/register.css?v=4">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="login-container">
@@ -20,6 +20,7 @@
             <h2>انضم إلينا</h2>
             <p>أنشئ حسابك وابدأ بشحن بطاقاتك المفضلة</p>
             <form id="register-form">
+                <!-- الاسم الكامل -->
                 <div class="input-group">
                     <label>الاسم الكامل</label>
                     <div class="input-wrapper">
@@ -27,6 +28,22 @@
                         <input type="text" id="reg-name" placeholder="أدخل اسمك الكامل" required>
                     </div>
                 </div>
+
+                <!-- رقم الهاتف -->
+                <div class="input-group">
+                    <label>رقم الهاتف</label>
+                    <div class="input-wrapper phone-wrapper">
+                        <span class="phone-prefix">+222</span>
+                        <input type="tel" id="reg-phone"
+                               placeholder="xxxxxxxx"
+                               maxlength="8"
+                               pattern="[0-9]{8}"
+                               required>
+                        <i class="fas fa-phone phone-icon"></i>
+                    </div>
+                </div>
+
+                <!-- البريد الإلكتروني -->
                 <div class="input-group">
                     <label>البريد الإلكتروني</label>
                     <div class="input-wrapper">
@@ -34,13 +51,18 @@
                         <input type="email" id="reg-email" placeholder="example@gmail.com" required>
                     </div>
                 </div>
+
+                <!-- كلمة المرور -->
                 <div class="input-group">
                     <label>كلمة المرور</label>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="reg-pass" placeholder="كلمة مرور قوية (6 أحرف على الأقل)" required>
+                        <input type="password" id="reg-pass"
+                               placeholder="كلمة مرور قوية (6 أحرف على الأقل)" required>
+                        <i class="fas fa-eye toggle-pass" id="toggle-reg-pass"></i>
                     </div>
                 </div>
+
                 <button type="submit" id="register-btn">إنشاء الحساب</button>
             </form>
             <div class="login-footer">
@@ -48,6 +70,6 @@
             </div>
         </div>
     </div>
-    <script type="module" src="js/register.js?v=2"></script>
+    <script type="module" src="js/register.js?v=4"></script>
 </body>
 </html>

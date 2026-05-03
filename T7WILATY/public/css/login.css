@@ -13,39 +13,174 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     direction: rtl;
 }
 
 .login-card {
     background: var(--card-bg);
-    padding: 28px 24px;   /* ← كان 36px 32px */
+    padding: 28px 24px;
     border-radius: 20px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,0.07);
     text-align: center;
-    width: 320px;         /* ← كان 360px */
+    width: 320px;
 }
 
 .logo { font-size: 26px; font-weight: bold; margin-bottom: 20px; color: white; }
 .logo span { color: var(--primary); }
 .logo-link { text-decoration: none; }
 
-.input-group { text-align: right; margin-bottom: 20px; }
+h2 { margin: 0 0 6px; font-size: 20px; }
+p  { margin: 0 0 20px; font-size: 13px; color: #94a3b8; }
+
+/* ── تبويبات الدخول ── */
+.login-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: #0f172a;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.tab-btn:not(.active):hover {
+    color: #94a3b8;
+}
+
+/* ── Input Groups ── */
+.input-group { text-align: right; margin-bottom: 16px; }
 .input-group label { font-size: 13px; color: #94a3b8; display: block; margin-bottom: 8px; }
 
-.input-wrapper { position: relative; display: flex; align-items: center; }
-.input-wrapper i { position: absolute; right: 12px; color: var(--primary); }
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.label-row label { margin-bottom: 0; }
+
+.forgot-link {
+    font-size: 12px;
+    color: var(--primary);
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+.forgot-link:hover { opacity: 0.8; }
+
+/* ── Input Wrapper ── */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper i.fa-envelope,
+.input-wrapper i.fa-lock {
+    position: absolute;
+    right: 12px;
+    color: var(--primary);
+    pointer-events: none;
+}
+
 .input-wrapper input {
     width: 100%;
-    padding: 12px 40px 12px 10px;
+    padding: 12px 40px 12px 40px;
     background: #0f172a;
     border: 1px solid #334155;
     border-radius: 10px;
     color: white;
     outline: none;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
 }
 
-#login-btn {
+.input-wrapper input:focus {
+    border-color: var(--primary);
+}
+
+/* ── حقل الهاتف ── */
+.phone-wrapper {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.phone-wrapper:focus-within {
+    border-color: var(--primary);
+}
+
+.phone-prefix {
+    padding: 12px 10px 12px 8px;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+    border-left: 1px solid #334155;
+    background: rgba(255,152,0,0.08);
+    flex-shrink: 0;
+}
+
+.phone-wrapper input {
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 12px 10px !important;
+    background: transparent !important;
+    flex: 1;
+    outline: none;
+    color: white;
+    font-size: 14px;
+    letter-spacing: 1px;
+    min-width: 0;
+}
+
+.phone-icon {
+    padding-left: 12px;
+    color: var(--primary);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+/* ── عرض/إخفاء كلمة المرور ── */
+.toggle-pass {
+    position: absolute;
+    left: 12px;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s;
+    z-index: 1;
+}
+.toggle-pass:hover { color: var(--primary); }
+
+/* ── أزرار الإرسال ── */
+#login-btn, #register-btn, #forgot-btn, #reset-btn {
     width: 100%;
     padding: 14px;
     background: var(--primary);
@@ -53,8 +188,31 @@ body {
     border-radius: 10px;
     color: white;
     font-weight: bold;
+    font-size: 15px;
     cursor: pointer;
     transition: 0.3s;
+    font-family: inherit;
+    margin-top: 4px;
 }
 
-#login-btn:hover { background: #e68a00; transform: translateY(-2px); }
+#login-btn:hover, #register-btn:hover,
+#forgot-btn:hover, #reset-btn:hover {
+    background: #e68a00;
+    transform: translateY(-2px);
+}
+
+#login-btn:disabled, #register-btn:disabled,
+#forgot-btn:disabled, #reset-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── footer ── */
+.login-footer {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+.login-footer a { color: var(--primary); text-decoration: none; }
+.login-footer a:hover { text-decoration: underline; }
