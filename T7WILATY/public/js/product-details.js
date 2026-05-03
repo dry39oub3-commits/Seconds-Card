@@ -88,7 +88,7 @@ async function loadProductDescription(productName) {
         const steps   = data.instructions.split('\n').map(s => s.trim()).filter(s => s);
         const linkify = (text) => text.replace(
             /(https?:\/\/[^\s)]+)/g,
-            '<a href="$1" target="_blank" rel="noopener" class="step-link">صفحة استرداد الرمز</a>'
+            '<a href="$1" target="_blank" rel="noopener" class="step-link">صفحة الاسترداد </a>'
         );
         html += `
         <div class="product-desc-section">

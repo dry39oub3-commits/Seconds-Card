@@ -152,109 +152,7 @@ body {
 
 /* تنسيق هيدر العميل - StoreCard */
 /* --- تنسيقات الهيدر الموحد (نفس مقاس index) --- */
-.main-header {
-    background: var(--dark-blue);
-    color: white;
-    padding: 10px 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
 
-.header-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    gap: 20px;
-}
-
-.logo { font-size: 22px; font-weight: bold; min-width: 150px; color: white; cursor: pointer; }
-.logo span { color: var(--primary); }
-.logo-link { text-decoration: none; display: inline-block; transition: 0.2s; }
-
-/* --- شريط البحث --- */
-.search-container { flex-grow: 1; display: flex; justify-content: center; }
-.search-bar {
-    width: 100%;
-    max-width: 500px;
-    background: white;
-    border-radius: 25px;
-    display: flex;
-    padding: 5px 15px;
-}
-.search-bar input { border: none; outline: none; width: 100%; padding: 8px; font-size: 14px; }
-.search-bar button { background: none; border: none; color: #667; cursor: pointer; }
-
-/* --- الأزرار الجانبية والسليكتر --- */
-.header-actions { display: flex; align-items: center; gap: 15px; min-width: 180px; justify-content: flex-end; }
-.action-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; position: relative; text-decoration: none; }
-
-/* --- إدارة القائمة المنسدلة (Dropdown) --- */
-.user-menu-container {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-menu {
-    display: none; /* مخفية افتراضياً وتظهر بـ JS */
-    position: absolute;
-    top: 45px;
-    left: 0;
-    background: var(--dropdown-bg);
-    min-width: 180px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    border-radius: 12px;
-    z-index: 1000;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.dropdown-menu.show {
-    display: block; /* تظهر عند الضغط */
-    animation: fadeIn 0.2s ease-out;
-}
-
-.dropdown-nav {
-    display: flex;
-    flex-direction: column; /* ترتيب العناصر من الأعلى للأسفل */
-    padding: 5px 0;
-}
-
-.dropdown-nav a, .logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: white;
-    text-decoration: none; /* إزالة الخطوط تماماً */
-    font-size: 14px;
-    transition: 0.3s;
-    background: none;
-    border: none;
-    width: 100%;
-    text-align: right;
-    cursor: pointer;
-}
-
-.dropdown-nav a:hover, .logout-btn:hover {
-    background: rgba(255, 152, 0, 0.1);
-    color: var(--primary);
-}
-
-.dropdown-nav hr {
-    border: 0;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin: 5px 0;
-}
-
-.logout-btn {
-    color: #ff4d4d; /* لون أحمر لتنبيه تسجيل الخروج */
-    font-weight: bold;
-}
 
 
 /* كروت الرصيد */
@@ -269,31 +167,7 @@ body {
 
 /* الهيدر في وضع النهار */
 /* الهيدر ثابت داكن في كلا الوضعين */
-.main-header {
-    background-color: #1a202c !important; /* لون داكن ثابت */
-    color: white !important;
-    padding: 10px 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
 
-/* ضمان بقاء الأيقونات واللوجو بيضاء في الهيدر */
-.main-header .logo { color: white !important; }
-.main-header .logo span { color: #f6ad55; } /* لون Card البرتقالي */
-
-.main-header .action-btn {
-    color: white !important;
-}
-
-.search-container {
-        order: 3;
-        width: 100%;
-        flex-grow: unset;
-    }
-
-    .search-bar { max-width: 100%; }
 
 
 /* --- ضمان ظهور سجل العمليات في الوضع الداكن --- */
@@ -390,51 +264,3 @@ body.dark-mode .history-section h3 {
     display: block;
 }
 
-/* الحاوية تكون relative */
-.user-menu-wrapper,
-.nav-icons,
-header {
-    position: relative;
-}
-
-.header-container {
-        flex-wrap: wrap;
-        padding: 8px 15px;
-        gap: 10px;
-    }
-
-    /* ===== Modal الشحن في وضع النهار ===== */
-[data-theme="light"] #depositModal > div {
-    background: #ffffff !important;
-    color: #1e293b !important;
-    border: 1px solid #e2e8f0 !important;
-}
-
-[data-theme="light"] #depositModal input[type="number"],
-[data-theme="light"] #depositModal input[type="file"] {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-    color: #1e293b !important;
-}
-
-[data-theme="light"] #depositModal label {
-    color: #475569 !important;
-}
-
-[data-theme="light"] #depositModal h3 {
-    color: #f97316 !important;
-}
-
-[data-theme="light"] #method-info {
-    background: #f8fafc !important;
-    border-color: #e2e8f0 !important;
-}
-
-[data-theme="light"] #payment-methods-container > div {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-}
-
-[data-theme="light"] #payment-methods-container > div div {
-    color: #1e293b !important;
-}
