@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://cdn.jsdelivr.net; media-src 'self' blob:; worker-src 'self' blob:; frame-src 'self';">
- 
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://cdn.jsdelivr.net; media-src 'self' blob:; worker-src 'self' blob:; frame-src 'self';">
+
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -13,21 +15,23 @@
     <link rel="stylesheet" href="css/index.css?v=2">
     <link rel="stylesheet" href="css/chat-float.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css?v=2">
-<link rel="icon" type="image/png" href="assets/Icon.png">    
+    <link rel="icon" type="image/png" href="assets/Icon.png">
 </head>
+
 <body>
 
     <header class="main-header">
         <div class="header-container">
-<a href="index.html" class="logo-link" style="text-decoration:none;">
-    <div class="logo" style="display:flex; align-items:center; gap:10px;">
-        <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
-        <div style="display:flex; flex-direction:column; line-height:1.1;">
-            <span style="font-size:18px; font-weight:800; color:white;">Store<span style="color:#f97316;">Card</span></span>
-        </div>
-    </div>
-</a>
-            
+            <a href="index.html" class="logo-link" style="text-decoration:none;">
+                <div class="logo" style="display:flex; align-items:center; gap:10px;">
+                    <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
+                    <div style="display:flex; flex-direction:column; line-height:1.1;">
+                        <span style="font-size:18px; font-weight:800; color:white;">Store<span
+                                style="color:#f97316;">Card</span></span>
+                    </div>
+                </div>
+            </a>
+
             <div class="search-container">
                 <div class="search-bar">
                     <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
@@ -99,15 +103,14 @@
     <main class="container">
         <div id="cards-grid" class="cards-grid"></div>
     </main>
- <!-- زر الدردشة العائم -->
-   <div id="chat-float-btn" 
-     onclick="toggleChatWidget()" 
-     title="تواصل مع الدعم الفني">
-    <i class="fas fa-headset"></i>
-    <span class="chat-float-badge" id="chat-float-badge"></span>
-</div>
-<script type="module" src="js/public-header.js?v=2"></script>
+    <!-- زر الدردشة العائم -->
+    <div id="chat-float-btn" onclick="toggleChatWidget()" title="تواصل مع الدعم الفني">
+        <i class="fas fa-headset"></i>
+        <span class="chat-float-badge" id="chat-float-badge"></span>
+    </div>
+    <script type="module" src="js/public-header.js?v=2"></script>
     <script type="module" src="js/index.js?v=2"></script>
-<script type="module" src="js/chat-float.js?v=2"></script>
+    <script type="module" src="js/chat-float.js?v=2"></script>
 </body>
+
 </html>

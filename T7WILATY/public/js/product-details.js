@@ -1,10 +1,10 @@
 /* eslint-disable */
 import { supabase } from './supabase-config.js';
 
-const params    = new URLSearchParams(window.location.search);
+const params = new URLSearchParams(window.location.search);
 const productId = params.get('id');
 
-let selectedPrice  = null;
+let selectedPrice = null;
 let currentProduct = null;
 
 // ✅ دالة مساعدة — تقرأ العملة الحالية دائماً من localStorage
@@ -40,7 +40,7 @@ function refreshPrices() {
 
     if (!currentProduct) return;
     const prices = buildPricesList(currentProduct);
-    const grid   = document.getElementById('prices-grid');
+    const grid = document.getElementById('prices-grid');
     if (grid) grid.innerHTML = renderPrices(prices, getCurrency());
 }
 
@@ -85,7 +85,7 @@ async function loadProductDescription(productName) {
     }
 
     if (data.instructions) {
-        const steps   = data.instructions.split('\n').map(s => s.trim()).filter(s => s);
+        const steps = data.instructions.split('\n').map(s => s.trim()).filter(s => s);
         const linkify = (text) => text.replace(
             /(https?:\/\/[^\s)]+)/g,
             '<a href="$1" target="_blank" rel="noopener" class="step-link">صفحة الاسترداد </a>'
@@ -101,7 +101,7 @@ async function loadProductDescription(productName) {
 
     if (html) {
         const container = document.createElement('div');
-        container.id    = 'product-description-block';
+        container.id = 'product-description-block';
         container.innerHTML = html;
         document.getElementById('product-content').appendChild(container);
     }
@@ -139,6 +139,8 @@ function renderProduct(product) {
             <i class="fas fa-cart-plus"></i> أضف إلى السلة
         </button>
     </div>`;
+
+    
 }
 
 // ==================== رسم الأسعار ====================
@@ -151,10 +153,10 @@ function renderPrices(prices, currency) {
         if (currency === 'USDT') {
             if (!p.usdt_price) return ''; // إخفاء الفئة إذا لا يوجد سعر USDT
             displayPrice = `${p.usdt_price} USDT`;
-            priceValue   = p.usdt_price;
+            priceValue = p.usdt_price;
         } else {
             displayPrice = `${p.value} MRU`;
-            priceValue   = p.value;
+            priceValue = p.value;
         }
 
         if (p.active === false) {
@@ -177,7 +179,7 @@ function renderPrices(prices, currency) {
 }
 
 // ==================== اختيار الفئة ====================
-window.selectPrice = function(index, value, currency) {
+window.selectPrice = function (index, value, currency) {
     document.querySelectorAll('.price-card').forEach(c => c.classList.remove('selected'));
     const card = document.getElementById(`price-${index}`);
     if (card) card.classList.add('selected');
@@ -185,7 +187,7 @@ window.selectPrice = function(index, value, currency) {
     selectedPrice = {
         index,
         value,
-        label:    currentProduct.prices[index].label,
+        label: currentProduct.prices[index].label,
         currency: currency || getCurrency()
     };
 
@@ -194,21 +196,21 @@ window.selectPrice = function(index, value, currency) {
 };
 
 // ==================== شراء الآن ====================
-window.buyNow = function() {
+window.buyNow = function () {
     if (!selectedPrice) return;
-    const cart   = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const exists = cart.find(
         item => item.productId === currentProduct.id && item.label === selectedPrice.label
     );
     if (!exists) {
         cart.push({
             productId: currentProduct.id,
-            name:      currentProduct.name,
-            image:     currentProduct.image,
-            label:     selectedPrice.label,
-            price:     selectedPrice.value,
-            currency:  selectedPrice.currency,
-            quantity:  1
+            name: currentProduct.name,
+            image: currentProduct.image,
+            label: selectedPrice.label,
+            price: selectedPrice.value,
+            currency: selectedPrice.currency,
+            quantity: 1
         });
         localStorage.setItem('cart', JSON.stringify(cart));
         updateCartBadge();
@@ -217,9 +219,9 @@ window.buyNow = function() {
 };
 
 // ==================== إضافة للسلة ====================
-window.addToCart = function() {
+window.addToCart = function () {
     if (!selectedPrice) return;
-    const cart   = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const exists = cart.find(
         item => item.productId === currentProduct.id && item.label === selectedPrice.label
     );
@@ -229,12 +231,12 @@ window.addToCart = function() {
     }
     cart.push({
         productId: currentProduct.id,
-        name:      currentProduct.name,
-        image:     currentProduct.image,
-        label:     selectedPrice.label,
-        price:     selectedPrice.value,
-        currency:  selectedPrice.currency,
-        quantity:  1
+        name: currentProduct.name,
+        image: currentProduct.image,
+        label: selectedPrice.label,
+        price: selectedPrice.value,
+        currency: selectedPrice.currency,
+        quantity: 1
     });
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartBadge();
@@ -258,7 +260,7 @@ function showToast(message, type = 'success') {
 }
 
 // ==================== Logout ====================
-window.handleLogout = async function() {
+window.handleLogout = async function () {
     if (confirm('هل تريد تسجيل الخروج؟')) {
         await supabase.auth.signOut();
         window.location.href = 'login.html';
@@ -272,7 +274,7 @@ function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     themeToggle.onclick = () => {
-        const current  = document.documentElement.getAttribute('data-theme');
+        const current = document.documentElement.getAttribute('data-theme');
         const newTheme = current === 'light' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
@@ -281,7 +283,7 @@ function initTheme() {
 
 // ==================== User Menu ====================
 function setupUserMenu() {
-    const userBtn      = document.getElementById('user-icon-btn');
+    const userBtn = document.getElementById('user-icon-btn');
     const userDropdown = document.getElementById('user-dropdown');
     if (!userBtn || !userDropdown) return;
     userBtn.onclick = (e) => { e.stopPropagation(); userDropdown.classList.toggle('show'); };
@@ -293,9 +295,9 @@ function setupUserMenu() {
 
 // ==================== Cart Badge ====================
 function updateCartBadge() {
-    const cart       = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    const cartIcon   = document.querySelector('a[href="cart.html"]');
+    const cartIcon = document.querySelector('a[href="cart.html"]');
     if (!cartIcon) return;
 
     let badge = cartIcon.querySelector('.cart-badge');
@@ -311,6 +313,6 @@ function updateCartBadge() {
         `;
         cartIcon.appendChild(badge);
     }
-    badge.textContent   = totalItems;
+    badge.textContent = totalItems;
     badge.style.display = totalItems > 0 ? 'flex' : 'none';
 }

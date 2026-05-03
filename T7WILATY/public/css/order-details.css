@@ -1,0 +1,330 @@
+/* ==================== CSS Variables ==================== */
+:root {
+    --bg:         #ffffff;
+    --card-bg:    #f8fafc;
+    --card-bg2:   #f1f5f9;
+    --deep-bg:    #e2e8f0;
+    --border:     rgba(0,0,0,0.08);
+    --text:       #0f172a;
+    --text-muted: #475569;
+    --text-soft:  #64748b;
+    --shadow:     rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] {
+    --bg:         #0f172a;
+    --card-bg:    #1e293b;
+    --card-bg2:   #1e293b;
+    --deep-bg:    #0f172a;
+    --border:     rgba(255,255,255,0.07);
+    --text:       #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-soft:  #64748b;
+    --shadow:     rgba(0,0,0,0.3);
+}
+
+/* ==================== Base ==================== */
+body {
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s;
+}
+
+/* ==================== Layout ==================== */
+#order-details-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ==================== Back Button ==================== */
+.back-btn,
+button[onclick*="orders.html"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-bottom: 20px;
+    font-family: inherit;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.back-btn:hover,
+button[onclick*="orders.html"]:hover {
+    border-color: #f97316;
+    color: #f97316;
+}
+
+/* ==================== Cards ==================== */
+.detail-card {
+    background: var(--card-bg) !important;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border) !important;
+    color: var(--text);
+}
+
+/* ==================== Summary Card (يسار) ==================== */
+.detail-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border) !important;
+    font-size: 13px;
+}
+
+.detail-summary-row:last-child { border-bottom: none !important; }
+
+.summary-label {
+    color: var(--text-soft) !important;
+    font-weight: 600;
+}
+
+.summary-value {
+    color: var(--text) !important;
+    font-weight: 700;
+    text-align: left;
+}
+
+/* Total Amount Box */
+.total-amount-box {
+    background: var(--deep-bg) !important;
+    border: 1px solid rgba(34,197,94,0.2) !important;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    margin-top: 14px;
+}
+
+/* ==================== Product Row ==================== */
+.product-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.product-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.product-row img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    background: white;
+    border-radius: 8px;
+    padding: 4px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* ==================== Code Box ==================== */
+.code-box {
+    background: var(--deep-bg) !important;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(249,115,22,0.15) !important;
+}
+
+/* ==================== Status Badges ==================== */
+.status-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-pending   { background: rgba(249,115,22,0.12); color: #ea6b00; border: 1px solid rgba(249,115,22,0.3); }
+.status-completed { background: rgba(34,197,94,0.12);  color: #16a34a; border: 1px solid rgba(34,197,94,0.3); }
+.status-cancelled { background: rgba(239,68,68,0.12);  color: #dc2626; border: 1px solid rgba(239,68,68,0.3); }
+.status-refunded  { background: rgba(59,130,246,0.12); color: #2563eb; border: 1px solid rgba(59,130,246,0.3); }
+
+[data-theme="dark"] .status-pending   { color: #f97316; }
+[data-theme="dark"] .status-completed { color: #22c55e; }
+[data-theme="dark"] .status-cancelled { color: #f87171; }
+[data-theme="dark"] .status-refunded  { color: #60a5fa; }
+
+/* ==================== Step Items (تعليمات) ==================== */
+.step-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.step-item:last-child { border-bottom: none; }
+
+.step-num {
+    width: 26px;
+    height: 26px;
+    background: rgba(249,115,22,0.12);
+    color: #f97316;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+/* ==================== Buttons ==================== */
+.copy-all-btn {
+    background: rgba(249,115,22,0.12);
+    color: #f97316;
+    border: 1px solid rgba(249,115,22,0.3);
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.copy-all-btn:hover { background: rgba(249,115,22,0.22); }
+
+.eye-btn, .copy-btn-sm {
+    background: var(--card-bg2) !important;
+    color: var(--text-muted) !important;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.15s;
+}
+
+.eye-btn:hover, .copy-btn-sm:hover {
+    background: var(--deep-bg) !important;
+    color: #f97316 !important;
+}
+
+/* ==================== Reject / Refund Blocks ==================== */
+.reject-block {
+    background: rgba(239,68,68,0.05) !important;
+    border: 1px solid rgba(239,68,68,0.2) !important;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.refund-receipt-block {
+    background: var(--card-bg) !important;
+    border: 1px solid rgba(245,158,11,0.2) !important;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+/* ==================== Inline Style Overrides (Light Mode) ==================== */
+
+/* خلفيات داكنة مبنية بـ JS */
+[data-theme="light"] [style*="background:#1e293b"],
+[data-theme="light"] [style*="background: #1e293b"] {
+    background: var(--card-bg) !important;
+    color: var(--text) !important;
+}
+
+[data-theme="light"] [style*="background:#0f172a"],
+[data-theme="light"] [style*="background: #0f172a"] {
+    background: var(--card-bg2) !important;
+}
+
+[data-theme="light"] [style*="background:#111827"],
+[data-theme="light"] [style*="background: #111827"] {
+    background: var(--card-bg) !important;
+}
+
+/* نصوص فاتحة */
+[data-theme="light"] [style*="color:#e2e8f0"],
+[data-theme="light"] [style*="color: #e2e8f0"],
+[data-theme="light"] [style*="color:#f1f5f9"],
+[data-theme="light"] [style*="color: #f1f5f9"],
+[data-theme="light"] [style*="color:#cbd5e1"],
+[data-theme="light"] [style*="color: #cbd5e1"] {
+    color: var(--text) !important;
+}
+
+[data-theme="light"] [style*="color:#94a3b8"],
+[data-theme="light"] [style*="color: #94a3b8"],
+[data-theme="light"] [style*="color:#64748b"],
+[data-theme="light"] [style*="color: #64748b"],
+[data-theme="light"] [style*="color:#475569"],
+[data-theme="light"] [style*="color: #475569"] {
+    color: var(--text-muted) !important;
+}
+
+/* حدود داكنة */
+[data-theme="light"] [style*="border:1px solid #334155"],
+[data-theme="light"] [style*="border: 1px solid #334155"],
+[data-theme="light"] [style*="border-color:#334155"],
+[data-theme="light"] [style*="border-color: #334155"] {
+    border-color: var(--border) !important;
+}
+
+[data-theme="light"] [style*="border:1px solid #1e293b"],
+[data-theme="light"] [style*="border: 1px solid #1e293b"] {
+    border-color: var(--border) !important;
+}
+
+/* Code boxes */
+[data-theme="light"] [style*="background:#0f172a"][style*="border-radius"] {
+    background: #f1f5f9 !important;
+}
+
+[data-theme="light"] [style*="background:#1e293b"][style*="border-radius"] {
+    background: #f8fafc !important;
+}
+
+/* أزرار النسخ/العين */
+[data-theme="light"] [style*="background:#334155"] {
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+}
+
+/* Sticky summary card */
+[data-theme="light"] [style*="position:sticky"],
+[data-theme="light"] [style*="position: sticky"] {
+    background: transparent !important;
+}
+
+/* border-top فواصل */
+[data-theme="light"] [style*="border-top:1px solid rgba(255,255,255,0.06)"],
+[data-theme="light"] [style*="border-top: 1px solid rgba(255,255,255,0.06)"] {
+    border-top-color: rgba(0,0,0,0.07) !important;
+}
+
+[data-theme="light"] [style*="border-bottom:1px solid rgba(255,255,255,0.06)"],
+[data-theme="light"] [style*="border-bottom: 1px solid rgba(255,255,255,0.06)"] {
+    border-bottom-color: rgba(0,0,0,0.07) !important;
+}
+
+/* Total amount box */
+[data-theme="light"] [style*="background:#0f172a"][style*="text-align:center"] {
+    background: #f1f5f9 !important;
+    border-color: rgba(34,197,94,0.2) !important;
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 768px) {
+    #order-details-content > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
