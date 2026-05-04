@@ -169,16 +169,20 @@ async function loadCompletedOrders() {
         }
         // ✅ استبدله بهذا
             if (manualCount > 0) {
-                const manualItems   = group.items.filter(i => i.status === 'مكتمل' && !i.auto_approved);
-                const approvedByName = manualItems[0]?.completed_by_name || 'يدوي';
-                approvalBadge += `<div style="margin-top:4px;">
-                    <span style="display:inline-flex;align-items:center;gap:4px;
-                        background:rgba(168,85,247,0.12);color:#c084fc;
-                        border:1px solid rgba(168,85,247,0.3);
-                        padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
-                        <i class="fas fa-user-check"></i> ${approvedByName}${manualCount > 1 ? ' (' + manualCount + ')' : ''}
-                    </span></div>`;
-            }
+    const manualItems    = group.items.filter(i => i.status === 'مكتمل' && !i.auto_approved);
+    const staffNames     = [...new Set(
+        manualItems.map(i => i.approved_by_name).filter(Boolean)
+    )].join(' / ');
+    const approvedByName = staffNames || 'يدوي';
+
+    approvalBadge += `<div style="margin-top:4px;">
+        <span style="display:inline-flex;align-items:center;gap:4px;
+            background:rgba(168,85,247,0.12);color:#c084fc;
+            border:1px solid rgba(168,85,247,0.3);
+            padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+            <i class="fas fa-user-check"></i> ${approvedByName}${manualCount > 1 ? ' (' + manualCount + ')' : ''}
+        </span></div>`;
+}
 
             // بعد autoApprovedCount و manualCount — أضف هذا
 const refundedItems  = group.items.filter(i => i.status === 'مسترد');
