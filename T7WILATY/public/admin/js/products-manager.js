@@ -34,8 +34,10 @@ const loadProducts = async () => {
                 💾 تحديث كل أسعار USDT
             </button>
         </div>
-        ${products.map(p => `
-        <div class="product-row-item">
+        ${products.map(p => {
+            const isHidden = p.hidden === true;
+            return `
+        <div class="product-row-item" style="${isHidden ? 'opacity:0.55;' : ''}">
             <div class="product-main-info" onclick="toggleDetails('${p.id}')">
                 <div class="p-identity">
                     <img src="${p.image || ''}" class="p-img-thumb" onerror="this.style.display='none'">
@@ -44,6 +46,10 @@ const loadProducts = async () => {
                     ${p.category ? `<span style="background:rgba(249,115,22,0.15);color:#f97316;
                         border-radius:10px;padding:2px 8px;font-size:11px;margin-right:4px;">
                         ${p.category}
+                    </span>` : ''}
+                    ${isHidden ? `<span style="background:rgba(239,68,68,0.15);color:#ef4444;
+                        border-radius:10px;padding:2px 8px;font-size:11px;margin-right:4px;">
+                        🚫 مخفي
                     </span>` : ''}
                 </div>
                 <div class="p-meta">
@@ -61,6 +67,31 @@ const loadProducts = async () => {
                     style="background:#22c55e; color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; margin-right:6px;">
                     <i class="fas fa-plus"></i>
                 </button>
+
+                <!-- ✅ زر إخفاء/إظهار المنتج -->
+                <button onclick="event.stopPropagation(); toggleProductVisibility('${p.id}', ${isHidden})"
+                    title="${isHidden ? 'إظهار المنتج للعملاء' : 'إخفاء المنتج عن العملاء'}"
+                    style="background:${isHidden ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'};
+                           color:${isHidden ? '#22c55e' : '#ef4444'};
+                           border:1px solid ${isHidden ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'};
+                           padding:7px 12px; border-radius:8px; cursor:pointer; margin-right:6px;
+                           font-size:13px; transition:all 0.2s;"
+                    id="hide-btn-${p.id}">
+                    <i class="fas ${isHidden ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                </button>
+
+                <!-- ✅ زر تفعيل/تعطيل Player ID -->
+            <button onclick="event.stopPropagation(); togglePlayerIdField('${p.id}', ${p.require_player_id === true})"
+                title="${p.require_player_id ? 'تعطيل حقل ID اللاعب' : 'تفعيل حقل ID اللاعب'}"
+                style="background:${p.require_player_id ? 'rgba(34,197,94,0.15)' : 'rgba(139,92,246,0.15)'};
+                    color:${p.require_player_id ? '#22c55e' : '#8b5cf6'};
+                    border:1px solid ${p.require_player_id ? 'rgba(34,197,94,0.4)' : 'rgba(139,92,246,0.4)'};
+                    padding:7px 12px; border-radius:8px; cursor:pointer; margin-right:6px;
+                    font-size:13px; transition:all 0.2s;"
+                id="playerid-btn-${p.id}">
+                <i class="fas ${p.require_player_id ? 'fa-gamepad' : 'fa-gamepad'}"></i>
+                ${p.require_player_id ? ' ID ✓' : ' ID'}
+            </button>
             </div>
             <div id="details-${p.id}" class="product-details-area" style="display:none;">
                 <div class="cards-sub-grid">
@@ -68,9 +99,47 @@ const loadProducts = async () => {
                 </div>
             </div>
         </div>
-    `).join('')}`;
+    `}).join('')}`;
 
     setTimeout(recalcAllUSDT, 100);
+};
+
+// ==================== إخفاء / إظهار المنتج ====================
+window.toggleProductVisibility = async (productId, currentlyHidden) => {
+    const newHidden = !currentlyHidden;
+    const label = newHidden ? 'إخفاء' : 'إظهار';
+
+    if (!confirm(`هل تريد ${label} هذا المنتج ${newHidden ? 'عن' : 'لـ'} العملاء؟`)) return;
+
+    const { error } = await supabase
+        .from('products')
+        .update({ hidden: newHidden })
+        .eq('id', productId);
+
+    if (error) {
+        showToast('❌ خطأ: ' + error.message, true);
+    } else {
+        showToast(newHidden ? '🚫 تم إخفاء المنتج عن العملاء' : '✅ تم إظهار المنتج للعملاء');
+        loadProducts();
+    }
+};
+
+// ==================== فتح صفحة المنتج ====================
+window.openProductPage = (productId) => {
+    // بناء الرابط بناءً على الدومين الحالي
+    const base = window.location.origin;
+    const url  = `${base}/product-details?id=${productId}`;
+
+    // نسخ الرابط للحافظة
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('🔗 تم نسخ رابط المنتج!');
+    }).catch(() => {
+        // إذا فشل النسخ، افتح الرابط مباشرة
+        window.open(url, '_blank');
+    });
+
+    // فتح صفحة المنتج في تبويب جديد
+    window.open(url, '_blank');
 };
 
 // ==================== حساب USDT للمنتجات بدون سعر محفوظ ====================
@@ -122,7 +191,6 @@ function updateProfitPreview(productId, priceIndex) {
     const preview   = document.getElementById(`profit-preview-${productId}-${priceIndex}`);
     const usdtInput = document.getElementById(`usdt-input-${productId}-${priceIndex}`);
 
-    // ✅ حساب USDT تلقائياً = سعر البيع MRU ÷ سعر الصرف
     if (usdtInput && sellPrice > 0 && rate > 0) {
         usdtInput.value = (sellPrice / rate).toFixed(2);
     }
@@ -471,3 +539,36 @@ function showToast(message, isError = false) {
     document.body.appendChild(toast);
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2500);
 }
+
+
+// ==================== تفعيل / تعطيل حقل Player ID ====================
+window.togglePlayerIdField = async (productId, currentlyEnabled) => {
+    const newState = !currentlyEnabled;
+    
+    if (newState) {
+        // إذا كان سيفعّل، نسأل عن اسم الحقل
+        const label = prompt('اكتب تسمية حقل ID اللاعب:', 'ID اللاعب');
+        if (label === null) return; // ضغط إلغاء
+        
+        const { error } = await supabase
+            .from('products')
+            .update({ 
+                require_player_id: true,
+                player_id_label: label.trim() || 'ID اللاعب'
+            })
+            .eq('id', productId);
+            
+        if (error) showToast('❌ خطأ: ' + error.message, true);
+        else { showToast('🎮 تم تفعيل حقل ID اللاعب!'); loadProducts(); }
+    } else {
+        if (!confirm('هل تريد تعطيل حقل ID اللاعب لهذا المنتج؟')) return;
+        
+        const { error } = await supabase
+            .from('products')
+            .update({ require_player_id: false })
+            .eq('id', productId);
+            
+        if (error) showToast('❌ خطأ: ' + error.message, true);
+        else { showToast('✅ تم تعطيل حقل ID اللاعب'); loadProducts(); }
+    }
+};

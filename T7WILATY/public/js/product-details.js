@@ -118,7 +118,29 @@ function buildPricesList(product) {
 function renderProduct(product) {
     const prices = buildPricesList(product);
 
-    document.getElementById('product-content').innerHTML = `
+    // ✅ حقل Player ID إذا كان مفعّلاً
+    const playerIdField = product.require_player_id ? `
+    <div style="margin: 16px 0;">
+        <label style="display:block; font-size:14px; color:#94a3b8; font-weight:600; margin-bottom:8px;">
+            🎮 ${product.player_id_label || 'ID اللاعب'}
+        </label>
+        <input 
+            type="text" 
+            id="player-id-input"
+            placeholder="أدخل ${product.player_id_label || 'ID اللاعب'} هنا"
+            style="width:100%; padding:12px 16px; background:#1e293b;
+                   border:1px solid #334155; border-radius:10px;
+                   color:#e2e8f0; font-size:15px; box-sizing:border-box;
+                   outline:none; font-family:'Cairo',sans-serif;"
+            oninput="this.style.borderColor = this.value.trim() ? '#22c55e' : '#334155'"
+        >
+        <span id="player-id-error" 
+              style="color:#ef4444; font-size:12px; display:none; margin-top:4px; display:none;">
+            ⚠️ هذا الحقل مطلوب قبل الإضافة للسلة
+        </span>
+    </div>` : '';
+
+document.getElementById('product-content').innerHTML = `
     <div class="product-header">
         <img src="${product.image || 'assets/placeholder.png'}" alt="${product.name}"
              onerror="this.src='assets/placeholder.png'">
@@ -127,6 +149,8 @@ function renderProduct(product) {
             <p class="country"><i class="fas fa-globe"></i> ${product.country || 'غير محدد'}</p>
         </div>
     </div>
+
+    ${playerIdField}
 
     <h2 class="prices-title">اختر الفئة:</h2>
     <div class="prices-grid" id="prices-grid">${renderPrices(prices, getCurrency())}</div>
@@ -139,8 +163,6 @@ function renderProduct(product) {
             <i class="fas fa-cart-plus"></i> أضف إلى السلة
         </button>
     </div>`;
-
-    
 }
 
 // ==================== رسم الأسعار ====================
@@ -196,8 +218,29 @@ window.selectPrice = function (index, value, currency) {
 };
 
 // ==================== شراء الآن ====================
+// ==================== دالة مساعدة للتحقق من Player ID ====================
+function getPlayerId() {
+    if (!currentProduct?.require_player_id) return null; // المنتج لا يحتاج ID
+    
+    const input = document.getElementById('player-id-input');
+    const error = document.getElementById('player-id-error');
+    
+    if (!input || input.value.trim() === '') {
+        if (input) input.style.borderColor = '#ef4444';
+        if (error) error.style.display = 'block';
+        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false; // ❌ فارغ
+    }
+    return input.value.trim(); // ✅ القيمة
+}
+
+// ==================== شراء الآن ====================
 window.buyNow = function () {
     if (!selectedPrice) return;
+    
+    const playerId = getPlayerId();
+    if (playerId === false) return; // ❌ الحقل مطلوب وفارغ
+    
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const exists = cart.find(
         item => item.productId === currentProduct.id && item.label === selectedPrice.label
@@ -210,7 +253,8 @@ window.buyNow = function () {
             label: selectedPrice.label,
             price: selectedPrice.value,
             currency: selectedPrice.currency,
-            quantity: 1
+            quantity: 1,
+            player_id: playerId || null  // ✅ حفظ ID اللاعب
         });
         localStorage.setItem('cart', JSON.stringify(cart));
         updateCartBadge();
@@ -221,6 +265,10 @@ window.buyNow = function () {
 // ==================== إضافة للسلة ====================
 window.addToCart = function () {
     if (!selectedPrice) return;
+    
+    const playerId = getPlayerId();
+    if (playerId === false) return; // ❌ الحقل مطلوب وفارغ
+    
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const exists = cart.find(
         item => item.productId === currentProduct.id && item.label === selectedPrice.label
@@ -236,7 +284,8 @@ window.addToCart = function () {
         label: selectedPrice.label,
         price: selectedPrice.value,
         currency: selectedPrice.currency,
-        quantity: 1
+        quantity: 1,
+        player_id: playerId || null  // ✅ حفظ ID اللاعب
     });
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartBadge();

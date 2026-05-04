@@ -75,6 +75,7 @@ async function displayProducts() {
     const { data: products, error } = await supabase
         .from("products")
         .select("*")
+        .neq('hidden', true)
         .order("id", { ascending: false });
 
     if (error) {
