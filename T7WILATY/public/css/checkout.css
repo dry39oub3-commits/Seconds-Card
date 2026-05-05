@@ -363,3 +363,15 @@
     border-color: #f97316;
     color: #f97316 !important;
 }
+
+[data-theme="light"] {
+    --input-bg: #ffffff;
+    --input-border: #e2e8f0;
+    --text-color: #1e293b;
+}
+
+[data-theme="dark"] {
+    --input-bg: #1e293b;
+    --input-border: #334155;
+    --text-color: #e2e8f0;
+}
