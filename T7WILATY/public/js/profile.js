@@ -47,13 +47,10 @@ if (displayPhone) {
     phoneEl.textContent = displayPhone;
     addPhoneBtn.style.display = 'none';
 } else {
-        phoneEl.textContent = phone;
-        addPhoneBtn.style.display = 'none';
-    } else {
-        phoneEl.textContent = 'لم يُضف بعد';
-        phoneEl.style.color = 'var(--text-soft)';
-        addPhoneBtn.style.display = 'inline-flex';
-    }
+    phoneEl.textContent = 'لم يُضف بعد';
+    phoneEl.style.color = 'var(--text-soft)';
+    addPhoneBtn.style.display = 'inline-flex';
+}
 
     displayUserPhoto(photo);
     updateHeaderAvatar(photo);
