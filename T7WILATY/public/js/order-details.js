@@ -172,13 +172,16 @@ async function loadOrderDetails(orderId) {
 
             ${paymentReceipt?.startsWith('http') ? `
 <div class="refund-receipt-block">
-    <div class="refund-title" style="color:#f97316;">
+    <div class="refund-title" style="color:#f97316; cursor:pointer; user-select:none;"
+         onclick="const img = document.getElementById('payment-receipt-img'); const isHidden = img.style.display === 'none'; img.style.display = isHidden ? 'block' : 'none'; this.querySelector('.receipt-toggle-icon').className = isHidden ? 'fas fa-chevron-up receipt-toggle-icon' : 'fas fa-chevron-down receipt-toggle-icon';">
         <i class="fas fa-receipt"></i> إيصال الدفع
+        <i class="fas fa-chevron-down receipt-toggle-icon" style="margin-right:auto; font-size:12px;"></i>
     </div>
-    <img src="${paymentReceipt}"
+    <img id="payment-receipt-img"
+         src="${paymentReceipt}"
          class="refund-img"
          onclick="window.open('${paymentReceipt}','_blank')"
-         style="cursor:zoom-in;"
+         style="cursor:zoom-in; display:none;"
          title="انقر للتكبير">
 </div>` : ''}
 
@@ -207,10 +210,15 @@ ${isCompleted && executionReceipt?.startsWith('http') ? `
 
 ${isRefunded && refundReceiptUrl?.startsWith('http') ? `
 <div class="refund-receipt-block">
-    <div class="refund-title">
+    <div class="refund-title" style="cursor:pointer; user-select:none;"
+         onclick="const img = document.getElementById('refund-receipt-img'); const isHidden = img.style.display === 'none'; img.style.display = isHidden ? 'block' : 'none'; this.querySelector('.receipt-toggle-icon').className = isHidden ? 'fas fa-chevron-up receipt-toggle-icon' : 'fas fa-chevron-down receipt-toggle-icon';">
         <i class="fas fa-receipt"></i> إيصال الاسترداد
+        <i class="fas fa-chevron-down receipt-toggle-icon" style="margin-right:auto; font-size:12px;"></i>
     </div>
-    <img src="${refundReceiptUrl}" class="refund-img">
+    <img id="refund-receipt-img"
+         src="${refundReceiptUrl}"
+         class="refund-img"
+         style="display:none;">
 </div>` : ''}
         </div>
 
