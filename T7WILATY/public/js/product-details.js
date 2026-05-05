@@ -159,9 +159,6 @@ document.getElementById('product-content').innerHTML = `
         <button class="add-to-cart-btn" id="buy-btn" onclick="buyNow()" disabled>
             <i class="fas fa-bolt"></i> اشتر الآن
         </button>
-        <button class="add-to-cart-btn" id="add-btn" onclick="addToCart()" disabled>
-            <i class="fas fa-cart-plus"></i> أضف إلى السلة
-        </button>
     </div>`;
 }
 
@@ -239,26 +236,22 @@ window.buyNow = function () {
     if (!selectedPrice) return;
     
     const playerId = getPlayerId();
-    if (playerId === false) return; // ❌ الحقل مطلوب وفارغ
+    if (playerId === false) return;
     
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const exists = cart.find(
-        item => item.productId === currentProduct.id && item.label === selectedPrice.label
-    );
-    if (!exists) {
-        cart.push({
-            productId: currentProduct.id,
-            name: currentProduct.name,
-            image: currentProduct.image,
-            label: selectedPrice.label,
-            price: selectedPrice.value,
-            currency: selectedPrice.currency,
-            quantity: 1,
-            player_id: playerId || null  // ✅ حفظ ID اللاعب
-        });
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartBadge();
-    }
+    // ✅ مسح السلة تماماً ووضع المنتج الجديد فقط
+    const newCart = [{
+        productId: currentProduct.id,
+        name: currentProduct.name,
+        image: currentProduct.image,
+        label: selectedPrice.label,
+        price: selectedPrice.value,
+        currency: selectedPrice.currency,
+        quantity: 1,
+        player_id: playerId || null
+    }];
+    
+    localStorage.setItem('cart', JSON.stringify(newCart));
+    updateCartBadge();
     window.location.href = 'cart.html';
 };
 

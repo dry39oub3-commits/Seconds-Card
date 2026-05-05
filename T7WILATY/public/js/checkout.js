@@ -140,7 +140,8 @@ window.selectMethod = async function(id, account, name) {
                 quantity:       item.quantity || 1,
                 status:         'قيد الانتظار',
                 paymentMethod:  name,
-                user_id:        user.id
+                user_id:        user.id,
+                player_id:      item.player_id || null
             }));
 
             const { data: insertedOrders, error: insertError } = await supabase
@@ -424,6 +425,7 @@ async function executePayment() {
                     quantity:          item.quantity || 1,
                     user_id:           user.id,
                     paymentMethod:     'المحفظة',
+                    player_id:         item.player_id || null,
                     status:            (allHaveStock && hasStock) ? 'مكتمل' : 'قيد الانتظار',
                     card_code:         (allHaveStock && hasStock) ? stockResult.codes.join('\n') : null,
                     cost_price:        (allHaveStock && hasStock) ? stockResult.costPerCode : null,
@@ -517,7 +519,8 @@ async function executePayment() {
             status:         'قيد الانتظار',
             receiptUrl:     receiptUrl,
             paymentMethod:  selectedPaymentMethod.name,
-            user_id:        user.id
+            user_id:        user.id,
+            player_id:      item.player_id || null
         }));
 
         const { error: insertError } = await supabase.from('orders').insert(orders);

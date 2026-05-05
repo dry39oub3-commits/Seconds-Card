@@ -77,6 +77,7 @@ function renderCart() {
                 <div class="item-info">
                     <h4>${item.name}</h4>
                     ${item.label ? `<span style="font-size:12px; color:#f97316; background:rgba(249,115,22,0.1); padding:2px 8px; border-radius:20px; display:inline-block; margin-bottom:4px;">${item.label}</span>` : ''}
+                    ${item.player_id ? `<div style="font-size:11px; color:#22c55e; margin-top:3px;">🎮 ${item.player_id}</div>` : ''}
                     <p>${itemPrice} MRU</p>
                 </div>
                 <div class="quantity-control">

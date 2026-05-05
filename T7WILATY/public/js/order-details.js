@@ -60,6 +60,8 @@ async function loadOrderDetails(orderId) {
 
     const rejectReason     = allOrders.find(o => o.reject_reason)?.reject_reason;
     const refundReceiptUrl = allOrders.find(o => o.refund_receipt_url)?.refund_receipt_url;
+    // ✅ جلب إيصال التنفيذ (الذي يرفعه الأدمن عند القبول)
+    const executionReceipt = allOrders.find(o => o.receipt_url)?.receipt_url;
 
     // حفظ الأكواد
     window._orderCodesMap = {};
@@ -81,7 +83,6 @@ async function loadOrderDetails(orderId) {
 
         const codesSection = isCompleted && codes.length > 0 ? `
             <div class="codes-section">
-
                 <div class="codes-header">
                     <div class="codes-label">
                         <i class="fas fa-key"></i>
@@ -126,9 +127,7 @@ async function loadOrderDetails(orderId) {
             <div class="product-row-inner">
                 ${image
                     ? `<img src="${image}" class="product-img" alt="">`
-                    : `<div class="product-img-placeholder">
-                           <i class="fas fa-box"></i>
-                       </div>`}
+                    : `<div class="product-img-placeholder"><i class="fas fa-box"></i></div>`}
                 <div class="product-info">
                     <div class="product-name">${order.product_name || '—'}</div>
                     ${order.label ? `<div class="product-label">
@@ -141,10 +140,24 @@ async function loadOrderDetails(orderId) {
                     <span class="status-badge ${itemStatusClass}">${order.status}</span>
                 </div>
             </div>
+            
             ${codesSection}
+            ${order.player_id ? `
+            <div style="margin-top:12px; margin-bottom:0; font-size:13px; grid-column:1/-1;
+                background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.3);
+                border-radius:8px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <span>🎮 Player ID</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <strong id="player-id-value" style="font-family:monospace; color:#22c55e; font-size:15px;">
+                        ${order.player_id}
+                    </strong>
+                    
+                </div>
+            </div>` : ''}
         </div>`;
     }).join('');
 
+    
     container.innerHTML = `
     <button onclick="window.location.href='orders.html'" class="back-btn">
         <i class="fas fa-arrow-right"></i> العودة للطلبات
@@ -164,6 +177,19 @@ async function loadOrderDetails(orderId) {
                         <div class="reject-text">${rejectReason}</div>
                     </div>
                 </div>
+            </div>` : ''}
+
+            ${/* ✅ إيصال التنفيذ — يظهر عند اكتمال الطلب إذا رفعه الأدمن */
+            isCompleted && executionReceipt?.startsWith('http') ? `
+            <div class="refund-receipt-block">
+                <div class="refund-title" style="color:#22c55e;">
+                    <i class="fas fa-receipt"></i> إيصال التنفيذ
+                </div>
+                <img src="${executionReceipt}"
+                     class="refund-img"
+                     onclick="window.open('${executionReceipt}','_blank')"
+                     style="cursor:zoom-in;"
+                     title="انقر للتكبير">
             </div>` : ''}
 
             ${isRefunded && refundReceiptUrl?.startsWith('http') ? `
