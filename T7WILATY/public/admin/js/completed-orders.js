@@ -240,7 +240,10 @@ if (rejectedItems.length > 0) {
                 <td><strong>${group.totalPrice} MRU</strong></td>
                 <td style="text-align:center;">${totalQty}</td>
                 <td>${dateCell}</td>
-                <td>${paymentMethod}</td>
+                <td>
+                    <div>${paymentMethod}</div>
+                    ${group.items[0]?.sender_phone ? `<div style="font-size:11px;color:#22c55e;font-family:monospace;margin-top:3px;direction:ltr;"><i class="fas fa-paper-plane" style="font-size:9px;"></i> ${group.items[0].sender_phone}</div>` : ''}
+                </td>
                 <td>${receiptBtn}</td>
                 <td>
                     <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;${style}">
@@ -251,7 +254,15 @@ if (rejectedItems.length > 0) {
                         ? `<div style="font-size:11px;color:#ef4444;margin-top:4px;">السبب: ${group.items[0].reject_reason}</div>`
                         : ''}
                 </td>
-                <td>${refundBtn}</td>
+                <td>
+                    ${refundBtn}
+                    <button onclick="deleteOrderGroup('${group.order_number}')"
+                        style="background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;
+                            cursor:pointer;font-size:12px;width:100%;display:flex;
+                            align-items:center;gap:4px;justify-content:center;margin-top:6px;">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -675,4 +686,30 @@ window.showAlert = (message, type = 'success') => {
         showAlert.style.transform = 'translateX(-50%) translateY(-20px)';
         setTimeout(() => showAlert.remove(), 350);
     }, 3000);
+};
+
+window.deleteOrderGroup = async (orderNumberOrId) => {
+    if (!confirm(`هل تريد حذف هذا الطلب نهائياً؟`)) return;
+
+    let error;
+
+    // حاول الحذف بـ order_number أولاً
+    const res1 = await supabase
+        .from('orders')
+        .delete()
+        .eq('order_number', orderNumberOrId);
+
+    if (res1.error) {
+        // إذا فشل، احذف بالـ id
+        const res2 = await supabase
+            .from('orders')
+            .delete()
+            .eq('id', orderNumberOrId);
+        error = res2.error;
+    }
+
+    if (error) { showAlert('❌ خطأ في الحذف: ' + error.message, 'error'); return; }
+
+    showAlert('✅ تم حذف الطلب بنجاح', 'success');
+    loadCompletedOrders();
 };
