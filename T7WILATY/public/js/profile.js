@@ -317,3 +317,11 @@ function showToast(message, type = 'success') {
         setTimeout(() => t.remove(), 300);
     }, 2800);
 }
+
+// ==================== مراقبة حذف الحساب ====================
+supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+});
