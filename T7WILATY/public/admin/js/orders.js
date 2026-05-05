@@ -1443,3 +1443,6 @@ window.filterCompleted = () => {
         row.style.display = !q || row.innerText.toLowerCase().includes(q) ? '' : 'none';
     });
 };
+
+window.loadOrders = loadOrders;
+window.loadCompletedOrders = loadCompletedOrders;
