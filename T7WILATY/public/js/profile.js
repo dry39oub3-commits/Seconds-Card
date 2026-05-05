@@ -27,21 +27,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const name  = userData?.full_name || userData?.fullName || user.user_metadata?.full_name || 'مستخدم';
     const photo = userData?.avatar_url || user.user_metadata?.avatar_url || '';
-    const phone = userData?.phone || '';
-    if (!phone && user.user_metadata?.phone) {
+let phone = userData?.phone || '';
+
+if (!phone && user.user_metadata?.phone) {
     await supabase.from('users')
         .update({ phone: user.user_metadata.phone })
         .eq('id', user.id);
+    phone = user.user_metadata.phone;
 }
 
-const displayPhone = phone || user.user_metadata?.phone || '';
+const displayPhone = phone;
 
     document.getElementById('user-display-name').value = name;
 
     // عرض رقم الهاتف
-    const phoneEl    = document.getElementById('user-display-phone');
-    const addPhoneBtn = document.getElementById('add-phone-btn');
-    if (phone) {
+    const phoneEl     = document.getElementById('user-display-phone');
+const addPhoneBtn = document.getElementById('add-phone-btn');
+if (displayPhone) {
+    phoneEl.textContent = displayPhone;
+    addPhoneBtn.style.display = 'none';
+} else {
         phoneEl.textContent = phone;
         addPhoneBtn.style.display = 'none';
     } else {
