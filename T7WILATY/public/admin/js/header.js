@@ -141,36 +141,38 @@ document.addEventListener('DOMContentLoaded', loadWalletPendingBadge);
 // admin-guard.js يتولى حماية الصفحات — هنا نطبق فقط القفل البصري على الـ drawer
 document.addEventListener('DOMContentLoaded', () => {
     // انتظر حتى يُحمّل admin-guard ويضع window.STAFF_PERMISSIONS
-    setTimeout(() => {
-        if (window.IS_ADMIN) return;
+    const waitForGuard = setInterval(() => {
+    if (window.IS_ADMIN === undefined) return; // لم يُحمَّل بعد
+    clearInterval(waitForGuard);
+    
+    if (window.IS_ADMIN) return; // أدمن — لا قيود
 
-        const PAGE_PERM_MAP = {
-            'orders.html':           'approve_orders',
-            'completed-orders.html': 'view_completed',
-            'stocks.html':           'manage_stock',
-            'admin-wallet.html':     'view_wallets',
-            'products-manager.html': 'manage_products',
-            'Slider-manager.html':   'manage_slider',
-            'payment-methods.html':  'manage_payments',
-            'users-manager.html':    'manage_users',
-            'staff-manager.html':    'manage_users',
-            'stats.html':            'view_stats',
-            'admin-chat.html':       'chat_support',
-        };
+    const PAGE_PERM_MAP = {
+        'orders.html':           'approve_orders',
+        'completed-orders.html': 'view_completed',
+        'stocks.html':           'manage_stock',
+        'admin-wallet.html':     'view_wallets',
+        'products-manager.html': 'manage_products',
+        'Slider-manager.html':   'manage_slider',
+        'payment-methods.html':  'manage_payments',
+        'users-manager.html':    'manage_users',
+        'staff-manager.html':    'manage_users',
+        'stats.html':            'view_stats',
+        'admin-chat.html':       'chat_support',
+    };
 
-        // قفل روابط الـ drawer
-        document.querySelectorAll('.drawer-nav-list .nav-link').forEach(link => {
-            const page     = link.getAttribute('href')?.split('/').pop().split('?')[0];
-            const required = PAGE_PERM_MAP[page];
-            if (required && !window.hasPerm?.(required)) {
-                link.style.opacity = '0.4';
-                link.style.cursor  = 'not-allowed';
-                link.title         = 'ليس لديك صلاحية للوصول';
-                link.addEventListener('click', e => {
-                    e.preventDefault();
-                    window.location.href = '403.html';
-                });
-            }
-        });
-    }, 300);
+    document.querySelectorAll('.drawer-nav-list .nav-link').forEach(link => {
+        const page     = link.getAttribute('href')?.split('/').pop().split('?')[0];
+        const required = PAGE_PERM_MAP[page];
+        if (required && !window.hasPerm?.(required)) {
+            link.style.opacity = '0.4';
+            link.style.cursor  = 'not-allowed';
+            link.title         = 'ليس لديك صلاحية للوصول';
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                window.location.href = '403.html';
+            });
+        }
+    });
+}, 50);
 });
