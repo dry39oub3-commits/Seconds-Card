@@ -212,7 +212,23 @@ window.selectMethod = async function(id, account, name) {
             accountElem.textContent = account || 'غير متوفر';
         }
         if (receiptSection) receiptSection.style.display = 'block';
-        if (statusMsg) statusMsg.innerHTML = '';
+        if (statusMsg) statusMsg.innerHTML = `
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px; font-weight:600;">
+                    📱 رقم الهاتف المرسل منه
+                </label>
+                <input type="tel" id="sender-phone-input"
+                    placeholder="مثال: 22xxxxxxxx"
+                    style="width:100%; padding:12px 16px;
+                           background:var(--input-bg, #f8fafc);
+                           border:1.5px solid var(--input-border, #cbd5e1);
+                           border-radius:10px; color:var(--text-primary, #1e293b);
+                           font-size:15px; box-sizing:border-box;
+                           outline:none; font-family:'Cairo',sans-serif;
+                           transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='#f97316'"
+                    onblur="this.style.borderColor='#cbd5e1'">
+            </div>`;
     }
 };
 
@@ -490,6 +506,14 @@ async function executePayment() {
         return;
     }
 
+    const senderPhone = document.getElementById('sender-phone-input')?.value.trim();
+if (!senderPhone) {
+    showToast('⚠️ الرجاء إدخال رقم الهاتف المرسل منه!', 'error');
+    document.getElementById('sender-phone-input')?.focus();
+    document.getElementById('sender-phone-input').style.borderColor = '#ef4444';
+    return;
+}
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
@@ -510,6 +534,7 @@ async function executePayment() {
             order_number:   sharedOrderNumber,
             customer_name:  user?.user_metadata?.full_name || 'مستخدم',
             customer_phone: window._userPhone || '',
+            sender_phone:   document.getElementById('sender-phone-input')?.value.trim() || '',
             product_id:     item.productId || null,
             product_name:   item.name,
             label:          item.label || null,

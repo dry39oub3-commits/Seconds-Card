@@ -168,6 +168,7 @@ async function fetchUserOrders() {
                         ${multiProductBadge}
                         Qty: ${totalQty}
                     </div>
+                    
                     <div style="font-size:12px;color:#64748b;font-family:monospace;">${orderNum}</div>
                 </div>
 

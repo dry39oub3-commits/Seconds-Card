@@ -131,7 +131,13 @@ function renderPage(page) {
                 <td><strong>${group.totalPrice} ${group.items[0]?.currency || 'MRU'}</strong></td>
                 <td>${totalQty}</td>
                 <td><small>${date}</small></td>
-                <td>${paymentMethod}</td>
+                <td>
+    <div>${paymentMethod}</div>
+    ${group.items[0]?.sender_phone ? `
+    <div style="font-size:11px;color:#22c55e;font-family:monospace;margin-top:4px;direction:ltr;">
+        <i class="fas fa-paper-plane" style="font-size:9px;margin-left:3px;"></i>${group.items[0].sender_phone}
+    </div>` : ''}
+</td>
                 <td>${receiptBtn}</td>
                 <td>${acceptBtn}</td>
             </tr>`;
@@ -1085,7 +1091,7 @@ function getThemeColors() {
 window.quickRefund = async (orderId, paymentMethod) => {
     const { data: order, error } = await supabase
         .from('orders')
-        .select('id, user_id, price, quantity, payment_method, paymentMethod, customer_name, customer_phone, product_name, label, order_number, created_at')
+        .select('id, user_id, price, quantity, payment_method, paymentMethod, customer_name, customer_phone, sender_phone, product_name, label, order_number, created_at')
         .eq('id', orderId)
         .single();
 
@@ -1128,8 +1134,15 @@ window.quickRefund = async (orderId, paymentMethod) => {
             <div class="refund-row"><span class="label"><i class="fas fa-hashtag"></i> رقم الطلب</span><span class="value" style="font-family:monospace;color:#f97316;">${order.order_number || '#' + orderId.substring(0,8)}</span></div>
             <div class="refund-row"><span class="label"><i class="fas fa-box"></i> المنتج</span><span class="value">${order.product_name || '—'} ${order.label ? `<span style="color:#f97316;font-size:12px;">(${order.label})</span>` : ''}</span></div>
             <div class="refund-row"><span class="label"><i class="fas fa-user"></i> العميل</span><span class="value">${order.customer_name || '—'}</span></div>
-            ${order.customer_phone ? `<div class="refund-row"><span class="label"><i class="fas fa-phone"></i> الهاتف</span><span class="value" style="font-family:monospace;direction:ltr;">${order.customer_phone}</span></div>` : ''}
+            ${(order.sender_phone || order.customer_phone) ? `
+<div class="refund-row">
+    <span class="label"><i class="fas fa-phone"></i> ${order.sender_phone ? 'الرقم المرسل منه' : 'الهاتف'}</span>
+    <span class="value" style="font-family:monospace;direction:ltr;${order.sender_phone ? 'color:#22c55e;' : ''}">
+        ${order.sender_phone || order.customer_phone}
+    </span>
+</div>` : ''}
             <div class="refund-row"><span class="label"><i class="fas fa-credit-card"></i> طريقة الدفع</span><span class="value">${pm || '—'}</span></div>
+            
             <div class="refund-amount-box">
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">المبلغ الذي سيُسترد</div>
                 <div style="font-size:28px;font-weight:900;color:#f59e0b;">${refundAmount} <span style="font-size:14px;font-weight:600;">MRU</span></div>
