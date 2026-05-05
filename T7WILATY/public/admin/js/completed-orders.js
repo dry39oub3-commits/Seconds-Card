@@ -437,7 +437,34 @@ window.showOrderPopup = (orderId) => {
                      })}</div></div>
             </div>
             ${profitHtml}
-            ${suppliersHtml}
+            ${suppliersHtml}            
+            ${order.player_id ? `
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">
+                    🎮 Player ID
+                </div>
+                <div style="background:#0f172a;border:1px solid rgba(34,197,94,0.3);border-radius:8px;
+                            padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+                    <strong style="font-family:monospace;color:#22c55e;font-size:15px;">${order.player_id}</strong>
+                    <button onclick="copyText('${order.player_id}')"
+                        style="background:#334155;color:white;border:none;padding:3px 8px;
+                            border-radius:4px;cursor:pointer;font-size:11px;">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>` : ''}
+
+            ${order.receipt_url?.startsWith('http') ? `
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;color:#22c55e;margin-bottom:8px;font-weight:700;">
+                    <i class="fas fa-receipt"></i> إيصال التنفيذ
+                </div>
+                <img src="${order.receipt_url}"
+                    style="width:100%;border-radius:10px;cursor:zoom-in;"
+                    onclick="window.open('${order.receipt_url}','_blank')"
+                    title="انقر للتكبير">
+            </div>` : ''}
+
             <div>
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">
                     🔑 الأكواد (${codes.length})

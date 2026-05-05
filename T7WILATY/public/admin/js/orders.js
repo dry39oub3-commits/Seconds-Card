@@ -525,7 +525,7 @@ window.openOrderModal = (order) => {
             <div style="margin-bottom:15px;">
                 <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">
                     <i class="fas fa-receipt" style="color:#f97316;"></i>
-                    إيصال التنفيذ (اختياري — يظهر للعميل)
+                    إيصال التنفيذ ( يظهر للعميل)
                 </label>
                 <input type="file" id="player-receipt-file" accept="image/*"
                     style="width:100%; padding:10px; background:${c.inputBg};
@@ -848,9 +848,16 @@ window.approveOrder = async (orderId, quantity) => {
     const stockCodesData   = window._stockCodesData || [];
     const suppliersDetails = stockCodesData.map(c => ({ code: c.code, supplier_name: c.supplier_name, supplier_order_id: c.order_id }));
 
-    // رفع إيصال Player ID إن وجد
-    let playerReceiptUrl = null;
+// ✅ التحقق من الإيصال — إلزامي لطلبات Player ID
     const playerReceiptFile = document.getElementById('player-receipt-file')?.files[0];
+    if (hasPlayerId && !playerReceiptFile) {
+        showToast('⚠️ يجب رفع إيصال التنفيذ قبل القبول!');
+        document.getElementById('player-receipt-file')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('player-receipt-file').style.border = '2px solid #ef4444';
+        return;
+    }
+
+    let playerReceiptUrl = null;
     if (playerReceiptFile) {
         try {
             const fileName = `player-receipts/${orderId}_${Date.now()}`;
