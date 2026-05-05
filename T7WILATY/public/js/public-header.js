@@ -167,3 +167,11 @@ window.handleLogout = async function() {
         window.location.href = 'index.html';
     }
 };
+
+// ==================== مراقبة حذف الحساب ====================
+supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+});
