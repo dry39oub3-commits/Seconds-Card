@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -13,12 +14,13 @@
     <link rel="stylesheet" href="css/chat-float.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css?v=2">
     <script>
-        (function(){
+        (function () {
             const t = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', t);
         })();
     </script>
 </head>
+
 <body>
     <header class="main-header">
         <div class="header-container">
@@ -26,7 +28,8 @@
                 <div class="logo" style="display:flex; align-items:center; gap:10px;">
                     <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
                     <div style="display:flex; flex-direction:column; line-height:1.1;">
-                        <span style="font-size:18px; font-weight:800; color:white;">Store<span style="color:#f97316;">Card</span></span>
+                        <span style="font-size:18px; font-weight:800; color:var(--text-primary, #1e293b);">Store<span
+                                style="color:#f97316;">Card</span></span>
                     </div>
                 </div>
             </a>
@@ -39,7 +42,6 @@
             </div>
 
             <div class="header-actions">
-
                 <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
                 <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
 
@@ -81,7 +83,8 @@
 
                 <!-- الاسم قابل للتعديل -->
                 <div class="edit-name-container">
-                    <input type="text" id="user-display-name" class="profile-name-input" value="جاري التحميل..." required>
+                    <input type="text" id="user-display-name" class="profile-name-input" value="جاري التحميل..."
+                        required>
                     <i class="fas fa-pencil-alt edit-icon-hint"></i>
                 </div>
 
@@ -145,10 +148,7 @@
             <p class="modal-desc">سيُستخدم رقم هاتفك لتسجيل الدخول بسهولة</p>
             <div class="phone-input-row">
                 <span class="phone-prefix-modal">+222</span>
-                <input type="tel" id="modal-phone-input"
-                       placeholder="xxxxxxxx"
-                       maxlength="8"
-                       class="modal-phone-input">
+                <input type="tel" id="modal-phone-input" placeholder="xxxxxxxx" maxlength="8" class="modal-phone-input">
             </div>
             <button onclick="savePhone()" id="save-phone-btn" class="modal-save-btn">
                 <i class="fas fa-save"></i> حفظ الرقم
@@ -167,4 +167,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="js/profile.js?v=3"></script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -7,25 +8,27 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Store-Card</title>
-    <link rel="icon" type="image/png" href="assets/Icon.png">    
+    <link rel="icon" type="image/png" href="assets/Icon.png">
 
     <link rel="stylesheet" href="css/index.css?v=2">
     <link rel="stylesheet" href="css/chat-float.css?v=2">
     <link rel="stylesheet" href="css/cart.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css?v=2">
 </head>
+
 <body>
     <header class="main-header">
         <div class="header-container">
-<a href="index.html" class="logo-link" style="text-decoration:none;">
-    <div class="logo" style="display:flex; align-items:center; gap:10px;">
-        <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
-        <div style="display:flex; flex-direction:column; line-height:1.1;">
-            <span style="font-size:18px; font-weight:800; color:white;">Store<span style="color:#f97316;">Card</span></span>
-        </div>
-    </div>
-</a>
-            
+            <a href="index.html" class="logo-link" style="text-decoration:none;">
+                <div class="logo" style="display:flex; align-items:center; gap:10px;">
+                    <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
+                    <div style="display:flex; flex-direction:column; line-height:1.1;">
+                        <span style="font-size:18px; font-weight:800; color:var(--text-primary, #1e293b);">Store<span
+                                style="color:#f97316;">Card</span></span>
+                    </div>
+                </div>
+            </a>
+
             <div class="search-container">
                 <div class="search-bar">
                     <input type="text" id="main-search" placeholder="ابحث عن بطاقة...">
@@ -34,7 +37,6 @@
             </div>
 
             <div class="header-actions">
-
                 <button id="theme-toggle" class="action-btn"><i class="fas fa-moon"></i></button>
                 <a href="cart.html" class="action-btn"><i class="fas fa-shopping-cart"></i></a>
 
@@ -69,76 +71,74 @@
 
         <aside class="cart-summary">
             <!-- ملخص الطلب — الصق هذا مكان summary-card القديمة -->
-<div class="cart-summary">
-    <div class="summary-card">
+            <div class="cart-summary">
+                <div class="summary-card">
 
-        <!-- العنوان -->
-        <div class="summary-title">
-            <i class="fas fa-receipt"></i>
-            ملخص الطلب
-        </div>
+                    <!-- العنوان -->
+                    <div class="summary-title">
+                        <i class="fas fa-receipt"></i>
+                        ملخص الطلب
+                    </div>
 
-        <!-- الصفوف -->
-        <div class="summary-item">
-            <span class="s-label">
-                <i class="fas fa-box"></i>
-                عدد المنتجات
-            </span>
-            <span class="s-value" id="items-count">0</span>
-        </div>
+                    <!-- الصفوف -->
+                    <div class="summary-item">
+                        <span class="s-label">
+                            <i class="fas fa-box"></i>
+                            عدد المنتجات
+                        </span>
+                        <span class="s-value" id="items-count">0</span>
+                    </div>
 
-        <div class="summary-item">
-            <span class="s-label">
-                <i class="fas fa-tag"></i>
-                إجمالي المنتجات
-            </span>
-            <span class="s-value" id="subtotal">0 MRU</span>
-        </div>
+                    <div class="summary-item">
+                        <span class="s-label">
+                            <i class="fas fa-tag"></i>
+                            إجمالي المنتجات
+                        </span>
+                        <span class="s-value" id="subtotal">0 MRU</span>
+                    </div>
 
-        <div class="summary-item">
-            <span class="s-label">
-                <i class="fas fa-percent"></i>
-                الضريبة (0%)
-            </span>
-            <span class="s-value">0 MRU</span>
-        </div>
+                    <div class="summary-item">
+                        <span class="s-label">
+                            <i class="fas fa-percent"></i>
+                            الضريبة (0%)
+                        </span>
+                        <span class="s-value">0 MRU</span>
+                    </div>
 
-        <!-- الإجمالي -->
-        <div class="summary-total-row">
-            <span class="t-label">
-                <i class="fas fa-coins"></i>
-                الإجمالي النهائي
-            </span>
-            <span class="t-value">
-                <span class="t-currency">MRU</span>
-                <span id="final-total-num">0</span>
-            </span>
-        </div>
+                    <!-- الإجمالي -->
+                    <div class="summary-total-row">
+                        <span class="t-label">
+                            <i class="fas fa-coins"></i>
+                            الإجمالي النهائي
+                        </span>
+                        <span class="t-value">
+                            <span class="t-currency">MRU</span>
+                            <span id="final-total-num">0</span>
+                        </span>
+                    </div>
 
-        <!-- زر الدفع -->
-        <button class="checkout-btn" onclick="processCheckout()">
-            <i class="fas fa-bolt"></i>
-            الذهاب للدفع
-        </button>
+                    <!-- زر الدفع -->
+                    <button class="checkout-btn" onclick="processCheckout()">
+                        <i class="fas fa-bolt"></i>
+                        الذهاب للدفع
+                    </button>
 
-        <!-- شريط الأمان -->
-        <div class="summary-secure">
-            <i class="fas fa-shield-alt"></i>
-            دفع آمن ومشفّر بالكامل
-        </div>
+                    <!-- شريط الأمان -->
+                    <div class="summary-secure">
+                        <i class="fas fa-shield-alt"></i>
+                        دفع آمن ومشفّر بالكامل
+                    </div>
 
-    </div>
-</div>
+                </div>
+            </div>
         </aside>
     </main>
 
- <!-- زر الدردشة العائم -->
-   <div id="chat-float-btn" 
-     onclick="toggleChatWidget()" 
-     title="تواصل مع الدعم الفني">
-    <i class="fas fa-headset"></i>
-    <span class="chat-float-badge" id="chat-float-badge"></span>
-</div>
+    <!-- زر الدردشة العائم -->
+    <div id="chat-float-btn" onclick="toggleChatWidget()" title="تواصل مع الدعم الفني">
+        <i class="fas fa-headset"></i>
+        <span class="chat-float-badge" id="chat-float-badge"></span>
+    </div>
 
     <!-- ✅ Supabase بدل Firebase -->
     <script type="module" src="js/supabase-config.js?v=2"></script>
@@ -182,5 +182,7 @@
         });
     </script>
     <script type="module" src="js/public-header.js?v=2"></script>
-<script type="module" src="js/chat-float.js?v=2"></script></body>
+    <script type="module" src="js/chat-float.js?v=2"></script>
+</body>
+
 </html>

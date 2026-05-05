@@ -1,4 +1,15 @@
 import { supabase } from './supabase-config.js';
+/* eslint-disable */
+// ==================== sanitize ====================
+function sanitize(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     const params  = new URLSearchParams(window.location.search);
@@ -39,10 +50,10 @@ async function loadOrderDetails(orderId) {
 
     const orderNum   = firstOrder.order_number || '#' + firstOrder.id.substring(0, 8);
     const date       = new Date(firstOrder.created_at).toLocaleString('fr-FR');
-    const currency   = firstOrder.currency || 'MRU';
+    const currency   = sanitize(firstOrder.currency || 'MRU');
     const totalPrice = allOrders.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
     const totalQty   = allOrders.reduce((s, o) => s + (o.quantity || 1), 0);
-    const pm         = firstOrder.paymentMethod || firstOrder.payment_method || '—';
+    const pm         = sanitize(firstOrder.paymentMethod || firstOrder.payment_method || '—');
 
     const priority = { 'قيد الانتظار': 5, 'قيد المراجعة': 4, 'مكتمل': 3, 'مسترد': 2, 'ملغي': 1 };
     const groupStatus = allOrders.reduce((best, o) =>
@@ -60,7 +71,6 @@ async function loadOrderDetails(orderId) {
 
     const rejectReason     = allOrders.find(o => o.reject_reason)?.reject_reason;
     const refundReceiptUrl = allOrders.find(o => o.refund_receipt_url)?.refund_receipt_url;
-    // ✅ جلب إيصال التنفيذ (الذي يرفعه الأدمن عند القبول)
     const paymentReceipt   = firstOrder.receiptUrl || firstOrder.receipt_url || null;
     const executionReceipt = allOrders.find(o => o.execution_receipt_url)?.execution_receipt_url;
 
@@ -90,7 +100,7 @@ async function loadOrderDetails(orderId) {
                         ${codes.length > 1 ? codes.length + ' أكواد' : 'الكود'}
                     </div>
                     <div class="codes-actions">
-                        <button onclick="showInstructions('${(order.product_name||'').replace(/'/g,"\\'")}')"
+                        <button onclick="showInstructions('${sanitize(order.product_name||'').replace(/'/g,"\\'")}')"
                             class="btn-instructions">
                             <i class="fas fa-list-ol"></i> تعليمات الاسترداد
                         </button>
@@ -111,7 +121,7 @@ async function loadOrderDetails(orderId) {
                 <div class="code-box">
                     ${codes.length > 1 ? `<span class="code-num">${i+1}</span>` : ''}
                     <span id="code-${orderIdx}-${i}"
-                          data-code="${code.replace(/"/g,'&quot;')}"
+                          data-code="${sanitize(code)}"
                           data-hidden="true"
                           class="code-text code-hidden">
                         ●●●●●●●●●●●●●●●●
@@ -127,18 +137,18 @@ async function loadOrderDetails(orderId) {
         <div class="detail-card product-card">
             <div class="product-row-inner">
                 ${image
-                    ? `<img src="${image}" class="product-img" alt="">`
+                    ? `<img src="${sanitize(image)}" class="product-img" alt="">`
                     : `<div class="product-img-placeholder"><i class="fas fa-box"></i></div>`}
                 <div class="product-info">
-                    <div class="product-name">${order.product_name || '—'}</div>
+                    <div class="product-name">${sanitize(order.product_name) || '—'}</div>
                     ${order.label ? `<div class="product-label">
-                        <i class="fas fa-tag"></i> ${order.label}
+                        <i class="fas fa-tag"></i> ${sanitize(order.label)}
                     </div>` : ''}
                     <div class="product-qty">× ${order.quantity || 1}</div>
                 </div>
                 <div class="product-price-col">
                     <div class="product-price">${total} ${currency}</div>
-                    <span class="status-badge ${itemStatusClass}">${order.status}</span>
+                    <span class="status-badge ${itemStatusClass}">${sanitize(order.status)}</span>
                 </div>
             </div>
             
@@ -150,16 +160,14 @@ async function loadOrderDetails(orderId) {
                 <span>🎮 Player ID</span>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <strong id="player-id-value" style="font-family:monospace; color:#22c55e; font-size:15px;">
-                        ${order.player_id}
+                        ${sanitize(order.player_id)}
                     </strong>
-                    
                 </div>
             </div>` : ''}
         </div>`;
         
     }).join('');
 
-    
     container.innerHTML = `
     <button onclick="window.location.href='orders.html'" class="back-btn">
         <i class="fas fa-arrow-right"></i> العودة للطلبات
@@ -178,9 +186,9 @@ async function loadOrderDetails(orderId) {
         <i class="fas fa-chevron-down receipt-toggle-icon" style="margin-right:auto; font-size:12px;"></i>
     </div>
     <img id="payment-receipt-img"
-         src="${paymentReceipt}"
+         src="${sanitize(paymentReceipt)}"
          class="refund-img"
-         onclick="window.open('${paymentReceipt}','_blank')"
+         onclick="window.open('${sanitize(paymentReceipt)}','_blank')"
          style="cursor:zoom-in; display:none;"
          title="انقر للتكبير">
 </div>` : ''}
@@ -191,7 +199,7 @@ ${isCancelled && rejectReason ? `
         <i class="fas fa-times-circle reject-icon"></i>
         <div>
             <div class="reject-title">سبب الرفض</div>
-            <div class="reject-text">${rejectReason}</div>
+            <div class="reject-text">${sanitize(rejectReason)}</div>
         </div>
     </div>
 </div>` : ''}
@@ -201,9 +209,9 @@ ${isCompleted && executionReceipt?.startsWith('http') ? `
     <div class="refund-title" style="color:#22c55e;">
         <i class="fas fa-receipt"></i> إيصال التنفيذ
     </div>
-    <img src="${executionReceipt}"
+    <img src="${sanitize(executionReceipt)}"
          class="refund-img"
-         onclick="window.open('${executionReceipt}','_blank')"
+         onclick="window.open('${sanitize(executionReceipt)}','_blank')"
          style="cursor:zoom-in;"
          title="انقر للتكبير">
 </div>` : ''}
@@ -216,7 +224,7 @@ ${isRefunded && refundReceiptUrl?.startsWith('http') ? `
         <i class="fas fa-chevron-down receipt-toggle-icon" style="margin-right:auto; font-size:12px;"></i>
     </div>
     <img id="refund-receipt-img"
-         src="${refundReceiptUrl}"
+         src="${sanitize(refundReceiptUrl)}"
          class="refund-img"
          style="display:none;">
 </div>` : ''}
@@ -227,16 +235,16 @@ ${isRefunded && refundReceiptUrl?.startsWith('http') ? `
 
                 <div class="summary-header">
                     <div class="summary-title">ملخص الطلب</div>
-                    <span class="status-badge ${statusClass}">${groupStatus}</span>
+                    <span class="status-badge ${statusClass}">${sanitize(groupStatus)}</span>
                 </div>
 
                 <div class="detail-summary-row">
                     <span class="summary-label"><i class="fas fa-hashtag summary-icon orange"></i>رقم الطلب</span>
-                    <span class="summary-order-num">${orderNum}</span>
+                    <span class="summary-order-num">${sanitize(orderNum)}</span>
                 </div>
                 <div class="detail-summary-row">
                     <span class="summary-label"><i class="fas fa-calendar summary-icon"></i>التاريخ</span>
-                    <span class="summary-value summary-date">${date}</span>
+                    <span class="summary-value summary-date">${sanitize(date)}</span>
                 </div>
                 <div class="detail-summary-row">
                     <span class="summary-label"><i class="fas fa-credit-card summary-icon"></i>الدفع</span>
@@ -352,7 +360,7 @@ window.showInstructions = async (productName) => {
             </div>
 
             <div class="inst-product-name">
-                <i class="fas fa-box"></i> ${productName}
+                <i class="fas fa-box"></i> ${sanitize(productName)}
             </div>
 
             ${steps.length > 0 ? `
@@ -361,7 +369,7 @@ window.showInstructions = async (productName) => {
                 <div class="inst-step-item">
                     <div class="inst-step-num">${i + 1}</div>
                     <div class="inst-step-text">
-                        ${step.replace(/(https?:\/\/[^\s)]+)/g,
+                        ${sanitize(step).replace(/(https?:\/\/[^\s)]+)/g,
                             '<a href="$1" target="_blank" rel="noopener" class="inst-link">صفحة الاسترداد</a>')}
                     </div>
                 </div>`).join('')}

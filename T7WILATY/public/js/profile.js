@@ -154,6 +154,7 @@ window.savePhone = async () => {
     btn.disabled  = false;
 
     showToast('✅ تم حفظ رقم الهاتف!');
+    setTimeout(() => window.location.reload(), 1000);
 };
 
 // ==================== رفع الصورة ====================

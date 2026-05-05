@@ -740,3 +740,10 @@ body::before {
     .price-start { display: none; }
 }
 
+[data-theme="light"] {
+    --text-primary: #1e293b;
+}
+
+[data-theme="dark"] {
+    --text-primary: #e2e8f0;
+}
