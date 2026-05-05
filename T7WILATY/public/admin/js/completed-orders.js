@@ -512,29 +512,28 @@ function updateSummary(orders) {
 }
 
 // ==================== استرداد مجموعة ====================
-// ==================== استرداد مجموعة ====================
 window.refundGroupOrders = async (ids) => {
     if (!confirm(`هل تريد استرداد ${ids.length} طلب وإرجاع المبلغ للمحفظة؟`)) return;
 
-await supabase.from('orders').update({ 
-    status: 'مسترد',
-    approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
-}).eq('id', orderId);
-
-    let totalRefunded      = 0;
+    let totalRefunded = 0;
 
     for (const orderId of ids) {
         const { data: order } = await supabase
             .from('orders')
-            .select('id, user_id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, price, quantity, suppliers_details')
+            .select('id, user_id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, price, quantity, suppliers_details, paymentMethod, payment_method')
             .eq('id', orderId)
             .single();
 
         if (!order) continue;
 
-        await supabase.from('orders').update({ status: 'مسترد' }).eq('id', orderId);
+        await supabase.from('orders').update({ 
+            status: 'مسترد',
+            approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+        }).eq('id', orderId);
 
         const refundAmount = (order.price || 0) * (order.quantity || 1);
+
+    
 
         if (order.user_id && refundAmount > 0 && (order.paymentMethod === 'المحفظة' || order.payment_method === 'المحفظة')) {
             const { data: userData } = await supabase

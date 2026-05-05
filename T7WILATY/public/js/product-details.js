@@ -120,25 +120,31 @@ function renderProduct(product) {
 
     // ✅ حقل Player ID إذا كان مفعّلاً
     const playerIdField = product.require_player_id ? `
-    <div style="margin: 16px 0;">
-        <label style="display:block; font-size:14px; color:#94a3b8; font-weight:600; margin-bottom:8px;">
-            🎮 ${product.player_id_label || 'ID اللاعب'}
-        </label>
-        <input 
-            type="text" 
-            id="player-id-input"
-            placeholder="أدخل ${product.player_id_label || 'ID اللاعب'} هنا"
-            style="width:100%; padding:12px 16px; background:#1e293b;
-                   border:1px solid #334155; border-radius:10px;
-                   color:#e2e8f0; font-size:15px; box-sizing:border-box;
-                   outline:none; font-family:'Cairo',sans-serif;"
-            oninput="this.style.borderColor = this.value.trim() ? '#22c55e' : '#334155'"
-        >
-        <span id="player-id-error" 
-              style="color:#ef4444; font-size:12px; display:none; margin-top:4px; display:none;">
-            ⚠️ هذا الحقل مطلوب قبل الإضافة للسلة
-        </span>
-    </div>` : '';
+<div style="margin: 16px 0;">
+    <label style="display:block; font-size:14px; color:var(--text-secondary, #64748b); font-weight:600; margin-bottom:8px;">
+        🎮 ${product.player_id_label || 'ID اللاعب'}
+    </label>
+    <input 
+        type="text" 
+        id="player-id-input"
+        placeholder="أدخل ${product.player_id_label || 'ID اللاعب'} هنا"
+        style="width:100%; padding:12px 16px;
+               background:var(--input-bg, #ffffff);
+               border:1.5px solid var(--input-border, #cbd5e1);
+               border-radius:10px;
+               color:var(--text-primary, #1e293b);
+               font-size:15px; box-sizing:border-box;
+               outline:none; font-family:'Cairo',sans-serif;
+               transition: border-color 0.2s;"
+        oninput="this.style.borderColor = this.value.trim() ? '#22c55e' : 'var(--input-border, #cbd5e1)'"
+        onfocus="this.style.borderColor='#f97316'"
+        onblur="this.style.borderColor = this.value.trim() ? '#22c55e' : 'var(--input-border, #cbd5e1)'"
+    >
+    <span id="player-id-error" 
+          style="color:#ef4444; font-size:12px; margin-top:4px; display:none;">
+        ⚠️ هذا الحقل مطلوب قبل الإضافة للسلة
+    </span>
+</div>` : '';
 
 document.getElementById('product-content').innerHTML = `
     <div class="product-header">

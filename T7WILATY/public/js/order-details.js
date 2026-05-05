@@ -61,7 +61,8 @@ async function loadOrderDetails(orderId) {
     const rejectReason     = allOrders.find(o => o.reject_reason)?.reject_reason;
     const refundReceiptUrl = allOrders.find(o => o.refund_receipt_url)?.refund_receipt_url;
     // ✅ جلب إيصال التنفيذ (الذي يرفعه الأدمن عند القبول)
-    const executionReceipt = allOrders.find(o => o.receipt_url)?.receipt_url;
+    const paymentReceipt   = firstOrder.receiptUrl || firstOrder.receipt_url || null;
+    const executionReceipt = allOrders.find(o => o.execution_receipt_url)?.execution_receipt_url;
 
     // حفظ الأكواد
     window._orderCodesMap = {};
@@ -155,6 +156,7 @@ async function loadOrderDetails(orderId) {
                 </div>
             </div>` : ''}
         </div>`;
+        
     }).join('');
 
     
@@ -168,37 +170,48 @@ async function loadOrderDetails(orderId) {
         <div class="order-products-col">
             ${productCards}
 
-            ${isCancelled && rejectReason ? `
-            <div class="reject-block">
-                <div class="reject-inner">
-                    <i class="fas fa-times-circle reject-icon"></i>
-                    <div>
-                        <div class="reject-title">سبب الرفض</div>
-                        <div class="reject-text">${rejectReason}</div>
-                    </div>
-                </div>
-            </div>` : ''}
+            ${paymentReceipt?.startsWith('http') ? `
+<div class="refund-receipt-block">
+    <div class="refund-title" style="color:#f97316;">
+        <i class="fas fa-receipt"></i> إيصال الدفع
+    </div>
+    <img src="${paymentReceipt}"
+         class="refund-img"
+         onclick="window.open('${paymentReceipt}','_blank')"
+         style="cursor:zoom-in;"
+         title="انقر للتكبير">
+</div>` : ''}
 
-            ${/* ✅ إيصال التنفيذ — يظهر عند اكتمال الطلب إذا رفعه الأدمن */
-            isCompleted && executionReceipt?.startsWith('http') ? `
-            <div class="refund-receipt-block">
-                <div class="refund-title" style="color:#22c55e;">
-                    <i class="fas fa-receipt"></i> إيصال التنفيذ
-                </div>
-                <img src="${executionReceipt}"
-                     class="refund-img"
-                     onclick="window.open('${executionReceipt}','_blank')"
-                     style="cursor:zoom-in;"
-                     title="انقر للتكبير">
-            </div>` : ''}
+${isCancelled && rejectReason ? `
+<div class="reject-block">
+    <div class="reject-inner">
+        <i class="fas fa-times-circle reject-icon"></i>
+        <div>
+            <div class="reject-title">سبب الرفض</div>
+            <div class="reject-text">${rejectReason}</div>
+        </div>
+    </div>
+</div>` : ''}
 
-            ${isRefunded && refundReceiptUrl?.startsWith('http') ? `
-            <div class="refund-receipt-block">
-                <div class="refund-title">
-                    <i class="fas fa-receipt"></i> إيصال الاسترداد
-                </div>
-                <img src="${refundReceiptUrl}" class="refund-img">
-            </div>` : ''}
+${isCompleted && executionReceipt?.startsWith('http') ? `
+<div class="refund-receipt-block">
+    <div class="refund-title" style="color:#22c55e;">
+        <i class="fas fa-receipt"></i> إيصال التنفيذ
+    </div>
+    <img src="${executionReceipt}"
+         class="refund-img"
+         onclick="window.open('${executionReceipt}','_blank')"
+         style="cursor:zoom-in;"
+         title="انقر للتكبير">
+</div>` : ''}
+
+${isRefunded && refundReceiptUrl?.startsWith('http') ? `
+<div class="refund-receipt-block">
+    <div class="refund-title">
+        <i class="fas fa-receipt"></i> إيصال الاسترداد
+    </div>
+    <img src="${refundReceiptUrl}" class="refund-img">
+</div>` : ''}
         </div>
 
         <div class="order-summary-col">

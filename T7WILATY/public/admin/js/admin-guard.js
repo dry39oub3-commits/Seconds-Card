@@ -33,7 +33,7 @@ async function initGuard() {
 
     const { data: u, error } = await supabase
         .from('users')
-        .select('is_admin, is_staff, full_name, staff_permissions')
+        .select('is_admin, is_staff, is_active, full_name, staff_permissions')
         .eq('id', session.user.id)
         .single();
 
@@ -49,11 +49,12 @@ async function initGuard() {
         return;
     }
 
-    if (!u?.is_admin && (!u?.is_staff || u?.is_active === false)) {
-    await supabase.auth.signOut();
-    window.location.replace('login.html');
-    return;
-}
+    // عامل غير نشط → خروج
+    if (!u?.is_admin && u?.is_staff && u?.is_active === false) {
+        await supabase.auth.signOut();
+        window.location.replace('login.html');
+        return;
+    }
 
     // تخزين البيانات عالمياً
     window.CURRENT_USER      = session.user;
