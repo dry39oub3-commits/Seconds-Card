@@ -345,7 +345,7 @@ async function loadPaymentMethods() {
                 style="height:40px; object-fit:contain; margin-bottom:8px; display:block; margin-left:auto; margin-right:auto;"
                 onerror="this.style.display='none'">
             <div style="font-weight:bold; font-size:14px; color:#e2e8f0;">${m.name}</div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">${m.account_number || ''}</div>
+            
         </div>
     `).join('');
 }

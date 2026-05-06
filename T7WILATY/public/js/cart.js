@@ -1,59 +1,155 @@
+// cart.js - Cloud Storage with Supabase
 import { supabase } from './supabase-config.js';
 
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+// ==================== إدارة السلة السحابية ====================
 
-document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    setupUserMenu();
-    renderCart();
-    checkAuthState();
-    checkUserIcon();
-});
+async function getOrCreateCart(userId) {
+    // جلب السلة الحالية أو إنشاء واحدة جديدة
+    let { data: cart, error } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .single();
 
-async function checkUserIcon() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const userBtn = document.getElementById('user-icon-btn');
-    if (!userBtn) return;
+    if (error || !cart) {
+        const { data: newCart, error: createError } = await supabase
+            .from('carts')
+            .insert({ user_id: userId, status: 'active' })
+            .select('id')
+            .single();
+        if (createError) throw createError;
+        return newCart.id;
+    }
+    return cart.id;
+}
 
-    if (session?.user) {
-        const user = session.user;
-        const avatarUrl = user.user_metadata?.avatar_url || '';
+async function loadCartFromCloud(userId) {
+    const cartId = await getOrCreateCart(userId);
+    const { data: items, error } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_id', cartId);
 
-        if (avatarUrl) {
-            userBtn.innerHTML = `
-                <img src="${avatarUrl}" 
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                     style="width:32px; height:32px; border-radius:50%; object-fit:cover;
-                            border:2px solid #f97316; display:block;">
-                <i class="fas fa-user-check" style="display:none;"></i>
-            `;
-        } else {
-            userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
-        }
+    if (error) throw error;
+    return { cartId, items: items || [] };
+}
 
-        userBtn.style.padding = '0';
-        userBtn.style.background = 'transparent';
-        userBtn.style.border = 'none';
+async function saveCartItemToCloud(cartId, item) {
+    // تحقق إن كان المنتج موجود مسبقاً
+    const { data: existing } = await supabase
+        .from('cart_items')
+        .select('id, quantity')
+        .eq('cart_id', cartId)
+        .eq('product_id', item.id)
+        .single();
 
-        userBtn.onclick = (e) => {
-            e.stopPropagation();
-            document.getElementById('user-dropdown')?.classList.toggle('show');
-        };
+    if (existing) {
+        // تحديث الكمية
+        const { error } = await supabase
+            .from('cart_items')
+            .update({ quantity: existing.quantity + (item.quantity || 1) })
+            .eq('id', existing.id);
+        if (error) throw error;
     } else {
-        userBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i>';
-        userBtn.title = 'تسجيل الدخول';
-        userBtn.onclick = () => { window.location.href = 'login.html'; };
+        // إضافة منتج جديد
+        const { error } = await supabase
+            .from('cart_items')
+            .insert({
+                cart_id: cartId,
+                product_id: item.id,
+                name: item.name,
+                price: item.price,
+                image: item.image,
+                label: item.label,
+                player_id: item.player_id,
+                quantity: item.quantity || 1
+            });
+        if (error) throw error;
     }
 }
 
-// --- 2. عرض محتويات السلة وتحديث الواجهة ---
+async function updateCartItemQty(itemDbId, newQty) {
+    if (newQty <= 0) {
+        return await removeCartItemFromCloud(itemDbId);
+    }
+    const { error } = await supabase
+        .from('cart_items')
+        .update({ quantity: newQty })
+        .eq('id', itemDbId);
+    if (error) throw error;
+}
+
+async function removeCartItemFromCloud(itemDbId) {
+    const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('id', itemDbId);
+    if (error) throw error;
+}
+
+// ==================== الحالة المحلية للصفحة ====================
+let cartItems = [];
+let currentCartId = null;
+let currentUserId = null;
+
+// ==================== التهيئة ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    initTheme();
+    await checkAuthState();
+    checkUserIcon();
+});
+
+async function checkAuthState() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session?.user) {
+        currentUserId = session.user.id;
+        try {
+            const { cartId, items } = await loadCartFromCloud(currentUserId);
+            currentCartId = cartId;
+            cartItems = items;
+
+            // مزامنة localStorage القديمة إن وجدت
+            await migrateLocalStorageToCloud();
+        } catch (err) {
+            console.error('خطأ في تحميل السلة:', err);
+        }
+    } else {
+        // مستخدم غير مسجل - استخدم localStorage مؤقتاً
+        cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+    }
+
+    renderCart();
+}
+
+// مزامنة البيانات القديمة من localStorage إلى السحابة
+async function migrateLocalStorageToCloud() {
+    const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+    if (localCart.length === 0) return;
+
+    for (const item of localCart) {
+        try {
+            await saveCartItemToCloud(currentCartId, item);
+        } catch (e) {
+            console.warn('فشل نقل المنتج:', item.name, e);
+        }
+    }
+    localStorage.removeItem('cart');
+
+    // أعد تحميل السلة من السحابة بعد المزامنة
+    const { items } = await loadCartFromCloud(currentUserId);
+    cartItems = items;
+}
+
+// ==================== عرض السلة ====================
 function renderCart() {
     const list = document.getElementById('cart-items-list');
     const emptyMsg = document.getElementById('empty-cart-msg');
 
     if (!list) return;
 
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
         list.innerHTML = "";
         if (emptyMsg) emptyMsg.style.display = 'block';
         updateSummary(0);
@@ -66,7 +162,7 @@ function renderCart() {
     let html = '<h2>سلة المشتريات</h2>';
     let total = 0;
 
-    cart.forEach((item, index) => {
+    cartItems.forEach((item, index) => {
         const itemPrice = parseFloat(item.price) || 0;
         const itemQty = parseInt(item.quantity) || 1;
         total += itemPrice * itemQty;
@@ -101,73 +197,140 @@ function renderCart() {
     updateCartBadge();
 }
 
-// --- 3. وظائف التحكم (تحديث الكمية والحذف) ---
-window.updateQty = (index, change) => {
-    if (!cart[index].quantity) cart[index].quantity = 1;
-    const newQty = cart[index].quantity + change;
+// ==================== التحكم في السلة ====================
+window.updateQty = async (index, change) => {
+    const item = cartItems[index];
+    const newQty = (item.quantity || 1) + change;
+
     if (newQty > 5) {
         showToast('⚠️ لا يمكن إضافة أكثر من 5 قطع!', 'warning');
         return;
     }
-    if (newQty > 0) {
-        cart[index].quantity = newQty;
-        saveAndReload();
+
+    if (currentUserId && item.id) {
+        try {
+            if (newQty <= 0) {
+                await removeCartItemFromCloud(item.id);
+                cartItems.splice(index, 1);
+            } else {
+                await updateCartItemQty(item.id, newQty);
+                cartItems[index].quantity = newQty;
+            }
+        } catch (err) {
+            showToast('❌ خطأ في التحديث', 'error');
+            return;
+        }
+    } else {
+        // وضع offline
+        if (newQty <= 0) {
+            cartItems.splice(index, 1);
+        } else {
+            cartItems[index].quantity = newQty;
+        }
+        localStorage.setItem('cart', JSON.stringify(cartItems));
     }
-};
 
-window.removeItem = (index) => {
-    cart.splice(index, 1);
-    saveAndReload();
-};
-
-function saveAndReload() {
-    localStorage.setItem('cart', JSON.stringify(cart));
     renderCart();
-}
+};
 
-// استبدل دالة updateSummary في cart.js بهذه
+window.removeItem = async (index) => {
+    const item = cartItems[index];
+
+    if (currentUserId && item.id) {
+        try {
+            await removeCartItemFromCloud(item.id);
+        } catch (err) {
+            showToast('❌ خطأ في الحذف', 'error');
+            return;
+        }
+    } else {
+        localStorage.setItem('cart', JSON.stringify(cartItems));
+    }
+
+    cartItems.splice(index, 1);
+    renderCart();
+};
+
+// ==================== ملخص السلة ====================
 function updateSummary(total) {
-    const subtotalElem     = document.getElementById('subtotal');
-    const finalTotalElem   = document.getElementById('final-total');
-    const finalTotalNum    = document.getElementById('final-total-num');
-    const countElem        = document.getElementById('items-count');
+    const subtotalElem      = document.getElementById('subtotal');
+    const finalTotalElem    = document.getElementById('final-total');
+    const finalTotalNum     = document.getElementById('final-total-num');
+    const countElem         = document.getElementById('items-count');
     const checkoutTotalElem = document.getElementById('checkout-total-display');
 
-    if (subtotalElem)      subtotalElem.textContent    = `${total} MRU`;
-    if (finalTotalElem)    finalTotalElem.textContent  = `${total} MRU`;
-    if (finalTotalNum)     finalTotalNum.textContent   = total;
-    if (countElem)         countElem.textContent       = cart.length;
-    if (checkoutTotalElem) checkoutTotalElem.textContent = `${total} MRU`;
+    if (subtotalElem)       subtotalElem.textContent     = `${total} MRU`;
+    if (finalTotalElem)     finalTotalElem.textContent   = `${total} MRU`;
+    if (finalTotalNum)      finalTotalNum.textContent    = total;
+    if (countElem)          countElem.textContent        = cartItems.length;
+    if (checkoutTotalElem)  checkoutTotalElem.textContent = `${total} MRU`;
 }
 
-// --- 4. معالجة الانتقال للدفع ---
+function updateCartBadge() {
+    const totalItems = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+    let badge = document.querySelector('.cart-badge');
+    const cartIcon = document.querySelector('a[href="cart.html"]');
+
+    if (!cartIcon) return;
+
+    if (!badge) {
+        cartIcon.style.position = 'relative';
+        badge = document.createElement('span');
+        badge.className = 'cart-badge';
+        badge.style.cssText = `
+            position: absolute; top: -8px; left: -8px;
+            background: #f97316; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 11px; display: flex;
+            align-items: center; justify-content: center; font-weight: bold;
+        `;
+        cartIcon.appendChild(badge);
+    }
+
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'flex' : 'none';
+}
+
+// ==================== أيقونة المستخدم ====================
+async function checkUserIcon() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userBtn = document.getElementById('user-icon-btn');
+    if (!userBtn) return;
+
+    if (session?.user) {
+        const avatarUrl = session.user.user_metadata?.avatar_url || '';
+        if (avatarUrl) {
+            userBtn.innerHTML = `
+                <img src="${avatarUrl}"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                     style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #f97316;display:block;">
+                <i class="fas fa-user-check" style="display:none;"></i>`;
+        } else {
+            userBtn.innerHTML = '<i class="fas fa-user-check"></i>';
+        }
+        userBtn.style.cssText = 'padding:0;background:transparent;border:none;';
+        userBtn.onclick = (e) => {
+            e.stopPropagation();
+            document.getElementById('user-dropdown')?.classList.toggle('show');
+        };
+    } else {
+        userBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i>';
+        userBtn.title = 'تسجيل الدخول';
+        userBtn.onclick = () => { window.location.href = 'login.html'; };
+    }
+}
+
+// ==================== الدفع ====================
 window.processCheckout = () => {
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
         showToast("سلتك فارغة! قم بإضافة بطاقات أولاً.", 'error');
         return;
     }
     window.location.href = "checkout.html";
 };
 
-// ==================== الوظائف المساعدة ====================
-
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-}
-
-function setupUserMenu() {
-    const userBtn = document.getElementById('user-icon-btn');
-    const userDropdown = document.getElementById('user-dropdown');
-    if (userBtn && userDropdown) {
-        userBtn.onclick = (e) => {
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-        };
-        window.onclick = () => userDropdown.classList.remove('show');
-    }
-}
-
+// ==================== تسجيل الخروج ====================
 window.handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
@@ -178,70 +341,29 @@ window.handleLogout = async () => {
     }
 };
 
-function updateCartBadge() {
-    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    
-    let badge = document.querySelector('.cart-badge');
-    const cartIcon = document.querySelector('a[href="cart.html"]');
-    
-    if (!cartIcon) return;
-    
-    if (!badge) {
-        cartIcon.style.position = 'relative';
-        badge = document.createElement('span');
-        badge.className = 'cart-badge';
-        badge.style.cssText = `
-            position: absolute;
-            top: -8px;
-            left: -8px;
-            background: #f97316;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        `;
-        cartIcon.appendChild(badge);
-    }
-    
-    badge.textContent = totalItems;
-    badge.style.display = totalItems > 0 ? 'flex' : 'none';
+// ==================== الثيم ====================
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
 }
 
-// ==================== دالة التنبيهات (نسخة واحدة فقط) ====================
+// ==================== التنبيهات ====================
 function showToast(message, type = 'success') {
     document.getElementById('_toast')?.remove();
     const t = document.createElement('div');
     t.id = '_toast';
     t.textContent = message;
-    
-    // تعديل بسيط ليعمل مع الـ warning أيضاً
-    let bgColor = '#22c55e';
-    if(type === 'error') bgColor = '#ef4444';
-    if(type === 'warning') bgColor = '#f97316';
-
+    const colors = { success: '#22c55e', error: '#ef4444', warning: '#f97316' };
     t.style.cssText = `
-        position: fixed;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-10px);
-        background: ${bgColor};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        font-family: 'Tajawal', sans-serif;
-        z-index: 99999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        opacity: 0;
-        transition: opacity 0.3s, transform 0.3s;
-        pointer-events: none;
-        white-space: nowrap;
+        position:fixed; top:24px; left:50%;
+        transform:translateX(-50%) translateY(-10px);
+        background:${colors[type] || colors.success};
+        color:white; padding:12px 24px; border-radius:10px;
+        font-size:14px; font-weight:700;
+        font-family:'Tajawal',sans-serif;
+        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.3);
+        opacity:0; transition:opacity .3s,transform .3s;
+        pointer-events:none; white-space:nowrap;
     `;
     document.body.appendChild(t);
     requestAnimationFrame(() => {
