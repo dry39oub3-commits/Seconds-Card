@@ -907,6 +907,9 @@ window.approveOrder = async (orderId, quantity) => {
 
     document.getElementById('order-modal').remove();
     showToast('✅ تم قبول الطلب بنجاح!');
+    // إشعار العميل
+const { data: approvedOrder } = await supabase.from('orders').select('*').eq('id', orderId).single()
+if (approvedOrder) await notifyCustomer(approvedOrder, 'مكتمل', approvedOrder.card_code)
     loadOrders();
 };
 
@@ -991,6 +994,9 @@ window.rejectOrder = async (orderId) => {
     window._reservedStockIds = null; window._stockCodesData = null;
     document.getElementById('order-modal').remove();
     showToast('تم رفض الطلب.');
+    // إشعار العميل
+const { data: rejectedOrder } = await supabase.from('orders').select('*').eq('id', orderId).single()
+if (rejectedOrder) await notifyCustomer(rejectedOrder, 'ملغي', null, reason)
     loadOrders();
 };
 
@@ -1234,6 +1240,9 @@ window.executeRefund = async (orderId, pm, refundAmount, userId) => {
     }
 
     document.getElementById('refund-modal')?.remove();
+    // إشعار العميل
+const { data: refundedOrder } = await supabase.from('orders').select('*').eq('id', orderId).single()
+if (refundedOrder) await notifyCustomer(refundedOrder, 'مسترد')
     loadOrders();
 };
 
@@ -1464,4 +1473,67 @@ window.filterCompleted = () => {
 };
 
 window.loadOrders = loadOrders;
+
+// ==================== إشعار Telegram للعميل ====================
+async function notifyCustomer(order, status, cardCode = null, rejectReason = null) {
+    const SUPABASE_ANON_KEY = "sb_publishable_UKw4zfQRW6-RsX8ntT_Ssw_ZnZuhvKd"
+    
+    let message = ''
+    
+    if (status === 'مكتمل' && cardCode) {
+        message = `✅ <b>تم إكمال طلبك!</b>
+
+🔸 <b>رقم الطلب:</b> #${order.order_number || ''}
+📦 <b>المنتج:</b> ${order.product_name || ''} ${order.label ? `(${order.label})` : ''}
+🔑 <b>الكود:</b>
+<code>${cardCode}</code>
+
+شكراً لتسوقك معنا! 🛍️`
+    } else if (status === 'ملغي') {
+        message = `❌ <b>تم رفض طلبك</b>
+
+🔸 <b>رقم الطلب:</b> #${order.order_number || ''}
+📦 <b>المنتج:</b> ${order.product_name || ''} ${order.label ? `(${order.label})` : ''}
+📝 <b>السبب:</b> ${rejectReason || 'غير محدد'}
+
+للاستفسار تواصل مع الدعم. 💬`
+    } else if (status === 'مسترد') {
+        message = `↩️ <b>تم استرداد طلبك</b>
+
+🔸 <b>رقم الطلب:</b> #${order.order_number || ''}
+📦 <b>المنتج:</b> ${order.product_name || ''} ${order.label ? `(${order.label})` : ''}
+💰 <b>المبلغ:</b> ${(order.price || 0) * (order.quantity || 1)} MRU
+
+تم إعادة المبلغ. للاستفسار تواصل مع الدعم. 💬`
+    }
+
+    if (!message || !order.customer_phone) return
+
+    // جلب chat_id العميل من قاعدة البيانات
+    const { data: userData } = await supabase
+        .from('users')
+        .select('telegram_chat_id')
+        .eq('id', order.user_id)
+        .maybeSingle()
+
+    if (!userData?.telegram_chat_id) return
+
+    await fetch(
+        'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/telegram-notify',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+                customer_notification: true,
+                chat_id: userData.telegram_chat_id,
+                message
+            })
+        }
+    )
+}
+
 window.loadCompletedOrders = loadCompletedOrders;
+

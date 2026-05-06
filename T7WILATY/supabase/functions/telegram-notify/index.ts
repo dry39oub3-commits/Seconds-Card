@@ -12,6 +12,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 serve(async (req) => {
     const body = await req.json().catch(() => ({}))
 
+    // ── إشعار طلب جديد ──
     if (body.record) {
         const record = body.record
         const orderDisplayId = record.order_number || `S${record.id?.toString().slice(-6).toUpperCase()}`
@@ -40,6 +41,7 @@ serve(async (req) => {
         return new Response("Notification Sent", { status: 200 })
     }
 
+    // ── أوامر البوت ──
     const msg = body?.message
     if (msg) {
         const chatId = String(msg.chat.id)
@@ -56,7 +58,6 @@ serve(async (req) => {
 /orders — الطلبات قيد الانتظار
 /stats — إحصائيات اليوم
 /wallet — طلبات شحن المحفظة
-/add — إضافة أكواد للمخزون
 /help — قائمة الأوامر`)
 
         } else if (text === '/orders') {
@@ -117,120 +118,6 @@ serve(async (req) => {
 ✅ مكتملة: <b>${completed}</b>
 ⏳ معلقة: <b>${pending}</b>
 💰 الإيرادات: <b>${revenue} MRU</b>`)
-
-        } else if (text === '/add') {
-            const { data: products } = await supabase
-                .from('products')
-                .select('id, name, prices')
-                .order('name')
-
-            if (!products?.length) {
-                await sendMessage(chatId, '❌ لا توجد منتجات في قاعدة البيانات')
-            } else {
-                let msg = `📦 <b>قائمة المنتجات المتاحة:</b>\n\n`
-                products.forEach((p, i) => {
-                    const prices = Array.isArray(p.prices)
-                        ? p.prices
-                        : Object.values(p.prices || {})
-                    const activeLabels = (prices as any[])
-                        .filter(pr => pr.active !== false)
-                        .map(pr => pr.label)
-                        .join(' | ')
-                    msg += `${i + 1}. <b>${p.name}</b>\n`
-                    msg += `   💰 الفئات: ${activeLabels || '—'}\n\n`
-                })
-                msg += `━━━━━━━━━━━━━━━━\n`
-                msg += `📝 <b>لإضافة أكواد أرسل:</b>\n\n`
-                msg += `<code>/stock اسم المنتج | الفئة | المورد | OrderID | التكلفة$ | الكمية</code>\n`
-                msg += `<i>ثم الأكواد كل كود في سطر</i>\n\n`
-                msg += `<b>مثال:</b>\n`
-                msg += `<code>/stock Apple Gift Card (US) | 2$ | kryptomate | 12345 | 10.50 | 5\nXXXX-XXXX-XXXX\nYYYY-YYYY-YYYY</code>`
-                await sendMessage(chatId, msg)
-            }
-
-        } else if (text.startsWith('/stock ')) {
-            const lines  = text.split('\n')
-            const header = lines[0].replace('/stock ', '').trim()
-            const codes  = lines.slice(1).map(c => c.trim()).filter(c => c.length > 0)
-            const parts  = header.split('|').map(p => p.trim())
-
-            if (parts.length < 6) {
-                await sendMessage(chatId, `❌ الصيغة غير صحيحة!\n\n<code>/stock المنتج | الفئة | المورد | OrderID | التكلفة$ | الكمية\nKOD1\nKOD2</code>`)
-                return new Response('ok')
-            }
-
-            const [productName, priceLabel, supplierName, orderId, costStr, qtyStr] = parts
-            const cost = parseFloat(costStr)
-            const qty  = parseInt(qtyStr)
-
-            if (isNaN(cost) || cost <= 0) {
-                await sendMessage(chatId, '❌ التكلفة غير صحيحة!')
-                return new Response('ok')
-            }
-            if (isNaN(qty) || qty <= 0) {
-                await sendMessage(chatId, '❌ الكمية غير صحيحة!')
-                return new Response('ok')
-            }
-            if (codes.length === 0) {
-                await sendMessage(chatId, '❌ لم ترسل أي أكواد!')
-                return new Response('ok')
-            }
-            if (codes.length !== qty) {
-                await sendMessage(chatId, `❌ عدد الأكواد (${codes.length}) لا يطابق الكمية (${qty})!`)
-                return new Response('ok')
-            }
-
-            const { data: product } = await supabase
-                .from('products')
-                .select('id, name')
-                .ilike('name', `%${productName}%`)
-                .maybeSingle()
-
-            if (!product) {
-                await sendMessage(chatId, `❌ المنتج "${productName}" غير موجود!\nاستخدم /add لرؤية الأسماء الصحيحة`)
-                return new Response('ok')
-            }
-
-            const { data: existing } = await supabase
-                .from('stocks')
-                .select('code')
-                .in('code', codes)
-
-            if (existing?.length) {
-                const dupList = existing.map((e: any) => `• ${e.code}`).join('\n')
-                await sendMessage(chatId, `❌ يوجد ${existing.length} كود مكرر:\n${dupList}`)
-                return new Response('ok')
-            }
-
-            const costPerCard = cost / qty
-            const rows = codes.map(code => ({
-                product_id:        product.id,
-                product_name:      product.name,
-                price_label:       priceLabel,
-                price_value:       null,
-                supplier_name:     supplierName,
-                order_id:          orderId,
-                cost_per_card_usd: costPerCard,
-                code:              code,
-                status:            'available',
-                created_at:        new Date().toISOString()
-            }))
-
-            const { error } = await supabase.from('stocks').insert(rows)
-
-            if (error) {
-                await sendMessage(chatId, `❌ خطأ في الحفظ:\n${error.message}`)
-                return new Response('ok')
-            }
-
-            await sendMessage(chatId, `✅ <b>تم حفظ ${codes.length} كود بنجاح!</b>
-
-📦 المنتج: ${product.name}
-🏷️ الفئة: ${priceLabel}
-🏪 المورد: ${supplierName}
-📋 OrderID: ${orderId}
-💰 تكلفة البطاقة: ${costPerCard.toFixed(3)}$
-💵 التكلفة الإجمالية: ${cost}$`)
 
         } else {
             await sendMessage(chatId, '❓ أمر غير معروف — أرسل /help لقائمة الأوامر')
