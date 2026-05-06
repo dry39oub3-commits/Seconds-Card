@@ -132,12 +132,12 @@ function renderPage(page) {
                 <td>${totalQty}</td>
                 <td><small>${date}</small></td>
                 <td>
-    <div>${paymentMethod}</div>
-    ${group.items[0]?.sender_phone ? `
-    <div style="font-size:11px;color:#22c55e;font-family:monospace;margin-top:4px;direction:ltr;">
-        <i class="fas fa-paper-plane" style="font-size:9px;margin-left:3px;"></i>${group.items[0].sender_phone}
-    </div>` : ''}
-</td>
+                    <div>${paymentMethod}</div>
+                    ${group.items[0]?.sender_phone ? `
+                    <div style="font-size:11px;color:#22c55e;font-family:monospace;margin-top:4px;direction:ltr;">
+                        <i class="fas fa-paper-plane" style="font-size:9px;margin-left:3px;"></i>${group.items[0].sender_phone}
+                    </div>` : ''}
+                </td>
                 <td>${receiptBtn}</td>
                 <td>${acceptBtn}</td>
             </tr>`;
@@ -191,7 +191,6 @@ function renderPagination(total) {
                        font-family:'Tajawal',sans-serif;transition:all 0.15s;">
                 <i class="fas fa-chevron-right"></i>
             </button>
-
             ${pages.map(p => p === '...'
                 ? `<span style="color:#475569;padding:0 4px;">...</span>`
                 : `<button onclick="goToPage(${p})"
@@ -204,7 +203,6 @@ function renderPagination(total) {
                     ${p}
                    </button>`
             ).join('')}
-
             <button onclick="goToPage(${currentPage + 1})"
                 ${currentPage === totalPages ? 'disabled' : ''}
                 style="padding:7px 14px;border-radius:8px;border:1px solid var(--border-light,#334155);
@@ -307,7 +305,6 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
         ? `calcProfit(${orderPrice}, '${currency}')`
         : `calcProfitItem(${suffix}, ${orderPrice})`;
 
-    // ── قسم الموردين (مشترك بين الوضعين) ──
     const suppliersSelectHTML = suppliers.length > 0 ? `
         <div id="supplier-select-wrap${suffix}" style="margin-top:10px; display:${hasPlayerId ? 'block' : 'none'};">
             <label style="font-size:12px; color:${c.textMuted}; display:block; margin-bottom:6px;">
@@ -367,15 +364,11 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
             ` : ''}
 
             <p id="stock-status${suffix}" style="font-size:11px; color:${c.textMuted}; margin-top:5px; text-align:center;"></p>
-
-            ${/* الموردون — يظهرون في كلا الوضعين */ suppliersSelectHTML}
-
-            ${!hasPlayerId && suppliers.length === 0 ? '' : ''}
+            ${suppliersSelectHTML}
         </div>
     `;
 }
 
-// ==================== حساب الربح لطلبات Player ID ====================
 window.calcProfitPlayerID = (suffix, orderPrice, currency) => {
     const cost    = parseFloat(document.getElementById(`modal-cost${suffix}`)?.value) || 0;
     const display = document.getElementById(`profit-display-pi${suffix}`);
@@ -439,8 +432,7 @@ window.openOrderModal = (order) => {
     const stockSectionHTML = buildStockSection({
         suffix: '', productId: order.product_id, label: order.label,
         quantity: order.quantity || 1, orderPrice: totalPrice, prices,
-        currency: displayCurrency,
-        hasPlayerId
+        currency: displayCurrency, hasPlayerId
     });
 
     const inputStyle = `width:100%;padding:10px;background:${c.inputBg};border:1px solid ${c.inputBorder};border-radius:8px;color:${c.inputColor};font-size:14px;box-sizing:border-box;`;
@@ -452,7 +444,6 @@ window.openOrderModal = (order) => {
                 ✕ إغلاق
             </button>
             <h2 style="text-align:center; margin-bottom:20px; color:#f97316;">تفاصيل الطلب</h2>
-
             <div style="background:${c.deepBg}; border-radius:12px; padding:20px; margin-bottom:20px; display:flex; gap:15px; align-items:center; border:1px solid ${c.border};">
                 <img src="${image}" style="width:90px;height:90px;object-fit:contain;background:white;border-radius:10px;padding:5px;flex-shrink:0;" onerror="this.style.display='none'">
                 <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
@@ -465,7 +456,6 @@ window.openOrderModal = (order) => {
                     <p style="margin:0; color:${c.textMuted}; font-size:13px;">💳 ${order.paymentMethod || order.payment_method || '-'}</p>
                 </div>
             </div>
-
             ${order.player_id ? `
             <div style="margin-bottom:15px; font-size:13px;
                 background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.3);
@@ -473,24 +463,12 @@ window.openOrderModal = (order) => {
                 <span style="color:#94a3b8;">🎮 Player ID:</span>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <strong id="player-id-value" style="font-family:monospace; color:#22c55e; font-size:15px;">${order.player_id}</strong>
-                    <button onclick="
-                        navigator.clipboard.writeText('${order.player_id}').then(() => {
-                            this.innerHTML='<i class=\\'fas fa-check\\'></i>';
-                            this.style.background='rgba(34,197,94,0.3)';
-                            setTimeout(() => {
-                                this.innerHTML='<i class=\\'fas fa-copy\\'></i>';
-                                this.style.background='rgba(34,197,94,0.15)';
-                            }, 1500);
-                        });"
-                        style="background:rgba(34,197,94,0.15); color:#22c55e;
-                               border:1px solid rgba(34,197,94,0.4);
-                               padding:4px 10px; border-radius:6px; cursor:pointer;
-                               font-size:12px; transition:all 0.2s;">
+                    <button onclick="navigator.clipboard.writeText('${order.player_id}').then(() => { this.innerHTML='<i class=\\'fas fa-check\\'></i>'; this.style.background='rgba(34,197,94,0.3)'; setTimeout(() => { this.innerHTML='<i class=\\'fas fa-copy\\'></i>'; this.style.background='rgba(34,197,94,0.15)'; }, 1500); });"
+                        style="background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.4); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; transition:all 0.2s;">
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
             </div>` : ''}
-
             <div style="display:grid; grid-template-columns:${hasPlayerId ? '1fr' : '1fr 1fr'}; gap:15px; margin-bottom:15px;">
                 ${stockSectionHTML}
                 ${!hasPlayerId ? `
@@ -504,7 +482,6 @@ window.openOrderModal = (order) => {
                     <p style="font-size:11px; color:${c.textMuted}; margin-top:4px;">أدخل كل كود في سطر منفصل</p>
                 </div>` : ''}
             </div>
-
             ${!hasPlayerId ? `
             <div id="profit-display" style="display:none; margin-bottom:15px; background:${c.deepBg}; border-radius:8px; padding:12px; text-align:center; border:1px solid ${c.border};"></div>
             <div id="stock-suppliers-section" style="display:none; margin-bottom:15px;">
@@ -515,32 +492,25 @@ window.openOrderModal = (order) => {
                     <div id="stock-suppliers-list" style="display:flex; flex-direction:column; gap:8px;"></div>
                 </div>
             </div>` : ''}
-
             <div style="margin-bottom:15px;">
                 <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">🏪 اسم المورد</label>
                 <input type="text" id="modal-supplier-id" placeholder="اسم المورد..." style="${inputStyle}">
             </div>
-
             <div style="margin-bottom:20px;">
                 <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">🔖 Order ID المورد</label>
                 <input type="text" id="modal-supplier-order-id" placeholder="أدخل Order ID من المورد..." style="${inputStyle}">
             </div>
-
             ${hasPlayerId ? `
             <div style="margin-bottom:15px;">
                 <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">
-                    <i class="fas fa-receipt" style="color:#f97316;"></i>
-                    إيصال التنفيذ ( يظهر للعميل)
+                    <i class="fas fa-receipt" style="color:#f97316;"></i> إيصال التنفيذ (يظهر للعميل)
                 </label>
                 <input type="file" id="player-receipt-file" accept="image/*"
-                    style="width:100%; padding:10px; background:${c.inputBg};
-                           border:1px solid ${c.inputBorder}; border-radius:8px;
-                           color:${c.text}; font-size:13px; box-sizing:border-box; cursor:pointer;">
+                    style="width:100%; padding:10px; background:${c.inputBg}; border:1px solid ${c.inputBorder}; border-radius:8px; color:${c.text}; font-size:13px; box-sizing:border-box; cursor:pointer;">
                 <div id="player-receipt-preview" style="display:none; margin-top:8px; border-radius:10px; overflow:hidden; border:1px solid ${c.border};">
                     <img id="player-receipt-img" style="width:100%; max-height:180px; object-fit:cover; display:block;">
                 </div>
             </div>` : ''}
-
             <div style="margin-bottom:12px;">
                 <input type="text" id="reject-reason" placeholder="سبب الرفض..."
                     style="${inputStyle} border-color:#ef4444; margin-bottom:8px;">
@@ -549,7 +519,6 @@ window.openOrderModal = (order) => {
                     <i class="fas fa-times-circle"></i> رفض الطلب
                 </button>
             </div>
-
             <button onclick="approveOrder('${order.id}', ${order.quantity || 1})"
                 style="width:100%;padding:14px;background:#22c55e;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;font-weight:bold;">
                 <i class="fas fa-check-circle"></i> تأكيد القبول
@@ -682,9 +651,7 @@ window.calcProfit = (orderPrice, currency) => {
         const profit    = orderPrice - totalCost;
         profitDisplay.style.display = 'block';
         profitDisplay.innerHTML = `
-            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">
-                التكلفة: $${cost} × ${quantity} كود = $${totalCost.toFixed(2)}
-            </div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">التكلفة: $${cost} × ${quantity} كود = $${totalCost.toFixed(2)}</div>
             <span style="color:#94a3b8;font-size:13px;">الربح: </span>
             <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:18px;font-weight:bold;">${profit.toFixed(2)}</span>
             <span style="color:#94a3b8;font-size:13px;"> MRU</span>
@@ -694,9 +661,7 @@ window.calcProfit = (orderPrice, currency) => {
         const profit    = orderPrice - totalCost;
         profitDisplay.style.display = 'block';
         profitDisplay.innerHTML = `
-            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">
-                التكلفة: $${cost} × ${quantity} كود × ${USD_TO_MRU} = ${totalCost.toFixed(0)} MRU
-            </div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">التكلفة: $${cost} × ${quantity} كود × ${USD_TO_MRU} = ${totalCost.toFixed(0)} MRU</div>
             <span style="color:#94a3b8;font-size:13px;">الربح: </span>
             <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:18px;font-weight:bold;">${profit.toFixed(0)}</span>
             <span style="color:#94a3b8;font-size:13px;"> MRU</span>
@@ -853,7 +818,6 @@ window.approveOrder = async (orderId, quantity) => {
     const stockCodesData   = window._stockCodesData || [];
     const suppliersDetails = stockCodesData.map(c => ({ code: c.code, supplier_name: c.supplier_name, supplier_order_id: c.order_id }));
 
-// ✅ التحقق من الإيصال — إلزامي لطلبات Player ID
     const playerReceiptFile = document.getElementById('player-receipt-file')?.files[0];
     if (hasPlayerId && !playerReceiptFile) {
         showToast('⚠️ يجب رفع إيصال التنفيذ قبل القبول!');
@@ -866,8 +830,7 @@ window.approveOrder = async (orderId, quantity) => {
     if (playerReceiptFile) {
         try {
             const fileName = `player-receipts/${orderId}_${Date.now()}`;
-            const { error: uploadError } = await supabase.storage
-                .from('receipts').upload(fileName, playerReceiptFile);
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, playerReceiptFile);
             if (!uploadError) {
                 const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
                 playerReceiptUrl = urlData?.publicUrl;
@@ -907,9 +870,6 @@ window.approveOrder = async (orderId, quantity) => {
 
     document.getElementById('order-modal').remove();
     showToast('✅ تم قبول الطلب بنجاح!');
-    // إشعار العميل
-const { data: approvedOrder } = await supabase.from('orders').select('*').eq('id', orderId).single()
-if (approvedOrder) await notifyCustomer(approvedOrder, 'مكتمل', approvedOrder.card_code)
     loadOrders();
 };
 
@@ -994,9 +954,6 @@ window.rejectOrder = async (orderId) => {
     window._reservedStockIds = null; window._stockCodesData = null;
     document.getElementById('order-modal').remove();
     showToast('تم رفض الطلب.');
-    // إشعار العميل
-const { data: rejectedOrder } = await supabase.from('orders').select('*').eq('id', orderId).single()
-if (rejectedOrder) await notifyCustomer(rejectedOrder, 'ملغي', null, reason)
     loadOrders();
 };
 
@@ -1035,10 +992,12 @@ window.filterOrders = () => {
     });
 };
 
+// ==================== DOMContentLoaded ====================
 document.addEventListener('DOMContentLoaded', () => {
     loadOrders();
     loadCompletedOrders();
     checkNewOrders();
+    subscribeToOrderUpdates(); // ✅ إشعارات العميل
     supabase.channel('orders-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
             loadOrders();
@@ -1143,18 +1102,14 @@ window.quickRefund = async (orderId, paymentMethod) => {
             <div class="refund-row">
                 <span class="label"><i class="fas fa-phone"></i> ${order.sender_phone ? 'الرقم المرسل منه' : 'الهاتف'}</span>
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span class="value" style="font-family:monospace;direction:ltr;${order.sender_phone ? 'color:#22c55e;' : ''}">
-                        ${order.sender_phone || order.customer_phone}
-                    </span>
+                    <span class="value" style="font-family:monospace;direction:ltr;${order.sender_phone ? 'color:#22c55e;' : ''}">${order.sender_phone || order.customer_phone}</span>
                     <button onclick="navigator.clipboard.writeText('${order.sender_phone || order.customer_phone}').then(() => { this.innerHTML='<i class=\\'fas fa-check\\'></i>'; setTimeout(() => this.innerHTML='<i class=\\'fas fa-copy\\'></i>', 1500); })"
-                        style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);
-                            padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;">
+                        style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;">
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
             </div>` : ''}
             <div class="refund-row"><span class="label"><i class="fas fa-credit-card"></i> طريقة الدفع</span><span class="value">${pm || '—'}</span></div>
-            
             <div class="refund-amount-box">
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">المبلغ الذي سيُسترد</div>
                 <div style="font-size:28px;font-weight:900;color:#f59e0b;">${refundAmount} <span style="font-size:14px;font-weight:600;">MRU</span></div>
@@ -1166,7 +1121,7 @@ window.quickRefund = async (orderId, paymentMethod) => {
             </div>
             <div style="margin-bottom:16px;">
                 <label style="font-size:13px; color:${c.textMuted}; display:block; margin-bottom:6px;">
-                    <i class="fas fa-receipt" style="color:#f59e0b;"></i> إيصال الاسترداد (اختياري — يظهر للعميل)
+                    <i class="fas fa-receipt" style="color:#f59e0b;"></i> إيصال الاسترداد (اختياري)
                 </label>
                 <input type="file" id="refund-receipt-file" accept="image/*"
                     style="width:100%; padding:10px; background:${c.deepBg}; border:1px solid ${c.border}; border-radius:8px; color:${c.text}; font-size:13px; box-sizing:border-box; cursor:pointer;">
@@ -1240,9 +1195,6 @@ window.executeRefund = async (orderId, pm, refundAmount, userId) => {
     }
 
     document.getElementById('refund-modal')?.remove();
-    // إشعار العميل
-const { data: refundedOrder } = await supabase.from('orders').select('*').eq('id', orderId).single()
-if (refundedOrder) await notifyCustomer(refundedOrder, 'مسترد')
     loadOrders();
 };
 
@@ -1409,9 +1361,7 @@ function renderCompletedPage(page) {
 
         const firstItem  = group.items[0];
         const isAuto     = group.items.some(i => i.auto_approved);
-        const approvedBy = [...new Set(
-            group.items.map(i => i.approved_by_name || i.completed_by_name).filter(Boolean)
-        )].join(' / ');
+        const approvedBy = [...new Set(group.items.map(i => i.approved_by_name || i.completed_by_name).filter(Boolean))].join(' / ');
 
         const statusBadge = `
             <div style="display:flex;flex-direction:column;gap:4px;">
@@ -1464,76 +1414,124 @@ function renderCompletedPage(page) {
 }
 
 window.renderCompletedPage = renderCompletedPage;
-
 window.filterCompleted = () => {
     const q = document.getElementById('completed-search')?.value.toLowerCase().trim() || '';
     document.querySelectorAll('#completed-orders-list tr').forEach(row => {
         row.style.display = !q || row.innerText.toLowerCase().includes(q) ? '' : 'none';
     });
 };
-
 window.loadOrders = loadOrders;
-
-// ==================== إشعار Telegram للعميل ====================
-async function notifyCustomer(order, status, cardCode = null, rejectReason = null) {
-    const SUPABASE_ANON_KEY = "sb_publishable_UKw4zfQRW6-RsX8ntT_Ssw_ZnZuhvKd"
-    
-    let message = ''
-    
-    if (status === 'مكتمل' && cardCode) {
-        message = `✅ <b>تم إكمال طلبك!</b>
-
-🔸 <b>رقم الطلب:</b> #${order.order_number || ''}
-📦 <b>المنتج:</b> ${order.product_name || ''} ${order.label ? `(${order.label})` : ''}
-🔑 <b>الكود:</b>
-<code>${cardCode}</code>
-
-شكراً لتسوقك معنا! 🛍️`
-    } else if (status === 'ملغي') {
-        message = `❌ <b>تم رفض طلبك</b>
-
-🔸 <b>رقم الطلب:</b> #${order.order_number || ''}
-📦 <b>المنتج:</b> ${order.product_name || ''} ${order.label ? `(${order.label})` : ''}
-📝 <b>السبب:</b> ${rejectReason || 'غير محدد'}
-
-للاستفسار تواصل مع الدعم. 💬`
-    } else if (status === 'مسترد') {
-        message = `↩️ <b>تم استرداد طلبك</b>
-
-🔸 <b>رقم الطلب:</b> #${order.order_number || ''}
-📦 <b>المنتج:</b> ${order.product_name || ''} ${order.label ? `(${order.label})` : ''}
-💰 <b>المبلغ:</b> ${(order.price || 0) * (order.quantity || 1)} MRU
-
-تم إعادة المبلغ. للاستفسار تواصل مع الدعم. 💬`
-    }
-
-    if (!message || !order.customer_phone) return
-
-    // جلب chat_id العميل من قاعدة البيانات
-    const { data: userData } = await supabase
-        .from('users')
-        .select('telegram_chat_id')
-        .eq('id', order.user_id)
-        .maybeSingle()
-
-    if (!userData?.telegram_chat_id) return
-
-    await fetch(
-        'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/telegram-notify',
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify({
-                customer_notification: true,
-                chat_id: userData.telegram_chat_id,
-                message
-            })
-        }
-    )
-}
-
 window.loadCompletedOrders = loadCompletedOrders;
 
+// ==================== إشعارات العميل داخل الموقع ====================
+async function subscribeToOrderUpdates() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) return
+
+    const userId = session.user.id
+
+    supabase.channel('customer-orders')
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+            filter: `user_id=eq.${userId}`
+        }, (payload) => {
+            const order  = payload.new
+            const status = order.status
+
+            if (status === 'مكتمل') {
+                showCustomerNotification({
+                    title:   '✅ تم إكمال طلبك!',
+                    body:    `${order.product_name} ${order.label ? `(${order.label})` : ''}`,
+                    code:    order.card_code,
+                    color:   '#22c55e',
+                    orderId: order.order_number
+                })
+            } else if (status === 'ملغي') {
+                showCustomerNotification({
+                    title:   '❌ تم رفض طلبك',
+                    body:    `${order.product_name} — السبب: ${order.reject_reason || 'غير محدد'}`,
+                    color:   '#ef4444',
+                    orderId: order.order_number
+                })
+            } else if (status === 'مسترد') {
+                showCustomerNotification({
+                    title:   '↩️ تم استرداد طلبك',
+                    body:    `${order.product_name} — ${(order.price || 0) * (order.quantity || 1)} MRU`,
+                    color:   '#f59e0b',
+                    orderId: order.order_number
+                })
+            }
+        })
+        .subscribe()
+}
+
+function showCustomerNotification({ title, body, code, color, orderId }) {
+    document.getElementById('_customer-notif')?.remove()
+
+    const notif = document.createElement('div')
+    notif.id = '_customer-notif'
+    notif.style.cssText = `
+        position: fixed; top: 20px; left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b; border: 2px solid ${color};
+        border-radius: 16px; padding: 20px 24px;
+        min-width: 320px; max-width: 420px;
+        z-index: 999999; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        font-family: 'Tajawal', sans-serif;
+        animation: notifSlideDown 0.4s ease; direction: rtl;
+    `
+
+    notif.innerHTML = `
+        <style>
+            @keyframes notifSlideDown {
+                from { opacity:0; transform:translateX(-50%) translateY(-20px); }
+                to   { opacity:1; transform:translateX(-50%) translateY(0); }
+            }
+        </style>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-size:16px; font-weight:800; color:${color};">${title}</span>
+            <button onclick="document.getElementById('_customer-notif').remove()"
+                style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:18px;">✕</button>
+        </div>
+        <div style="font-size:13px; color:#e2e8f0; margin-bottom:${code ? '12px' : '0'};">${body}</div>
+        ${code ? `
+        <div style="background:#0f172a; border:1px solid ${color}; border-radius:10px; padding:12px; margin-top:8px;">
+            <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">🔑 الكود:</div>
+            <div style="font-family:monospace; font-size:15px; color:${color}; font-weight:700; letter-spacing:1px;">
+                ${code.split('\n').join('<br>')}
+            </div>
+            <button onclick="navigator.clipboard.writeText(this.dataset.code); this.innerHTML='✅ تم النسخ!'; setTimeout(() => this.innerHTML='📋 نسخ الكود', 2000);"
+                data-code="${code.replace(/"/g, '&quot;')}"
+                style="width:100%; margin-top:10px; padding:8px; background:${color};
+                       color:white; border:none; border-radius:8px; cursor:pointer;
+                       font-size:13px; font-weight:700; font-family:'Tajawal',sans-serif;">
+                📋 نسخ الكود
+            </button>
+        </div>` : ''}
+        <div style="margin-top:12px;">
+            <a href="orders.html" style="display:block; text-align:center; padding:8px;
+               background:rgba(249,115,22,0.15); color:#f97316; border:1px solid #f97316;
+               border-radius:8px; text-decoration:none; font-size:13px; font-weight:700;">
+                📋 عرض الطلبات
+            </a>
+        </div>
+    `
+
+    document.body.appendChild(notif)
+
+    if (!code) {
+        setTimeout(() => {
+            notif.style.opacity = '0'
+            notif.style.transition = 'opacity 0.4s'
+            setTimeout(() => notif?.remove(), 400)
+        }, 8000)
+    }
+
+    if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/assets/Icon.png' })
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission()
+    }
+}
