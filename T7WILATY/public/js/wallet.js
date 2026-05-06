@@ -53,12 +53,10 @@ async function loadWalletData() {
         .eq('id', user.id)
         .single();
 
-    const balance    = userData?.balance || 0;
-    const rate       = 43;
-
-    // ← جلب العملة المختارة من checkout
-    const currency   = localStorage.getItem('lastCurrency') || 'MRU';
-    const isUSDT     = currency === 'USDT';
+    const balance  = userData?.balance || 0;
+    const rate     = 43;
+    const currency = localStorage.getItem('lastCurrency') || 'MRU';
+    const isUSDT   = currency === 'USDT';
 
     const mruEl = document.getElementById('mruBalance');
     const usdEl = document.getElementById('usdBalance');
@@ -66,21 +64,20 @@ async function loadWalletData() {
     if (mruEl) mruEl.textContent = `MRU ${balance.toFixed(2)}`;
     if (usdEl) usdEl.textContent = `$${(balance / rate).toFixed(2)}`;
 
-    // ← تمييز العملة النشطة
     const mruCard = document.getElementById('mru-balance-card');
     const usdCard = document.getElementById('usd-balance-card');
 
     if (mruCard && usdCard) {
         if (isUSDT) {
-            usdCard.style.border  = '2px solid #f97316';
-            mruCard.style.border  = '1px solid transparent';
-            usdCard.style.boxShadow = '0 0 12px rgba(249,115,22,0.3)';
-            mruCard.style.boxShadow = 'none';
+            usdCard.style.border     = '2px solid #f97316';
+            mruCard.style.border     = '1px solid transparent';
+            usdCard.style.boxShadow  = '0 0 12px rgba(249,115,22,0.3)';
+            mruCard.style.boxShadow  = 'none';
         } else {
-            mruCard.style.border  = '2px solid #f97316';
-            usdCard.style.border  = '1px solid transparent';
-            mruCard.style.boxShadow = '0 0 12px rgba(249,115,22,0.3)';
-            usdCard.style.boxShadow = 'none';
+            mruCard.style.border     = '2px solid #f97316';
+            usdCard.style.border     = '1px solid transparent';
+            mruCard.style.boxShadow  = '0 0 12px rgba(249,115,22,0.3)';
+            usdCard.style.boxShadow  = 'none';
         }
     }
 
@@ -196,6 +193,11 @@ async function loadTransactions(userId) {
                     <span style="color:#94a3b8;">🏦 طريقة الدفع</span>
                     <span style="color:#e2e8f0; font-weight:600;">${t.payment_method || '-'}</span>
                 </div>
+                ${t.sender_phone ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8;">📱 الرقم المرسل منه</span>
+                    <span style="color:#22c55e; font-weight:600; font-family:monospace; direction:ltr;">${t.sender_phone}</span>
+                </div>` : ''}
                 ${t.order_number ? `
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <span style="color:#94a3b8;">🔢 رقم الطلب</span>
@@ -281,14 +283,39 @@ async function loadTransactions(userId) {
 window.openDepositModal = async () => {
     document.getElementById('depositModal').style.display = 'flex';
     await loadPaymentMethods();
-};
 
+    // أضف حقل رقم الهاتف إذا لم يكن موجوداً
+    if (!document.getElementById('wallet-sender-phone')) {
+        const receiptSection = document.getElementById('charge-receipt')?.closest('div');
+        if (receiptSection) {
+            const phoneDiv = document.createElement('div');
+            phoneDiv.style.cssText = 'margin-bottom:16px;';
+            phoneDiv.innerHTML = `
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+                    📱 رقم الهاتف المرسل منه
+                </label>
+                <input type="tel" id="wallet-sender-phone"
+                    placeholder="مثال: 22xxxxxxxx"
+                    maxlength="8"
+                    style="width:100%; padding:12px 16px; background:#0f172a;
+                           border:1.5px solid #334155; border-radius:10px;
+                           color:#e2e8f0; font-size:15px; box-sizing:border-box;
+                           outline:none; font-family:'Cairo',sans-serif;"
+                    oninput="this.value=this.value.replace(/\\D/g,'')"
+                    onfocus="this.style.borderColor='#f97316'"
+                    onblur="this.style.borderColor='#334155'">
+            `;
+            receiptSection.parentNode.insertBefore(phoneDiv, receiptSection);
+        }
+    }
+};
 window.closeDepositModal = () => {
     document.getElementById('depositModal').style.display = 'none';
     document.getElementById('charge-amount').value = '';
     document.getElementById('charge-receipt').value = '';
     document.getElementById('charge-method-selected').value = '';
     document.getElementById('method-info').style.display = 'none';
+    document.getElementById('wallet-sender-phone').value = '';
     document.querySelectorAll('#payment-methods-container > div').forEach(d => {
         d.style.borderColor = '#334155';
         d.style.background  = '#0f172a';
@@ -331,9 +358,9 @@ window.selectMethod = (name, account, el) => {
     });
     el.style.borderColor = '#f97316';
     el.style.background  = 'rgba(249,115,22,0.1)';
-    document.getElementById('charge-method-selected').value     = name;
+    document.getElementById('charge-method-selected').value      = name;
     document.getElementById('method-account-display').textContent = account;
-    document.getElementById('method-info').style.display        = 'block';
+    document.getElementById('method-info').style.display         = 'block';
 };
 
 // ===== نسخ رقم الحساب =====
@@ -342,11 +369,11 @@ window.copyMethodAccount = () => {
     navigator.clipboard.writeText(account).then(() => showToast('✅ تم نسخ رقم الحساب!'));
 };
 
-// ===== إرسال طلب الشحن — مع منع التكرار ✅ =====
+// ===== إرسال طلب الشحن =====
 let isSubmitting = false;
 
 window.submitCharge = async () => {
-    if (isSubmitting) return; // ✅ منع الضغط المتكرر
+    if (isSubmitting) return;
 
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -355,16 +382,20 @@ window.submitCharge = async () => {
     const amount      = parseFloat(document.getElementById('charge-amount').value);
     const method      = document.getElementById('charge-method-selected').value;
     const receiptFile = document.getElementById('charge-receipt').files[0];
+    const senderPhone = document.getElementById('wallet-sender-phone')?.value.trim();
 
-    if (!amount || amount <= 0) { showToast('⚠️ أدخل مبلغاً صحيحاً'); return; }
-    if (!method)                { showToast('⚠️ اختر طريقة الدفع أولاً'); return; }
-    if (!receiptFile)           { showToast('⚠️ يرجى رفع إيصال التحويل'); return; }
+    if (!amount || amount <= 0)                    { showToast('⚠️ أدخل مبلغاً صحيحاً'); return; }
+    if (!method)                                    { showToast('⚠️ اختر طريقة الدفع أولاً'); return; }
+    if (!receiptFile)                               { showToast('⚠️ يرجى رفع إيصال التحويل'); return; }
+    if (!senderPhone || !/^\d{8}$/.test(senderPhone)) {
+        showToast('⚠️ أدخل رقم الهاتف المرسل منه (8 أرقام)');
+        return;
+    }
 
-    // ✅ تعطيل الزر وإظهار حالة التحميل
     isSubmitting = true;
     const btn = document.querySelector('#depositModal button[onclick="submitCharge()"]');
     if (btn) {
-        btn.disabled = true;
+        btn.disabled      = true;
         btn.style.opacity = '0.6';
         btn.style.cursor  = 'not-allowed';
         btn.innerHTML     = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
@@ -395,13 +426,13 @@ window.submitCharge = async () => {
         payment_method: method,
         receipt_url,
         status:         'قيد المراجعة',
-        order_number:   chargeOrderNumber
+        order_number:   chargeOrderNumber,
+        sender_phone:   '+222' + senderPhone
     });
 
-    // ✅ إعادة تفعيل الزر دائماً
     isSubmitting = false;
     if (btn) {
-        btn.disabled = false;
+        btn.disabled      = false;
         btn.style.opacity = '1';
         btn.style.cursor  = 'pointer';
         btn.innerHTML     = '<i class="fas fa-paper-plane"></i> إرسال طلب الشحن';

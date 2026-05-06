@@ -1135,12 +1135,19 @@ window.quickRefund = async (orderId, paymentMethod) => {
             <div class="refund-row"><span class="label"><i class="fas fa-box"></i> المنتج</span><span class="value">${order.product_name || '—'} ${order.label ? `<span style="color:#f97316;font-size:12px;">(${order.label})</span>` : ''}</span></div>
             <div class="refund-row"><span class="label"><i class="fas fa-user"></i> العميل</span><span class="value">${order.customer_name || '—'}</span></div>
             ${(order.sender_phone || order.customer_phone) ? `
-<div class="refund-row">
-    <span class="label"><i class="fas fa-phone"></i> ${order.sender_phone ? 'الرقم المرسل منه' : 'الهاتف'}</span>
-    <span class="value" style="font-family:monospace;direction:ltr;${order.sender_phone ? 'color:#22c55e;' : ''}">
-        ${order.sender_phone || order.customer_phone}
-    </span>
-</div>` : ''}
+            <div class="refund-row">
+                <span class="label"><i class="fas fa-phone"></i> ${order.sender_phone ? 'الرقم المرسل منه' : 'الهاتف'}</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="value" style="font-family:monospace;direction:ltr;${order.sender_phone ? 'color:#22c55e;' : ''}">
+                        ${order.sender_phone || order.customer_phone}
+                    </span>
+                    <button onclick="navigator.clipboard.writeText('${order.sender_phone || order.customer_phone}').then(() => { this.innerHTML='<i class=\\'fas fa-check\\'></i>'; setTimeout(() => this.innerHTML='<i class=\\'fas fa-copy\\'></i>', 1500); })"
+                        style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);
+                            padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>` : ''}
             <div class="refund-row"><span class="label"><i class="fas fa-credit-card"></i> طريقة الدفع</span><span class="value">${pm || '—'}</span></div>
             
             <div class="refund-amount-box">

@@ -49,19 +49,19 @@ async function loadUsers() {
 }
 
 function updateStats() {
-    const pending          = allTransactions.filter(t => t.status === 'قيد المراجعة');
-    const charges          = allTransactions.filter(t => t.type === 'charge'   && t.status === 'مكتمل');
-    const withdraws        = allTransactions.filter(t => t.type === 'withdraw' && t.status === 'مكتمل');
+    const pending = allTransactions.filter(t => t.status === 'قيد المراجعة');
+    const charges = allTransactions.filter(t => t.type === 'charge' && t.status === 'مكتمل');
+    const withdraws = allTransactions.filter(t => t.type === 'withdraw' && t.status === 'مكتمل');
     const usersWithBalance = allUsers.filter(u => u.balance > 0);
-    const totalBalances    = allUsers.reduce((s, u) => s + (u.balance || 0), 0);
+    const totalBalances = allUsers.reduce((s, u) => s + (u.balance || 0), 0);
 
     const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n);
 
-    document.getElementById('stat-pending').textContent        = pending.length;
-    document.getElementById('stat-total-charge').textContent   = fmt(charges.reduce((s, t) => s + t.amount, 0));
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('stat-total-charge').textContent = fmt(charges.reduce((s, t) => s + t.amount, 0));
     document.getElementById('stat-total-withdraw').textContent = fmt(withdraws.reduce((s, t) => s + t.amount, 0));
-    document.getElementById('stat-users').textContent          = usersWithBalance.length;
-    document.getElementById('pending-count').textContent       = pending.length;
+    document.getElementById('stat-users').textContent = usersWithBalance.length;
+    document.getElementById('pending-count').textContent = pending.length;
 
     // ===== عداد قيد المراجعة على زر التاب =====
     const pendingTabBtn = document.querySelector('.tab-btn[onclick*="pending"]');
@@ -94,7 +94,7 @@ function updateStats() {
 
 // ==================== RENDER TRANSACTIONS ====================
 function renderAll() {
-    const search       = document.getElementById('search-input')?.value.toLowerCase() || '';
+    const search = document.getElementById('search-input')?.value.toLowerCase() || '';
     const statusFilter = document.getElementById('status-filter')?.value || '';
 
     const filtered = allTransactions.filter(t => {
@@ -108,10 +108,10 @@ function renderAll() {
         return matchSearch && matchStatus;
     });
 
-    renderList('pending-list',  filtered.filter(t => t.status === 'قيد المراجعة'));
-    renderList('charge-list',   filtered.filter(t => t.type === 'charge'));
+    renderList('pending-list', filtered.filter(t => t.status === 'قيد المراجعة'));
+    renderList('charge-list', filtered.filter(t => t.type === 'charge'));
     renderList('withdraw-list', filtered.filter(t => t.type === 'withdraw'));
-    
+
 }
 
 function renderList(containerId, list) {
@@ -123,15 +123,15 @@ function renderList(containerId, list) {
     }
 
     container.innerHTML = list.map(tx => {
-        const isCharge  = tx.type === 'charge';
-        const date      = new Date(tx.created_at).toLocaleString('fr-FR');
+        const isCharge = tx.type === 'charge';
+        const date = new Date(tx.created_at).toLocaleString('fr-FR');
         const isPending = tx.status === 'قيد المراجعة';
         const isRejected = tx.status === 'مرفوض';
-        const scId      = tx.user_id ? generateSCId(tx.user_id) : '---';
+        const scId = tx.user_id ? generateSCId(tx.user_id) : '---';
 
         // جلب بيانات المستخدم من allUsers
         const user = allUsers.find(u => u.id === tx.user_id);
-        const userName  = user?.full_name || user?.fullName || 'مستخدم';
+        const userName = user?.full_name || user?.fullName || 'مستخدم';
         const userEmail = user?.email || '';
         const userAvatar = user?.avatar_url || '';
 
@@ -152,9 +152,9 @@ function renderList(containerId, list) {
             <!-- صورة البروفيل -->
             <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0;">
                 ${userAvatar
-                    ? `<img src="${userAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #334155;">`
-                    : `<div style="width:44px;height:44px;border-radius:50%;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:18px;"><i class="fas fa-user"></i></div>`
-                }
+                ? `<img src="${userAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #334155;">`
+                : `<div style="width:44px;height:44px;border-radius:50%;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:18px;"><i class="fas fa-user"></i></div>`
+            }
             </div>
 
             <div class="tx-icon ${isCharge ? 'charge' : 'withdraw'}">
@@ -190,7 +190,17 @@ function renderList(containerId, list) {
                 ${tx.withdraw_account ? `
                     <p style="font-size:13px;">حساب الاستلام: <strong style="color:#e2e8f0;">${tx.withdraw_account}</strong></p>
                 ` : ''}
-
+${tx.sender_phone ? `
+    <p style="font-size:13px; display:flex; align-items:center; gap:8px;">
+        <span style="color:#94a3b8;">📱 الرقم المرسل منه:</span>
+        <strong style="color:#22c55e; font-family:monospace; direction:ltr;">${tx.sender_phone}</strong>
+        <button onclick="navigator.clipboard.writeText('${tx.sender_phone}').then(() => { this.innerHTML='<i class=\\'fas fa-check\\'></i>'; setTimeout(() => this.innerHTML='<i class=\\'fas fa-copy\\'></i>', 1500); })"
+            style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);
+                   padding:2px 8px;border-radius:5px;cursor:pointer;font-size:11px;">
+            <i class="fas fa-copy"></i>
+        </button>
+    </p>
+` : ''}
                 <span class="status-badge status-${tx.status === 'مكتمل' ? 'completed' : tx.status === 'مرفوض' ? 'rejected' : 'pending'}">
                     ${tx.status}
                 </span>
@@ -327,9 +337,9 @@ window.confirmReject = async () => {
 // ==================== USER ORDERS MODAL ====================
 window.openUserOrders = async (userId) => {
     const modal = document.getElementById('user-orders-modal');
-    const body  = document.getElementById('user-orders-body');
-    const scId  = generateSCId(userId);
-    const user  = allUsers.find(u => u.id === userId);
+    const body = document.getElementById('user-orders-body');
+    const scId = generateSCId(userId);
+    const user = allUsers.find(u => u.id === userId);
 
     document.getElementById('user-orders-title').textContent =
         `طلبات ${user?.full_name || user?.email || scId}`;
@@ -400,7 +410,7 @@ window.closeUserOrdersModal = () => {
     document.getElementById('user-orders-modal').classList.remove('active');
 };
 // ==================== USERS FILTER ====================
-window.applyUsersFilter = function() {
+window.applyUsersFilter = function () {
     const search = document.getElementById('users-search-input').value.toLowerCase().trim();
 
     if (!search) {
@@ -409,9 +419,9 @@ window.applyUsersFilter = function() {
     }
 
     const filtered = allUsers.filter(user => {
-        const name  = (user.full_name || user.fullName || '').toLowerCase();
+        const name = (user.full_name || user.fullName || '').toLowerCase();
         const email = (user.email || '').toLowerCase();
-        const scId  = generateSCId(user.id).toLowerCase();
+        const scId = generateSCId(user.id).toLowerCase();
         return name.includes(search) || email.includes(search) || scId.includes(search);
     });
 
@@ -468,7 +478,7 @@ window.approveTransaction = async (txId, userId, amount, type) => {
             .from('users').select('balance').eq('id', userId).single();
 
         const currentBalance = userData?.balance || 0;
-        const newBalance     = type === 'charge' ? currentBalance + amount : currentBalance - amount;
+        const newBalance = type === 'charge' ? currentBalance + amount : currentBalance - amount;
 
         if (newBalance < 0) { showToast('⚠️ رصيد المستخدم غير كافٍ للسحب!'); return; }
 
@@ -498,10 +508,10 @@ window.rejectTransaction = async (txId) => {
 window.openEditModal = (userId, balance) => {
     currentEditUserId = userId;
     const scId = generateSCId(userId);
-    document.getElementById('edit-user-id').textContent   = userId.substring(0, 16) + '...';
+    document.getElementById('edit-user-id').textContent = userId.substring(0, 16) + '...';
     document.getElementById('edit-user-scid').textContent = scId;
-    document.getElementById('edit-balance-input').value   = balance;
-    document.getElementById('edit-note-input').value      = '';
+    document.getElementById('edit-balance-input').value = balance;
+    document.getElementById('edit-note-input').value = '';
     document.getElementById('edit-modal').classList.add('active');
 };
 
@@ -511,25 +521,25 @@ window.closeEditModal = () => {
 
 window.saveBalance = async () => {
     const newBalance = parseFloat(document.getElementById('edit-balance-input').value);
-    const note       = document.getElementById('edit-note-input').value.trim() || 'تعديل يدوي من الأدمن';
+    const note = document.getElementById('edit-note-input').value.trim() || 'تعديل يدوي من الأدمن';
     if (isNaN(newBalance) || newBalance < 0) { showToast('⚠️ أدخل رصيداً صحيحاً'); return; }
 
     const { data: userData } = await supabase
         .from('users').select('balance').eq('id', currentEditUserId).single();
     const oldBalance = userData?.balance || 0;
-    const diff       = newBalance - oldBalance;
+    const diff = newBalance - oldBalance;
 
     const { error } = await supabase.from('users')
         .update({ balance: newBalance }).eq('id', currentEditUserId);
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
 
     await supabase.from('wallet_transactions').insert({
-        user_id:        currentEditUserId,
-        type:           diff >= 0 ? 'charge' : 'withdraw',
-        amount:         Math.abs(diff),
+        user_id: currentEditUserId,
+        type: diff >= 0 ? 'charge' : 'withdraw',
+        amount: Math.abs(diff),
         payment_method: 'تعديل أدمن',
-        status:         'مكتمل',
-        note:           note
+        status: 'مكتمل',
+        note: note
     });
 
     closeEditModal();
@@ -566,13 +576,13 @@ window.switchTab = (tab) => {
     document.getElementById(`tab-${tab}`)?.classList.add('active');
 
     // إظهار / إخفاء شريط البحث المناسب
-    const txFilterBar    = document.getElementById('tx-filter-bar');
+    const txFilterBar = document.getElementById('tx-filter-bar');
     const usersFilterBar = document.getElementById('users-filter-bar');
     if (tab === 'users') {
-        txFilterBar.style.display    = 'none';
+        txFilterBar.style.display = 'none';
         usersFilterBar.style.display = 'flex';
     } else {
-        txFilterBar.style.display    = 'flex';
+        txFilterBar.style.display = 'flex';
         usersFilterBar.style.display = 'none';
     }
 
@@ -654,7 +664,7 @@ function showConfirm(message) {
         document.body.appendChild(modal);
 
         document.getElementById('confirm-yes').onclick = () => { modal.remove(); resolve(true); };
-        document.getElementById('confirm-no').onclick  = () => { modal.remove(); resolve(false); };
+        document.getElementById('confirm-no').onclick = () => { modal.remove(); resolve(false); };
         modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(false); } };
     });
 }

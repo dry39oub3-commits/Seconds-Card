@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -7,139 +8,144 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Store-Card</title>
-    <link rel="icon" type="image/png" href="../assets/Icon.png">    
+    <link rel="icon" type="image/png" href="../assets/Icon.png">
 
     <link rel="stylesheet" href="./css/dashboard-main.css?v=2">
-<link rel="stylesheet" href="css/all.min.css?v=2">
+    <link rel="stylesheet" href="css/all.min.css?v=2">
 
-<script type="module" src="./js/admin-guard.js?v=2"></script>
+    <script type="module" src="./js/admin-guard.js?v=2"></script>
 
 </head>
-<body>
+
 <body>
 
-<header class="admin-top-header">
-    <div class="header-container">
- 
-        <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
-            <span></span><span></span><span></span>
-        </button>
- 
-        <div class="logo">
-            <a href="orders.html" style="text-decoration:none; color:inherit;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="../assets/Icon.png" alt="StoreCard" style="height:40px; width:40px; object-fit:contain;">
-                    <div style="display:flex; flex-direction:column; line-height:1.1;">
-                        <span style="font-size:18px; font-weight:800; color:white;">
-                            Store<span style="color:#f97316;">Card</span>
-                        </span>
-                    </div>
+    <body>
+
+        <header class="admin-top-header">
+            <div class="header-container">
+
+                <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+                    <span></span><span></span><span></span>
+                </button>
+
+                <div class="logo">
+                    <a href="orders.html" style="text-decoration:none; color:inherit;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="../assets/Icon.png" alt="StoreCard"
+                                style="height:40px; width:40px; object-fit:contain;">
+                            <div style="display:flex; flex-direction:column; line-height:1.1;">
+                                <span style="font-size:18px; font-weight:800; color:white;">
+                                    Store<span style="color:#f97316;">Card</span>
+                                </span>
+                            </div>
+                        </div>
+                    </a>
                 </div>
-            </a>
-        </div>
- 
-        <nav class="main-nav">
-            <ul class="nav-list" id="main-nav-list">
-                <li data-perm="all">
-                    <a href="Slider-manager.html" class="nav-link">
-                        <i class="fas fa-chart-line"></i> السلايدر
-                    </a>
-                </li>
-                <li data-perm="view_wallets">
-                    <a href="admin-wallet.html" class="nav-link">
-                        <i class="fas fa-wallet"></i> المحافظ
-                    </a>
-                </li>
-                <li data-perm="all">
-                    <a href="payment-methods.html" class="nav-link">
-                        <i class="fas fa-credit-card"></i> الدفع
-                    </a>
-                </li>
-                <li data-perm="view_stats">
-                    <a href="dashboard.html" class="nav-link">
-                        <i class="fas fa-chart-bar"></i> الإحصائيات
-                    </a>
-                </li>
-                <li data-perm="all">
-                    <a href="products-manager.html" class="nav-link">
-                        <i class="fas fa-box-open"></i> المنتجات
-                    </a>
-                </li>
-                <li data-perm="manage_stock">
-                    <a href="stocks.html" class="nav-link">
-                        <i class="fas fa-layer-group"></i> المخزون
-                    </a>
-                </li>
-                <li data-perm="view_completed">
-                    <a href="completed-orders.html" class="nav-link">
-                        <i class="fas fa-check-double"></i> الطلبات المكتملة
-                    </a>
-                </li>
-            </ul>
-        </nav>
- 
-        <div style="position:relative; display:inline-block; margin-left:15px;">
-            <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
-                <i class="fas fa-bell"></i>
-                <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
-            </button>
-        </div>
- 
-        <button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
-            <i class="fas fa-moon"></i>
-        </button>
- 
-        <div class="user-actions">
-            <button class="logout-btn" id="logoutBtn">
-                <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
-            </button>
-        </div>
- 
-    </div>
-</header>
 
-    <div class="admin-container">
-        <h1><i class="fas fa-credit-card"></i> إدارة طرق الدفع</h1>
+                <nav class="main-nav">
+                    <ul class="nav-list" id="main-nav-list">
+                        <li data-perm="all">
+                            <a href="Slider-manager.html" class="nav-link">
+                                <i class="fas fa-chart-line"></i> السلايدر
+                            </a>
+                        </li>
+                        <li data-perm="view_wallets">
+                            <a href="admin-wallet.html" class="nav-link">
+                                <i class="fas fa-wallet"></i> المحافظ
+                            </a>
+                        </li>
+                        <li data-perm="all">
+                            <a href="payment-methods.html" class="nav-link">
+                                <i class="fas fa-credit-card"></i> الدفع
+                            </a>
+                        </li>
+                        <li data-perm="view_stats">
+                            <a href="dashboard.html" class="nav-link">
+                                <i class="fas fa-chart-bar"></i> الإحصائيات
+                            </a>
+                        </li>
+                        <li data-perm="all">
+                            <a href="products-manager.html" class="nav-link">
+                                <i class="fas fa-box-open"></i> المنتجات
+                            </a>
+                        </li>
+                        <li data-perm="manage_stock">
+                            <a href="stocks.html" class="nav-link">
+                                <i class="fas fa-layer-group"></i> المخزون
+                            </a>
+                        </li>
+                        <li data-perm="view_completed">
+                            <a href="completed-orders.html" class="nav-link">
+                                <i class="fas fa-check-double"></i> الطلبات المكتملة
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
 
-        <div class="add-form">
-            <h2><i class="fas fa-plus-circle"></i> إضافة طريقة دفع جديدة</h2>
-            <div class="form-group">
-                <label>اسم البنك / طريقة الدفع</label>
-                <input type="text" id="method-name" placeholder="مثال: بنك موريتانيا">
-            </div>
-            <div class="form-group">
-                <label>رابط الشعار (URL)</label>
-                <input type="text" id="method-logo" placeholder="https://...">
-            </div>
-            <div class="form-group">
-                <label>رقم الحساب</label>
-                <input type="text" id="method-account" placeholder="مثال: 1234 5678 9012">
-            </div>
-            <button class="save-btn" id="save-btn">
-                <i class="fas fa-save"></i> حفظ
-        </div>
+                <div style="position:relative; display:inline-block; margin-left:15px;">
+                    <button id="bell-btn"
+                        style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
+                        <i class="fas fa-bell"></i>
+                        <span id="orders-badge"
+                            style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+                    </button>
+                </div>
 
-        <div class="methods-list" id="methods-list">
-            <p style="text-align:center; color:#94a3b8;">جاري التحميل...</p>
+                <button id="theme-toggle"
+                    style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <div class="user-actions">
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
+                    </button>
+                </div>
+
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <h1><i class="fas fa-credit-card"></i> إدارة طرق الدفع</h1>
+
+            <div class="add-form">
+                <h2><i class="fas fa-plus-circle"></i> إضافة طريقة دفع جديدة</h2>
+                <div class="form-group">
+                    <label>اسم البنك / طريقة الدفع</label>
+                    <input type="text" id="method-name" placeholder="مثال: بنك موريتانيا">
+                </div>
+                <div class="form-group">
+                    <label>رابط الشعار (URL)</label>
+                    <input type="text" id="method-logo" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>رقم الحساب</label>
+                    <input type="text" id="method-account" placeholder="مثال: 1234 5678 9012">
+                </div>
+                <button class="save-btn" id="save-btn">
+                    <i class="fas fa-save"></i> حفظ
+                </button>
+            </div>
+            <div class="methods-list" id="methods-list">
+                <p style="text-align:center; color:#94a3b8;">جاري التحميل...</p>
+            </div>
         </div>
-    </div>
-    <!-- زر الدردشة العائم للأدمن -->
-<div id="admin-chat-float-btn" onclick="toggleAdminChat()"
-     style="position:fixed; bottom:24px; left:24px; width:52px; height:52px;
+        <!-- زر الدردشة العائم للأدمن -->
+        <div id="admin-chat-float-btn" onclick="toggleAdminChat()" style="position:fixed; bottom:24px; left:24px; width:52px; height:52px;
             background:#f97316; color:white; border-radius:50%; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             font-size:22px; box-shadow:0 4px 20px rgba(249,115,22,0.4);
             z-index:99997; transition:transform 0.2s;">
-    <i class="fas fa-headset"></i>
-    <span id="admin-chat-badge"
-          style="display:none; position:absolute; top:-4px; right:-4px;
+            <i class="fas fa-headset"></i>
+            <span id="admin-chat-badge" style="display:none; position:absolute; top:-4px; right:-4px;
                  background:#ef4444; color:white; border-radius:50%;
                  width:18px; height:18px; font-size:10px; font-weight:800;
                  align-items:center; justify-content:center;"></span>
-</div>
-<script type="module" src="./js/admin-chat.js?v=2"></script>
-    <script type="module" src="./js/header.js?v=2"></script>
-<script type="module" src="./js/bell.js?v=2"></script>
-    <script type="module" src="./js/payment-methods.js?v=2"></script>
-</body>
+        </div>
+        <script type="module" src="./js/admin-chat.js?v=2"></script>
+        <script type="module" src="./js/header.js?v=2"></script>
+        <script type="module" src="./js/bell.js?v=2"></script>
+        <script type="module" src="./js/payment-methods.js?v=2"></script>
+    </body>
+
 </html>
