@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const name  = document.getElementById('reg-name').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const pass  = document.getElementById('reg-pass').value;
+            const name   = document.getElementById('reg-name').value.trim();
+            const phone  = document.getElementById('reg-phone').value.trim();
+            const email  = document.getElementById('reg-email').value.trim();
+            const pass   = document.getElementById('reg-pass').value;
             const regBtn = document.getElementById('register-btn');
 
             // التحقق من البريد
@@ -57,18 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
             regBtn.innerText = 'جاري إنشاء الحساب...';
             regBtn.disabled  = true;
 
-            // التحقق من أن رقم الهاتف غير مسجل مسبقاً
-            let userData = null;
-for (let attempt = 0; attempt < 3; attempt++) {
-    const { data } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-    if (data?.phone) { userData = data; break; }
-    if (attempt < 2) await new Promise(r => setTimeout(r, 800));
-    userData = data;
-}
+            // ✅ التحقق من أن رقم الهاتف غير مسجل مسبقاً
+            const { data: existingPhone } = await supabase
+                .from('users')
+                .select('id')
+                .eq('phone', fullPhone)
+                .single();
 
             if (existingPhone) {
                 showToast('⚠️ رقم الهاتف مسجل مسبقاً، يرجى تسجيل الدخول');
@@ -100,17 +94,17 @@ for (let attempt = 0; attempt < 3; attempt++) {
                 return;
             }
 
-            // حفظ بيانات المستخدم مع الهاتف
+            // ✅ حفظ بيانات المستخدم مع الهاتف
             if (data.user) {
                 await supabase.from('users').upsert({
-                id:        data.user.id,
-                full_name: name,       // ← اسم الحقل الصحيح
-                fullName:  name,       // ← للتوافق مع القديم
-                phone:     fullPhone,
-                balance:   0,
-                role:      'user'
-            });
-          }
+                    id:        data.user.id,
+                    full_name: name,
+                    fullName:  name,
+                    phone:     fullPhone,
+                    balance:   0,
+                    role:      'user'
+                });
+            }
 
             showToast(`✅ تم إنشاء حسابك بنجاح! مرحباً بك يا ${name}`);
             setTimeout(() => window.location.href = 'index.html', 1500);
