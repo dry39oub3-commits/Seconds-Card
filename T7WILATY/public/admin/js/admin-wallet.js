@@ -136,103 +136,93 @@ function renderList(containerId, list) {
         const userAvatar = user?.avatar_url || '';
 
         return `
-        <div class="tx-card" style="
-            border-right: 3px solid ${isCharge ? '#22c55e' : '#f97316'};
-            transition: transform 0.15s, box-shadow 0.15s;
-            position: relative;
-        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
-           onmouseout="this.style.transform='';this.style.boxShadow=''">
-        ${tx.status === 'قيد المراجعة' ? `
-            <div style="position:absolute; top:10px; left:10px;
-                background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.4);
-                color:#f97316; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;">
-                🔔 بانتظار المراجعة
-            </div>` : ''}
-            
-            <!-- صورة البروفيل -->
-            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0;">
-                ${userAvatar
-                ? `<img src="${userAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #334155;">`
-                : `<div style="width:44px;height:44px;border-radius:50%;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:18px;"><i class="fas fa-user"></i></div>`
-            }
+<div class="tx-card" style="
+    border-right: 3px solid ${isCharge ? '#22c55e' : '#f97316'};
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative; flex-direction:column; gap:12px;
+" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
+   onmouseout="this.style.transform='';this.style.boxShadow=''">
+
+    <!-- الصف العلوي: صورة + معلومات + مبلغ -->
+    <div style="display:flex; align-items:center; gap:12px;">
+        ${userAvatar
+            ? `<img src="${userAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #334155;flex-shrink:0;">`
+            : `<div style="width:44px;height:44px;border-radius:50%;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:18px;flex-shrink:0;"><i class="fas fa-user"></i></div>`
+        }
+        <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span style="font-weight:700; color:#f1f5f9; font-size:14px;">${userName}</span>
+                <span style="font-size:11px; color:#94a3b8;">${userEmail}</span>
             </div>
-
-            <div class="tx-icon ${isCharge ? 'charge' : 'withdraw'}">
-                <i class="fas fa-arrow-${isCharge ? 'up' : 'down'}"></i>
-            </div>
-
-            <div class="tx-info" style="flex:1;">
-                <!-- اسم العميل والإيميل -->
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                    <span style="font-weight:700; color:#f1f5f9; font-size:14px;">${userName}</span>
-                    <span style="font-size:11px; color:#94a3b8; background:#0f172a; padding:2px 7px; border-radius:5px;">${userEmail}</span>
-                </div>
-
-                <h4 style="margin:0 0 4px;">${isCharge ? 'شحن رصيد' : 'سحب رصيد'} • ${tx.payment_method || '-'}</h4>
-
-                <p style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:4px 0;">
-                    <span onclick="openUserOrders('${tx.user_id}')"
-                          style="font-family:monospace; color:#f97316; font-size:12px;
-                                 background:rgba(249,115,22,0.1); padding:2px 6px;
-                                 border-radius:5px; cursor:pointer; border:1px solid rgba(249,115,22,0.2);"
-                          title="انقر لعرض طلبات العميل">
-                        ${scId}
-                    </span>
-                    ${tx.order_number ? `
-                    <span style="font-family:monospace; color:#60a5fa; font-size:12px;
-                                 background:rgba(96,165,250,0.1); padding:2px 8px;
-                                 border-radius:5px; border:1px solid rgba(96,165,250,0.2);">
-                        🔖 ${tx.order_number}
-                    </span>` : ''}
-                    <span style="color:#64748b; font-size:11px;">${date}</span>
-                </p>
-
-                ${tx.withdraw_account ? `
-                    <p style="font-size:13px;">حساب الاستلام: <strong style="color:#e2e8f0;">${tx.withdraw_account}</strong></p>
-                ` : ''}
-${tx.sender_phone ? `
-    <p style="font-size:13px; display:flex; align-items:center; gap:8px;">
-        <span style="color:#94a3b8;">📱 الرقم المرسل منه:</span>
-        <strong style="color:#22c55e; font-family:monospace; direction:ltr;">${tx.sender_phone}</strong>
-        <button onclick="navigator.clipboard.writeText('${tx.sender_phone}').then(() => { this.innerHTML='<i class=\\'fas fa-check\\'></i>'; setTimeout(() => this.innerHTML='<i class=\\'fas fa-copy\\'></i>', 1500); })"
-            style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);
-                   padding:2px 8px;border-radius:5px;cursor:pointer;font-size:11px;">
-            <i class="fas fa-copy"></i>
-        </button>
-    </p>
-` : ''}
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap;">
+                <span onclick="openUserOrders('${tx.user_id}')"
+                      style="font-family:monospace; color:#f97316; font-size:11px;
+                             background:rgba(249,115,22,0.1); padding:2px 6px;
+                             border-radius:5px; cursor:pointer; border:1px solid rgba(249,115,22,0.2);">
+                    ${scId}
+                </span>
+                ${tx.order_number ? `
+                <span style="font-family:monospace; color:#60a5fa; font-size:11px;
+                             background:rgba(96,165,250,0.1); padding:2px 6px;
+                             border-radius:5px; border:1px solid rgba(96,165,250,0.2);">
+                    🔖 ${tx.order_number}
+                </span>` : ''}
                 <span class="status-badge status-${tx.status === 'مكتمل' ? 'completed' : tx.status === 'مرفوض' ? 'rejected' : 'pending'}">
                     ${tx.status}
                 </span>
-
-                <!-- سبب الرفض -->
-                ${isRejected && tx.reject_reason ? `
-                    <div style="margin-top:8px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
-                                border-radius:8px; padding:8px 12px; font-size:13px; color:#fca5a5;">
-                        <i class="fas fa-exclamation-circle"></i> سبب الرفض: ${tx.reject_reason}
-                    </div>
-                ` : ''}
             </div>
-
-            <div class="tx-amount ${isCharge ? 'credit' : 'debit'}">
+        </div>
+        <div style="text-align:left; flex-shrink:0;">
+            <div class="tx-amount ${isCharge ? 'credit' : 'debit'}" style="font-size:16px; font-weight:800;">
                 ${isCharge ? '+' : '-'}${tx.amount} MRU
             </div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">${date}</div>
+        </div>
+    </div>
 
-            ${tx.receipt_url ? `
-                <img src="${tx.receipt_url}" class="receipt-img" onclick="viewReceipt('${tx.receipt_url}')">
-            ` : ''}
+    <!-- الصف الثاني: تفاصيل -->
+    <div style="background:#0f172a; border-radius:8px; padding:10px 12px; font-size:12px; color:#94a3b8;
+                display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+        <span>🏦 ${tx.payment_method || '-'}</span>
+        ${tx.sender_phone ? `
+        <span style="color:#22c55e; display:flex; align-items:center; gap:6px;">
+            📱 <span style="font-family:monospace; direction:ltr;">${tx.sender_phone}</span>
+            <button onclick="navigator.clipboard.writeText('${tx.sender_phone}').then(() => { this.innerHTML='<i class=\\'fas fa-check\\'></i>'; setTimeout(() => this.innerHTML='<i class=\\'fas fa-copy\\'></i>', 1500); })"
+                style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);
+                       padding:2px 6px;border-radius:5px;cursor:pointer;font-size:10px;">
+                <i class="fas fa-copy"></i>
+            </button>
+        </span>` : ''}
+        ${tx.withdraw_account ? `<span>💳 ${tx.withdraw_account}</span>` : ''}
+        ${tx.receipt_url ? `
+        <a href="${tx.receipt_url}" target="_blank"
+            style="color:#60a5fa; display:inline-flex; align-items:center; gap:4px;
+                   background:rgba(96,165,250,0.1); padding:3px 8px; border-radius:5px;
+                   text-decoration:none; border:1px solid rgba(96,165,250,0.2);">
+            <i class="fas fa-receipt"></i> إيصال
+        </a>` : ''}
+    </div>
 
-            ${isPending ? `
-                <div class="tx-actions">
-                    <button class="btn-approve" onclick="approveTransaction('${tx.id}', '${tx.user_id}', ${tx.amount}, '${tx.type}')">
-                        <i class="fas fa-check"></i> قبول
-                    </button>
-                    <button class="btn-reject" onclick="openRejectModal('${tx.id}')">
-                        <i class="fas fa-times"></i> رفض
-                    </button>
-                </div>
-            ` : ''}
-        </div>`;
+    <!-- سبب الرفض -->
+    ${isRejected && tx.reject_reason ? `
+    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3);
+                border-radius:8px; padding:8px 12px; font-size:12px; color:#fca5a5;">
+        <i class="fas fa-exclamation-circle"></i> سبب الرفض: ${tx.reject_reason}
+    </div>` : ''}
+
+    <!-- أزرار القبول/الرفض -->
+    ${isPending ? `
+    <div style="display:flex; gap:8px;">
+        <button class="btn-approve" style="flex:1;"
+                onclick="approveTransaction('${tx.id}', '${tx.user_id}', ${tx.amount}, '${tx.type}')">
+            <i class="fas fa-check"></i> قبول
+        </button>
+        <button class="btn-reject" style="flex:1;"
+                onclick="openRejectModal('${tx.id}')">
+            <i class="fas fa-times"></i> رفض
+        </button>
+    </div>` : ''}
+</div>`;
     }).join('');
 }
 

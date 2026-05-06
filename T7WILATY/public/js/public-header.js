@@ -1,10 +1,10 @@
 import { supabase } from './supabase-config.js';
 
 // ==================== تشغيل عند التحميل ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
     initUserIcon();
-    updateCartBadge();
+    await updateCartBadge();
     initSearch();
     applyStoredSettings();
 });
@@ -76,11 +76,9 @@ async function initUserIcon() {
 }
 
 // ==================== badge السلة ====================
-function updateCartBadge() {
-    const cart       = JSON.parse(localStorage.getItem('cart') || '[]');
-    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    const cartLink   = document.getElementById('cart-icon-link')
-                    || document.querySelector('a[href="cart.html"]');
+async function updateCartBadge() {
+    const cartLink = document.getElementById('cart-icon-link')
+                  || document.querySelector('a[href="cart.html"]');
     if (!cartLink) return;
 
     cartLink.style.position = 'relative';
@@ -97,8 +95,32 @@ function updateCartBadge() {
         `;
         cartLink.appendChild(badge);
     }
-    badge.textContent   = totalItems;
-    badge.style.display = totalItems > 0 ? 'flex' : 'none';
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) { badge.style.display = 'none'; return; }
+
+        const { data: cart } = await supabase
+            .from('carts')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .eq('status', 'active')
+            .single();
+
+        if (!cart) { badge.style.display = 'none'; return; }
+
+        const { data: items } = await supabase
+            .from('cart_items')
+            .select('quantity')
+            .eq('cart_id', cart.id);
+
+        const total = (items || []).reduce((s, i) => s + (i.quantity || 1), 0);
+        badge.textContent   = total;
+        badge.style.display = total > 0 ? 'flex' : 'none';
+
+    } catch {
+        badge.style.display = 'none';
+    }
 }
 
 // ==================== البحث ====================

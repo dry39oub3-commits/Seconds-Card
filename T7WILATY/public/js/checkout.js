@@ -558,6 +558,35 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2000);
 }
 
+// ===== نسخ رقم الحساب =====
+window.copyAccount = function() {
+    const text = document.getElementById('selected-account')?.textContent?.trim();
+    if (!text) return;
+
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+    document.body.appendChild(el);
+    el.select();
+    el.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    document.body.removeChild(el);
+
+    // تغيير زر النسخ مؤقتاً
+    const btn = document.querySelector('#selected-method-info button');
+    if (btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check" style="color:#22c55e;"></i>';
+        btn.style.borderColor = '#22c55e';
+        btn.style.color = '#22c55e';
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.style.borderColor = '#334155';
+            btn.style.color = '#94a3b8';
+        }, 2000);
+    }
+};
+
 // ===== Logout =====
 window.handleLogout = async () => {
     const { error } = await supabase.auth.signOut();

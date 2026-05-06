@@ -69,18 +69,10 @@
                 <div id="mru-balance-card" class="balance-card">
                     <div class="card-inner">
                         <i class="fas fa-wallet icon-bg"></i>
-                        <span id="mruBalance">MRU 0</span>
                         <h2 id="mruBalance">0.00 MRU</h2>
                     </div>
                 </div>
 
-                <div id="usd-balance-card" class="balance-card">
-                    <div class="card-inner">
-                        <i class="fas fa-dollar-sign icon-bg"></i>
-                        <span id="usdBalance">$0</span>
-                        <h2 id="usdBalance">$0.00</h2>
-                    </div>
-                </div>
             </div>
 
             <!-- زر الشحن -->
@@ -104,8 +96,8 @@
     <!-- ===== Modal الشحن ===== -->
     <div id="depositModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
      z-index:9999; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-        <div style="background:#1e293b; border-radius:16px; padding:28px; width:100%; max-width:480px;
-                color:#e2e8f0; position:relative; max-height:90vh; overflow-y:auto;">
+        <div style="background:var(--surface); border-radius:16px; padding:28px; width:100%; max-width:480px;
+        color:var(--text); position:relative; max-height:90vh; overflow-y:auto; border:1px solid var(--border);">
 
             <button onclick="closeDepositModal()" style="position:absolute; top:14px; left:14px; background:#ef4444; color:white;
                    border:none; border-radius:8px; padding:5px 12px; cursor:pointer; font-size:14px;">
@@ -121,69 +113,68 @@
                 <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
                     💵 المبلغ (MRU)
                 </label>
-                <input type="number" id="charge-amount" placeholder="أدخل المبلغ..." style="width:100%; padding:12px; background:#0f172a; border:1px solid #334155;
-                       border-radius:8px; color:#e2e8f0; font-size:15px; box-sizing:border-box; outline:none;">
-            </div>
+                <input type="number" id="charge-amount" placeholder="أدخل المبلغ..." style="width:100%; padding:12px; background:var(--surface-2); border:1px solid var(--border);
+       border-radius:8px; color:var(--text); font-size:15px; box-sizing:border-box; outline:none;" </div>
 
-            <!-- بوابات الدفع -->
-            <div style="margin-bottom:16px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:10px;">
-                    🏦 اختر طريقة الدفع
-                </label>
-                <div id="payment-methods-container" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div style="text-align:center; color:#64748b; padding:20px; grid-column:1/-1;">
-                        <i class="fas fa-spinner fa-spin"></i> جاري تحميل البوابات...
+                <!-- بوابات الدفع -->
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:10px;">
+                        🏦 اختر طريقة الدفع
+                    </label>
+                    <div id="payment-methods-container" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div style="text-align:center; color:#64748b; padding:20px; grid-column:1/-1;">
+                            <i class="fas fa-spinner fa-spin"></i> جاري تحميل البوابات...
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- معلومات البوابة المختارة -->
-            <div id="method-info" style="display:none; background:#0f172a; border-radius:10px;
-             padding:14px; margin-bottom:16px; border:1px solid #334155;">
-                <p style="font-size:12px; color:#94a3b8; margin-bottom:8px;">
-                    📤 أرسل المبلغ إلى الرقم التالي:
-                </p>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span id="method-account-display" style="font-family:monospace; font-size:16px; color:#22c55e;
+                <!-- معلومات البوابة المختارة -->
+                <div id="method-info" style="display:none; background:var(--surface-2); border-radius:10px;
+ padding:14px; margin-bottom:16px; border:1px solid var(--border);">
+                    <p style="font-size:12px; color:#94a3b8; margin-bottom:8px;">
+                        📤 أرسل المبلغ إلى الرقم التالي:
+                    </p>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="method-account-display" style="font-family:monospace; font-size:16px; color:#22c55e;
                            font-weight:bold; flex:1; word-break:break-all;"></span>
-                    <button onclick="copyMethodAccount()" style="background:#334155; color:white; border:none; padding:6px 12px;
-                           border-radius:6px; cursor:pointer; font-size:12px; flex-shrink:0;">
-                        <i class="fas fa-copy"></i> نسخ
-                    </button>
+                        <button onclick="copyMethodAccount()" style="background:var(--surface-3); color:var(--text-soft); 
+       border:1px solid var(--border); padding:6px 12px;
+       border-radius:6px; cursor:pointer; font-size:12px; flex-shrink:0;">
+                            <i class="fas fa-copy"></i> نسخ
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- رفع الإيصال -->
-            <div style="margin-bottom:20px;">
-                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
-                    🧾 رفع إيصال التحويل
-                </label>
-                <input type="file" id="charge-receipt" accept="image/*" style="width:100%; padding:10px; background:#0f172a; border:1px solid #334155;
-                       border-radius:8px; color:#e2e8f0; font-size:13px; box-sizing:border-box; cursor:pointer;">
-            </div>
+                <!-- رفع الإيصال -->
+                <div style="margin-bottom:20px;">
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:6px;">
+                        🧾 رفع إيصال التحويل
+                    </label>
+                    <input type="file" id="charge-receipt" accept="image/*" style="width:100%; padding:10px; background:var(--surface-2); border:1px solid var(--border);
+       border-radius:8px; color:var(--text); font-size:13px; box-sizing:border-box; cursor:pointer;" </div>
 
-            <input type="hidden" id="charge-method-selected">
+                    <input type="hidden" id="charge-method-selected">
 
-            <!-- زر الإرسال -->
-            <button onclick="submitCharge()" style="width:100%; padding:14px; background:#22c55e; color:white; border:none;
+                    <!-- زر الإرسال -->
+                    <button onclick="submitCharge()" style="width:100%; padding:14px; background:#22c55e; color:white; border:none;
                    border-radius:10px; font-size:16px; cursor:pointer; font-weight:bold;
                    transition:background 0.2s;">
-                <i class="fas fa-paper-plane"></i> إرسال طلب الشحن
-            </button>
+                        <i class="fas fa-paper-plane"></i> إرسال طلب الشحن
+                    </button>
 
-            <p style="text-align:center; font-size:12px; color:#64748b; margin-top:12px;">
-                🔒 سيتم مراجعة طلبك وإضافة الرصيد خلال دقائق
-            </p>
-        </div>
-    </div>
-    <!-- زر الدردشة العائم -->
-    <div id="chat-float-btn" onclick="toggleChatWidget()" title="تواصل مع الدعم الفني">
-        <i class="fas fa-headset"></i>
-        <span class="chat-float-badge" id="chat-float-badge"></span>
-    </div>
-    <script type="module" src="js/public-header.js?v=2"></script>
-    <script type="module" src="./js/wallet.js?v=2"></script>
-    <script type="module" src="js/chat-float.js?v=2"></script>
+                    <p style="text-align:center; font-size:12px; color:#64748b; margin-top:12px;">
+                        🔒 سيتم مراجعة طلبك وإضافة الرصيد خلال دقائق
+                    </p>
+                </div>
+            </div>
+            <!-- زر الدردشة العائم -->
+            <div id="chat-float-btn" onclick="toggleChatWidget()" title="تواصل مع الدعم الفني">
+                <i class="fas fa-headset"></i>
+                <span class="chat-float-badge" id="chat-float-badge"></span>
+            </div>
+            <script type="module" src="js/public-header.js?v=2"></script>
+            <script type="module" src="./js/wallet.js?v=2"></script>
+            <script type="module" src="js/chat-float.js?v=2"></script>
 </body>
 
 </html>
