@@ -382,8 +382,19 @@ window.calcProfitPlayerID = (suffix, orderPrice, currency) => {
     if (!display) return;
     if (cost <= 0) { display.style.display = 'none'; return; }
 
-    const isCrypto  = currency === 'MRU';
-    const totalCost = isCrypto ? cost : cost * USD_TO_MRU;
+    const totalCost = cost * USD_TO_MRU;
+const profit    = orderPrice - totalCost;
+const color     = profit >= 0 ? '#22c55e' : '#ef4444';
+
+display.style.display = 'block';
+display.innerHTML = `
+    <div style="font-size:11px;color:#64748b;margin-bottom:4px;">
+        التكلفة: $${cost} × ${USD_TO_MRU} = ${totalCost.toFixed(0)} MRU
+    </div>
+    <span style="color:#94a3b8;font-size:13px;">الربح: </span>
+    <span style="color:${color};font-size:16px;font-weight:bold;">${profit.toFixed(0)}</span>
+    <span style="color:#94a3b8;font-size:13px;"> MRU</span>
+`;
     const profit    = orderPrice - totalCost;
     const color     = profit >= 0 ? '#22c55e' : '#ef4444';
 
