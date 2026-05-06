@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await updateCartBadge();
     initSearch();
     applyStoredSettings();
+    subscribeToOrderUpdates();
 });
 
 // ==================== الثيم ====================
@@ -190,3 +191,112 @@ window.handleLogout = async function() {
     }
 };
 
+// ==================== إشعارات الطلبات للعميل ====================
+async function subscribeToOrderUpdates() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) return
+
+    const userId = session.user.id
+
+    supabase.channel(`orders-${userId}`)
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+            filter: `user_id=eq.${userId}`
+        }, (payload) => {
+            const order  = payload.new
+            const status = order.status
+
+            if (status === 'مكتمل') {
+                showCustomerNotification({
+                    title: '✅ تم إكمال طلبك!',
+                    body:  `${order.product_name} ${order.label ? `(${order.label})` : ''}`,
+                    code:  order.card_code,
+                    color: '#22c55e'
+                })
+            } else if (status === 'ملغي') {
+                showCustomerNotification({
+                    title: '❌ تم رفض طلبك',
+                    body:  `${order.product_name} — السبب: ${order.reject_reason || 'غير محدد'}`,
+                    color: '#ef4444'
+                })
+            } else if (status === 'مسترد') {
+                showCustomerNotification({
+                    title: '↩️ تم استرداد طلبك',
+                    body:  `${order.product_name} — ${(order.price || 0) * (order.quantity || 1)} MRU`,
+                    color: '#f59e0b'
+                })
+            }
+        })
+        .subscribe()
+}
+
+function showCustomerNotification({ title, body, code, color }) {
+    document.getElementById('_customer-notif')?.remove()
+
+    const notif = document.createElement('div')
+    notif.id = '_customer-notif'
+    notif.style.cssText = `
+        position: fixed; top: 20px; left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b; border: 2px solid ${color};
+        border-radius: 16px; padding: 20px 24px;
+        min-width: 320px; max-width: 420px;
+        z-index: 999999; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        font-family: 'Tajawal', sans-serif;
+        animation: notifSlideDown 0.4s ease; direction: rtl;
+    `
+
+    notif.innerHTML = `
+        <style>
+            @keyframes notifSlideDown {
+                from { opacity:0; transform:translateX(-50%) translateY(-20px); }
+                to   { opacity:1; transform:translateX(-50%) translateY(0); }
+            }
+        </style>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-size:16px; font-weight:800; color:${color};">${title}</span>
+            <button onclick="document.getElementById('_customer-notif').remove()"
+                style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:18px;">✕</button>
+        </div>
+        <div style="font-size:13px; color:#e2e8f0; margin-bottom:${code ? '12px' : '0'};">${body}</div>
+        ${code ? `
+        <div style="background:#0f172a; border:1px solid ${color}; border-radius:10px; padding:12px; margin-top:8px;">
+            <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">🔑 الكود:</div>
+            <div style="font-family:monospace; font-size:15px; color:${color}; font-weight:700; letter-spacing:1px;">
+                ${code.split('\n').join('<br>')}
+            </div>
+            <button onclick="navigator.clipboard.writeText(this.dataset.code); this.innerHTML='✅ تم النسخ!'; setTimeout(() => this.innerHTML='📋 نسخ الكود', 2000);"
+                data-code="${code.replace(/"/g, '&quot;')}"
+                style="width:100%; margin-top:10px; padding:8px; background:${color};
+                       color:white; border:none; border-radius:8px; cursor:pointer;
+                       font-size:13px; font-weight:700; font-family:'Tajawal',sans-serif;">
+                📋 نسخ الكود
+            </button>
+        </div>` : ''}
+        <div style="margin-top:12px;">
+            <a href="orders.html" style="display:block; text-align:center; padding:8px;
+               background:rgba(249,115,22,0.15); color:#f97316; border:1px solid #f97316;
+               border-radius:8px; text-decoration:none; font-size:13px; font-weight:700;">
+                📋 عرض الطلبات
+            </a>
+        </div>
+    `
+
+    document.body.appendChild(notif)
+
+    if (!code) {
+        setTimeout(() => {
+            notif.style.opacity = '0'
+            notif.style.transition = 'opacity 0.4s'
+            setTimeout(() => notif?.remove(), 400)
+        }, 8000)
+    }
+
+    if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/assets/Icon.png' })
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission()
+    }
+}
