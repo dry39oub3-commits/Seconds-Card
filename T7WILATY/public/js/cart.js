@@ -10,14 +10,14 @@ async function getOrCreateCart(userId) {
         .select('id')
         .eq('user_id', userId)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
     if (error || !cart) {
         const { data: newCart, error: createError } = await supabase
             .from('carts')
             .insert({ user_id: userId, status: 'active' })
             .select('id')
-            .single();
+            .maybeSingle();
         if (createError) throw createError;
         return newCart.id;
     }
