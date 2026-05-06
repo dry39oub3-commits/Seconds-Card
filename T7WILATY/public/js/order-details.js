@@ -206,13 +206,16 @@ ${isCancelled && rejectReason ? `
 
 ${isCompleted && executionReceipt?.startsWith('http') ? `
 <div class="refund-receipt-block">
-    <div class="refund-title" style="color:#22c55e;">
+    <div class="refund-title" style="color:#22c55e; cursor:pointer; user-select:none;"
+         onclick="const img = document.getElementById('execution-receipt-img'); const isHidden = img.style.display === 'none'; img.style.display = isHidden ? 'block' : 'none'; this.querySelector('.receipt-toggle-icon').className = isHidden ? 'fas fa-chevron-up receipt-toggle-icon' : 'fas fa-chevron-down receipt-toggle-icon';">
         <i class="fas fa-receipt"></i> إيصال التنفيذ
+        <i class="fas fa-chevron-down receipt-toggle-icon" style="margin-right:auto; font-size:12px;"></i>
     </div>
-    <img src="${sanitize(executionReceipt)}"
+    <img id="execution-receipt-img"
+         src="${sanitize(executionReceipt)}"
          class="refund-img"
          onclick="window.open('${sanitize(executionReceipt)}','_blank')"
-         style="cursor:zoom-in;"
+         style="cursor:zoom-in; display:none;"
          title="انقر للتكبير">
 </div>` : ''}
 
