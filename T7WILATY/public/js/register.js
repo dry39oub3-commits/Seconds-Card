@@ -58,11 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
             regBtn.disabled  = true;
 
             // التحقق من أن رقم الهاتف غير مسجل مسبقاً
-            const { data: existingPhone } = await supabase
-                .from('users')
-                .select('id')
-                .eq('phone', fullPhone)
-                .single();
+            let userData = null;
+for (let attempt = 0; attempt < 3; attempt++) {
+    const { data } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+    if (data?.phone) { userData = data; break; }
+    if (attempt < 2) await new Promise(r => setTimeout(r, 800));
+    userData = data;
+}
 
             if (existingPhone) {
                 showToast('⚠️ رقم الهاتف مسجل مسبقاً، يرجى تسجيل الدخول');
