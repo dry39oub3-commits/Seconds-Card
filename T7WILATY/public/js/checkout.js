@@ -3,31 +3,58 @@ import { supabase } from './supabase-config.js';
 let totalAmount = 0;
 let userBalance = 0;
 let selectedPaymentMethod = null;
-let cart = [];
+let cart = []; // سيُملأ من Supabase
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthAndLoadData();
-
     document.getElementById('confirm-payment-btn')?.addEventListener('click', executePayment);
-
     document.getElementById('receipt-input')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
             const preview = document.getElementById('receipt-preview');
-            if (preview) {
-                preview.src = ev.target.result;
-                preview.style.display = 'block';
-            }
+            if (preview) { preview.src = ev.target.result; preview.style.display = 'block'; }
         };
         reader.readAsDataURL(file);
     });
 });
 
+// ===== جلب السلة من Supabase =====
+async function loadCartFromCloud(userId) {
+    let { data: cartRow } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .single();
+
+    if (!cartRow) return [];
+
+    const { data: items } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_id', cartRow.id);
+
+    return items || [];
+}
+
+// ===== مسح السلة السحابية بعد الدفع =====
+async function clearCloudCart(userId) {
+    const { data: cartRow } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .single();
+
+    if (!cartRow) return;
+
+    await supabase.from('cart_items').delete().eq('cart_id', cartRow.id);
+}
+
 // ===== جلب بوابات الدفع =====
 async function loadPaymentMethods() {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const currency = cart[0]?.currency || 'MRU';
     const isCrypto = currency === 'USDT';
     const rate = 43;
@@ -55,8 +82,7 @@ async function loadPaymentMethods() {
                 <div class="payment-method-desc">رصيدك: ${displayBalance}</div>
             </div>
             <div class="payment-method-radio"></div>
-        </div>
-    `;
+        </div>`;
 
     if (error || !methods || methods.length === 0) {
         list.innerHTML = walletCard;
@@ -66,14 +92,13 @@ async function loadPaymentMethods() {
     list.innerHTML = walletCard + methods.map(m => `
         <div class="payment-method-card" id="pm-${m.id}" onclick="selectMethod('${m.id}', '${m.account_number}', '${m.name}')">
             <img src="${m.logo_url || ''}" alt="${m.name}"
-                 style="width:42px; height:42px; object-fit:contain; border-radius:8px;"
+                 style="width:42px;height:42px;object-fit:contain;border-radius:8px;"
                  onerror="this.style.display='none'">
             <div class="payment-method-info">
                 <div class="payment-method-name">${m.name}</div>
             </div>
             <div class="payment-method-radio"></div>
-        </div>
-    `).join('');
+        </div>`).join('');
 }
 
 // ===== اختيار طريقة الدفع =====
@@ -86,24 +111,19 @@ window.selectMethod = async function(id, account, name) {
 
     const card = document.getElementById(`pm-${id}`);
     if (card) card.classList.add('selected');
-
     selectedPaymentMethod = { id, account, name };
 
     const infoDiv        = document.getElementById('selected-method-info');
     const accountElem    = document.getElementById('selected-account');
     const receiptSection = document.getElementById('receipt-upload-section');
     const statusMsg      = document.getElementById('payment-status-msg');
-
-    const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
-    const currency = cartData[0]?.currency || 'MRU';
+    const currency       = cart[0]?.currency || 'MRU';
 
     if (id === 'wallet') {
         if (infoDiv) infoDiv.style.display = 'none';
         if (receiptSection) receiptSection.style.display = 'none';
-
         const rate = 43;
         const balanceInCurrency = currency === 'USDT' ? userBalance / rate : userBalance;
-
         if (balanceInCurrency < totalAmount) {
             statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
         } else {
@@ -111,28 +131,24 @@ window.selectMethod = async function(id, account, name) {
         }
 
     } else if (currency === 'USDT') {
-        // ← إخفاء رقم الحساب والإيصال
         if (infoDiv) infoDiv.style.display = 'none';
         if (receiptSection) receiptSection.style.display = 'none';
-
-        // ← إظهار loading
         if (statusMsg) statusMsg.innerHTML = `
-            <div style="text-align:center; padding:20px; color:#94a3b8;">
-                <i class="fas fa-spinner fa-spin" style="font-size:24px; color:#f97316;"></i>
+            <div style="text-align:center;padding:20px;color:#94a3b8;">
+                <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#f97316;"></i>
                 <p style="margin-top:10px;">جاري إنشاء QR Code...</p>
             </div>`;
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const user = session?.user;
-
-            // إنشاء الطلب مؤقتاً في قاعدة البيانات
             const sharedOrderNumber = generateOrderNumber();
-            const orders = cartData.map(item => ({
+
+            const orders = cart.map(item => ({
                 order_number:   sharedOrderNumber,
                 customer_name:  user?.user_metadata?.full_name || 'مستخدم',
                 customer_phone: window._userPhone || '',
-                product_id:     item.productId || null,
+                product_id:     item.product_id || null,
                 product_name:   item.name,
                 label:          item.label || null,
                 price:          item.price,
@@ -148,10 +164,8 @@ window.selectMethod = async function(id, account, name) {
                 .from('orders').insert(orders).select();
             if (insertError) throw insertError;
 
-            // حفظ الطلب للاستخدام لاحقاً
             window._pendingOrderId = insertedOrders[0].id;
 
-            // استدعاء create-invoice
             const response = await fetch(
                 'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/create-invoice',
                 {
@@ -163,50 +177,43 @@ window.selectMethod = async function(id, account, name) {
                     body: JSON.stringify({
                         orderId:     insertedOrders[0].id,
                         amount:      totalAmount,
-                        description: cartData.map(i => i.name).join(', ')
+                        description: cart.map(i => i.name).join(', ')
                     })
                 }
             );
 
             const invoice = await response.json();
-
             if (invoice.id) {
-                // حفظ رابط الدفع
                 window._invoiceUrl = invoice.invoice_url;
-
-                // عرض QR Code
                 if (statusMsg) statusMsg.innerHTML = `
-                    <div style="text-align:center; padding:16px; background:rgba(249,115,22,0.05);
-                                border:1px solid #f97316; border-radius:12px; margin-top:10px;">
-                        <p style="color:#f97316; font-weight:bold; margin-bottom:12px;">
+                    <div style="text-align:center;padding:16px;background:rgba(249,115,22,0.05);
+                                border:1px solid #f97316;border-radius:12px;margin-top:10px;">
+                        <p style="color:#f97316;font-weight:bold;margin-bottom:12px;">
                             <i class="fas fa-qrcode"></i> امسح QR Code أو اضغط على زر الدفع
                         </p>
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(invoice.invoice_url)}"
-                             style="border-radius:8px; border:4px solid #f97316; width:200px; height:200px;">
-                        <p style="color:#94a3b8; font-size:12px; margin-top:10px;">
+                             style="border-radius:8px;border:4px solid #f97316;width:200px;height:200px;">
+                        <p style="color:#94a3b8;font-size:12px;margin-top:10px;">
                             المبلغ: <strong style="color:#f97316;">${totalAmount} USDT</strong>
                         </p>
                         <a href="${invoice.invoice_url}" target="_blank"
-                           style="display:inline-block; margin-top:10px; padding:10px 20px;
-                                  background:#f97316; color:white; border-radius:8px;
-                                  text-decoration:none; font-weight:bold; font-size:14px;">
+                           style="display:inline-block;margin-top:10px;padding:10px 20px;
+                                  background:#f97316;color:white;border-radius:8px;
+                                  text-decoration:none;font-weight:bold;font-size:14px;">
                             <i class="fas fa-external-link-alt"></i> فتح صفحة الدفع
                         </a>
-                        <p style="color:#94a3b8; font-size:11px; margin-top:8px;">
+                        <p style="color:#94a3b8;font-size:11px;margin-top:8px;">
                             بعد إتمام الدفع اضغط "تأكيد الدفع الآن"
                         </p>
                     </div>`;
             } else {
                 throw new Error(invoice.message || 'فشل إنشاء الفاتورة');
             }
-
         } catch (error) {
-            if (statusMsg) statusMsg.innerHTML = `
-                <p style="color:#ef4444;">❌ خطأ في إنشاء QR Code: ${error.message}</p>`;
+            if (statusMsg) statusMsg.innerHTML = `<p style="color:#ef4444;">❌ خطأ: ${error.message}</p>`;
         }
 
     } else {
-        // ← طريقة محلية MRU
         if (infoDiv && accountElem) {
             infoDiv.style.display = 'block';
             accountElem.textContent = account || 'غير متوفر';
@@ -214,20 +221,16 @@ window.selectMethod = async function(id, account, name) {
         if (receiptSection) receiptSection.style.display = 'block';
         if (statusMsg) statusMsg.innerHTML = `
             <div style="margin-bottom:12px;">
-                <label style="display:block; font-size:13px; color:var(--text-secondary, #94a3b8); margin-bottom:6px; font-weight:600;">
+                <label style="display:block;font-size:13px;color:var(--text-secondary,#94a3b8);margin-bottom:6px;font-weight:600;">
                     📱 رقم الهاتف المرسل منه
                 </label>
-                <input type="tel" id="sender-phone-input"
-                    placeholder="مثال: 22xxxxxxxx"
-                    style="width:100%; padding:12px 16px;
-                    background:var(--input-bg);
-                    border:1.5px solid var(--input-border);
-                    border-radius:10px; color:var(--text-color);
-                    font-size:15px; box-sizing:border-box;
-                    outline:none; font-family:'Cairo',sans-serif;
-                    transition:border-color 0.2s;"
-                onfocus="this.style.borderColor='#f97316'"
-                onblur="this.style.borderColor='var(--input-border)'">
+                <input type="tel" id="sender-phone-input" placeholder="مثال: 22xxxxxxxx"
+                    style="width:100%;padding:12px 16px;background:var(--input-bg);
+                    border:1.5px solid var(--input-border);border-radius:10px;
+                    color:var(--text-color);font-size:15px;box-sizing:border-box;
+                    outline:none;font-family:'Cairo',sans-serif;transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='#f97316'"
+                    onblur="this.style.borderColor='var(--input-border)'">
             </div>`;
     }
 };
@@ -237,22 +240,22 @@ async function checkAuthAndLoadData() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
 
-    const userIcon = document.querySelector('#user-icon-btn i');
-    if (userIcon && user) userIcon.className = 'fas fa-user-check';
+    if (!user) return;
 
-    cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const userIcon = document.querySelector('#user-icon-btn i');
+    if (userIcon) userIcon.className = 'fas fa-user-check';
+
+    // ✅ تحميل السلة من السحابة
+    cart = await loadCartFromCloud(user.id);
     totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
 
     const currency = cart[0]?.currency || 'MRU';
-    localStorage.setItem('lastCurrency', currency);
 
     const totalElem = document.getElementById('checkout-total');
     if (totalElem) totalElem.textContent = `${totalAmount} ${currency}`;
 
     const totalDisplay = document.getElementById('checkout-total-display');
     if (totalDisplay) totalDisplay.textContent = `${totalAmount} ${currency}`;
-
-    if (!user) return;
 
     try {
         const { data: userData, error } = await supabase
@@ -265,33 +268,28 @@ async function checkAuthAndLoadData() {
 
         if (userData?.is_blocked) {
             document.body.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;
-                            height:100vh; background:#0f172a; color:white; font-family:'Cairo',sans-serif;
-                            text-align:center; gap:20px; padding:20px;">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                            height:100vh;background:#0f172a;color:white;font-family:'Cairo',sans-serif;
+                            text-align:center;gap:20px;padding:20px;">
                     <div style="font-size:80px;">🚫</div>
-                    <h1 style="color:#ef4444; font-size:28px;">تم تعليق حسابك</h1>
-                    <p style="color:#94a3b8; font-size:16px; max-width:400px; line-height:2;">
-                        حسابك محظور حالياً ولا يمكنك إتمام عمليات الدفع.<br>
-                        يرجى التواصل مع الدعم الفني.
+                    <h1 style="color:#ef4444;font-size:28px;">تم تعليق حسابك</h1>
+                    <p style="color:#94a3b8;font-size:16px;max-width:400px;line-height:2;">
+                        حسابك محظور حالياً ولا يمكنك إتمام عمليات الدفع.<br>يرجى التواصل مع الدعم الفني.
                     </p>
-                    <a href="index.html" style="background:#f97316; color:white; padding:12px 30px;
-                        border-radius:8px; text-decoration:none; font-size:16px;">العودة للرئيسية</a>
+                    <a href="index.html" style="background:#f97316;color:white;padding:12px 30px;
+                       border-radius:8px;text-decoration:none;font-size:16px;">العودة للرئيسية</a>
                 </div>`;
             return;
         }
 
         userBalance = userData?.balance || 0;
-
         window._userPhone = userData?.phone || '';
 
         const balanceElem = document.getElementById('current-wallet-balance');
         if (balanceElem) {
-            if (currency === 'USDT') {
-                const rate = 43;
-                balanceElem.textContent = `${(userBalance / rate).toFixed(2)} USDT`;
-            } else {
-                balanceElem.textContent = `${userBalance} MRU`;
-            }
+            balanceElem.textContent = currency === 'USDT'
+                ? `${(userBalance / 43).toFixed(2)} USDT`
+                : `${userBalance} MRU`;
         }
 
         const confirmBtn = document.getElementById('confirm-payment-btn');
@@ -300,11 +298,11 @@ async function checkAuthAndLoadData() {
         if (totalAmount > 0) {
             if (confirmBtn) confirmBtn.disabled = false;
         } else {
-            if (statusMsg) statusMsg.innerHTML = `<p style="color:red; font-weight:bold;">⚠️ سلتك فارغة!</p>`;
+            if (statusMsg) statusMsg.innerHTML = `<p style="color:red;font-weight:bold;">⚠️ سلتك فارغة!</p>`;
             if (confirmBtn) confirmBtn.disabled = true;
         }
     } catch (error) {
-        console.error('Error fetching balance:', error);
+        console.error('Error fetching user data:', error);
     }
 
     await loadPaymentMethods();
@@ -315,11 +313,11 @@ function generateOrderNumber() {
     return `S${Math.floor(100000 + Math.random() * 900000)}`;
 }
 
-// ==================== سحب تلقائي من المخزون ====================
+// ==================== سحب من المخزون ====================
 async function pullFromStock(item) {
-    const productId = item.productId || null;
-    const label     = item.label    || null;
-    const quantity  = item.quantity || 1;
+    const productId = item.product_id || null;
+    const label     = item.label      || null;
+    const quantity  = item.quantity   || 1;
 
     if (!productId || !label) return null;
 
@@ -342,26 +340,21 @@ async function pullFromStock(item) {
 
     const codes    = availableCodes.map(c => c.code);
     const stockIds = availableCodes.map(c => c.id);
-
-    const costPerCode     = availableCodes[0]?.cost_per_card_usd || 0;
-    const supplierName    = availableCodes[0]?.supplier_name     || 'تلقائي';
-    const supplierOrderId = availableCodes[0]?.order_id          || '';
-
     const suppliersMap = {};
     availableCodes.forEach(c => {
         const name = c.supplier_name || 'غير محدد';
-        if (!suppliersMap[name]) {
-            suppliersMap[name] = {
-                supplier_name:     name,
-                supplier_order_id: c.order_id || ''
-            };
-        }
+        if (!suppliersMap[name]) suppliersMap[name] = { supplier_name: name, supplier_order_id: c.order_id || '' };
     });
 
-    return { codes, stockIds, costPerCode, supplierName, supplierOrderId, suppliersDetails: Object.values(suppliersMap) };
+    return {
+        codes, stockIds,
+        costPerCode:     availableCodes[0]?.cost_per_card_usd || 0,
+        supplierName:    availableCodes[0]?.supplier_name     || 'تلقائي',
+        supplierOrderId: availableCodes[0]?.order_id          || '',
+        suppliersDetails: Object.values(suppliersMap)
+    };
 }
 
-// ==================== تنفيذ السحب وتحديث المخزون ====================
 async function commitStockPull(stockResult, orderId) {
     await supabase
         .from('stocks')
@@ -379,17 +372,12 @@ async function executePayment() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     const btn  = document.getElementById('confirm-payment-btn');
-
     if (totalAmount <= 0) return;
 
     const currency = cart[0]?.currency || 'MRU';
 
     const { data: userCheck } = await supabase
-        .from('users')
-        .select('is_blocked')
-        .eq('id', user.id)
-        .single();
-
+        .from('users').select('is_blocked').eq('id', user.id).single();
     if (userCheck?.is_blocked) {
         showToast('🚫 حسابك محظور، لا يمكنك إتمام الدفع', 'error');
         return;
@@ -397,9 +385,7 @@ async function executePayment() {
 
     // ===== دفع بالمحفظة =====
     if (selectedPaymentMethod.id === 'wallet') {
-        const rate = 43;
-        const balanceInCurrency = currency === 'USDT' ? userBalance / rate : userBalance;
-
+        const balanceInCurrency = currency === 'USDT' ? userBalance / 43 : userBalance;
         if (balanceInCurrency < totalAmount) {
             showToast('⚠️ رصيدك غير كافٍ! اشحن محفظتك أولاً.', 'error');
             return;
@@ -411,29 +397,24 @@ async function executePayment() {
         try {
             const stockResults = [];
             for (const item of cart) {
-                const result = await pullFromStock(item);
-                stockResults.push(result);
+                stockResults.push(await pullFromStock(item));
             }
 
-            const newBalance = userBalance - totalAmount;
             const { error: balanceError } = await supabase
-                .from('users')
-                .update({ balance: newBalance })
-                .eq('id', user.id);
-
+                .from('users').update({ balance: userBalance - totalAmount }).eq('id', user.id);
             if (balanceError) throw balanceError;
 
             const sharedOrderNumber = generateOrderNumber();
             const allHaveStock = stockResults.every(r => r !== null);
 
             const ordersToInsert = cart.map((item, i) => {
-                const stockResult = stockResults[i];
-                const hasStock    = stockResult !== null;
+                const sr = stockResults[i];
+                const hasStock = sr !== null;
                 return {
                     order_number:      sharedOrderNumber,
                     customer_name:     user?.user_metadata?.full_name || 'مستخدم',
-                    customer_phone: window._userPhone || '',
-                    product_id:        item.productId || null,
+                    customer_phone:    window._userPhone || '',
+                    product_id:        item.product_id || null,
                     product_name:      item.name,
                     label:             item.label || null,
                     price:             item.price,
@@ -443,12 +424,12 @@ async function executePayment() {
                     paymentMethod:     'المحفظة',
                     player_id:         item.player_id || null,
                     status:            (allHaveStock && hasStock) ? 'مكتمل' : 'قيد الانتظار',
-                    card_code:         (allHaveStock && hasStock) ? stockResult.codes.join('\n') : null,
-                    cost_price:        (allHaveStock && hasStock) ? stockResult.costPerCode : null,
-                    supplier_id:       (allHaveStock && hasStock) ? stockResult.supplierName : null,
-                    supplier_order_id: (allHaveStock && hasStock) ? stockResult.supplierOrderId : null,
-                    suppliers_details: (allHaveStock && hasStock) ? stockResult.suppliersDetails : null,
-                    auto_approved:     (allHaveStock && hasStock) ? true : false
+                    card_code:         (allHaveStock && hasStock) ? sr.codes.join('\n') : null,
+                    cost_price:        (allHaveStock && hasStock) ? sr.costPerCode : null,
+                    supplier_id:       (allHaveStock && hasStock) ? sr.supplierName : null,
+                    supplier_order_id: (allHaveStock && hasStock) ? sr.supplierOrderId : null,
+                    suppliers_details: (allHaveStock && hasStock) ? sr.suppliersDetails : null,
+                    auto_approved:     (allHaveStock && hasStock)
                 };
             });
 
@@ -458,9 +439,8 @@ async function executePayment() {
 
             if (allHaveStock) {
                 for (let i = 0; i < cart.length; i++) {
-                    if (stockResults[i] && insertedOrders[i]) {
+                    if (stockResults[i] && insertedOrders[i])
                         await commitStockPull(stockResults[i], insertedOrders[i].id);
-                    }
                 }
             }
 
@@ -474,8 +454,10 @@ async function executePayment() {
                 status:         'مكتمل'
             });
 
-            localStorage.removeItem('cart');
-            showToast(allHaveStock ? '✅ تم الدفع وتسليم جميع بطاقاتك بنجاح!' : '✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
+            // ✅ مسح السلة السحابية
+            await clearCloudCart(user.id);
+
+            showToast(allHaveStock ? '✅ تم الدفع وتسليم جميع بطاقاتك!' : '✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
             setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
         } catch (error) {
@@ -487,11 +469,10 @@ async function executePayment() {
         return;
     }
 
-   // ===== دفع بالكريبتو (NOWPayments) =====
+    // ===== دفع بالكريبتو =====
     if (currency === 'USDT') {
-        // الطلب تم إنشاؤه مسبقاً عند اختيار Bybit
         if (window._invoiceUrl) {
-            localStorage.removeItem('cart');
+            await clearCloudCart(user.id);
             window.location.href = window._invoiceUrl;
         } else {
             showToast('⚠️ الرجاء اختيار Bybit أولاً لإنشاء QR Code', 'error');
@@ -501,33 +482,25 @@ async function executePayment() {
 
     // ===== دفع بالإيصال (MRU) =====
     const receiptFile = document.getElementById('receipt-input')?.files[0];
-    if (!receiptFile) {
-        showToast('⚠️ الرجاء رفع إيصال الدفع!', 'error');
-        return;
-    }
+    if (!receiptFile) { showToast('⚠️ الرجاء رفع إيصال الدفع!', 'error'); return; }
 
     const senderPhone = document.getElementById('sender-phone-input')?.value.trim();
-if (!senderPhone) {
-    showToast('⚠️ الرجاء إدخال رقم الهاتف المرسل منه!', 'error');
-    document.getElementById('sender-phone-input')?.focus();
-    document.getElementById('sender-phone-input').style.borderColor = '#ef4444';
-    return;
-}
-if (!/^\d{8}$/.test(senderPhone)) {
-    showToast('⚠️ رقم الهاتف يجب أن يكون 8 أرقام فقط!', 'error');
-    document.getElementById('sender-phone-input')?.focus();
-    document.getElementById('sender-phone-input').style.borderColor = '#ef4444';
-    return;
-}
+    if (!senderPhone) {
+        showToast('⚠️ الرجاء إدخال رقم الهاتف المرسل منه!', 'error');
+        document.getElementById('sender-phone-input')?.focus();
+        return;
+    }
+    if (!/^\d{8}$/.test(senderPhone)) {
+        showToast('⚠️ رقم الهاتف يجب أن يكون 8 أرقام فقط!', 'error');
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
     try {
         const filePath = `receipts/${Date.now()}`;
-        const { error: uploadError } = await supabase.storage
-            .from('receipts').upload(filePath, receiptFile);
-
+        const { error: uploadError } = await supabase.storage.from('receipts').upload(filePath, receiptFile);
         let receiptUrl = '';
         if (!uploadError) {
             const { data } = supabase.storage.from('receipts').getPublicUrl(filePath);
@@ -535,13 +508,12 @@ if (!/^\d{8}$/.test(senderPhone)) {
         }
 
         const sharedOrderNumber = generateOrderNumber();
-
         const orders = cart.map(item => ({
             order_number:   sharedOrderNumber,
             customer_name:  user?.user_metadata?.full_name || 'مستخدم',
             customer_phone: window._userPhone || '',
-            sender_phone:   document.getElementById('sender-phone-input')?.value.trim() || '',
-            product_id:     item.productId || null,
+            sender_phone:   senderPhone,
+            product_id:     item.product_id || null,
             product_name:   item.name,
             label:          item.label || null,
             price:          item.price,
@@ -557,7 +529,9 @@ if (!/^\d{8}$/.test(senderPhone)) {
         const { error: insertError } = await supabase.from('orders').insert(orders);
         if (insertError) throw insertError;
 
-        localStorage.removeItem('cart');
+        // ✅ مسح السلة السحابية
+        await clearCloudCart(user.id);
+
         showToast('✅ تمت عملية الدفع بنجاح!', 'success');
         setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
@@ -569,36 +543,27 @@ if (!/^\d{8}$/.test(senderPhone)) {
     }
 }
 
-// ===== Toast Notification =====
+// ===== Toast =====
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.textContent = message;
     toast.style.cssText = `
-        position: fixed; bottom: 30px; left: 50%;
-        transform: translateX(-50%);
-        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
-        color: white; padding: 14px 28px; border-radius: 12px;
-        font-size: 16px; z-index: 9999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        transition: opacity 0.5s; font-family: 'Cairo', sans-serif;
-        text-align: center; max-width: 320px; width: 90%;
-    `;
+        position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+        background:${type === 'success' ? '#22c55e' : '#ef4444'};
+        color:white; padding:14px 28px; border-radius:12px; font-size:16px;
+        z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.3);
+        transition:opacity 0.5s; font-family:'Cairo',sans-serif;
+        text-align:center; max-width:320px; width:90%;`;
     document.body.appendChild(toast);
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2000);
 }
 
-
-
 // ===== Logout =====
 window.handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (!error) {
-        localStorage.clear();
-        window.location.href = 'index.html';
-    }
+    if (!error) { localStorage.clear(); window.location.href = 'index.html'; }
 };
 
-// ===== Auth Check =====
 async function requireAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
