@@ -146,17 +146,20 @@ window.savePhone = async () => {
         return;
     }
 
-    // تحديث الواجهة
-    document.getElementById('user-display-phone').textContent = fullPhone;
-    document.getElementById('user-display-phone').style.color = '';
-    document.getElementById('add-phone-btn').style.display = 'none';
-    document.getElementById('phone-modal').style.display   = 'none';
-    document.getElementById('modal-phone-input').value     = '';
+    // ✅ تحديث الواجهة مباشرة بدون reload
+    const phoneEl     = document.getElementById('user-display-phone');
+    const addPhoneBtn = document.getElementById('add-phone-btn');
+
+    phoneEl.textContent    = fullPhone;
+    phoneEl.style.color    = '';
+    addPhoneBtn.style.display              = 'none';
+    document.getElementById('phone-modal').style.display = 'none';
+    document.getElementById('modal-phone-input').value   = '';
     btn.innerHTML = '<i class="fas fa-save"></i> حفظ الرقم';
     btn.disabled  = false;
 
     showToast('✅ تم حفظ رقم الهاتف!');
-    setTimeout(() => window.location.reload(), 1000);
+    // ❌ حذفنا: setTimeout(() => window.location.reload(), 1000)
 };
 
 // ==================== رفع الصورة ====================
