@@ -220,7 +220,6 @@ window.selectPrice = function (index, value, currency) {
     if (document.getElementById('buy-btn')) document.getElementById('buy-btn').disabled = false;
 };
 
-// ==================== شراء الآن ====================
 // ==================== دالة مساعدة للتحقق من Player ID ====================
 function getPlayerId() {
     if (!currentProduct?.require_player_id) return null; // المنتج لا يحتاج ID
@@ -238,27 +237,69 @@ function getPlayerId() {
 }
 
 // ==================== شراء الآن ====================
-window.buyNow = function () {
+// ==================== شراء الآن (سحابي) ====================
+window.buyNow = async function () {
     if (!selectedPrice) return;
-    
+
     const playerId = getPlayerId();
     if (playerId === false) return;
-    
-    // ✅ مسح السلة تماماً ووضع المنتج الجديد فقط
-    const newCart = [{
-        productId: currentProduct.id,
-        name: currentProduct.name,
-        image: currentProduct.image,
-        label: selectedPrice.label,
-        price: selectedPrice.value,
-        currency: selectedPrice.currency,
-        quantity: 1,
-        player_id: playerId || null
-    }];
-    
-    localStorage.setItem('cart', JSON.stringify(newCart));
-    updateCartBadge();
-    window.location.href = 'cart.html';
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+        showToast('⚠️ يجب تسجيل الدخول أولاً', 'warning');
+        setTimeout(() => window.location.href = 'login.html', 1500);
+        return;
+    }
+
+    const userId = session.user.id;
+
+    try {
+        // 1. جلب أو إنشاء السلة
+        let { data: cart } = await supabase
+            .from('carts')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .single();
+
+        if (!cart) {
+            const { data: newCart } = await supabase
+                .from('carts')
+                .insert({ user_id: userId, status: 'active' })
+                .select('id')
+                .single();
+            cart = newCart;
+        }
+
+        // 2. مسح السلة الحالية تماماً
+        await supabase
+            .from('cart_items')
+            .delete()
+            .eq('cart_id', cart.id);
+
+        // 3. إضافة المنتج الجديد فقط
+        const { error } = await supabase
+            .from('cart_items')
+            .insert({
+                cart_id: cart.id,
+                product_id: currentProduct.id,
+                name: currentProduct.name,
+                image: currentProduct.image,
+                label: selectedPrice.label,
+                price: selectedPrice.value,
+                quantity: 1,
+                player_id: playerId || null
+            });
+
+        if (error) throw error;
+
+        window.location.href = 'cart.html';
+
+    } catch (err) {
+        console.error(err);
+        showToast('❌ حدث خطأ، حاول مجدداً', 'error');
+    }
 };
 
 // ==================== إضافة للسلة ====================
@@ -341,10 +382,26 @@ function setupUserMenu() {
     });
 }
 
-// ==================== Cart Badge ====================
-function updateCartBadge() {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+async function updateCartBadge() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const { data: cart } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .single();
+
+    if (!cart) return;
+
+    const { data: items } = await supabase
+        .from('cart_items')
+        .select('quantity')
+        .eq('cart_id', cart.id);
+
+    const totalItems = (items || []).reduce((sum, i) => sum + (i.quantity || 1), 0);
+
     const cartIcon = document.querySelector('a[href="cart.html"]');
     if (!cartIcon) return;
 
