@@ -884,7 +884,7 @@ window.approveOrder = async (orderId, quantity) => {
         supplier_order_id: supplierOrderId,
         suppliers_details: suppliersDetails.length > 0 ? suppliersDetails : null,
         approved_by_name:  window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
-        ...(playerReceiptUrl && { receipt_url: playerReceiptUrl })
+        ...(playerReceiptUrl && { execution_receipt_url: playerReceiptUrl })
     }).eq('id', orderId).select().single();
 
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
