@@ -54,6 +54,15 @@ function buildAdminWidget() {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+            <!-- ✅ حقل البحث -->
+            <div style="padding:8px 10px;border-bottom:1px solid #1e2d42;flex-shrink:0;">
+                <input id="aw-search" type="text" placeholder="🔍 بحث عن عميل..."
+                    autocomplete="off"
+                    style="width:100%;background:#111827;border:1px solid #1e2d42;
+                        border-radius:8px;padding:7px 10px;color:#f1f5f9;
+                        font-size:12px;font-family:inherit;direction:rtl;
+                        outline:none;transition:border-color 0.2s;box-sizing:border-box;">
+            </div>
             <div id="aw-conv-list" style="flex:1;overflow-y:auto;">
                 <div style="text-align:center;color:#475569;padding:30px;font-size:12px;">
                     <i class="fas fa-spinner fa-spin"></i>
