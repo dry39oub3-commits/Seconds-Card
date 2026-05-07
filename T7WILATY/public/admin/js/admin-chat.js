@@ -60,7 +60,7 @@ function buildAdminWidget() {
                 <div style="position:relative;">
                     <i class="fas fa-search" style="position:absolute;right:9px;top:50%;
                        transform:translateY(-50%);color:#475569;font-size:11px;pointer-events:none;"></i>
-                    <input id="aw-search" type="text" placeholder="بحث عن عميل..."
+                    <input id="aw-search" type="text" placeholder="بحث بالاسم أو الإيميل أو الهاتف..."
                         autocomplete="off"
                         style="width:100%;background:#111827;border:1px solid #1e2d42;
                                border-radius:8px;padding:7px 28px 7px 10px;color:#f1f5f9;
@@ -155,30 +155,88 @@ function buildAdminWidget() {
 
     document.body.appendChild(widget);
 
-    // ✅ البحث — مباشرة بعد appendChild
-    widget.querySelector('#aw-search').addEventListener('input', (e) => {
+    // ==================== البحث ====================
+    let searchTimer = null;
+    widget.querySelector('#aw-search').addEventListener('input', async (e) => {
+        clearTimeout(searchTimer);
         const q = e.target.value.trim().toLowerCase();
         const list = document.getElementById('aw-conv-list');
         if (!list) return;
 
+        // إذا فارغ — أعد القائمة العادية
+        if (!q) {
+            await loadConversations();
+            return;
+        }
+
+        // ابحث أولاً في القائمة الحالية
+        let found = false;
         document.querySelectorAll('.aw-conv-item').forEach(el => {
             const email = (el.dataset.email || '').toLowerCase();
-            el.style.display = !q || email.includes(q) ? '' : 'none';
+            const match = email.includes(q);
+            el.style.display = match ? '' : 'none';
+            if (match) found = true;
         });
 
-        let noResult = list.querySelector('#aw-no-result');
-        const visible = [...list.querySelectorAll('.aw-conv-item')].filter(el => el.style.display !== 'none');
-        if (q && visible.length === 0) {
-            if (!noResult) {
-                noResult = document.createElement('div');
-                noResult.id = 'aw-no-result';
-                noResult.style.cssText = 'text-align:center;color:#475569;padding:20px;font-size:12px;';
-                noResult.innerHTML = '<i class="fas fa-search" style="display:block;margin-bottom:6px;opacity:0.3;font-size:20px;"></i>لا توجد نتائج';
-                list.appendChild(noResult);
+        if (found) return;
+
+        // انتظر قليلاً قبل البحث في DB
+        searchTimer = setTimeout(async () => {
+            list.innerHTML = '<div style="text-align:center;color:#475569;padding:20px;font-size:12px;"><i class="fas fa-spinner fa-spin"></i></div>';
+
+            const { data: users } = await supabase
+                .from('users')
+                .select('id, email, full_name, phone')
+                .or(`email.ilike.%${q}%,full_name.ilike.%${q}%,phone.ilike.%${q}%`)
+                .limit(10);
+
+            if (!users?.length) {
+                list.innerHTML = `
+                    <div style="text-align:center;color:#475569;padding:20px;font-size:12px;">
+                        <i class="fas fa-search" style="display:block;margin-bottom:6px;opacity:0.3;font-size:20px;"></i>
+                        لا توجد نتائج
+                    </div>`;
+                return;
             }
-        } else {
-            noResult?.remove();
-        }
+
+            list.innerHTML = users.map(u => `
+                <div class="aw-conv-item"
+                     data-uid="${escAttr(u.id)}"
+                     data-email="${escAttr(u.email || '')}"
+                     style="padding:12px 14px;border-bottom:1px solid #1e2d42;cursor:pointer;
+                            transition:background 0.15s;display:flex;flex-direction:column;gap:3px;
+                            border-right:3px solid transparent;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                        <span style="font-size:12px;font-weight:700;color:#f1f5f9;
+                                     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">
+                            ${escHtml(u.full_name || u.email || 'مجهول')}
+                        </span>
+                        <span style="font-size:10px;color:#3b82f6;background:rgba(59,130,246,0.1);
+                                     padding:2px 6px;border-radius:6px;flex-shrink:0;white-space:nowrap;">
+                            <i class="fas fa-user"></i> عميل
+                        </span>
+                    </div>
+                    <div style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        ${escHtml(u.email || '')}
+                    </div>
+                    ${u.phone ? `
+                    <div style="font-size:10px;color:#334155;font-family:monospace;direction:ltr;">
+                        ${escHtml(u.phone)}
+                    </div>` : ''}
+                </div>
+            `).join('');
+
+            list.querySelectorAll('.aw-conv-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    openConversation(el.dataset.uid, el.dataset.email);
+                    const searchEl = document.getElementById('aw-search');
+                    if (searchEl) searchEl.value = '';
+                    loadConversations();
+                });
+                el.addEventListener('mouseenter', () => { el.style.background = '#1a2535'; });
+                el.addEventListener('mouseleave', () => { el.style.background = 'transparent'; });
+            });
+        }, 300);
     });
 
     widget.querySelector('#aw-close-btn').addEventListener('click', () => toggleAdminChat());
@@ -315,16 +373,6 @@ async function loadConversations() {
             if (el.dataset.uid !== selectedUserId) el.style.background = 'transparent';
         });
     });
-
-    // ✅ إعادة تطبيق البحث إذا كان فيه نص
-    const searchInput = document.getElementById('aw-search');
-    if (searchInput?.value.trim()) {
-        const q = searchInput.value.trim().toLowerCase();
-        list.querySelectorAll('.aw-conv-item').forEach(el => {
-            const email = (el.dataset.email || '').toLowerCase();
-            el.style.display = !q || email.includes(q) ? '' : 'none';
-        });
-    }
 }
 
 window.openConversation = async (userId, userEmail) => {
@@ -384,7 +432,7 @@ window.openConversation = async (userId, userEmail) => {
             <div style="flex:1;display:flex;flex-direction:column;align-items:center;
                         justify-content:center;color:#475569;gap:8px;font-size:13px;padding:30px;">
                 <i class="fas fa-comment-slash" style="font-size:24px;opacity:0.2;"></i>
-                <span>لا توجد رسائل</span>
+                <span>لا توجد رسائل — ابدأ المحادثة!</span>
             </div>`;
     } else {
         data.forEach(msg => appendMessage(msg));
