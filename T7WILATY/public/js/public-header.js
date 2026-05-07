@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initSearch();
     applyStoredSettings();
     subscribeToOrderUpdates();
+    initLastSeen(); // ✅
 });
 
 // ==================== الثيم ====================
@@ -190,6 +191,28 @@ window.handleLogout = async function() {
         window.location.href = 'index.html';
     }
 };
+
+// ==================== آخر ظهور ====================
+async function initLastSeen() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) return
+
+    const updateLastSeen = async () => {
+        await supabase.from('users')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', session.user.id)
+    }
+
+    await updateLastSeen()
+    setInterval(updateLastSeen, 60000) // كل دقيقة
+
+    // تحديث عند إغلاق الصفحة
+    window.addEventListener('beforeunload', () => {
+        navigator.sendBeacon && supabase.from('users')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', session.user.id)
+    })
+}
 
 // ==================== إشعارات الطلبات للعميل ====================
 async function subscribeToOrderUpdates() {

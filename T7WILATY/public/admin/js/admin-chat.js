@@ -395,10 +395,44 @@ window.openConversation = async (userId, userEmail) => {
             updateFloatBadge();
         });
 
-    const chatWith = document.getElementById('aw-chat-with');
-    const status   = document.getElementById('aw-chat-status');
-    if (chatWith) chatWith.textContent = userEmail;
-    if (status)   status.textContent  = '🟢 نشط';
+    // ✅ جلب بيانات العميل
+    const { data: userData } = await supabase
+        .from('users')
+        .select('last_seen, full_name, phone')
+        .eq('id', userId)
+        .maybeSingle()
+
+    const chatWith = document.getElementById('aw-chat-with')
+    const status   = document.getElementById('aw-chat-status')
+
+    if (chatWith) chatWith.textContent = userData?.full_name || userEmail
+
+    if (status) {
+        if (userData?.last_seen) {
+            const diffMs   = Date.now() - new Date(userData.last_seen).getTime()
+            const diffMins = Math.floor(diffMs / 60000)
+            const diffHrs  = Math.floor(diffMs / 3600000)
+            const diffDays = Math.floor(diffMs / 86400000)
+
+            if (diffMins < 2)       status.innerHTML = '<span style="color:#22c55e;">🟢 نشط الآن</span>'
+            else if (diffMins < 60) status.innerHTML = `<span style="color:#94a3b8;">⚪ آخر ظهور منذ ${diffMins} دقيقة</span>`
+            else if (diffHrs < 24)  status.innerHTML = `<span style="color:#94a3b8;">⚪ آخر ظهور منذ ${diffHrs} ساعة</span>`
+            else                    status.innerHTML = `<span style="color:#94a3b8;">⚪ آخر ظهور منذ ${diffDays} يوم</span>`
+        } else {
+            status.innerHTML = '<span style="color:#475569;">⚪ غير معروف</span>'
+        }
+    }
+
+    // ✅ إضافة رقم الهاتف في الهيدر إذا وجد
+    const phoneEl = document.getElementById('aw-chat-phone')
+    if (phoneEl) phoneEl.remove()
+    if (userData?.phone) {
+        const phoneDiv = document.createElement('div')
+        phoneDiv.id = 'aw-chat-phone'
+        phoneDiv.style.cssText = 'font-size:10px;color:#475569;font-family:monospace;direction:ltr;margin-top:1px;'
+        phoneDiv.textContent = userData.phone
+        document.getElementById('aw-chat-status')?.insertAdjacentElement('afterend', phoneDiv)
+    }
 
     const input   = document.getElementById('aw-input');
     const sendBtn = document.getElementById('aw-send');
