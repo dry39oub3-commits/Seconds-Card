@@ -54,15 +54,21 @@ function buildAdminWidget() {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+
             <!-- ✅ حقل البحث -->
             <div style="padding:8px 10px;border-bottom:1px solid #1e2d42;flex-shrink:0;">
-                <input id="aw-search" type="text" placeholder="🔍 بحث عن عميل..."
-                    autocomplete="off"
-                    style="width:100%;background:#111827;border:1px solid #1e2d42;
-                        border-radius:8px;padding:7px 10px;color:#f1f5f9;
-                        font-size:12px;font-family:inherit;direction:rtl;
-                        outline:none;transition:border-color 0.2s;box-sizing:border-box;">
+                <div style="position:relative;">
+                    <i class="fas fa-search" style="position:absolute;right:9px;top:50%;
+                       transform:translateY(-50%);color:#475569;font-size:11px;pointer-events:none;"></i>
+                    <input id="aw-search" type="text" placeholder="بحث عن عميل..."
+                        autocomplete="off"
+                        style="width:100%;background:#111827;border:1px solid #1e2d42;
+                               border-radius:8px;padding:7px 28px 7px 10px;color:#f1f5f9;
+                               font-size:12px;font-family:inherit;direction:rtl;
+                               outline:none;transition:border-color 0.2s;box-sizing:border-box;">
+                </div>
             </div>
+
             <div id="aw-conv-list" style="flex:1;overflow-y:auto;">
                 <div style="text-align:center;color:#475569;padding:30px;font-size:12px;">
                     <i class="fas fa-spinner fa-spin"></i>
@@ -118,6 +124,7 @@ function buildAdminWidget() {
             #aw-conv-list::-webkit-scrollbar-thumb,#aw-messages::-webkit-scrollbar-thumb{
                 background:#1e2d42;border-radius:3px}
             #aw-input:focus{border-color:#f97316!important;}
+            #aw-search:focus{border-color:#f97316!important;}
             #aw-send:not(:disabled):hover{opacity:0.85!important;}
 
             @media (max-width: 768px) {
@@ -147,6 +154,32 @@ function buildAdminWidget() {
     `;
 
     document.body.appendChild(widget);
+
+    // ✅ البحث — مباشرة بعد appendChild
+    widget.querySelector('#aw-search').addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        const list = document.getElementById('aw-conv-list');
+        if (!list) return;
+
+        document.querySelectorAll('.aw-conv-item').forEach(el => {
+            const email = (el.dataset.email || '').toLowerCase();
+            el.style.display = !q || email.includes(q) ? '' : 'none';
+        });
+
+        let noResult = list.querySelector('#aw-no-result');
+        const visible = [...list.querySelectorAll('.aw-conv-item')].filter(el => el.style.display !== 'none');
+        if (q && visible.length === 0) {
+            if (!noResult) {
+                noResult = document.createElement('div');
+                noResult.id = 'aw-no-result';
+                noResult.style.cssText = 'text-align:center;color:#475569;padding:20px;font-size:12px;';
+                noResult.innerHTML = '<i class="fas fa-search" style="display:block;margin-bottom:6px;opacity:0.3;font-size:20px;"></i>لا توجد نتائج';
+                list.appendChild(noResult);
+            }
+        } else {
+            noResult?.remove();
+        }
+    });
 
     widget.querySelector('#aw-close-btn').addEventListener('click', () => toggleAdminChat());
 
@@ -282,6 +315,16 @@ async function loadConversations() {
             if (el.dataset.uid !== selectedUserId) el.style.background = 'transparent';
         });
     });
+
+    // ✅ إعادة تطبيق البحث إذا كان فيه نص
+    const searchInput = document.getElementById('aw-search');
+    if (searchInput?.value.trim()) {
+        const q = searchInput.value.trim().toLowerCase();
+        list.querySelectorAll('.aw-conv-item').forEach(el => {
+            const email = (el.dataset.email || '').toLowerCase();
+            el.style.display = !q || email.includes(q) ? '' : 'none';
+        });
+    }
 }
 
 window.openConversation = async (userId, userEmail) => {
