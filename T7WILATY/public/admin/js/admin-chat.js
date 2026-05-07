@@ -9,10 +9,8 @@ let isWidgetOpen      = false;
 let unreadCounts      = {};
 const seenMsgIds = new Set();
 
-// ✅ وقت تحميل الصفحة — فقط الرسائل بعد هذا الوقت تُحسب كجديدة
 const SESSION_START = new Date().toISOString();
 
-// ==================== بناء Widget الأدمن ====================
 function buildAdminWidget() {
     if (document.getElementById('admin-chat-widget')) return;
 
@@ -42,7 +40,6 @@ function buildAdminWidget() {
     `;
 
     widget.innerHTML = `
-        <!-- قائمة المحادثات -->
         <div style="background:#0d1424;border-left:1px solid #1e2d42;
                     display:flex;flex-direction:column;overflow:hidden;">
             <div style="padding:13px 14px;border-bottom:1px solid #1e2d42;
@@ -64,7 +61,6 @@ function buildAdminWidget() {
             </div>
         </div>
 
-        <!-- لوحة الدردشة -->
         <div style="display:flex;flex-direction:column;overflow:hidden;">
             <div id="aw-chat-header" style="padding:12px 16px;border-bottom:1px solid #1e2d42;
                  background:#111827;display:flex;align-items:center;gap:10px;flex-shrink:0;">
@@ -114,12 +110,35 @@ function buildAdminWidget() {
                 background:#1e2d42;border-radius:3px}
             #aw-input:focus{border-color:#f97316!important;}
             #aw-send:not(:disabled):hover{opacity:0.85!important;}
+
+            @media (max-width: 768px) {
+                #admin-chat-widget {
+                    width: calc(100vw - 16px) !important;
+                    height: 75vh !important;
+                    bottom: 80px !important;
+                    left: 8px !important;
+                    grid-template-columns: 160px 1fr !important;
+                }
+            }
+
+            @media (max-width: 480px) {
+                #admin-chat-widget {
+                    width: calc(100vw - 8px) !important;
+                    height: 80vh !important;
+                    bottom: 75px !important;
+                    left: 4px !important;
+                    grid-template-columns: 120px 1fr !important;
+                }
+                #aw-conv-list .aw-conv-item { padding: 8px 10px !important; }
+                #aw-messages { padding: 10px 8px !important; }
+                #aw-form { padding: 8px !important; }
+                #aw-input { font-size: 12px !important; padding: 8px !important; }
+            }
         </style>
     `;
 
     document.body.appendChild(widget);
 
-    // ✅ زر الإغلاق بـ event listener بدل onclick inline
     widget.querySelector('#aw-close-btn').addEventListener('click', () => toggleAdminChat());
 
     widget.querySelector('#aw-form').addEventListener('submit', async (e) => {
@@ -144,7 +163,6 @@ function buildAdminWidget() {
     });
 }
 
-// ==================== فتح / إغلاق ====================
 window.toggleAdminChat = async () => {
     isWidgetOpen = !isWidgetOpen;
     buildAdminWidget();
@@ -159,7 +177,6 @@ window.toggleAdminChat = async () => {
             widget.style.transform = 'translateY(0) scale(1)';
         });
         if (btn) btn.querySelector('i').className = 'fas fa-times';
-
         await loadConversations();
         subscribeToNewMessages();
     } else {
@@ -170,7 +187,6 @@ window.toggleAdminChat = async () => {
     }
 };
 
-// ==================== جلب العداد من DB ====================
 async function refreshUnreadFromDB() {
     const { data } = await supabase
         .from('chats')
@@ -185,12 +201,10 @@ async function refreshUnreadFromDB() {
     });
 
     if (selectedUserId) fresh[selectedUserId] = 0;
-
     unreadCounts = fresh;
     updateFloatBadge();
 }
 
-// ==================== تحميل قائمة المحادثات ====================
 async function loadConversations() {
     const list = document.getElementById('aw-conv-list');
     if (!list) return;
@@ -248,7 +262,6 @@ async function loadConversations() {
         </div>`;
     }).join('');
 
-    // ✅ event listeners بدل onclick inline — يحل مشكلة الأحرف الخاصة في userId/email
     list.querySelectorAll('.aw-conv-item').forEach(el => {
         el.addEventListener('click', () => {
             openConversation(el.dataset.uid, el.dataset.email);
@@ -262,19 +275,15 @@ async function loadConversations() {
     });
 }
 
-// ==================== فتح محادثة ====================
 window.openConversation = async (userId, userEmail) => {
     selectedUserId    = userId;
     selectedUserEmail = userEmail;
 
-    // ✅ صفّر الذاكرة فوراً
     unreadCounts[userId] = 0;
     updateFloatBadge();
 
-    // حدّث القائمة من الذاكرة (العداد صفر الآن)
     await loadConversations();
 
-    // علّم الرسائل كمقروءة في DB في الخلفية
     supabase
         .from('chats')
         .update({ is_read: true })
@@ -316,7 +325,7 @@ window.openConversation = async (userId, userEmail) => {
     const box = document.getElementById('aw-messages');
     if (!box) return;
     box.innerHTML  = '';
-    lastDateLabel  = null; // ✅ إعادة تعيين فاصل التاريخ
+    lastDateLabel  = null;
 
     if (!data || data.length === 0) {
         box.innerHTML = `
@@ -338,45 +347,30 @@ window.openConversation = async (userId, userEmail) => {
             table:  'chats'
         }, async (payload) => {
             if (payload.new.user_id !== userId) return;
-
             const empty = box.querySelector('div[style*="flex-direction:column"]');
             if (empty) empty.remove();
             appendMessage(payload.new);
             box.scrollTop = box.scrollHeight;
-
             if (payload.new.sender === 'user') {
-                supabase
-                    .from('chats')
-                    .update({ is_read: true })
-                    .eq('id', payload.new.id)
-                    .then(() => {});
+                supabase.from('chats').update({ is_read: true }).eq('id', payload.new.id).then(() => {});
             }
         })
-        .subscribe((status) => {
-            console.log('[AdminChat] msg subscription:', status);
-        });
+        .subscribe();
 };
 
-// ==================== إضافة رسالة ====================
 let lastDateLabel = null;
 
 function appendMessage(msg) {
     const box = document.getElementById('aw-messages');
     if (!box) return;
 
-    // ✅ فاصل التاريخ
     const dateLabel = formatDateLabel(msg.created_at);
     if (dateLabel !== lastDateLabel) {
         lastDateLabel = dateLabel;
         const separator = document.createElement('div');
         separator.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 6px 0;
-            color: #475569;
-            font-size: 11px;
-            text-align: center;
+            display: flex; align-items: center; gap: 8px;
+            margin: 6px 0; color: #475569; font-size: 11px; text-align: center;
         `;
         separator.innerHTML = `
             <div style="flex:1;height:1px;background:#1e2d42;"></div>
@@ -392,15 +386,10 @@ function appendMessage(msg) {
 
     const bubble = document.createElement('div');
     bubble.style.cssText = `
-        max-width: 75%;
-        padding: 9px 13px;
+        max-width: 75%; padding: 9px 13px;
         border-radius: ${isAdmin ? '14px 14px 14px 4px' : '14px 14px 4px 14px'};
-        font-size: 13px;
-        line-height: 1.6;
-        word-break: break-word;
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
+        font-size: 13px; line-height: 1.6; word-break: break-word;
+        display: flex; flex-direction: column; gap: 3px;
         align-self: ${isAdmin ? 'flex-start' : 'flex-end'};
         background: ${isAdmin ? '#f97316' : '#1a2535'};
         color: ${isAdmin ? 'white' : '#f1f5f9'};
@@ -420,7 +409,6 @@ function appendMessage(msg) {
     box.appendChild(bubble);
 }
 
-// ==================== مراقبة رسائل جديدة من أي مستخدم ====================
 function subscribeToNewMessages() {
     if (newMsgSubscription) {
         supabase.removeChannel(newMsgSubscription);
@@ -429,27 +417,18 @@ function subscribeToNewMessages() {
 
     newMsgSubscription = supabase
         .channel('aw-all-new-' + Date.now())
-        .on('postgres_changes', {
-            event:  'INSERT',
-            schema: 'public',
-            table:  'chats'
-        }, (payload) => {
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
             if (payload.new.sender !== 'user') return;
             if (seenMsgIds.has(payload.new.id)) return;
             seenMsgIds.add(payload.new.id);
-
             if (payload.new.user_id === selectedUserId) return;
-
             unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
             updateFloatBadge();
             loadConversations();
         })
-        .subscribe((status) => {
-            console.log('[AdminChat] all-new subscription:', status);
-        });
+        .subscribe();
 }
 
-// ==================== Badge الزر العائم ====================
 function updateFloatBadge() {
     const badge = document.getElementById('admin-chat-badge');
     if (!badge) return;
@@ -462,7 +441,6 @@ function updateFloatBadge() {
     }
 }
 
-// ==================== مساعدات ====================
 function formatTime(dateStr) {
     return new Date(dateStr).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' });
 }
@@ -471,33 +449,23 @@ function formatDateLabel(dateStr) {
     const d     = new Date(dateStr);
     const today = new Date();
     const yest  = new Date(); yest.setDate(today.getDate() - 1);
-
     const sameDay = (a, b) =>
         a.getFullYear() === b.getFullYear() &&
         a.getMonth()    === b.getMonth()    &&
         a.getDate()     === b.getDate();
-
     if (sameDay(d, today)) return 'اليوم';
     if (sameDay(d, yest))  return 'أمس';
-
     return d.toLocaleDateString('ar', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function escHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function escAttr(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/'/g, '&#39;')
-        .replace(/"/g, '&quot;');
+    return String(str).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
 }
 
-// ==================== تهيئة عند تحميل الصفحة ====================
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('admin-chat-float-btn');
     if (btn) {
@@ -510,27 +478,18 @@ document.addEventListener('DOMContentLoaded', () => {
         badgeSubscription = null;
     }
 
-    // ✅ عند تحميل الصفحة: العداد = صفر
     unreadCounts = {};
     updateFloatBadge();
 
     badgeSubscription = supabase
         .channel('aw-badge-' + Date.now())
-        .on('postgres_changes', {
-            event:  'INSERT',
-            schema: 'public',
-            table:  'chats'
-        }, (payload) => {
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
             if (payload.new.sender !== 'user') return;
             if (seenMsgIds.has(payload.new.id)) return;
             seenMsgIds.add(payload.new.id);
-
             if (payload.new.user_id === selectedUserId) return;
-
             unreadCounts[payload.new.user_id] = (unreadCounts[payload.new.user_id] || 0) + 1;
             updateFloatBadge();
         })
-        .subscribe((status) => {
-            console.log('[AdminChat] badge subscription:', status);
-        });
+        .subscribe();
 });
