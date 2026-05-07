@@ -5,8 +5,10 @@ let subscription      = null;
 let badgeSubscription = null;
 let isOpen            = false;
 let unreadCount       = 0;
-let lastShownDate     = null;   // ← آخر تاريخ ظهر كفاصل
+let lastShownDate     = null;
 const seenIds         = new Set();
+
+const AI_SUPPORT_URL  = 'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/ai-support'
 
 // ==================== بناء نافذة الدردشة ====================
 function buildChatWidget() {
@@ -103,15 +105,21 @@ function buildChatWidget() {
 
     document.body.appendChild(widget);
 
+    // ==================== إرسال رسالة ====================
     widget.querySelector('#cw-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!currentUser) return;
+
         const input   = document.getElementById('cw-input');
         const sendBtn = document.getElementById('cw-send');
         const message = input.value.trim();
         if (!message) return;
+
         input.value      = '';
         sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        // ✅ حفظ رسالة العميل
         await supabase.from('chats').insert({
             user_id:    currentUser.id,
             user_email: currentUser.email,
@@ -119,7 +127,25 @@ function buildChatWidget() {
             sender:     'user',
             is_read:    false
         });
-        sendBtn.disabled = false;
+
+        // ✅ استدع الوكيل الذكي في الخلفية
+        showTypingIndicator()
+        fetch(AI_SUPPORT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id:    currentUser.id,
+                user_email: currentUser.email,
+                message
+            })
+        }).then(() => {
+            removeTypingIndicator()
+        }).catch(() => {
+            removeTypingIndicator()
+        })
+
+        sendBtn.disabled  = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
         input.focus();
     });
 
@@ -128,6 +154,50 @@ function buildChatWidget() {
     });
 
     setTimeout(() => document.getElementById('cw-input')?.focus(), 300);
+}
+
+// ==================== مؤشر الكتابة ====================
+function showTypingIndicator() {
+    const box = document.getElementById('cw-messages')
+    if (!box || document.getElementById('cw-typing')) return
+
+    const typing = document.createElement('div')
+    typing.id = 'cw-typing'
+    typing.style.cssText = `
+        max-width: 78%;
+        padding: 10px 14px;
+        border-radius: 14px 14px 14px 4px;
+        background: #1a2535;
+        border: 1px solid #1e2d42;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-self: flex-end;
+    `
+    typing.innerHTML = `
+        <span style="font-size:10px;font-weight:700;opacity:0.6;">🎧 الدعم الفني</span>
+        <div style="display:flex;gap:4px;align-items:center;padding:2px 0;">
+            <span style="width:7px;height:7px;background:#f97316;border-radius:50%;
+                         animation:typingDot 1.2s infinite 0s;display:inline-block;"></span>
+            <span style="width:7px;height:7px;background:#f97316;border-radius:50%;
+                         animation:typingDot 1.2s infinite 0.2s;display:inline-block;"></span>
+            <span style="width:7px;height:7px;background:#f97316;border-radius:50%;
+                         animation:typingDot 1.2s infinite 0.4s;display:inline-block;"></span>
+        </div>
+        <style>
+            @keyframes typingDot {
+                0%,60%,100% { transform:translateY(0); opacity:0.4; }
+                30% { transform:translateY(-4px); opacity:1; }
+            }
+        </style>
+    `
+
+    box.appendChild(typing)
+    box.scrollTop = box.scrollHeight
+}
+
+function removeTypingIndicator() {
+    document.getElementById('cw-typing')?.remove()
 }
 
 // ==================== Picker: كاميرا أو معرض ====================
@@ -301,7 +371,7 @@ async function loadWidgetMessages() {
     }
 
     box.innerHTML  = '';
-    lastShownDate  = null;   // ← نعيد التهيئة عند كل تحميل
+    lastShownDate  = null;
 
     if (!data || data.length === 0) {
         box.innerHTML = `
@@ -328,6 +398,7 @@ function subscribeWidget() {
             if (!box) return;
             const empty = box.querySelector('div[style*="flex-direction:column"]');
             if (empty) empty.remove();
+            removeTypingIndicator()
             appendWidgetMessage(payload.new);
             box.scrollTop = box.scrollHeight;
             if (!isOpen && payload.new.sender === 'admin') {
@@ -379,7 +450,6 @@ function appendWidgetMessage(msg) {
     const box = document.getElementById('cw-messages');
     if (!box) return;
 
-    // ── فاصل التاريخ (مرة واحدة لكل يوم) ──
     const msgDate = new Date(msg.created_at).toDateString();
     if (msgDate !== lastShownDate) {
         lastShownDate = msgDate;
