@@ -3,9 +3,9 @@ import { supabase } from '../../js/supabase-config.js';
 const USD_TO_MRU = 43;
 
 // ==================== Pagination ====================
-let currentPage    = 1;
-const PAGE_SIZE    = 10;
-let allGrouped     = [];
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let allGrouped = [];
 
 async function loadOrders() {
     const ordersList = document.getElementById('admin-orders-list');
@@ -62,22 +62,22 @@ function renderPage(page) {
     const ordersList = document.getElementById('admin-orders-list');
     if (!ordersList) return;
 
-    const total      = allGrouped.length;
+    const total = allGrouped.length;
     const totalPages = Math.ceil(total / PAGE_SIZE);
-    currentPage      = Math.max(1, Math.min(page, totalPages));
+    currentPage = Math.max(1, Math.min(page, totalPages));
 
-    const start  = (currentPage - 1) * PAGE_SIZE;
-    const end    = Math.min(start + PAGE_SIZE, total);
-    const slice  = allGrouped.slice(start, end);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = Math.min(start + PAGE_SIZE, total);
+    const slice = allGrouped.slice(start, end);
 
     const canApprove = window.hasPerm?.('approve_orders') ?? true;
-    const canRefund  = window.hasPerm?.('refund_orders')  ?? true;
+    const canRefund = window.hasPerm?.('refund_orders') ?? true;
 
     ordersList.innerHTML = slice.map(group => {
-        const date          = group.created_at ? new Date(group.created_at).toLocaleString('fr-FR') : 'غير محدد';
+        const date = group.created_at ? new Date(group.created_at).toLocaleString('fr-FR') : 'غير محدد';
         const paymentMethod = group.paymentMethod || group.payment_method || '-';
-        const receiptUrl    = group.receiptUrl || group.receipt_url;
-        const receiptBtn    = receiptUrl
+        const receiptUrl = group.receiptUrl || group.receipt_url;
+        const receiptBtn = receiptUrl
             ? `<a href="${receiptUrl}" target="_blank" class="btn-check" title="عرض الإيصال"><i class="fas fa-receipt"></i></a>`
             : '-';
 
@@ -101,19 +101,19 @@ function renderPage(page) {
 
         const acceptBtn = group.items.length === 1
             ? `<div style="display:flex;flex-direction:column;gap:6px;">
-                ${canApprove ? `<button onclick="openOrderModal(${JSON.stringify(group.items[0]).replace(/"/g,'&quot;')})"
+                ${canApprove ? `<button onclick="openOrderModalWithBinance(${JSON.stringify(group.items[0]).replace(/"/g, '&quot;')})"
                     style="background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
                     <i class="fas fa-check-circle"></i> قبول</button>` : ''}
-                ${canRefund ? `<button onclick="quickRefund('${group.items[0].id}','${group.items[0].paymentMethod||group.items[0].payment_method||''}')"
+                ${canRefund ? `<button onclick="quickRefund('${group.items[0].id}','${group.items[0].paymentMethod || group.items[0].payment_method || ''}')"
                     style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
                     <i class="fas fa-undo"></i> استرداد</button>` : ''}
                 ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
                </div>`
             : `<div style="display:flex;flex-direction:column;gap:6px;">
-                ${canApprove ? `<button onclick="openGroupOrderModal(${JSON.stringify(group.items).replace(/"/g,'&quot;')})"
+                ${canApprove ? `<button onclick="openGroupOrderModal(${JSON.stringify(group.items).replace(/"/g, '&quot;')})"
                     style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
                     <i class="fas fa-layer-group"></i> قبول المجموعة (${group.items.length})</button>` : ''}
-                ${canRefund ? `<button onclick="quickRefundGroup(${JSON.stringify(group.items.map(i=>i.id)).replace(/"/g,'&quot;')},'${group.paymentMethod||group.payment_method||''}')"
+                ${canRefund ? `<button onclick="quickRefundGroup(${JSON.stringify(group.items.map(i => i.id)).replace(/"/g, '&quot;')},'${group.paymentMethod || group.payment_method || ''}')"
                     style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;">
                     <i class="fas fa-undo"></i> استرداد المجموعة</button>` : ''}
                 ${!canApprove && !canRefund ? `<span style="font-size:12px;color:#475569;">لا صلاحية</span>` : ''}
@@ -121,7 +121,7 @@ function renderPage(page) {
 
         return `
             <tr id="order-row-${group.order_number || group.id}">
-                <td style="color:#f97316;font-weight:bold;">${group.order_number || '#' + group.id.substring(0,7)}</td>
+                <td style="color:#f97316;font-weight:bold;">${group.order_number || '#' + group.id.substring(0, 7)}</td>
                 <td>
                     <div style="font-weight:700;font-size:13px;">${group.customer_name || 'غير معروف'}</div>
                     ${group.customer_phone ? `<div style="font-size:11px;color:#64748b;font-family:monospace;margin-top:2px;direction:ltr;">${group.customer_phone}</div>` : ''}
@@ -153,7 +153,7 @@ function renderPagination(total) {
     if (totalPages <= 1) return;
 
     const start = (currentPage - 1) * PAGE_SIZE + 1;
-    const end   = Math.min(currentPage * PAGE_SIZE, total);
+    const end = Math.min(currentPage * PAGE_SIZE, total);
 
     let pages = [];
     if (totalPages <= 7) {
@@ -192,8 +192,8 @@ function renderPagination(total) {
                 <i class="fas fa-chevron-right"></i>
             </button>
             ${pages.map(p => p === '...'
-                ? `<span style="color:#475569;padding:0 4px;">...</span>`
-                : `<button onclick="goToPage(${p})"
+        ? `<span style="color:#475569;padding:0 4px;">...</span>`
+        : `<button onclick="goToPage(${p})"
                     style="padding:7px 13px;border-radius:8px;font-size:13px;cursor:pointer;
                            font-family:'Tajawal',sans-serif;transition:all 0.15s;
                            border:1px solid ${p === currentPage ? '#f97316' : 'var(--border-light,#334155)'};
@@ -202,7 +202,7 @@ function renderPagination(total) {
                            font-weight:${p === currentPage ? '700' : '400'};">
                     ${p}
                    </button>`
-            ).join('')}
+    ).join('')}
             <button onclick="goToPage(${currentPage + 1})"
                 ${currentPage === totalPages ? 'disabled' : ''}
                 style="padding:7px 14px;border-radius:8px;border:1px solid var(--border-light,#334155);
@@ -252,9 +252,9 @@ async function processWalletOrders(orders) {
 }
 
 async function tryAutoApproveFromStock(order) {
-    const quantity  = order.quantity || 1;
+    const quantity = order.quantity || 1;
     const productId = order.product_id;
-    const label     = order.label;
+    const label = order.label;
     if (!productId || !label) return false;
 
     const { data: availableCodes, error } = await supabase
@@ -264,7 +264,7 @@ async function tryAutoApproveFromStock(order) {
 
     if (error || !availableCodes || availableCodes.length < quantity) return false;
 
-    const codes    = availableCodes.map(c => c.code);
+    const codes = availableCodes.map(c => c.code);
     const stockIds = availableCodes.map(c => c.id);
     const suppliersMap = {};
     availableCodes.forEach(c => {
@@ -296,9 +296,9 @@ async function tryAutoApproveFromStock(order) {
 
 // ==================== buildStockSection ====================
 function buildStockSection({ suffix = '', productId, label, quantity, orderPrice, prices = [], currency = 'MRU', hasPlayerId = false }) {
-    const c          = getThemeColors();
-    const priceObj   = (prices || []).find(p => p.label === label) || prices[0] || {};
-    const suppliers  = priceObj.suppliers || [];
+    const c = getThemeColors();
+    const priceObj = (prices || []).find(p => p.label === label) || prices[0] || {};
+    const suppliers = priceObj.suppliers || [];
     const inputStyle = `width:100%; padding:9px 12px; background:${c.inputBg}; border:1px solid ${c.inputBorder}; border-radius:8px; color:${c.inputColor}; font-family:inherit; font-size:13px;`;
 
     const calcCall = suffix === ''
@@ -350,7 +350,7 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
 
             ${!hasPlayerId ? `
             <button onclick="loadFromStock${suffix === '' ? '(\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')' : 'ForItem(' + suffix + ',\'' + productId + '\',\'' + label + '\',' + quantity + ',' + orderPrice + ')'}"
-                style="width:100%; margin-top:10px; padding:10px; background:rgba(59,130,246,0.15);
+                style="width:100%; margin-top:8px; padding:10px; background:rgba(59,130,246,0.15);
                     color:#3b82f6; border:1px solid #3b82f6; border-radius:8px;
                     cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s;"
                 onmouseover="this.style.background='rgba(59,130,246,0.3)'"
@@ -369,15 +369,16 @@ function buildStockSection({ suffix = '', productId, label, quantity, orderPrice
     `;
 }
 
+// ==================== حساب الربح لطلبات Player ID ====================
 window.calcProfitPlayerID = (suffix, orderPrice, currency) => {
-    const cost    = parseFloat(document.getElementById(`modal-cost${suffix}`)?.value) || 0;
+    const cost = parseFloat(document.getElementById(`modal-cost${suffix}`)?.value) || 0;
     const display = document.getElementById(`profit-display-pi${suffix}`);
     if (!display) return;
     if (cost <= 0) { display.style.display = 'none'; return; }
 
     const totalCost = cost * USD_TO_MRU;
-    const profit    = orderPrice - totalCost;
-    const color     = profit >= 0 ? '#22c55e' : '#ef4444';
+    const profit = orderPrice - totalCost;
+    const color = profit >= 0 ? '#22c55e' : '#ef4444';
 
     display.style.display = 'block';
     display.innerHTML = `
@@ -391,15 +392,15 @@ window.calcProfitPlayerID = (suffix, orderPrice, currency) => {
 };
 
 window.onSupplierSelectChange = (suffix) => {
-    const sel    = document.getElementById(`supplier-select${suffix}`);
+    const sel = document.getElementById(`supplier-select${suffix}`);
     const buyBtn = document.getElementById(`buy-btn${suffix}`);
     const selectedOpt = sel.options[sel.selectedIndex];
 
     if (sel.value) {
-        buyBtn.href              = sel.value;
-        buyBtn.style.display     = 'inline-flex';
-        buyBtn.style.alignItems  = 'center';
-        buyBtn.style.gap         = '6px';
+        buyBtn.href = sel.value;
+        buyBtn.style.display = 'inline-flex';
+        buyBtn.style.alignItems = 'center';
+        buyBtn.style.gap = '6px';
         const supplierField = document.getElementById(`modal-supplier-id${suffix === '' ? '' : '-' + suffix}`);
         if (supplierField) supplierField.value = selectedOpt.dataset.name || '';
     } else {
@@ -407,18 +408,19 @@ window.onSupplierSelectChange = (suffix) => {
     }
 };
 
+// ==================== openOrderModal الأصلي ====================
 window.openOrderModal = (order) => {
-    const product     = order.products || {};
-    const image       = product.image  || '';
-    const prices      = product.prices || [];
-    const totalPrice  = order.price * (order.quantity || 1);
+    const product = order.products || {};
+    const image = product.image || '';
+    const prices = product.prices || [];
+    const totalPrice = order.price * (order.quantity || 1);
     const hasPlayerId = !!order.player_id;
     const displayCurrency = order.currency || 'MRU';
-    const c           = getThemeColors();
+    const c = getThemeColors();
 
     document.getElementById('order-modal')?.remove();
     window._reservedStockIds = null;
-    window._stockCodesData   = null;
+    window._stockCodesData = null;
 
     const modal = document.createElement('div');
     modal.id = 'order-modal';
@@ -540,12 +542,150 @@ window.openOrderModal = (order) => {
     });
 };
 
+// ==================== openOrderModalWithBinance ====================
+window.openOrderModalWithBinance = (order) => {
+    window.openOrderModal(order);
+
+    setTimeout(() => {
+        const costInput = document.getElementById('modal-cost');
+        if (!costInput) return;
+
+        // زر Binance
+        const binanceBtn = document.createElement('button');
+        binanceBtn.id = 'binance-fetch-btn';
+        binanceBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1e293b" style="vertical-align:middle;margin-left:6px;">
+                <path d="M12 0L7.5 4.5 10.5 7.5 12 6l1.5 1.5 3-3L12 0zM4.5 7.5L0 12l4.5 4.5 3-3L6 12l1.5-1.5-3-3zm15 0l-3 3L18 12l-1.5 1.5 3 3L24 12l-4.5-4.5zM12 13.5L10.5 15l-3-3L4.5 15 12 22.5l7.5-7.5-3-3-3 3L12 13.5z"/>
+            </svg>
+            جلب من سحوبات Binance
+        `;
+        binanceBtn.style.cssText = `
+            width:100%; margin-top:8px; padding:10px 14px;
+            background:#fcd535; color:#1e293b; border:none;
+            border-radius:8px; cursor:pointer; font-size:13px;
+            font-weight:800; font-family:'Tajawal',sans-serif;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            transition:opacity 0.2s; box-shadow:0 2px 8px rgba(252,213,53,0.3);
+        `;
+        binanceBtn.onmouseover = () => binanceBtn.style.opacity = '0.88';
+        binanceBtn.onmouseout = () => binanceBtn.style.opacity = '1';
+        binanceBtn.onclick = () => fetchBinanceWithdrawals();
+
+        costInput.parentNode.insertBefore(binanceBtn, costInput.nextSibling);
+
+        // حاوية الـ dropdown
+        const dropdown = document.createElement('div');
+        dropdown.id = 'binance-dropdown';
+        dropdown.style.cssText = `
+            display:none; margin-top:6px; background:#0a0f1a;
+            border:1.5px solid #fcd535; border-radius:10px;
+            overflow:hidden; max-height:260px; overflow-y:auto;
+        `;
+        binanceBtn.after(dropdown);
+
+    }, 120);
+};
+
+// ==================== جلب سحوبات Binance ====================
+async function fetchBinanceWithdrawals() {
+    const btn = document.getElementById('binance-fetch-btn');
+    const dropdown = document.getElementById('binance-dropdown');
+    if (!btn || !dropdown) return;
+
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الجلب...';
+    btn.disabled = true;
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(
+            'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/binance-withdrawals',
+            { headers: { Authorization: `Bearer ${session?.access_token}` } }
+        );
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+            dropdown.style.display = 'block';
+            dropdown.innerHTML = `<p style="text-align:center;color:#94a3b8;padding:16px;font-size:13px;">لا توجد سحوبات حديثة</p>`;
+            return;
+        }
+
+        dropdown.style.display = 'block';
+        dropdown.innerHTML = data.map(w => {
+            const date = new Date(w.createTime).toLocaleString('fr-FR');
+            const amount = w.amount;
+            const txId = w.transactionId || w.orderId || '—';
+            const fund = w.fundsDetail?.[0];
+            const coin = fund?.currency || 'USDT';
+            const toUser = w.counterPartyNickname || w.payerInfo?.name || '—';
+
+            return `
+    <div onclick="selectBinanceWithdrawal('${amount}', '${txId}')"
+        style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #1e293b;
+               transition:background 0.15s; display:flex; justify-content:space-between; align-items:center;"
+        onmouseover="this.style.background='rgba(252,213,53,0.08)'"
+        onmouseout="this.style.background='transparent'">
+        <div>
+            <div style="font-weight:800; color:#fcd535; font-size:15px;">${amount} ${coin}</div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">${toUser} • ${date}</div>
+        </div>
+        <div style="font-size:10px; color:#475569; font-family:monospace;
+                    max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:ltr;">
+            ${txId}
+        </div>
+    </div>`;
+        }).join('');
+
+    } catch (err) {
+        dropdown.style.display = 'block';
+        dropdown.innerHTML = `<p style="text-align:center;color:#ef4444;padding:16px;font-size:13px;">❌ ${err.message}</p>`;
+    } finally {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    }
+}
+
+// ==================== اختيار عملية Binance ====================
+window.selectBinanceWithdrawal = (amount, txId) => {
+    const costInput = document.getElementById('modal-cost');
+    const orderIdInput = document.getElementById('modal-supplier-order-id');
+    const dropdown = document.getElementById('binance-dropdown');
+
+    if (costInput) {
+        costInput.value = amount;
+        costInput.readOnly = true;
+        costInput.style.cssText += `background:#0d2010 !important; color:#fcd535 !important; cursor:not-allowed; border-color:#fcd535;`;
+        // trigger profit calc
+        costInput.dispatchEvent(new Event('input'));
+    }
+
+    if (orderIdInput) {
+        orderIdInput.value = txId;
+        orderIdInput.readOnly = true;
+        orderIdInput.style.cssText += `background:#0d2010 !important; color:#fcd535 !important; cursor:not-allowed; border-color:#fcd535;`;
+    }
+
+    if (dropdown) dropdown.style.display = 'none';
+
+    // شارة الربط
+    const btn = document.getElementById('binance-fetch-btn');
+    if (btn) {
+        btn.innerHTML = '✅ تم الربط مع Binance';
+        btn.style.background = '#0d2010';
+        btn.style.color = '#fcd535';
+        btn.style.border = '1px solid #fcd535';
+        btn.disabled = true;
+    }
+
+    showToast('✅ تم ربط عملية Binance — الحقول محمية من التعديل');
+};
+
 window.openGroupOrderModal = (items) => {
     document.getElementById('order-modal')?.remove();
-    window._groupItems     = items;
+    window._groupItems = items;
     window._groupStockData = items.map(() => null);
-    const c          = getThemeColors();
-    const firstItem  = items[0];
+    const c = getThemeColors();
+    const firstItem = items[0];
     const totalPrice = items.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
     const inputStyle = `width:100%;padding:8px;background:${c.inputBg};border:1px solid ${c.inputBorder};border-radius:7px;color:${c.inputColor};font-size:13px;box-sizing:border-box;`;
 
@@ -559,9 +699,9 @@ window.openGroupOrderModal = (items) => {
     `;
 
     const itemsSections = items.map((item, idx) => {
-        const img      = item.products?.image || '';
-        const prices   = item.products?.prices || [];
-        const hasPI    = !!item.player_id;
+        const img = item.products?.image || '';
+        const prices = item.products?.prices || [];
+        const hasPI = !!item.player_id;
         const stockHTML = buildStockSection({
             suffix: idx, productId: item.product_id, label: item.label,
             quantity: item.quantity || 1, orderPrice: item.price * (item.quantity || 1),
@@ -635,30 +775,30 @@ window.openGroupOrderModal = (items) => {
 };
 
 window.calcProfit = (orderPrice, currency) => {
-    const cost          = parseFloat(document.getElementById('modal-cost').value) || 0;
-    const codesEl       = document.getElementById('modal-code');
-    const codesText     = codesEl ? codesEl.value.trim() : '';
-    const quantity      = codesText ? codesText.split('\n').filter(c => c.trim() !== '').length : 1;
+    const cost = parseFloat(document.getElementById('modal-cost').value) || 0;
+    const codesEl = document.getElementById('modal-code');
+    const codesText = codesEl ? codesEl.value.trim() : '';
+    const quantity = codesText ? codesText.split('\n').filter(c => c.trim() !== '').length : 1;
     const profitDisplay = document.getElementById('profit-display');
 
     if (!profitDisplay) return;
     if (cost <= 0) { profitDisplay.style.display = 'none'; return; }
 
-    const isCrypto = (currency || 'MRU') === 'USMDT';
+    const isCrypto = (currency || 'MRU') === 'USDT';
 
     if (isCrypto) {
         const totalCost = cost * quantity;
-        const profit    = orderPrice - totalCost;
+        const profit = orderPrice - totalCost;
         profitDisplay.style.display = 'block';
         profitDisplay.innerHTML = `
             <div style="font-size:12px;color:#64748b;margin-bottom:6px;">التكلفة: $${cost} × ${quantity} كود = $${totalCost.toFixed(2)}</div>
             <span style="color:#94a3b8;font-size:13px;">الربح: </span>
             <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:18px;font-weight:bold;">${profit.toFixed(2)}</span>
-            <span style="color:#94a3b8;font-size:13px;"> MRU</span>
+            <span style="color:#94a3b8;font-size:13px;"> USDT</span>
         `;
     } else {
         const totalCost = cost * USD_TO_MRU * quantity;
-        const profit    = orderPrice - totalCost;
+        const profit = orderPrice - totalCost;
         profitDisplay.style.display = 'block';
         profitDisplay.innerHTML = `
             <div style="font-size:12px;color:#64748b;margin-bottom:6px;">التكلفة: $${cost} × ${quantity} كود × ${USD_TO_MRU} = ${totalCost.toFixed(0)} MRU</div>
@@ -702,7 +842,7 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
 
     document.getElementById('modal-code').value = availableCodes.map(c => c.code).join('\n');
     window._reservedStockIds = availableCodes.map(c => c.id);
-    window._stockCodesData   = availableCodes.map(c => ({
+    window._stockCodesData = availableCodes.map(c => ({
         id: c.id, code: c.code,
         supplier_name: c.supplier_name || 'غير محدد',
         order_id: c.order_id || '',
@@ -722,8 +862,8 @@ window.loadFromStock = async (productId, label, quantity, orderPrice) => {
         suppliersMap[name].count++;
     });
     const suppliers = Object.values(suppliersMap);
-    const section   = document.getElementById('stock-suppliers-section');
-    const list      = document.getElementById('stock-suppliers-list');
+    const section = document.getElementById('stock-suppliers-section');
+    const list = document.getElementById('stock-suppliers-list');
     if (list) {
         list.innerHTML = suppliers.map(s => `
             <div style="width:100%;padding:12px 16px;background:rgba(249,115,22,0.08);border:2px solid #f97316;
@@ -769,8 +909,8 @@ window.loadFromStockForItem = async (idx, productId, label, quantity, orderPrice
 
     statusEl.textContent = `✅ تم سحب ${availableCodes.length} كود`; statusEl.style.color = '#22c55e';
 
-    document.getElementById(`code-${idx}`).value           = availableCodes.map(c => c.code).join('\n');
-    document.getElementById(`supplier-${idx}`).value       = availableCodes[0]?.supplier_name || '';
+    document.getElementById(`code-${idx}`).value = availableCodes.map(c => c.code).join('\n');
+    document.getElementById(`supplier-${idx}`).value = availableCodes[0]?.supplier_name || '';
     document.getElementById(`supplier-order-${idx}`).value = availableCodes[0]?.order_id || '';
 
     const costField = document.getElementById(`modal-cost${idx}`);
@@ -781,7 +921,7 @@ window.loadFromStockForItem = async (idx, productId, label, quantity, orderPrice
     if (!window._groupStockData) window._groupStockData = [];
     window._groupStockData[idx] = {
         stockIds: availableCodes.map(c => c.id),
-        codes:    availableCodes.map(c => c.code),
+        codes: availableCodes.map(c => c.code),
         suppliersDetails: availableCodes.map(c => ({
             code: c.code,
             supplier_name: c.supplier_name || 'غير محدد',
@@ -794,19 +934,19 @@ window.loadFromStockForItem = async (idx, productId, label, quantity, orderPrice
 };
 
 window.approveOrder = async (orderId, quantity) => {
-    const hasPlayerId     = !!document.getElementById('player-id-value');
-    const codesRaw        = document.getElementById('modal-code')?.value.trim() || '';
-    const codes           = hasPlayerId ? [] : codesRaw.split('\n').map(c => c.trim()).filter(c => c !== '');
-    const cost            = document.getElementById('modal-cost').value.trim();
-    const supplierId      = document.getElementById('modal-supplier-id').value.trim();
+    const hasPlayerId = !!document.getElementById('player-id-value');
+    const codesRaw = document.getElementById('modal-code')?.value.trim() || '';
+    const codes = hasPlayerId ? [] : codesRaw.split('\n').map(c => c.trim()).filter(c => c !== '');
+    const cost = document.getElementById('modal-cost').value.trim();
+    const supplierId = document.getElementById('modal-supplier-id').value.trim();
     const supplierOrderId = document.getElementById('modal-supplier-order-id')?.value.trim() || '';
 
     if (!hasPlayerId) {
-        if (codes.length === 0)        { showToast('⚠️ يرجى إدخال كود البطاقة!'); return; }
+        if (codes.length === 0) { showToast('⚠️ يرجى إدخال كود البطاقة!'); return; }
         if (codes.length !== quantity) { showToast(`⚠️ عدد الأكواد (${codes.length}) لا يطابق الكمية (${quantity})!`); return; }
     }
     if (!cost || parseFloat(cost) <= 0) { showToast('⚠️ يرجى إدخال سعر التكلفة!'); return; }
-    if (!supplierId)                    { showToast('⚠️ يرجى إدخال اسم المورد!'); return; }
+    if (!supplierId) { showToast('⚠️ يرجى إدخال اسم المورد!'); return; }
 
     if (!hasPlayerId) {
         for (const c of codes) {
@@ -815,7 +955,7 @@ window.approveOrder = async (orderId, quantity) => {
         }
     }
 
-    const stockCodesData   = window._stockCodesData || [];
+    const stockCodesData = window._stockCodesData || [];
     const suppliersDetails = stockCodesData.map(c => ({ code: c.code, supplier_name: c.supplier_name, supplier_order_id: c.order_id }));
 
     const playerReceiptFile = document.getElementById('player-receipt-file')?.files[0];
@@ -835,17 +975,17 @@ window.approveOrder = async (orderId, quantity) => {
                 const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
                 playerReceiptUrl = urlData?.publicUrl;
             }
-        } catch(e) { console.warn('تعذر رفع الإيصال:', e); }
+        } catch (e) { console.warn('تعذر رفع الإيصال:', e); }
     }
 
     const { data: orderData, error } = await supabase.from('orders').update({
-        status:            'مكتمل',
-        card_code:         hasPlayerId ? null : codes.join('\n'),
-        cost_price:        parseFloat(cost),
-        supplier_id:       supplierId,
+        status: 'مكتمل',
+        card_code: hasPlayerId ? null : codes.join('\n'),
+        cost_price: parseFloat(cost),
+        supplier_id: supplierId,
         supplier_order_id: supplierOrderId,
         suppliers_details: suppliersDetails.length > 0 ? suppliersDetails : null,
-        approved_by_name:  window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
+        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
         ...(playerReceiptUrl && { execution_receipt_url: playerReceiptUrl })
     }).eq('id', orderId).select().single();
 
@@ -860,7 +1000,7 @@ window.approveOrder = async (orderId, quantity) => {
         if (reservedIds?.length > 0) {
             await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: orderId }).in('id', reservedIds);
             window._reservedStockIds = null;
-            window._stockCodesData   = null;
+            window._stockCodesData = null;
         } else {
             for (const code of codes) {
                 await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: orderId }).eq('code', code).eq('status', 'available');
@@ -878,17 +1018,17 @@ window.approveGroupOrders = async () => {
     if (!items.length) return;
 
     for (let i = 0; i < items.length; i++) {
-        const hasPI    = !!items[i].player_id;
+        const hasPI = !!items[i].player_id;
         const codesRaw = document.getElementById(`code-${i}`)?.value.trim() || '';
-        const codes    = hasPI ? [] : codesRaw.split('\n').map(c => c.trim()).filter(c => c !== '');
-        const cost     = document.getElementById(`modal-cost${i}`)?.value.trim();
+        const codes = hasPI ? [] : codesRaw.split('\n').map(c => c.trim()).filter(c => c !== '');
+        const cost = document.getElementById(`modal-cost${i}`)?.value.trim();
         const supplier = document.getElementById(`supplier-${i}`)?.value.trim();
-        const qty      = items[i].quantity || 1;
+        const qty = items[i].quantity || 1;
 
-        if (!hasPI && !codes.length)        { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال الأكواد!`); return; }
-        if (!hasPI && codes.length !== qty) { showToast(`⚠️ العنصر ${i+1}: عدد الأكواد لا يطابق الكمية!`); return; }
-        if (!cost || parseFloat(cost) <= 0) { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال سعر التكلفة!`); return; }
-        if (!supplier)                      { showToast(`⚠️ العنصر ${i+1}: يرجى إدخال اسم المورد!`); return; }
+        if (!hasPI && !codes.length) { showToast(`⚠️ العنصر ${i + 1}: يرجى إدخال الأكواد!`); return; }
+        if (!hasPI && codes.length !== qty) { showToast(`⚠️ العنصر ${i + 1}: عدد الأكواد لا يطابق الكمية!`); return; }
+        if (!cost || parseFloat(cost) <= 0) { showToast(`⚠️ العنصر ${i + 1}: يرجى إدخال سعر التكلفة!`); return; }
+        if (!supplier) { showToast(`⚠️ العنصر ${i + 1}: يرجى إدخال اسم المورد!`); return; }
 
         if (!hasPI) {
             for (const c of codes) {
@@ -899,25 +1039,25 @@ window.approveGroupOrders = async () => {
     }
 
     for (let i = 0; i < items.length; i++) {
-        const item            = items[i];
-        const hasPI           = !!item.player_id;
-        const codes           = hasPI ? [] : document.getElementById(`code-${i}`).value.trim().split('\n').map(c => c.trim()).filter(c => c !== '');
-        const cost            = document.getElementById(`modal-cost${i}`).value.trim();
-        const supplierId      = document.getElementById(`supplier-${i}`).value.trim();
+        const item = items[i];
+        const hasPI = !!item.player_id;
+        const codes = hasPI ? [] : document.getElementById(`code-${i}`).value.trim().split('\n').map(c => c.trim()).filter(c => c !== '');
+        const cost = document.getElementById(`modal-cost${i}`).value.trim();
+        const supplierId = document.getElementById(`supplier-${i}`).value.trim();
         const supplierOrderId = document.getElementById(`supplier-order-${i}`)?.value.trim() || '';
-        const stockData       = window._groupStockData?.[i];
+        const stockData = window._groupStockData?.[i];
 
         const { data: orderData, error } = await supabase.from('orders').update({
-            status:            'مكتمل',
-            card_code:         hasPI ? null : codes.join('\n'),
-            cost_price:        parseFloat(cost),
-            supplier_id:       supplierId,
+            status: 'مكتمل',
+            card_code: hasPI ? null : codes.join('\n'),
+            cost_price: parseFloat(cost),
+            supplier_id: supplierId,
             supplier_order_id: supplierOrderId,
             suppliers_details: stockData?.suppliersDetails?.length > 0 ? stockData.suppliersDetails : null,
-            approved_by_name:  window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
+            approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
         }).eq('id', item.id).select().single();
 
-        if (error) { showToast(`❌ خطأ في الطلب ${i+1}: ` + error.message); return; }
+        if (error) { showToast(`❌ خطأ في الطلب ${i + 1}: ` + error.message); return; }
 
         if (!hasPI) {
             for (const c of codes) {
@@ -945,8 +1085,8 @@ window.rejectOrder = async (orderId) => {
     if (!confirm(`هل تريد رفض هذا الطلب؟\nالسبب: ${reason}`)) return;
 
     const { error } = await supabase.from('orders').update({
-        status:           'ملغي',
-        reject_reason:    reason,
+        status: 'ملغي',
+        reject_reason: reason,
         approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
     }).eq('id', orderId);
 
@@ -958,15 +1098,15 @@ window.rejectOrder = async (orderId) => {
 };
 
 window.rejectGroupOrders = async () => {
-    const items  = window._groupItems || [];
+    const items = window._groupItems || [];
     const reason = document.getElementById('group-reject-reason')?.value.trim();
     if (!reason) { showToast('⚠️ يرجى إدخال سبب الرفض!'); return; }
     if (!confirm(`هل تريد رفض ${items.length} طلب؟`)) return;
 
     for (const item of items) {
         await supabase.from('orders').update({
-            status:           'ملغي',
-            reject_reason:    reason,
+            status: 'ملغي',
+            reject_reason: reason,
             approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
         }).eq('id', item.id);
     }
@@ -997,7 +1137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadOrders();
     loadCompletedOrders();
     checkNewOrders();
-    subscribeToOrderUpdates(); // ✅ إشعارات العميل
+    subscribeToOrderUpdates();
     supabase.channel('orders-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
             loadOrders();
@@ -1025,11 +1165,11 @@ function showToast(message, type = 'success') {
     `;
     document.body.appendChild(t);
     requestAnimationFrame(() => {
-        t.style.opacity   = '1';
+        t.style.opacity = '1';
         t.style.transform = 'translateX(-50%) translateY(0)';
     });
     setTimeout(() => {
-        t.style.opacity   = '0';
+        t.style.opacity = '0';
         t.style.transform = 'translateX(-50%) translateY(-10px)';
         setTimeout(() => t.remove(), 300);
     }, 2800);
@@ -1038,16 +1178,16 @@ function showToast(message, type = 'success') {
 function getThemeColors() {
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
     return {
-        modalBg:     isLight ? '#ffffff' : '#1e293b',
-        deepBg:      isLight ? '#f8fafc' : '#0f172a',
-        border:      isLight ? '#e2e8f0' : '#334155',
-        text:        isLight ? '#1e293b' : '#e2e8f0',
-        textMuted:   isLight ? '#64748b' : '#94a3b8',
-        inputBg:     isLight ? '#f8fafc' : '#0f172a',
+        modalBg: isLight ? '#ffffff' : '#1e293b',
+        deepBg: isLight ? '#f8fafc' : '#0f172a',
+        border: isLight ? '#e2e8f0' : '#334155',
+        text: isLight ? '#1e293b' : '#e2e8f0',
+        textMuted: isLight ? '#64748b' : '#94a3b8',
+        inputBg: isLight ? '#f8fafc' : '#0f172a',
         inputBorder: isLight ? '#e2e8f0' : '#334155',
-        inputColor:  isLight ? '#1e293b' : '#e2e8f0',
-        cardBg:      isLight ? '#f1f5f9' : '#0f172a',
-        cardBorder:  isLight ? '#e2e8f0' : '#1e3a5f',
+        inputColor: isLight ? '#1e293b' : '#e2e8f0',
+        cardBg: isLight ? '#f1f5f9' : '#0f172a',
+        cardBorder: isLight ? '#e2e8f0' : '#1e3a5f',
     };
 }
 
@@ -1061,10 +1201,10 @@ window.quickRefund = async (orderId, paymentMethod) => {
 
     if (error || !order) { showToast('❌ خطأ في جلب الطلب', 'error'); return; }
 
-    const pm           = order.paymentMethod || order.payment_method || '';
+    const pm = order.paymentMethod || order.payment_method || '';
     const refundAmount = (order.price || 0) * (order.quantity || 1);
-    const isWallet     = pm === 'المحفظة' || pm === 'محفظة';
-    const c            = getThemeColors();
+    const isWallet = pm === 'المحفظة' || pm === 'محفظة';
+    const c = getThemeColors();
 
     document.getElementById('refund-modal')?.remove();
 
@@ -1095,7 +1235,7 @@ window.quickRefund = async (orderId, paymentMethod) => {
         </style>
         <div class="refund-box">
             <div class="refund-title"><i class="fas fa-undo"></i> تأكيد الاسترداد</div>
-            <div class="refund-row"><span class="label"><i class="fas fa-hashtag"></i> رقم الطلب</span><span class="value" style="font-family:monospace;color:#f97316;">${order.order_number || '#' + orderId.substring(0,8)}</span></div>
+            <div class="refund-row"><span class="label"><i class="fas fa-hashtag"></i> رقم الطلب</span><span class="value" style="font-family:monospace;color:#f97316;">${order.order_number || '#' + orderId.substring(0, 8)}</span></div>
             <div class="refund-row"><span class="label"><i class="fas fa-box"></i> المنتج</span><span class="value">${order.product_name || '—'} ${order.label ? `<span style="color:#f97316;font-size:12px;">(${order.label})</span>` : ''}</span></div>
             <div class="refund-row"><span class="label"><i class="fas fa-user"></i> العميل</span><span class="value">${order.customer_name || '—'}</span></div>
             ${(order.sender_phone || order.customer_phone) ? `
@@ -1166,11 +1306,11 @@ window.executeRefund = async (orderId, pm, refundAmount, userId) => {
                 const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
                 refundReceiptUrl = urlData?.publicUrl;
             }
-        } catch(e) { console.warn('تعذر رفع إيصال الاسترداد:', e); }
+        } catch (e) { console.warn('تعذر رفع إيصال الاسترداد:', e); }
     }
 
     await supabase.from('orders').update({
-        status:           'مسترد',
+        status: 'مسترد',
         approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
         ...(refundReceiptUrl && { refund_receipt_url: refundReceiptUrl })
     }).eq('id', orderId);
@@ -1181,13 +1321,13 @@ window.executeRefund = async (orderId, pm, refundAmount, userId) => {
         const newBalance = (userData?.balance || 0) + refundAmount;
         await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
         await supabase.from('wallet_transactions').insert({
-            user_id:        userId,
-            type:           'charge',
-            amount:         refundAmount,
+            user_id: userId,
+            type: 'charge',
+            amount: refundAmount,
             payment_method: 'استرداد طلب',
-            status:         'مكتمل',
-            receipt_url:    refundReceiptUrl || null,
-            created_at:     new Date().toISOString()
+            status: 'مكتمل',
+            receipt_url: refundReceiptUrl || null,
+            created_at: new Date().toISOString()
         });
         showToast(`✅ تم الاسترداد — أُضيف ${refundAmount} MRU للمحفظة`);
     } else {
@@ -1209,18 +1349,18 @@ window.quickRefundGroup = async (ids, paymentMethod) => {
     if (!orders?.length) { showToast('❌ خطأ في جلب الطلبات', 'error'); return; }
 
     const totalAmount = orders.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
-    const pm          = orders[0].paymentMethod || orders[0].payment_method || '';
-    const isWallet    = pm === 'المحفظة' || pm === 'محفظة';
-    const c           = getThemeColors();
+    const pm = orders[0].paymentMethod || orders[0].payment_method || '';
+    const isWallet = pm === 'المحفظة' || pm === 'محفظة';
+    const c = getThemeColors();
 
     document.getElementById('refund-modal')?.remove();
 
     const modal = document.createElement('div');
     modal.id = 'refund-modal';
-    modal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; animation:refundFadeIn 0.2s ease; overflow-y:auto;`;
+    modal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; overflow-y:auto;`;
 
     modal.innerHTML = `
-        <div style="background:${c.modalBg};border:1px solid ${c.border};border-radius:20px;padding:28px;width:100%;max-width:500px;color:${c.text};font-family:'Tajawal','Segoe UI',sans-serif;margin:auto;animation:refundSlideUp 0.25s ease;">
+        <div style="background:${c.modalBg};border:1px solid ${c.border};border-radius:20px;padding:28px;width:100%;max-width:500px;color:${c.text};font-family:'Tajawal','Segoe UI',sans-serif;margin:auto;">
             <div style="text-align:center;font-size:18px;font-weight:800;color:#f59e0b;margin-bottom:20px;">
                 <i class="fas fa-undo"></i> استرداد مجموعة (${orders.length} طلب)
             </div>
@@ -1240,7 +1380,7 @@ window.quickRefundGroup = async (ids, paymentMethod) => {
                 <span>${isWallet ? `سيتم إعادة <strong>${totalAmount} MRU</strong> تلقائياً إلى محفظة العميل.` : `طريقة الدفع يدوية — ستحتاج إلى الإرجاع يدوياً عبر <strong>${pm}</strong>.`}</span>
             </div>
             <button id="refund-confirm-btn"
-                onclick="executeGroupRefund(${JSON.stringify(ids).replace(/"/g,'&quot;')}, '${pm}', ${totalAmount}, '${orders[0].user_id}')"
+                onclick="executeGroupRefund(${JSON.stringify(ids).replace(/"/g, '&quot;')}, '${pm}', ${totalAmount}, '${orders[0].user_id}')"
                 style="width:100%;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Tajawal','Segoe UI',sans-serif;box-shadow:0 4px 14px rgba(245,158,11,0.35);margin-bottom:8px;">
                 <i class="fas fa-check-circle"></i> تأكيد استرداد ${orders.length} طلب
             </button>
@@ -1261,7 +1401,7 @@ window.executeGroupRefund = async (ids, pm, totalAmount, userId) => {
 
     for (const id of ids) {
         await supabase.from('orders').update({
-            status:           'مسترد',
+            status: 'مسترد',
             approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
         }).eq('id', id);
     }
@@ -1272,12 +1412,12 @@ window.executeGroupRefund = async (ids, pm, totalAmount, userId) => {
         const newBalance = (userData?.balance || 0) + totalAmount;
         await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
         await supabase.from('wallet_transactions').insert({
-            user_id:        userId,
-            type:           'charge',
-            amount:         totalAmount,
+            user_id: userId,
+            type: 'charge',
+            amount: totalAmount,
             payment_method: 'استرداد طلب',
-            status:         'مكتمل',
-            created_at:     new Date().toISOString()
+            status: 'مكتمل',
+            created_at: new Date().toISOString()
         });
         showToast(`✅ تم استرداد ${ids.length} طلب — أُضيف ${totalAmount} MRU للمحفظة`);
     } else {
@@ -1328,12 +1468,12 @@ async function loadCompletedOrders() {
 }
 
 function renderCompletedPage(page) {
-    const container  = document.getElementById('completed-orders-list');
+    const container = document.getElementById('completed-orders-list');
     if (!container) return;
 
-    const total      = allCompletedGrouped.length;
+    const total = allCompletedGrouped.length;
     const totalPages = Math.ceil(total / COMPLETED_PAGE_SIZE);
-    completedPage    = Math.max(1, Math.min(page, totalPages));
+    completedPage = Math.max(1, Math.min(page, totalPages));
 
     const start = (completedPage - 1) * COMPLETED_PAGE_SIZE;
     const slice = allCompletedGrouped.slice(start, start + COMPLETED_PAGE_SIZE);
@@ -1341,10 +1481,10 @@ function renderCompletedPage(page) {
     const statusColor = { 'مكتمل': '#22c55e', 'ملغي': '#ef4444', 'مسترد': '#f59e0b' };
 
     container.innerHTML = slice.map(group => {
-        const date     = new Date(group.created_at).toLocaleString('fr-FR');
+        const date = new Date(group.created_at).toLocaleString('fr-FR');
         const orderNum = group.order_number || '#' + group.id?.substring(0, 7);
-        const pm       = group.paymentMethod || group.payment_method || '-';
-        const color    = statusColor[group.items[0]?.status] || '#94a3b8';
+        const pm = group.paymentMethod || group.payment_method || '-';
+        const color = statusColor[group.items[0]?.status] || '#94a3b8';
 
         const imagesCell = group.items.map(item => {
             const img = item.products?.image;
@@ -1359,8 +1499,8 @@ function renderCompletedPage(page) {
             </div>`
         ).join('');
 
-        const firstItem  = group.items[0];
-        const isAuto     = group.items.some(i => i.auto_approved);
+        const firstItem = group.items[0];
+        const isAuto = group.items.some(i => i.auto_approved);
         const approvedBy = [...new Set(group.items.map(i => i.approved_by_name || i.completed_by_name).filter(Boolean))].join(' / ');
 
         const statusBadge = `
@@ -1369,12 +1509,12 @@ function renderCompletedPage(page) {
                     ${firstItem?.status || '—'}
                 </span>
                 ${(firstItem?.status === 'مكتمل' || firstItem?.status === 'مسترد')
-                    ? isAuto
-                        ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;"><i class="fas fa-box"></i> مخزون</span>`
-                        : approvedBy
+                ? isAuto
+                    ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;"><i class="fas fa-box"></i> مخزون</span>`
+                    : approvedBy
                         ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;" title="${approvedBy}"><i class="fas fa-user-check"></i> ${approvedBy}</span>`
                         : ''
-                    : ''}
+                : ''}
             </div>`;
 
         return `
@@ -1423,115 +1563,94 @@ window.filterCompleted = () => {
 window.loadOrders = loadOrders;
 window.loadCompletedOrders = loadCompletedOrders;
 
-// ==================== إشعارات العميل داخل الموقع ====================
+// ==================== إشعارات العميل ====================
 async function subscribeToOrderUpdates() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) return
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
 
-    const userId = session.user.id
+    const userId = session.user.id;
 
     supabase.channel('customer-orders')
         .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'orders',
+            event: 'UPDATE', schema: 'public', table: 'orders',
             filter: `user_id=eq.${userId}`
         }, (payload) => {
-            const order  = payload.new
-            const status = order.status
+            const order = payload.new;
+            const status = order.status;
 
             if (status === 'مكتمل') {
                 showCustomerNotification({
-                    title:   '✅ تم إكمال طلبك!',
-                    body:    `${order.product_name} ${order.label ? `(${order.label})` : ''}`,
-                    code:    order.card_code,
-                    color:   '#22c55e',
-                    orderId: order.order_number
-                })
+                    title: '✅ تم إكمال طلبك!',
+                    body: `${order.product_name} ${order.label ? `(${order.label})` : ''}`,
+                    code: order.card_code, color: '#22c55e', orderId: order.order_number
+                });
             } else if (status === 'ملغي') {
                 showCustomerNotification({
-                    title:   '❌ تم رفض طلبك',
-                    body:    `${order.product_name} — السبب: ${order.reject_reason || 'غير محدد'}`,
-                    color:   '#ef4444',
-                    orderId: order.order_number
-                })
+                    title: '❌ تم رفض طلبك',
+                    body: `${order.product_name} — السبب: ${order.reject_reason || 'غير محدد'}`,
+                    color: '#ef4444', orderId: order.order_number
+                });
             } else if (status === 'مسترد') {
                 showCustomerNotification({
-                    title:   '↩️ تم استرداد طلبك',
-                    body:    `${order.product_name} — ${(order.price || 0) * (order.quantity || 1)} MRU`,
-                    color:   '#f59e0b',
-                    orderId: order.order_number
-                })
+                    title: '↩️ تم استرداد طلبك',
+                    body: `${order.product_name} — ${(order.price || 0) * (order.quantity || 1)} MRU`,
+                    color: '#f59e0b', orderId: order.order_number
+                });
             }
         })
-        .subscribe()
+        .subscribe();
 }
 
 function showCustomerNotification({ title, body, code, color, orderId }) {
-    document.getElementById('_customer-notif')?.remove()
+    document.getElementById('_customer-notif')?.remove();
 
-    const notif = document.createElement('div')
-    notif.id = '_customer-notif'
+    const notif = document.createElement('div');
+    notif.id = '_customer-notif';
     notif.style.cssText = `
-        position: fixed; top: 20px; left: 50%;
-        transform: translateX(-50%);
-        background: #1e293b; border: 2px solid ${color};
-        border-radius: 16px; padding: 20px 24px;
-        min-width: 320px; max-width: 420px;
-        z-index: 999999; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        font-family: 'Tajawal', sans-serif;
-        animation: notifSlideDown 0.4s ease; direction: rtl;
-    `
+        position:fixed; top:20px; left:50%; transform:translateX(-50%);
+        background:#1e293b; border:2px solid ${color}; border-radius:16px;
+        padding:20px 24px; min-width:320px; max-width:420px;
+        z-index:999999; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        font-family:'Tajawal',sans-serif; animation:notifSlideDown 0.4s ease; direction:rtl;
+    `;
 
     notif.innerHTML = `
-        <style>
-            @keyframes notifSlideDown {
-                from { opacity:0; transform:translateX(-50%) translateY(-20px); }
-                to   { opacity:1; transform:translateX(-50%) translateY(0); }
-            }
-        </style>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <span style="font-size:16px; font-weight:800; color:${color};">${title}</span>
-            <button onclick="document.getElementById('_customer-notif').remove()"
-                style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:18px;">✕</button>
+        <style>@keyframes notifSlideDown { from{opacity:0;transform:translateX(-50%) translateY(-20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }</style>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:16px;font-weight:800;color:${color};">${title}</span>
+            <button onclick="document.getElementById('_customer-notif').remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;">✕</button>
         </div>
-        <div style="font-size:13px; color:#e2e8f0; margin-bottom:${code ? '12px' : '0'};">${body}</div>
+        <div style="font-size:13px;color:#e2e8f0;margin-bottom:${code ? '12px' : '0'};">${body}</div>
         ${code ? `
-        <div style="background:#0f172a; border:1px solid ${color}; border-radius:10px; padding:12px; margin-top:8px;">
-            <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">🔑 الكود:</div>
-            <div style="font-family:monospace; font-size:15px; color:${color}; font-weight:700; letter-spacing:1px;">
-                ${code.split('\n').join('<br>')}
-            </div>
-            <button onclick="navigator.clipboard.writeText(this.dataset.code); this.innerHTML='✅ تم النسخ!'; setTimeout(() => this.innerHTML='📋 نسخ الكود', 2000);"
+        <div style="background:#0f172a;border:1px solid ${color};border-radius:10px;padding:12px;margin-top:8px;">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">🔑 الكود:</div>
+            <div style="font-family:monospace;font-size:15px;color:${color};font-weight:700;letter-spacing:1px;">${code.split('\n').join('<br>')}</div>
+            <button onclick="navigator.clipboard.writeText(this.dataset.code);this.innerHTML='✅ تم النسخ!';setTimeout(()=>this.innerHTML='📋 نسخ الكود',2000);"
                 data-code="${code.replace(/"/g, '&quot;')}"
-                style="width:100%; margin-top:10px; padding:8px; background:${color};
-                       color:white; border:none; border-radius:8px; cursor:pointer;
-                       font-size:13px; font-weight:700; font-family:'Tajawal',sans-serif;">
+                style="width:100%;margin-top:10px;padding:8px;background:${color};color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:'Tajawal',sans-serif;">
                 📋 نسخ الكود
             </button>
         </div>` : ''}
         <div style="margin-top:12px;">
-            <a href="orders.html" style="display:block; text-align:center; padding:8px;
-               background:rgba(249,115,22,0.15); color:#f97316; border:1px solid #f97316;
-               border-radius:8px; text-decoration:none; font-size:13px; font-weight:700;">
+            <a href="orders.html" style="display:block;text-align:center;padding:8px;background:rgba(249,115,22,0.15);color:#f97316;border:1px solid #f97316;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">
                 📋 عرض الطلبات
             </a>
         </div>
-    `
+    `;
 
-    document.body.appendChild(notif)
+    document.body.appendChild(notif);
 
     if (!code) {
         setTimeout(() => {
-            notif.style.opacity = '0'
-            notif.style.transition = 'opacity 0.4s'
-            setTimeout(() => notif?.remove(), 400)
-        }, 8000)
+            notif.style.opacity = '0';
+            notif.style.transition = 'opacity 0.4s';
+            setTimeout(() => notif?.remove(), 400);
+        }, 8000);
     }
 
     if (Notification.permission === 'granted') {
-        new Notification(title, { body, icon: '/assets/Icon.png' })
+        new Notification(title, { body, icon: '/assets/Icon.png' });
     } else if (Notification.permission !== 'denied') {
-        Notification.requestPermission()
+        Notification.requestPermission();
     }
 }
