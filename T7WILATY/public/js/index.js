@@ -448,3 +448,212 @@ function filterCards(query) {
         noResult?.remove();
     }
 }
+
+
+// ==================== PWA Install Prompt ====================
+function showInstallPrompt() {
+    // لا تعرض مرة ثانية إذا تم التخطي أو التثبيت
+    if (localStorage.getItem('pwa-dismissed')) return;
+    // لا تعرض إذا كان التطبيق مثبتاً بالفعل
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isAndroid = /android/i.test(navigator.userAgent);
+    if (!isIOS && !isAndroid) return;
+
+    // إنشاء الـ overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'pwa-install-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
+        display: flex; align-items: flex-end; justify-content: center;
+        animation: fadeIn 0.3s ease;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    `;
+
+    if (isIOS) {
+        overlay.innerHTML = `
+            <style>
+                @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+                @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+            </style>
+            <div style="
+                background: #1e293b;
+                border-radius: 24px 24px 0 0;
+                padding: 28px 24px 36px;
+                width: 100%; max-width: 480px;
+                color: #e2e8f0;
+                font-family: 'Tajawal', sans-serif;
+                animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+                border-top: 1px solid #334155;
+            ">
+                <!-- Handle -->
+                <div style="width:40px;height:4px;background:#475569;border-radius:2px;margin:0 auto 20px;"></div>
+
+                <!-- Header -->
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                    <img src="assets/Icon.png" style="width:56px;height:56px;border-radius:14px;border:2px solid #334155;">
+                    <div>
+                        <div style="font-size:17px;font-weight:800;color:#f1f5f9;">StoreCard</div>
+                        <div style="font-size:13px;color:#64748b;">storecard.online</div>
+                    </div>
+                    <div style="margin-right:auto;background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;">
+                        مجاني
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <div style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:6px;">أضف التطبيق لشاشتك الرئيسية</div>
+                <div style="font-size:13px;color:#94a3b8;margin-bottom:20px;line-height:1.7;">
+                    ثبّت StoreCard كتطبيق على جهازك للوصول السريع بدون متجر التطبيقات
+                </div>
+
+                <!-- Steps -->
+                <div style="background:#0f172a;border-radius:14px;padding:16px;border:1px solid #334155;margin-bottom:20px;">
+                    <div style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-weight:600;">خطوات التثبيت على iPhone:</div>
+                    
+                    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+                        <div style="background:#f97316;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">1</div>
+                        <div style="font-size:13px;color:#e2e8f0;line-height:1.6;">
+                            اضغط على زر <strong style="color:#f97316;">المشاركة</strong> 
+                            <span style="background:#334155;border-radius:6px;padding:2px 8px;font-size:15px;">⎙</span>
+                            في شريط Safari السفلي
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+                        <div style="background:#f97316;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">2</div>
+                        <div style="font-size:13px;color:#e2e8f0;line-height:1.6;">
+                            اختر <strong style="color:#f97316;">"إضافة إلى الشاشة الرئيسية"</strong>
+                            <span style="background:#334155;border-radius:6px;padding:2px 8px;font-size:13px;">＋</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:flex-start;gap:12px;">
+                        <div style="background:#22c55e;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">✓</div>
+                        <div style="font-size:13px;color:#e2e8f0;line-height:1.6;">
+                            اضغط <strong style="color:#22c55e;">"إضافة"</strong> في الأعلى — تم!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arrow indicator -->
+                <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+                    <span style="font-size:20px;">👆</span>
+                    <span style="font-size:13px;color:#f97316;font-weight:600;">ابحث عن أيقونة المشاركة في الأسفل</span>
+                </div>
+
+                <!-- Skip -->
+                <button onclick="document.getElementById('pwa-install-overlay').remove(); localStorage.setItem('pwa-dismissed','1');"
+                    style="width:100%;padding:13px;background:transparent;color:#64748b;border:1px solid #334155;border-radius:12px;font-size:14px;cursor:pointer;font-family:'Tajawal',sans-serif;">
+                    تخطي
+                </button>
+            </div>
+        `;
+    } else {
+        // Android — استخدم beforeinstallprompt
+        overlay.innerHTML = `
+            <style>
+                @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+                @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+            </style>
+            <div style="
+                background: #1e293b;
+                border-radius: 24px 24px 0 0;
+                padding: 28px 24px 36px;
+                width: 100%; max-width: 480px;
+                color: #e2e8f0;
+                font-family: 'Tajawal', sans-serif;
+                animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+                border-top: 1px solid #334155;
+            ">
+                <div style="width:40px;height:4px;background:#475569;border-radius:2px;margin:0 auto 20px;"></div>
+
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                    <img src="assets/Icon.png" style="width:56px;height:56px;border-radius:14px;border:2px solid #334155;">
+                    <div>
+                        <div style="font-size:17px;font-weight:800;color:#f1f5f9;">StoreCard</div>
+                        <div style="font-size:13px;color:#64748b;">storecard.online</div>
+                    </div>
+                    <div style="margin-right:auto;background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;">
+                        مجاني
+                    </div>
+                </div>
+
+                <div style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:6px;">ثبّت التطبيق</div>
+                <div style="font-size:13px;color:#94a3b8;margin-bottom:24px;line-height:1.7;">
+                    احصل على تجربة أفضل مع تطبيق StoreCard — أسرع، أسهل، بدون متجر
+                </div>
+
+                <div style="display:flex;gap:16px;margin-bottom:20px;">
+                    <div style="flex:1;background:#0f172a;border-radius:12px;padding:14px;text-align:center;border:1px solid #334155;">
+                        <div style="font-size:24px;margin-bottom:6px;">⚡</div>
+                        <div style="font-size:12px;color:#94a3b8;">تحميل أسرع</div>
+                    </div>
+                    <div style="flex:1;background:#0f172a;border-radius:12px;padding:14px;text-align:center;border:1px solid #334155;">
+                        <div style="font-size:24px;margin-bottom:6px;">📲</div>
+                        <div style="font-size:12px;color:#94a3b8;">وصول سريع</div>
+                    </div>
+                    <div style="flex:1;background:#0f172a;border-radius:12px;padding:14px;text-align:center;border:1px solid #334155;">
+                        <div style="font-size:24px;margin-bottom:6px;">🔔</div>
+                        <div style="font-size:12px;color:#94a3b8;">إشعارات</div>
+                    </div>
+                </div>
+
+                <button id="pwa-install-btn"
+                    style="width:100%;padding:15px;background:linear-gradient(135deg,#f97316,#ea6c0a);color:white;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:'Tajawal',sans-serif;margin-bottom:10px;box-shadow:0 4px 20px rgba(249,115,22,0.4);">
+                    <i class="fas fa-download"></i> تثبيت التطبيق الآن
+                </button>
+                <button onclick="document.getElementById('pwa-install-overlay').remove(); localStorage.setItem('pwa-dismissed','1');"
+                    style="width:100%;padding:13px;background:transparent;color:#64748b;border:1px solid #334155;border-radius:12px;font-size:14px;cursor:pointer;font-family:'Tajawal',sans-serif;">
+                    ليس الآن
+                </button>
+            </div>
+        `;
+    }
+
+    // إغلاق عند الضغط على الخلفية
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+            localStorage.setItem('pwa-dismissed', '1');
+        }
+    });
+
+    document.body.appendChild(overlay);
+}
+
+// Android: استقبال حدث التثبيت
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // أظهر الـ overlay بعد ثانية
+    setTimeout(showInstallPrompt, 1000);
+
+    // ربط زر التثبيت
+    setTimeout(() => {
+        const btn = document.getElementById('pwa-install-btn');
+        if (btn && deferredPrompt) {
+            btn.onclick = async () => {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('pwa-install-overlay')?.remove();
+                if (outcome === 'accepted') {
+                    localStorage.setItem('pwa-dismissed', '1');
+                }
+            };
+        }
+    }, 1200);
+});
+
+// iOS: أظهر الـ overlay بعد ثانية
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+if (isIOS && !window.matchMedia('(display-mode: standalone)').matches) {
+    setTimeout(showInstallPrompt, 1000);
+}
