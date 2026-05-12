@@ -369,7 +369,7 @@ window.showOrderPopup = (orderId) => {
                 `).join('')}
             </div>`;
 
-    } else if (order.supplier_id) {
+} else if (order.supplier_id) {
         suppliersHtml = `
             <div style="margin-bottom:16px;">
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">🏪 المورد</div>
@@ -384,9 +384,17 @@ window.showOrderPopup = (orderId) => {
                                    border-radius:4px;cursor:pointer;font-size:11px;">
                             <i class="fas fa-copy"></i>
                         </button>
-                    </div>` : ''}
+                    </div>
+                    <button onclick="unlinkBinance('${order.id}', '${order.supplier_order_id}')"
+                        style="width:100%;margin-top:10px;padding:7px;background:transparent;
+                               color:#ef4444;border:1px solid #ef4444;border-radius:8px;
+                               cursor:pointer;font-size:12px;font-weight:700;
+                               font-family:'Tajawal',sans-serif;">
+                        🔗 إلغاء ربط Binance
+                    </button>` : ''}
                 </div>
             </div>`;
+    
     }
 
     let profitHtml = '';
@@ -711,5 +719,21 @@ window.deleteOrderGroup = async (orderNumberOrId) => {
     if (error) { showAlert('❌ خطأ في الحذف: ' + error.message, 'error'); return; }
 
     showAlert('✅ تم حذف الطلب بنجاح', 'success');
+    loadCompletedOrders();
+};
+
+// ==================== إلغاء ربط Binance ====================
+window.unlinkBinance = async (orderId, currentOrderId) => {
+    if (!confirm(`هل تريد إلغاء ربط Binance؟\nسيتم مسح: ${currentOrderId}`)) return;
+
+    const { error } = await supabase
+        .from('orders')
+        .update({ supplier_order_id: null })
+        .eq('id', orderId);
+
+    if (error) { showAlert('❌ خطأ: ' + error.message, 'error'); return; }
+
+    showAlert('✅ تم إلغاء ربط Binance — المعاملة ستظهر مجدداً', 'success');
+    document.getElementById('order-detail-popup')?.remove();
     loadCompletedOrders();
 };
