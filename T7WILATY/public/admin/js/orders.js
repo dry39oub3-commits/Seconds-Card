@@ -611,21 +611,20 @@ async function fetchBinanceWithdrawals() {
         }
 
         dropdown.style.display = 'block';
-        // من هذا:
 dropdown.innerHTML = data.map(w => `
     <div onclick="selectBinanceWithdrawal('${w.amount}', '${w.orderId}')"
-        style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #1e293b; transition:background 0.15s;"
+        style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #1e293b;
+               transition:background 0.15s;"
         onmouseover="this.style.background='rgba(252,213,53,0.08)'"
         onmouseout="this.style.background='transparent'">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <span style="font-weight:800; color:#fcd535; font-size:15px;">${w.amount} ${w.currency}</span>
             <span style="font-size:11px; color:#64748b;">${w.date}</span>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:#94a3b8; font-family:monospace;">${w.description}</span>
             <span style="font-size:12px; color:#e2e8f0; font-weight:600;">🏪 ${w.merchant}</span>
-            <span style="font-size:11px; color:#94a3b8; font-family:monospace;">${w.description}</span>
         </div>
-        <div style="font-size:11px; color:#94a3b8; font-family:monospace;">🔖 ${w.paidBy}</div>
     </div>
 `).join('');
 
