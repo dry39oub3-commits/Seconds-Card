@@ -637,7 +637,6 @@ dropdown.innerHTML = data.map(w => `
     }
 }
 
-// ==================== اختيار عملية Binance ====================
 window.selectBinanceWithdrawal = (amount, txId, merchant) => {
     const costInput     = document.getElementById('modal-cost');
     const orderIdInput  = document.getElementById('modal-supplier-order-id');
@@ -651,15 +650,8 @@ window.selectBinanceWithdrawal = (amount, txId, merchant) => {
         costInput.dispatchEvent(new Event('input'));
     }
 
-    // ✅ قابل للتعديل
-    if (orderIdInput) {
-        orderIdInput.value = txId;
-    }
-
-    // ✅ قابل للتعديل
-    if (supplierInput) {
-        supplierInput.value = merchant;
-    }
+    if (orderIdInput) orderIdInput.value = txId;
+    if (supplierInput) supplierInput.value = merchant;
 
     if (dropdown) dropdown.style.display = 'none';
 
@@ -672,6 +664,53 @@ window.selectBinanceWithdrawal = (amount, txId, merchant) => {
         btn.disabled         = true;
     }
 
+    // ✅ أضف زر إلغاء الربط
+    document.getElementById('binance-unlink-btn')?.remove();
+    const unlinkBtn = document.createElement('button');
+    unlinkBtn.id = 'binance-unlink-btn';
+    unlinkBtn.innerHTML = '🔗 إلغاء الربط';
+    unlinkBtn.style.cssText = `
+        width:100%; margin-top:6px; padding:8px 14px;
+        background:transparent; color:#ef4444;
+        border:1px solid #ef4444; border-radius:8px;
+        cursor:pointer; font-size:12px; font-weight:700;
+        font-family:'Tajawal',sans-serif; transition:opacity 0.2s;
+    `;
+    unlinkBtn.onclick = () => {
+        // ✅ إعادة تعيين حقل التكلفة
+        if (costInput) {
+            costInput.value    = '';
+            costInput.readOnly = false;
+            costInput.style.cssText = costInput.style.cssText
+                .replace(/background:[^;]+!important;/g, '')
+                .replace(/color:[^;]+!important;/g, '')
+                .replace(/cursor:[^;]+;/g, '')
+                .replace(/border-color:[^;]+;/g, '');
+        }
+
+        // ✅ إعادة تعيين حقلي المورد والـ Order ID
+        if (orderIdInput)  orderIdInput.value  = '';
+        if (supplierInput) supplierInput.value = '';
+
+        // ✅ إعادة زر Binance
+        if (btn) {
+            btn.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#1e293b" style="vertical-align:middle;margin-left:6px;">
+                    <path d="M12 0L7.5 4.5 10.5 7.5 12 6l1.5 1.5 3-3L12 0zM4.5 7.5L0 12l4.5 4.5 3-3L6 12l1.5-1.5-3-3zm15 0l-3 3L18 12l-1.5 1.5 3 3L24 12l-4.5-4.5zM12 13.5L10.5 15l-3-3L4.5 15 12 22.5l7.5-7.5-3-3-3 3L12 13.5z"/>
+                </svg>
+                جلب من سحوبات Binance
+            `;
+            btn.style.background = '#fcd535';
+            btn.style.color      = '#1e293b';
+            btn.style.border     = 'none';
+            btn.disabled         = false;
+        }
+
+        unlinkBtn.remove();
+        showToast('✅ تم إلغاء الربط');
+    };
+
+    btn?.after(unlinkBtn);
     showToast('✅ تم ربط عملية Binance');
 };
 
