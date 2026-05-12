@@ -612,7 +612,7 @@ async function fetchBinanceWithdrawals() {
 
         dropdown.style.display = 'block';
 dropdown.innerHTML = data.map(w => `
-    <div onclick="selectBinanceWithdrawal('${w.amount}', '${w.orderId}')"
+    <div onclick="selectBinanceWithdrawal('${w.amount}', '${w.orderId}', '${w.merchant}')"
         style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #1e293b;
                transition:background 0.15s;"
         onmouseover="this.style.background='rgba(252,213,53,0.08)'"
@@ -651,18 +651,24 @@ window.selectBinanceWithdrawal = (amount, txId) => {
         costInput.dispatchEvent(new Event('input'));
     }
 
-    
+        // ✅ املأ اسم المورد تلقائياً
+    if (supplierInput) {
+        supplierInput.value    = merchant;
+        supplierInput.readOnly = true;
+        supplierInput.style.cssText += `background:#0d2010 !important; color:#fcd535 !important; cursor:not-allowed; border-color:#fcd535;`;
+    }
+
 
     if (dropdown) dropdown.style.display = 'none';
 
     // شارة الربط
     const btn = document.getElementById('binance-fetch-btn');
     if (btn) {
-        btn.innerHTML = '✅ تم الربط مع Binance';
+        btn.innerHTML    = '✅ تم الربط مع Binance';
         btn.style.background = '#0d2010';
-        btn.style.color = '#fcd535';
-        btn.style.border = '1px solid #fcd535';
-        btn.disabled = true;
+        btn.style.color      = '#fcd535';
+        btn.style.border     = '1px solid #fcd535';
+        btn.disabled         = true;
     }
 
     showToast('✅ تم ربط عملية Binance — الحقول محمية من التعديل');
