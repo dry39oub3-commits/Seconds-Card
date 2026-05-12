@@ -651,11 +651,7 @@ window.selectBinanceWithdrawal = (amount, txId) => {
         costInput.dispatchEvent(new Event('input'));
     }
 
-    if (orderIdInput) {
-        orderIdInput.value = txId;
-        orderIdInput.readOnly = true;
-        orderIdInput.style.cssText += `background:#0d2010 !important; color:#fcd535 !important; cursor:not-allowed; border-color:#fcd535;`;
-    }
+    
 
     if (dropdown) dropdown.style.display = 'none';
 
