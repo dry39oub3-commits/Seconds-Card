@@ -638,40 +638,41 @@ dropdown.innerHTML = data.map(w => `
 }
 
 // ==================== اختيار عملية Binance ====================
-window.selectBinanceWithdrawal = (amount, txId) => {
-    const costInput = document.getElementById('modal-cost');
-    const orderIdInput = document.getElementById('modal-supplier-order-id');
-    const dropdown = document.getElementById('binance-dropdown');
+window.selectBinanceWithdrawal = (amount, txId, merchant) => {
+    const costInput     = document.getElementById('modal-cost');
+    const orderIdInput  = document.getElementById('modal-supplier-order-id');
+    const supplierInput = document.getElementById('modal-supplier-id');
+    const dropdown      = document.getElementById('binance-dropdown');
 
     if (costInput) {
-        costInput.value = amount;
+        costInput.value    = amount;
         costInput.readOnly = true;
         costInput.style.cssText += `background:#0d2010 !important; color:#fcd535 !important; cursor:not-allowed; border-color:#fcd535;`;
-        // trigger profit calc
         costInput.dispatchEvent(new Event('input'));
     }
 
-        // ✅ املأ اسم المورد تلقائياً
-    if (supplierInput) {
-        supplierInput.value    = merchant;
-        supplierInput.readOnly = true;
-        supplierInput.style.cssText += `background:#0d2010 !important; color:#fcd535 !important; cursor:not-allowed; border-color:#fcd535;`;
+    // ✅ قابل للتعديل
+    if (orderIdInput) {
+        orderIdInput.value = txId;
     }
 
+    // ✅ قابل للتعديل
+    if (supplierInput) {
+        supplierInput.value = merchant;
+    }
 
     if (dropdown) dropdown.style.display = 'none';
 
-    // شارة الربط
     const btn = document.getElementById('binance-fetch-btn');
     if (btn) {
-        btn.innerHTML    = '✅ تم الربط مع Binance';
+        btn.innerHTML        = '✅ تم الربط مع Binance';
         btn.style.background = '#0d2010';
         btn.style.color      = '#fcd535';
         btn.style.border     = '1px solid #fcd535';
         btn.disabled         = true;
     }
 
-    showToast('✅ تم ربط عملية Binance — الحقول محمية من التعديل');
+    showToast('✅ تم ربط عملية Binance');
 };
 
 window.openGroupOrderModal = (items) => {
