@@ -318,7 +318,7 @@ async function checkAuthAndLoadData() {
             const message    = encodeURIComponent(
                 `مرحباً، أريد تفعيل حسابي في StoreCard\n` +
                 `الاسم: ${name}\n` +
-                `رقم الهاتف المسجل: ${phone}\n\n` +
+                ` الهاتف: ${phone}\n\n` +
                 ``
             );
             const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
