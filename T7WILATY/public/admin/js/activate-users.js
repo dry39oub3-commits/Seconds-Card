@@ -19,6 +19,26 @@ window.loadUsers = async () => {
         return;
     }
 
+    // ✅ رفع الحظر تلقائياً لمن انتهت مدتهم
+    const now     = new Date();
+    const expired = (users || []).filter(u =>
+        u.is_blocked && u.banned_until && new Date(u.banned_until) < now
+    );
+
+    if (expired.length > 0) {
+        const ids = expired.map(u => u.id);
+        await supabase
+            .from('users')
+            .update({ is_blocked: false, banned_until: null })
+            .in('id', ids);
+
+        // ✅ تحديث محلي
+        expired.forEach(u => {
+            u.is_blocked   = false;
+            u.banned_until = null;
+        });
+    }
+
     window._allUsers = users || [];
     updateStats(users);
     renderTable();

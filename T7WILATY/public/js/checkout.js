@@ -3,7 +3,7 @@ import { supabase } from './supabase-config.js';
 let totalAmount = 0;
 let userBalance = 0;
 let selectedPaymentMethod = null;
-let cart = []; // سيُملأ من Supabase
+let cart = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthAndLoadData();
@@ -20,56 +20,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ===== جلب السلة من Supabase =====
+// ===== جلب السلة =====
 async function loadCartFromCloud(userId) {
     let { data: cartRow } = await supabase
-        .from('carts')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .single();
-
+        .from('carts').select('id')
+        .eq('user_id', userId).eq('status', 'active').single();
     if (!cartRow) return [];
-
     const { data: items } = await supabase
-        .from('cart_items')
-        .select('*')
-        .eq('cart_id', cartRow.id);
-
+        .from('cart_items').select('*').eq('cart_id', cartRow.id);
     return items || [];
 }
 
-// ===== مسح السلة السحابية بعد الدفع =====
+// ===== مسح السلة =====
 async function clearCloudCart(userId) {
     const { data: cartRow } = await supabase
-        .from('carts')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .single();
-
+        .from('carts').select('id')
+        .eq('user_id', userId).eq('status', 'active').single();
     if (!cartRow) return;
-
     await supabase.from('cart_items').delete().eq('cart_id', cartRow.id);
 }
 
 // ===== جلب بوابات الدفع =====
 async function loadPaymentMethods() {
-    const currency = cart[0]?.currency || 'MRU';
-    const isCrypto = currency === 'USDT';
-    const rate = 43;
-
+    const currency      = cart[0]?.currency || 'MRU';
+    const isCrypto      = currency === 'USDT';
     const displayBalance = isCrypto
-        ? `${(userBalance / rate).toFixed(2)} USDT`
+        ? `${(userBalance / 43).toFixed(2)} USDT`
         : `${userBalance} MRU`;
 
     const { data: methods, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('is_active', true)
-        .eq('show_in_checkout', true)
-        .eq('is_crypto', isCrypto)
-        .order('created_at', { ascending: true });
+        .from('payment_methods').select('*')
+        .eq('is_active', true).eq('show_in_checkout', true)
+        .eq('is_crypto', isCrypto).order('created_at', { ascending: true });
 
     const list = document.getElementById('payment-methods-list');
     if (!list) return;
@@ -84,10 +66,7 @@ async function loadPaymentMethods() {
             <div class="payment-method-radio"></div>
         </div>`;
 
-    if (error || !methods || methods.length === 0) {
-        list.innerHTML = walletCard;
-        return;
-    }
+    if (error || !methods || methods.length === 0) { list.innerHTML = walletCard; return; }
 
     list.innerHTML = walletCard + methods.map(m => `
         <div class="payment-method-card" id="pm-${m.id}" onclick="selectMethod('${m.id}', '${m.account_number}', '${m.name}')">
@@ -105,7 +84,7 @@ async function loadPaymentMethods() {
 window.selectMethod = async function(id, account, name) {
     document.querySelectorAll('.payment-method-card').forEach(c => {
         c.style.borderColor = '#334155';
-        c.style.background = '';
+        c.style.background  = '';
         c.classList.remove('selected');
     });
 
@@ -122,8 +101,7 @@ window.selectMethod = async function(id, account, name) {
     if (id === 'wallet') {
         if (infoDiv) infoDiv.style.display = 'none';
         if (receiptSection) receiptSection.style.display = 'none';
-        const rate = 43;
-        const balanceInCurrency = currency === 'USDT' ? userBalance / rate : userBalance;
+        const balanceInCurrency = currency === 'USDT' ? userBalance / 43 : userBalance;
         if (balanceInCurrency < totalAmount) {
             statusMsg.innerHTML = `<p style="color:#ef4444;">⚠️ رصيدك غير كافٍ — اشحن محفظتك أو اختر طريقة دفع أخرى</p>`;
         } else {
@@ -239,13 +217,11 @@ window.selectMethod = async function(id, account, name) {
 async function checkAuthAndLoadData() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
-
     if (!user) return;
 
     const userIcon = document.querySelector('#user-icon-btn i');
     if (userIcon) userIcon.className = 'fas fa-user-check';
 
-    // ✅ تحميل السلة من السحابة
     cart = await loadCartFromCloud(user.id);
     totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
 
@@ -258,10 +234,13 @@ async function checkAuthAndLoadData() {
     if (totalDisplay) totalDisplay.textContent = `${totalAmount} ${currency}`;
 
     try {
-        // ✅ جلب بيانات المستخدم + رقم واتساب من الإعدادات
         const [{ data: userData, error }, { data: settings }] = await Promise.all([
-            supabase.from('users').select('balance, is_blocked, is_active, banned_until, phone').eq('id', user.id).single(),
-            supabase.from('settings').select('whatsapp_number').eq('id', 1).single()
+            supabase.from('users')
+                .select('balance, is_blocked, is_active, banned_until, phone')
+                .eq('id', user.id).single(),
+            supabase.from('settings')
+                .select('whatsapp_number')
+                .eq('id', 1).single()
         ]);
 
         if (error) throw error;
@@ -271,8 +250,7 @@ async function checkAuthAndLoadData() {
         // ✅ رفع الحظر تلقائياً إذا انتهت المدة
         if (userData?.is_blocked && userData?.banned_until) {
             if (new Date(userData.banned_until) < new Date()) {
-                await supabase
-                    .from('users')
+                await supabase.from('users')
                     .update({ is_blocked: false, banned_until: null })
                     .eq('id', user.id);
                 userData.is_blocked   = false;
@@ -280,8 +258,8 @@ async function checkAuthAndLoadData() {
             }
         }
 
+        // ✅ فحص الحظر
         if (userData?.is_blocked) {
-            // ✅ حساب المدة المتبقية
             let bannedInfo = '';
             if (userData?.banned_until) {
                 const until    = new Date(userData.banned_until);
@@ -292,15 +270,10 @@ async function checkAuthAndLoadData() {
                 const diffDays = Math.floor(diffHrs / 24);
 
                 let remaining = '';
-                if (diffMs <= 0) {
-                    remaining = 'انتهت مدة الحظر — تواصل مع الدعم لرفع الحظر';
-                } else if (diffDays > 0) {
-                    remaining = `ينتهي الحظر بعد: ${diffDays} يوم`;
-                } else if (diffHrs > 0) {
-                    remaining = `ينتهي الحظر بعد: ${diffHrs} ساعة و ${diffMins % 60} دقيقة`;
-                } else {
-                    remaining = `ينتهي الحظر بعد: ${diffMins} دقيقة`;
-                }
+                if (diffMs <= 0)       remaining = 'انتهت مدة الحظر — تواصل مع الدعم لرفع الحظر';
+                else if (diffDays > 0) remaining = `ينتهي الحظر بعد: ${diffDays} يوم`;
+                else if (diffHrs > 0)  remaining = `ينتهي الحظر بعد: ${diffHrs} ساعة و ${diffMins % 60} دقيقة`;
+                else                   remaining = `ينتهي الحظر بعد: ${diffMins} دقيقة`;
 
                 bannedInfo = `
                     <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
@@ -330,104 +303,69 @@ async function checkAuthAndLoadData() {
                     </p>
                     ${bannedInfo}
                     <a href="index.html"
-                    style="background:#f97316;color:white;padding:12px 30px;
-                            border-radius:8px;text-decoration:none;font-size:16px;margin-top:8px;">
+                        style="background:#f97316;color:white;padding:12px 30px;
+                               border-radius:8px;text-decoration:none;font-size:16px;margin-top:8px;">
                         العودة للرئيسية
                     </a>
                 </div>`;
             return;
         }
 
-// ✅ فحص التفعيل
-if (!userData?.is_active) {
-    const phone   = userData?.phone || '';
-    const name    = user?.user_metadata?.full_name || '';
+        // ✅ فحص التفعيل
+        if (!userData?.is_active) {
+            const phone      = userData?.phone || '';
+            const name       = user?.user_metadata?.full_name || '';
+            const message    = encodeURIComponent(
+                `مرحباً، أريد تفعيل حسابي في StoreCard\n` +
+                `الاسم: ${name}\n` +
+                `رقم الهاتف المسجل: ${phone}\n\n` +
+                `⚠️ يجب أن ترسل هذه الرسالة من نفس الرقم المسجل في حسابك (${phone})`
+            );
+            const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
 
-    // ✅ تنسيق الرقم لواتساب — احذف + من البداية
-    const phoneForWA = phone.replace(/^\+/, '');
+            document.body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                            height:100vh;background:#0f172a;color:white;font-family:'Cairo',sans-serif;
+                            text-align:center;gap:20px;padding:20px;">
+                    <div style="font-size:80px;">⏳</div>
+                    <h1 style="color:#f97316;font-size:26px;">حسابك غير مفعّل</h1>
+                    <p style="color:#94a3b8;font-size:15px;max-width:420px;line-height:2;">
+                        يجب تفعيل حسابك أولاً قبل إجراء أي عملية شراء.
+                    </p>
+                    <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.3);
+                                border-radius:12px;padding:16px 24px;max-width:420px;text-align:right;">
+                        <div style="font-size:13px;color:#f97316;font-weight:700;margin-bottom:10px;">
+                            📋 شروط التفعيل
+                        </div>
+                        <div style="font-size:13px;color:#94a3b8;line-height:2;">
+                            ١. يجب أن ترسل رسالة التفعيل من نفس رقم هاتفك المسجل في الحساب<br>
+                            ٢. رقمك المسجل هو:
+                            <span style="color:#fcd535;font-family:monospace;font-weight:700;
+                                         background:rgba(252,213,53,0.1);padding:2px 8px;
+                                         border-radius:6px;direction:ltr;display:inline-block;">
+                                ${phone}
+                            </span><br>
+                            ٣. لا تغيّر نص الرسالة التلقائية
+                        </div>
+                    </div>
+                    <a href="${waLink}" target="_blank"
+                       style="display:inline-flex;align-items:center;gap:10px;
+                              background:#25d366;color:white;padding:14px 32px;
+                              border-radius:12px;text-decoration:none;font-size:16px;
+                              font-weight:bold;box-shadow:0 4px 20px rgba(37,211,102,0.4);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                        تواصل معنا عبر واتساب
+                    </a>
+                    <a href="index.html" style="color:#64748b;font-size:13px;text-decoration:none;">
+                        العودة للرئيسية
+                    </a>
+                </div>`;
+            return;
+        }
 
-    const message = encodeURIComponent(
-        `مرحباً، أريد تفعيل حسابي في StoreCard\n` +
-        `الاسم: ${name}\n` +
-        `رقم الهاتف المسجل: ${phone}\n\n` +
-        `⚠️ يجب أن ترسل هذه الرسالة من نفس الرقم المسجل في حسابك (${phone})`
-    );
-
-    // ✅ رابط واتساب يفتح محادثة مع رقم العميل نفسه أولاً
-    const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-
-    document.body.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-                    height:100vh;background:#0f172a;color:white;font-family:'Cairo',sans-serif;
-                    text-align:center;gap:20px;padding:20px;">
-            <div style="font-size:80px;">⏳</div>
-            <h1 style="color:#f97316;font-size:26px;">حسابك غير مفعّل</h1>
-            <p style="color:#94a3b8;font-size:15px;max-width:420px;line-height:2;">
-                يجب تفعيل حسابك أولاً قبل إجراء أي عملية شراء.
-            </p>
-
-            <!-- ✅ شرط التفعيل -->
-            <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.3);
-                        border-radius:12px;padding:16px 24px;max-width:420px;text-align:right;">
-                <div style="font-size:13px;color:#f97316;font-weight:700;margin-bottom:10px;">
-                    📋 شروط التفعيل
-                </div>
-                <div style="font-size:13px;color:#94a3b8;line-height:2;">
-                    ١. يجب أن ترسل رسالة التفعيل من نفس رقم هاتفك المسجل في الحساب<br>
-                    ٢. رقمك المسجل هو:
-                    <span style="color:#fcd535;font-family:monospace;font-weight:700;
-                                 background:rgba(252,213,53,0.1);padding:2px 8px;
-                                 border-radius:6px;direction:ltr;display:inline-block;">
-                        ${phone}
-                    </span><br>
-                    ٣. لا تغيّر نص الرسالة التلقائية
-                </div>
-            </div>
-
-            <a href="${waLink}" target="_blank"
-               style="display:inline-flex;align-items:center;gap:10px;
-                      background:#25d366;color:white;padding:14px 32px;
-                      border-radius:12px;text-decoration:none;font-size:16px;
-                      font-weight:bold;box-shadow:0 4px 20px rgba(37,211,102,0.4);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                تواصل معنا عبر واتساب
-            </a>
-            <a href="index.html" style="color:#64748b;font-size:13px;text-decoration:none;">
-                العودة للرئيسية
-            </a>
-        </div>`;
-    return;
-}
-    document.body.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-                    height:100vh;background:#0f172a;color:white;font-family:'Cairo',sans-serif;
-                    text-align:center;gap:20px;padding:20px;">
-            <div style="font-size:80px;">⏳</div>
-            <h1 style="color:#f97316;font-size:26px;">حسابك غير مفعّل</h1>
-            <p style="color:#94a3b8;font-size:15px;max-width:400px;line-height:2;">
-                يجب تفعيل حسابك أولاً قبل إجراء أي عملية شراء.<br>
-                تواصل معنا عبر واتساب لتفعيل حسابك.
-            </p>
-            <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${message}"
-               target="_blank"
-               style="display:inline-flex;align-items:center;gap:10px;
-                      background:#25d366;color:white;padding:14px 32px;
-                      border-radius:12px;text-decoration:none;font-size:16px;
-                      font-weight:bold;box-shadow:0 4px 20px rgba(37,211,102,0.4);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                تواصل معنا عبر واتساب
-            </a>
-            <a href="index.html" style="color:#64748b;font-size:13px;text-decoration:none;margin-top:8px;">
-                العودة للرئيسية
-            </a>
-        </div>`;
-    return;
-}
-
+        // ✅ حساب طبيعي مفعّل
         userBalance = userData?.balance || 0;
         window._userPhone = userData?.phone || '';
 
@@ -447,6 +385,7 @@ if (!userData?.is_active) {
             if (statusMsg) statusMsg.innerHTML = `<p style="color:red;font-weight:bold;">⚠️ سلتك فارغة!</p>`;
             if (confirmBtn) confirmBtn.disabled = true;
         }
+
     } catch (error) {
         console.error('Error fetching user data:', error);
     }
@@ -454,27 +393,22 @@ if (!userData?.is_active) {
     await loadPaymentMethods();
 }
 
-// ==================== توليد رقم الطلب ====================
+// ===== توليد رقم الطلب =====
 function generateOrderNumber() {
     return `S${Math.floor(100000 + Math.random() * 900000)}`;
 }
 
-// ==================== سحب من المخزون ====================
+// ===== سحب من المخزون =====
 async function pullFromStock(item) {
     const productId = item.product_id || null;
     const label     = item.label      || null;
     const quantity  = item.quantity   || 1;
-
     if (!productId || !label) return null;
 
     const { data: availableCodes, error } = await supabase
-        .from('stocks')
-        .select('id, code, cost_per_card_usd, supplier_name, order_id')
-        .eq('product_id', productId)
-        .eq('price_label', label)
-        .eq('status', 'available')
-        .order('created_at', { ascending: true })
-        .limit(quantity);
+        .from('stocks').select('id, code, cost_per_card_usd, supplier_name, order_id')
+        .eq('product_id', productId).eq('price_label', label).eq('status', 'available')
+        .order('created_at', { ascending: true }).limit(quantity);
 
     if (error || !availableCodes || availableCodes.length < quantity) return null;
 
@@ -494,16 +428,15 @@ async function pullFromStock(item) {
 
     return {
         codes, stockIds,
-        costPerCode:     availableCodes[0]?.cost_per_card_usd || 0,
-        supplierName:    availableCodes[0]?.supplier_name     || 'تلقائي',
-        supplierOrderId: availableCodes[0]?.order_id          || '',
+        costPerCode:      availableCodes[0]?.cost_per_card_usd || 0,
+        supplierName:     availableCodes[0]?.supplier_name     || 'تلقائي',
+        supplierOrderId:  availableCodes[0]?.order_id          || '',
         suppliersDetails: Object.values(suppliersMap)
     };
 }
 
 async function commitStockPull(stockResult, orderId) {
-    await supabase
-        .from('stocks')
+    await supabase.from('stocks')
         .update({ status: 'sold', sold_at: new Date().toISOString(), order_id: orderId })
         .in('id', stockResult.stockIds);
 }
@@ -523,9 +456,9 @@ async function executePayment() {
     const currency = cart[0]?.currency || 'MRU';
 
     const { data: userCheck } = await supabase
-        .from('users').select('is_blocked').eq('id', user.id).single();
-    if (userCheck?.is_blocked) {
-        showToast('🚫 حسابك محظور، لا يمكنك إتمام الدفع', 'error');
+        .from('users').select('is_blocked, is_active').eq('id', user.id).single();
+    if (userCheck?.is_blocked || !userCheck?.is_active) {
+        showToast('🚫 حسابك محظور أو غير مفعّل', 'error');
         return;
     }
 
@@ -537,24 +470,22 @@ async function executePayment() {
             return;
         }
 
-        btn.disabled = true;
+        btn.disabled  = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
         try {
             const stockResults = [];
-            for (const item of cart) {
-                stockResults.push(await pullFromStock(item));
-            }
+            for (const item of cart) stockResults.push(await pullFromStock(item));
 
             const { error: balanceError } = await supabase
                 .from('users').update({ balance: userBalance - totalAmount }).eq('id', user.id);
             if (balanceError) throw balanceError;
 
             const sharedOrderNumber = generateOrderNumber();
-            const allHaveStock = stockResults.every(r => r !== null);
+            const allHaveStock      = stockResults.every(r => r !== null);
 
             const ordersToInsert = cart.map((item, i) => {
-                const sr = stockResults[i];
+                const sr       = stockResults[i];
                 const hasStock = sr !== null;
                 return {
                     order_number:      sharedOrderNumber,
@@ -600,16 +531,14 @@ async function executePayment() {
                 status:         'مكتمل'
             });
 
-            // ✅ مسح السلة السحابية
             await clearCloudCart(user.id);
-
             showToast(allHaveStock ? '✅ تم الدفع وتسليم جميع بطاقاتك!' : '✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
             setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
         } catch (error) {
             console.error('Payment Error:', error);
             showToast('❌ حدث خطأ: ' + error.message, 'error');
-            btn.disabled = false;
+            btn.disabled  = false;
             btn.innerHTML = 'تأكيد الدفع الآن';
         }
         return;
@@ -626,7 +555,7 @@ async function executePayment() {
         return;
     }
 
-    // ===== دفع بالإيصال (MRU) =====
+    // ===== دفع بالإيصال =====
     const receiptFile = document.getElementById('receipt-input')?.files[0];
     if (!receiptFile) { showToast('⚠️ الرجاء رفع إيصال الدفع!', 'error'); return; }
 
@@ -641,7 +570,7 @@ async function executePayment() {
         return;
     }
 
-    btn.disabled = true;
+    btn.disabled  = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الدفع...';
 
     try {
@@ -675,16 +604,14 @@ async function executePayment() {
         const { error: insertError } = await supabase.from('orders').insert(orders);
         if (insertError) throw insertError;
 
-        // ✅ مسح السلة السحابية
         await clearCloudCart(user.id);
-
         showToast('✅ تمت عملية الدفع بنجاح!', 'success');
         setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
 
     } catch (error) {
         console.error('Payment Error:', error);
         showToast('❌ حدث خطأ: ' + error.message, 'error');
-        btn.disabled = false;
+        btn.disabled  = false;
         btn.innerHTML = 'تأكيد الدفع الآن';
     }
 }
@@ -708,7 +635,6 @@ function showToast(message, type = 'success') {
 window.copyAccount = function() {
     const text = document.getElementById('selected-account')?.textContent?.trim();
     if (!text) return;
-
     const el = document.createElement('textarea');
     el.value = text;
     el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
@@ -717,8 +643,6 @@ window.copyAccount = function() {
     el.setSelectionRange(0, 99999);
     document.execCommand('copy');
     document.body.removeChild(el);
-
-    // تغيير زر النسخ مؤقتاً
     const btn = document.querySelector('#selected-method-info button');
     if (btn) {
         const original = btn.innerHTML;
