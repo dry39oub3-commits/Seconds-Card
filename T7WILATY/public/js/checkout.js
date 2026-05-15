@@ -268,7 +268,17 @@ async function checkAuthAndLoadData() {
 
         const WHATSAPP_NUMBER = settings?.whatsapp_number || '22200000000';
 
-        if (error) throw error;
+        // ✅ رفع الحظر تلقائياً إذا انتهت المدة
+        if (userData?.is_blocked && userData?.banned_until) {
+            if (new Date(userData.banned_until) < new Date()) {
+                await supabase
+                    .from('users')
+                    .update({ is_blocked: false, banned_until: null })
+                    .eq('id', user.id);
+                userData.is_blocked   = false;
+                userData.banned_until = null;
+            }
+        }
 
         if (userData?.is_blocked) {
             // ✅ حساب المدة المتبقية

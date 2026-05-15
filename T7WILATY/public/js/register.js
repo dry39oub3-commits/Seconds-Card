@@ -102,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     fullName:  name,
                     phone:     fullPhone,
                     balance:   0,
-                    role:      'user'
+                    role:      'user',
+                    is_active: false  // ← يحتاج تفعيل يدوي من الأدمن
                 });
             }
 
