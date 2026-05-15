@@ -74,16 +74,45 @@ window.renderTable = () => {
         const isInactive = !isBlocked && !u.is_active;
 
         const bannedUntilText = isBlocked && u.banned_until
-            ? `<div style="font-size:10px;color:#f59e0b;margin-top:3px;">
-                حتى: ${new Date(u.banned_until).toLocaleString('fr-FR',{
-                    day:'2-digit',month:'2-digit',year:'numeric',
-                    hour:'2-digit',minute:'2-digit'
-                })}
-               </div>`
-            : '';
+    ? (() => {
+        const until    = new Date(u.banned_until);
+        const now      = new Date();
+        const diffMs   = until - now;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHrs  = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHrs / 24);
 
-        const statusBadge = isBlocked
-            ? `<span class="badge badge-blocked"><i class="fas fa-ban"></i> محظور</span>${bannedUntilText}`
+        let remaining = '';
+        if (diffMs <= 0) {
+            remaining = `<span style="color:#22c55e;">انتهى الحظر</span>`;
+        } else if (diffDays > 0) {
+            remaining = `متبقي: ${diffDays} يوم`;
+        } else if (diffHrs > 0) {
+            remaining = `متبقي: ${diffHrs} ساعة`;
+        } else {
+            remaining = `متبقي: ${diffMins} دقيقة`;
+        }
+
+        return `
+            <div style="font-size:10px;color:#f59e0b;margin-top:4px;
+                        background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);
+                        border-radius:6px;padding:3px 8px;display:inline-block;">
+                <i class="fas fa-clock" style="font-size:9px;"></i>
+                حتى: ${until.toLocaleString('fr-FR',{
+                    day:'2-digit', month:'2-digit', year:'numeric',
+                    hour:'2-digit', minute:'2-digit'
+                })}
+                <br>
+                <span style="color:#fcd535;">${remaining}</span>
+            </div>`;
+    })()
+    : '';
+
+const statusBadge = isBlocked
+    ? `<div>
+        <span class="badge badge-blocked"><i class="fas fa-ban"></i> محظور</span>
+        ${bannedUntilText}
+       </div>`
             : isActive
             ? `<span class="badge badge-active"><i class="fas fa-check-circle"></i> مفعّل</span>`
             : `<span class="badge badge-inactive"><i class="fas fa-times-circle"></i> غير مفعّل</span>`;
