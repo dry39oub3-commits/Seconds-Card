@@ -53,8 +53,8 @@ function renderUsersTable(usersList) {
 
     tbody.innerHTML = usersList.map(user => {
         const scId        = generateSCId(user.id);
-        const statusClass = user.is_blocked ? 'status-blocked' : 'status-active';
-        const statusText  = user.is_blocked ? 'محظور' : 'نشط';
+        const statusClass = user.is_active ? 'status-active' : 'status-blocked';
+        const statusText  = user.is_active ? 'نشط' : 'غير مفعّل';
         const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : 'غير معروف';
         const name        = user.fullName || user.full_name || 'بدون اسم';
 
@@ -79,7 +79,6 @@ function renderUsersTable(usersList) {
                         ${scId}
                     </span>
                 </td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${joinDate}</td>
                 <td>
                     <button onclick="openEditModal('${user.id}')"
@@ -106,10 +105,7 @@ window.filterUsers = function() {
             email.includes(searchTerm) ||
             scId.includes(searchTerm);
 
-        const matchesStatus =
-            statusFilter === 'all' ||
-            (statusFilter === 'blocked' && user.is_blocked) ||
-            (statusFilter === 'active'  && !user.is_blocked);
+        const matchesStatus = true;
 
         return matchesSearch && matchesStatus;
     });
@@ -124,7 +120,6 @@ window.openEditModal = function(userId) {
     document.getElementById('edit-user-id').value    = user.id;
     document.getElementById('edit-name').value        = user.fullName || user.full_name || '';
     document.getElementById('edit-email').value       = user.email || '';
-    document.getElementById('edit-status').value      = user.is_blocked ? 'blocked' : 'active';
     document.getElementById('edit-password').value    = '';
     document.getElementById('editModal').style.display = 'block';
 };
@@ -146,7 +141,6 @@ window.saveUserChanges = async function() {
         .update({
             full_name:  newName,
             email:      newEmail,
-            is_blocked: newStatus === 'blocked'
         })
         .eq('id', userId);
 
