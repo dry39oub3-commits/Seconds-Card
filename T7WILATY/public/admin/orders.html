@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -10,193 +11,206 @@
     <link rel="icon" type="image/png" href="../assets/Icon.png">
     <link rel="stylesheet" href="./css/dashboard-main.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css?v=2">
-   
 
-<style>
-/* ===== عزل ثيم orders - الوضع الداكن افتراضي ===== */
-body.orders-page {
-    --bg-light: #0f172a;
-    --white: #1e293b;
-    --text-main: #f1f5f9;
-    --text-muted: #94a3b8;
-    --border-light: #334155;
-    --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    background-color: var(--bg-light);
-    color: var(--text-main);
-}
 
-body.orders-page section,
-body.orders-page .table-container,
-body.orders-page .products-table-container {
-    background: var(--white) !important;
-    border-color: var(--border-light) !important;
-}
+    <style>
+        /* ===== عزل ثيم orders - الوضع الداكن افتراضي ===== */
+        body.orders-page {
+            --bg-light: #0f172a;
+            --white: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-light: #334155;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            background-color: var(--bg-light);
+            color: var(--text-main);
+        }
 
-body.orders-page table thead th {
-    background: #0f172a !important;
-    color: var(--text-muted) !important;
-    border-bottom-color: var(--border-light) !important;
-}
+        body.orders-page section,
+        body.orders-page .table-container,
+        body.orders-page .products-table-container {
+            background: var(--white) !important;
+            border-color: var(--border-light) !important;
+        }
 
-body.orders-page table tbody td {
-    border-bottom-color: var(--border-light) !important;
-    color: var(--text-main) !important;
-}
+        body.orders-page table thead th {
+            background: #0f172a !important;
+            color: var(--text-muted) !important;
+            border-bottom-color: var(--border-light) !important;
+        }
 
-body.orders-page table tbody tr:hover {
-    background: rgba(249,115,22,0.07) !important;
-}
+        body.orders-page table tbody td {
+            border-bottom-color: var(--border-light) !important;
+            color: var(--text-main) !important;
+        }
 
-body.orders-page input[type="text"],
-body.orders-page input[type="search"],
-body.orders-page input[type="number"],
-body.orders-page select {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
+        body.orders-page table tbody tr:hover {
+            background: rgba(249, 115, 22, 0.07) !important;
+        }
 
-body.orders-page input::placeholder {
-    color: #475569 !important;
-}
+        body.orders-page input[type="text"],
+        body.orders-page input[type="search"],
+        body.orders-page input[type="number"],
+        body.orders-page select {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
 
-/* ===== وضع النهار ===== */
-[data-theme="light"] body.orders-page,
-html[data-theme="light"] body.orders-page {
-    --bg-light: #f1f5f9;
-    --white: #ffffff;
-    --text-main: #111827;
-    --text-muted: #6b7280;
-    --border-light: #e5e7eb;
-    --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    background-color: #f1f5f9;
-    color: #111827;
-}
+        body.orders-page input::placeholder {
+            color: #475569 !important;
+        }
 
-html[data-theme="light"] body.orders-page tbody td span[style*="color:#e2e8f0"] {
-    color: #111827 !important;
-}
+        /* ===== وضع النهار ===== */
+        [data-theme="light"] body.orders-page,
+        html[data-theme="light"] body.orders-page {
+            --bg-light: #f1f5f9;
+            --white: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border-light: #e5e7eb;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            background-color: #f1f5f9;
+            color: #111827;
+        }
 
-html[data-theme="light"] body.orders-page section,
-html[data-theme="light"] body.orders-page .table-container {
-    background: #ffffff !important;
-    border-color: #e5e7eb !important;
-}
+        html[data-theme="light"] body.orders-page tbody td span[style*="color:#e2e8f0"] {
+            color: #111827 !important;
+        }
 
-html[data-theme="light"] body.orders-page table thead th {
-    background: #f8fafc !important;
-    color: #6b7280 !important;
-    border-bottom-color: #e5e7eb !important;
-}
+        html[data-theme="light"] body.orders-page section,
+        html[data-theme="light"] body.orders-page .table-container {
+            background: #ffffff !important;
+            border-color: #e5e7eb !important;
+        }
 
-html[data-theme="light"] body.orders-page table tbody td {
-    color: #111827 !important;
-    border-bottom-color: #e5e7eb !important;
-}
+        html[data-theme="light"] body.orders-page table thead th {
+            background: #f8fafc !important;
+            color: #6b7280 !important;
+            border-bottom-color: #e5e7eb !important;
+        }
 
-html[data-theme="light"] body.orders-page input[type="text"],
-html[data-theme="light"] body.orders-page input[type="search"],
-html[data-theme="light"] body.orders-page input[type="number"],
-html[data-theme="light"] body.orders-page select {
-    background: #ffffff !important;
-    border-color: #e5e7eb !important;
-    color: #111827 !important;
-}
+        html[data-theme="light"] body.orders-page table tbody td {
+            color: #111827 !important;
+            border-bottom-color: #e5e7eb !important;
+        }
 
-html[data-theme="light"] body.orders-page input::placeholder {
-    color: #9ca3af !important;
-}
-</style>
-<script type="module" src="./js/admin-guard.js?v=2"></script>
+        html[data-theme="light"] body.orders-page input[type="text"],
+        html[data-theme="light"] body.orders-page input[type="search"],
+        html[data-theme="light"] body.orders-page input[type="number"],
+        html[data-theme="light"] body.orders-page select {
+            background: #ffffff !important;
+            border-color: #e5e7eb !important;
+            color: #111827 !important;
+        }
+
+        html[data-theme="light"] body.orders-page input::placeholder {
+            color: #9ca3af !important;
+        }
+    </style>
+    <script type="module" src="./js/admin-guard.js?v=2"></script>
 </head>
+
 <body class="orders-page">
 
-<header class="admin-top-header">
-    <div class="header-container">
- 
-        <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
-            <span></span><span></span><span></span>
-        </button>
- 
-        <div class="logo">
-            <a href="orders.html" style="text-decoration:none; color:inherit;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="../assets/Icon.png" alt="StoreCard" style="height:40px; width:40px; object-fit:contain;">
-                    <div style="display:flex; flex-direction:column; line-height:1.1;">
-                        <span style="font-size:18px; font-weight:800; color:white;">
-                            Store<span style="color:#f97316;">Card</span>
-                        </span>
+    <header class="admin-top-header">
+        <div class="header-container">
+
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+                <span></span><span></span><span></span>
+            </button>
+
+            <div class="logo">
+                <a href="orders.html" style="text-decoration:none; color:inherit;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="../assets/Icon.png" alt="StoreCard"
+                            style="height:40px; width:40px; object-fit:contain;">
+                        <div style="display:flex; flex-direction:column; line-height:1.1;">
+                            <span style="font-size:18px; font-weight:800; color:white;">
+                                Store<span style="color:#f97316;">Card</span>
+                            </span>
+                        </div>
                     </div>
-                </div>
-            </a>
-        </div>
- 
-        <nav class="main-nav">
-            <ul class="nav-list" id="main-nav-list">
-                <li data-perm="all">
-                    <a href="Slider-manager.html" class="nav-link">
-                        <i class="fas fa-chart-line"></i> السلايدر
-                    </a>
-                </li>
-                <li data-perm="view_wallets">
-                    <a href="admin-wallet.html" class="nav-link">
-                        <i class="fas fa-wallet"></i> المحافظ
-                    </a>
-                </li>
-                <li data-perm="all">
-                    <a href="payment-methods.html" class="nav-link">
-                        <i class="fas fa-credit-card"></i> الدفع
-                    </a>
-                </li>
-                <li data-perm="view_stats">
-                    <a href="dashboard.html" class="nav-link">
-                        <i class="fas fa-chart-bar"></i> الإحصائيات
-                    </a>
-                </li>
-                <li data-perm="all">
-                    <a href="products-manager.html" class="nav-link">
-                        <i class="fas fa-box-open"></i> المنتجات
-                    </a>
-                </li>
-                <li data-perm="manage_stock">
-                    <a href="stocks.html" class="nav-link">
-                        <i class="fas fa-layer-group"></i> المخزون
-                    </a>
-                </li>
-                <li data-perm="view_completed">
-                    <a href="completed-orders.html" class="nav-link">
-                        <i class="fas fa-check-double"></i> الطلبات المكتملة
-                    </a>
-                </li>
-            </ul>
-        </nav>
- 
-        <div style="position:relative; display:inline-block; margin-left:15px;">
-            <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
-                <i class="fas fa-bell"></i>
-                <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+                </a>
+            </div>
+
+            <nav class="main-nav">
+                <ul class="nav-list" id="main-nav-list">
+                    <li data-perm="all">
+                        <a href="Slider-manager.html" class="nav-link">
+                            <i class="fas fa-chart-line"></i> السلايدر
+                        </a>
+                    </li>
+
+                    <li data-perm="all">
+                        <a href="activate-users.html" class="nav-link">
+                            <i class="fas fa-user-check"></i> تفعيل الحسابات
+                        </a>
+                    </li>
+
+                    <li data-perm="view_wallets">
+                        <a href="admin-wallet.html" class="nav-link">
+                            <i class="fas fa-wallet"></i> المحافظ
+                        </a>
+                    </li>
+                    <li data-perm="all">
+                        <a href="payment-methods.html" class="nav-link">
+                            <i class="fas fa-credit-card"></i> الدفع
+                        </a>
+                    </li>
+                    <li data-perm="view_stats">
+                        <a href="dashboard.html" class="nav-link">
+                            <i class="fas fa-chart-bar"></i> الإحصائيات
+                        </a>
+                    </li>
+                    <li data-perm="all">
+                        <a href="products-manager.html" class="nav-link">
+                            <i class="fas fa-box-open"></i> المنتجات
+                        </a>
+                    </li>
+                    <li data-perm="manage_stock">
+                        <a href="stocks.html" class="nav-link">
+                            <i class="fas fa-layer-group"></i> المخزون
+                        </a>
+                    </li>
+                    <li data-perm="view_completed">
+                        <a href="completed-orders.html" class="nav-link">
+                            <i class="fas fa-check-double"></i> الطلبات المكتملة
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div style="position:relative; display:inline-block; margin-left:15px;">
+                <button id="bell-btn"
+                    style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
+                    <i class="fas fa-bell"></i>
+                    <span id="orders-badge"
+                        style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+                </button>
+            </div>
+
+            <button id="theme-toggle"
+                style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
+                <i class="fas fa-moon"></i>
             </button>
+
+            <div class="user-actions">
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
+                </button>
+            </div>
+
         </div>
- 
-        <button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
-            <i class="fas fa-moon"></i>
-        </button>
- 
-        <div class="user-actions">
-            <button class="logout-btn" id="logoutBtn">
-                <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
-            </button>
-        </div>
- 
-    </div>
-</header>
+    </header>
 
     <main class="dashboard-main-area">
         <section class="content-card">
             <div class="section-header">
-                <h2><i class="fas fa-shopping-basket"></i>   قيد الانتظار</h2>
+                <h2><i class="fas fa-shopping-basket"></i> قيد الانتظار</h2>
                 <div class="search-box">
-                    <input type="text" id="orderSearch" placeholder="بحث برقم الطلب أو البريد..." onkeyup="filterOrders()">
+                    <input type="text" id="orderSearch" placeholder="بحث برقم الطلب أو البريد..."
+                        onkeyup="filterOrders()">
                 </div>
             </div>
 
@@ -217,62 +231,62 @@ html[data-theme="light"] body.orders-page input::placeholder {
                         </tr>
                     </thead>
                     <tbody id="admin-orders-list">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </section>
 
         <!-- ===== جدول الطلبات المكتملة ===== -->
-<section class="content-card" id="completed-section" style="margin-top:30px;">
-    <div class="section-header">
-        <h2><i class="fas fa-check-double" style="color:#22c55e;"></i>  المكتملة  </h2>
-        <div class="search-box">
-            <input type="text" id="completed-search"
-                   placeholder="بحث..." onkeyup="filterCompleted()">
-        </div>
-    </div>
+        <section class="content-card" id="completed-section" style="margin-top:30px;">
+            <div class="section-header">
+                <h2><i class="fas fa-check-double" style="color:#22c55e;"></i> المكتملة </h2>
+                <div class="search-box">
+                    <input type="text" id="completed-search" placeholder="بحث..." onkeyup="filterCompleted()">
+                </div>
+            </div>
 
-    <div class="table-container">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>رقم الطلب</th>
-                    <th>المستخدم</th>
-                    <th>صورة</th>
-                    <th>المنتج</th>
-                    <th>المبلغ</th>
-                    <th>الكمية</th>
-                    <th>التاريخ</th>
-                    <th>طريقة الدفع</th>
-                    <th>الحالة</th>
-                    
-                </tr>
-            </thead>
-            <tbody id="completed-orders-list">
-                <tr><td colspan="10" style="text-align:center;color:#64748b;">جاري التحميل...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</section>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>المستخدم</th>
+                            <th>صورة</th>
+                            <th>المنتج</th>
+                            <th>المبلغ</th>
+                            <th>الكمية</th>
+                            <th>التاريخ</th>
+                            <th>طريقة الدفع</th>
+                            <th>الحالة</th>
+
+                        </tr>
+                    </thead>
+                    <tbody id="completed-orders-list">
+                        <tr>
+                            <td colspan="10" style="text-align:center;color:#64748b;">جاري التحميل...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
     </main>
     <!-- زر الدردشة العائم للأدمن -->
-<div id="admin-chat-float-btn" onclick="toggleAdminChat()"
-     style="position:fixed; bottom:24px; left:24px; width:52px; height:52px;
+    <div id="admin-chat-float-btn" onclick="toggleAdminChat()" style="position:fixed; bottom:24px; left:24px; width:52px; height:52px;
             background:#f97316; color:white; border-radius:50%; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             font-size:22px; box-shadow:0 4px 20px rgba(249,115,22,0.4);
             z-index:99997; transition:transform 0.2s;">
-    <i class="fas fa-headset"></i>
-    <span id="admin-chat-badge"
-          style="display:none; position:absolute; top:-4px; right:-4px;
+        <i class="fas fa-headset"></i>
+        <span id="admin-chat-badge" style="display:none; position:absolute; top:-4px; right:-4px;
                  background:#ef4444; color:white; border-radius:50%;
                  width:18px; height:18px; font-size:10px; font-weight:800;
                  align-items:center; justify-content:center;"></span>
-</div>
-<script type="module" src="./js/admin-chat.js?v=2"></script>
+    </div>
+    <script type="module" src="./js/admin-chat.js?v=2"></script>
     <script type="module" src="./js/header.js?v=2"></script>
-<script type="module" src="./js/bell.js?v=2"></script>
+    <script type="module" src="./js/bell.js?v=2"></script>
     <script type="module" src="./js/orders.js?v=2"></script>
 </body>
+
 </html>
