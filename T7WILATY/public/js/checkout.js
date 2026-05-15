@@ -345,7 +345,7 @@ async function checkAuthAndLoadData() {
                                          border-radius:6px;direction:ltr;display:inline-block;">
                                 ${phone}
                             </span><br>
-                            ٣. لا تغيّر نص الرسالة التلقائية
+                            
                         </div>
                     </div>
                     <a href="${waLink}" target="_blank"
