@@ -319,7 +319,7 @@ async function checkAuthAndLoadData() {
                 `مرحباً، أريد تفعيل حسابي في StoreCard\n` +
                 `الاسم: ${name}\n` +
                 `رقم الهاتف المسجل: ${phone}\n\n` +
-                `⚠️ يجب أن ترسل هذه الرسالة من نفس الرقم المسجل في حسابك (${phone})`
+                ``
             );
             const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
 
