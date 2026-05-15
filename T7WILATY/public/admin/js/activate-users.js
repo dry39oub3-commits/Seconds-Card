@@ -1,7 +1,7 @@
 import { supabase } from '../../js/supabase-config.js';
 
-window._allUsers   = [];
-window._filterMode = 'all';
+window._allUsers      = [];
+window._filterMode    = 'all';
 window._selectedHours = null;
 
 // ==================== تحميل ====================
@@ -73,17 +73,51 @@ window.renderTable = () => {
         const isActive   = !isBlocked && !!u.is_active;
         const isInactive = !isBlocked && !u.is_active;
 
-        const bannedUntilText = isBlocked && u.banned_until
-            ? `<div style="font-size:10px;color:#f59e0b;margin-top:3px;">
-                حتى: ${new Date(u.banned_until).toLocaleString('fr-FR',{
-                    day:'2-digit',month:'2-digit',year:'numeric',
-                    hour:'2-digit',minute:'2-digit'
-                })}
-               </div>`
+        // ==================== نص الحظر ====================
+        const bannedUntilText = isBlocked
+            ? (() => {
+                if (!u.banned_until) {
+                    return `
+                        <div style="font-size:10px;color:#ef4444;margin-top:4px;
+                                    background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+                                    border-radius:6px;padding:3px 8px;display:inline-block;">
+                            🚫 محظور للأبد
+                        </div>`;
+                }
+
+                const until    = new Date(u.banned_until);
+                const now      = new Date();
+                const diffMs   = until - now;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHrs  = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHrs / 24);
+
+                let remaining = '';
+                if (diffMs <= 0)       remaining = `<span style="color:#22c55e;">انتهى الحظر</span>`;
+                else if (diffDays > 0) remaining = `متبقي: ${diffDays} يوم`;
+                else if (diffHrs > 0)  remaining = `متبقي: ${diffHrs} ساعة`;
+                else                   remaining = `متبقي: ${diffMins} دقيقة`;
+
+                return `
+                    <div style="font-size:10px;color:#f59e0b;margin-top:4px;
+                                background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);
+                                border-radius:6px;padding:3px 8px;display:inline-block;">
+                        <i class="fas fa-clock" style="font-size:9px;"></i>
+                        حتى: ${until.toLocaleString('fr-FR',{
+                            day:'2-digit', month:'2-digit', year:'numeric',
+                            hour:'2-digit', minute:'2-digit'
+                        })}
+                        <br>
+                        <span style="color:#fcd535;">${remaining}</span>
+                    </div>`;
+            })()
             : '';
 
         const statusBadge = isBlocked
-            ? `<span class="badge badge-blocked"><i class="fas fa-ban"></i> محظور</span>${bannedUntilText}`
+            ? `<div>
+                <span class="badge badge-blocked"><i class="fas fa-ban"></i> محظور</span>
+                ${bannedUntilText}
+               </div>`
             : isActive
             ? `<span class="badge badge-active"><i class="fas fa-check-circle"></i> مفعّل</span>`
             : `<span class="badge badge-inactive"><i class="fas fa-times-circle"></i> غير مفعّل</span>`;
@@ -217,7 +251,7 @@ window.toggleBlock = async (userId, block) => {
     updateStats(window._allUsers);
 };
 
-// ==================== modal الحظر المؤقت ====================
+// ==================== modal الحظر ====================
 window.showBlockModal = (userId, name) => {
     document.getElementById('block-modal')?.remove();
     window._selectedHours = null;
@@ -234,22 +268,23 @@ window.showBlockModal = (userId, name) => {
                     padding:28px; width:100%; max-width:420px;
                     font-family:'Tajawal',sans-serif; color:#e2e8f0;">
             <h3 style="text-align:center; color:#f59e0b; margin-bottom:20px;">
-                <i class="fas fa-ban"></i> حظر مؤقت — ${name}
+                <i class="fas fa-ban"></i> حظر — ${name}
             </h3>
+
             <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:8px;">
                 اختر مدة الحظر
             </label>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
                 ${[
-                    { label: 'ساعة',    hours: 1   },
-                    { label: '6 ساعات', hours: 6   },
-                    { label: '12 ساعة', hours: 12  },
-                    { label: 'يوم',     hours: 24  },
-                    { label: '3 أيام',  hours: 72  },
-                    { label: 'أسبوع',   hours: 168 },
-                    { label: 'شهر',     hours: 720 },
-                    { label: '3 أشهر',  hours: 2160},
-                    { label: 'سنة',     hours: 8760},
+                    { label: 'ساعة',    hours: 1    },
+                    { label: '6 ساعات', hours: 6    },
+                    { label: '12 ساعة', hours: 12   },
+                    { label: 'يوم',     hours: 24   },
+                    { label: '3 أيام',  hours: 72   },
+                    { label: 'أسبوع',   hours: 168  },
+                    { label: 'شهر',     hours: 720  },
+                    { label: '3 أشهر',  hours: 2160 },
+                    { label: 'سنة',     hours: 8760 },
                 ].map(opt => `
                     <button onclick="selectDuration(${opt.hours}, this)"
                         class="duration-btn"
@@ -261,6 +296,7 @@ window.showBlockModal = (userId, name) => {
                     </button>
                 `).join('')}
             </div>
+
             <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center;">
                 <input type="number" id="custom-hours" placeholder="عدد الساعات يدوياً"
                     min="1" oninput="updateBlockInfoCustom()"
@@ -269,15 +305,28 @@ window.showBlockModal = (userId, name) => {
                            font-size:13px; outline:none;">
                 <span style="color:#94a3b8; font-size:13px; white-space:nowrap;">ساعة</span>
             </div>
+
             <div id="block-duration-info"
                 style="text-align:center; font-size:12px; color:#f59e0b;
-                       margin-bottom:16px; min-height:18px;"></div>
+                       margin-bottom:12px; min-height:18px;"></div>
+
             <button onclick="applyBlock('${userId}')"
                 style="width:100%; padding:12px; background:#f59e0b; color:white; border:none;
                        border-radius:10px; font-size:15px; font-weight:800; cursor:pointer;
                        font-family:'Tajawal',sans-serif; margin-bottom:8px;">
-                <i class="fas fa-ban"></i> تطبيق الحظر
+                <i class="fas fa-ban"></i> تطبيق الحظر المؤقت
             </button>
+
+            <button onclick="applyPermanentBlock('${userId}')"
+                style="width:100%; padding:11px; background:rgba(239,68,68,0.12); color:#ef4444;
+                       border:1px solid #ef4444; border-radius:10px; font-size:14px; font-weight:800;
+                       cursor:pointer; font-family:'Tajawal',sans-serif; margin-bottom:8px;
+                       transition:background 0.2s;"
+                onmouseover="this.style.background='rgba(239,68,68,0.25)'"
+                onmouseout="this.style.background='rgba(239,68,68,0.12)'">
+                🚫 حظر للأبد
+            </button>
+
             <button onclick="document.getElementById('block-modal').remove()"
                 style="width:100%; padding:10px; background:transparent; color:#94a3b8;
                        border:1px solid #334155; border-radius:10px; font-size:14px;
@@ -322,6 +371,7 @@ function updateBlockInfo(hours) {
         })}`;
 }
 
+// ==================== تطبيق الحظر المؤقت ====================
 window.applyBlock = async (userId) => {
     const customHours = parseInt(document.getElementById('custom-hours')?.value);
     const hours = customHours > 0 ? customHours : window._selectedHours;
@@ -345,6 +395,26 @@ window.applyBlock = async (userId) => {
 
     document.getElementById('block-modal')?.remove();
     showToast(`🚫 تم الحظر لمدة ${hours} ساعة`, 'error');
+    renderTable();
+    updateStats(window._allUsers);
+};
+
+// ==================== حظر للأبد ====================
+window.applyPermanentBlock = async (userId) => {
+    if (!confirm('هل تريد حظر هذا الحساب للأبد؟')) return;
+
+    const { error } = await supabase
+        .from('users')
+        .update({ is_blocked: true, banned_until: null })
+        .eq('id', userId);
+
+    if (error) { showToast('❌ خطأ: ' + error.message, 'error'); return; }
+
+    const user = window._allUsers.find(u => u.id === userId);
+    if (user) { user.is_blocked = true; user.banned_until = null; }
+
+    document.getElementById('block-modal')?.remove();
+    showToast('🚫 تم الحظر للأبد', 'error');
     renderTable();
     updateStats(window._allUsers);
 };

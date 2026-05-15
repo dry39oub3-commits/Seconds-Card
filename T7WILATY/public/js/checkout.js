@@ -300,7 +300,7 @@ async function checkAuthAndLoadData() {
                         </div>
                         <div style="font-size:15px;color:#ef4444;font-weight:700;">${remaining}</div>
                         <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                            حتى: ${until.toLocaleString('ar-SA', {
+                            حتى: ${until.toLocaleString('fr-FR', {
                                 day:'2-digit', month:'2-digit', year:'numeric',
                                 hour:'2-digit', minute:'2-digit'
                             })}
