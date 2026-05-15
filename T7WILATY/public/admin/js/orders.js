@@ -617,14 +617,22 @@ dropdown.innerHTML = data.map(w => `
                transition:background 0.15s;"
         onmouseover="this.style.background='rgba(252,213,53,0.08)'"
         onmouseout="this.style.background='transparent'">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <span style="font-weight:800; color:#fcd535; font-size:15px;">${w.amount} ${w.currency}</span>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-weight:900; color:#fcd535; font-size:16px;">
+                ${w.amount} ${w.currency}
+            </span>
             <span style="font-size:11px; color:#64748b;">${w.date}</span>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:12px; color:#94a3b8; font-family:monospace;">${w.description}</span>
-            <span style="font-size:12px; color:#e2e8f0; font-weight:600;">🏪 ${w.merchant}</span>
+
+        <div style="font-size:12px; color:#e2e8f0; font-weight:700; margin-bottom:4px;">
+            🏪 ${w.merchant}
         </div>
+
+        <div style="font-size:11px; color:#94a3b8; font-family:monospace;">
+            TX: ${w.description}
+        </div>
+
     </div>
 `).join('');
 
