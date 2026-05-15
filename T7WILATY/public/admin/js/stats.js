@@ -3,13 +3,33 @@ import { supabase } from '../../js/supabase-config.js';
 const fmt  = (n) => new Intl.NumberFormat('fr-FR').format(Math.round(n));
 const fmtD = (n) => parseFloat(n).toFixed(2);
 
+// ==================== فلتر الإيرادات ====================
+window._revenueFilter = { from: null, to: null };
+
+window.applyRevenueFilter = () => {
+    const from = document.getElementById('revenue-from')?.value;
+    const to   = document.getElementById('revenue-to')?.value;
+    window._revenueFilter = {
+        from: from ? new Date(from) : null,
+        to:   to   ? new Date(to + 'T23:59:59') : null
+    };
+    loadDashboardStats();
+};
+
+window.resetRevenueFilter = () => {
+    document.getElementById('revenue-from').value = '';
+    document.getElementById('revenue-to').value   = '';
+    window._revenueFilter = { from: null, to: null };
+    loadDashboardStats();
+};
+
 async function loadDashboardStats() {
     const [
-        { data: orders  },
-        { data: users   },
-        { data: stocks  },
-        { data: walletTx},
-        { data: products},
+        { data: orders   },
+        { data: users    },
+        { data: stocks   },
+        { data: walletTx },
+        { data: products },
     ] = await Promise.all([
         supabase.from('orders').select('id, status, price, quantity, created_at, cost_price, paymentMethod, payment_method, auto_approved'),
         supabase.from('users').select('id, created_at, balance'),
@@ -23,28 +43,37 @@ async function loadDashboardStats() {
     const week  = new Date(today); week.setDate(today.getDate() - 7);
     const month = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const completed  = (orders || []).filter(o => o.status === 'مكتمل');
-    const pending    = (orders || []).filter(o => o.status !== 'مكتمل' && o.status !== 'ملغي' && o.status !== 'مسترد');
-    const cancelled  = (orders || []).filter(o => o.status === 'ملغي');
-    const refunded   = (orders || []).filter(o => o.status === 'مسترد');
+    const completed = (orders || []).filter(o => o.status === 'مكتمل');
+    const pending   = (orders || []).filter(o => o.status !== 'مكتمل' && o.status !== 'ملغي' && o.status !== 'مسترد');
+    const cancelled = (orders || []).filter(o => o.status === 'ملغي');
+    const refunded  = (orders || []).filter(o => o.status === 'مسترد');
 
-    const totalRevenue = completed.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
-    const totalCost    = completed.reduce((s, o) => s + (o.cost_price || 0) * 43 * (o.quantity || 1), 0);
+    // ✅ تطبيق فلتر التاريخ على الإيرادات
+    const { from: rFrom, to: rTo } = window._revenueFilter || {};
+    const filteredCompleted = completed.filter(o => {
+        const d = new Date(o.created_at);
+        if (rFrom && d < rFrom) return false;
+        if (rTo   && d > rTo)   return false;
+        return true;
+    });
+
+    const totalRevenue = filteredCompleted.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
+    const totalCost    = filteredCompleted.reduce((s, o) => s + (o.cost_price || 0) * 43 * (o.quantity || 1), 0);
     const totalProfit  = totalRevenue - totalCost;
 
-    const todayOrders  = completed.filter(o => new Date(o.created_at) >= today);
-    const weekOrders   = completed.filter(o => new Date(o.created_at) >= week);
-    const monthOrders  = completed.filter(o => new Date(o.created_at) >= month);
+    const todayOrders  = filteredCompleted.filter(o => new Date(o.created_at) >= today);
+    const weekOrders   = filteredCompleted.filter(o => new Date(o.created_at) >= week);
+    const monthOrders  = filteredCompleted.filter(o => new Date(o.created_at) >= month);
 
     const todayRevenue = todayOrders.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
-    const weekRevenue  = weekOrders.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
+    const weekRevenue  = weekOrders.reduce((s, o)  => s + (o.price || 0) * (o.quantity || 1), 0);
     const monthRevenue = monthOrders.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
 
-    const autoApproved   = completed.filter(o => o.auto_approved).length;
-    const manualApproved = completed.filter(o => !o.auto_approved).length;
+    const autoApproved   = filteredCompleted.filter(o =>  o.auto_approved).length;
+    const manualApproved = filteredCompleted.filter(o => !o.auto_approved).length;
 
     const paymentMap = {};
-    completed.forEach(o => {
+    filteredCompleted.forEach(o => {
         const pm = o.paymentMethod || o.payment_method || 'غير محدد';
         if (!paymentMap[pm]) paymentMap[pm] = { count: 0, revenue: 0 };
         paymentMap[pm].count++;
@@ -71,18 +100,18 @@ async function loadDashboardStats() {
     const newUsersWeek  = (users || []).filter(u => new Date(u.created_at) >= week).length;
     const newUsersMonth = (users || []).filter(u => new Date(u.created_at) >= month).length;
 
-    const charges      = (walletTx || []).filter(t => t.type === 'charge'   && t.status === 'مكتمل');
-    const withdraws    = (walletTx || []).filter(t => t.type === 'withdraw' && t.status === 'مكتمل');
-    const pending_w    = (walletTx || []).filter(t => t.status === 'قيد المراجعة');
+    const charges        = (walletTx || []).filter(t => t.type === 'charge'   && t.status === 'مكتمل');
+    const withdraws      = (walletTx || []).filter(t => t.type === 'withdraw' && t.status === 'مكتمل');
+    const pending_w      = (walletTx || []).filter(t => t.status === 'قيد المراجعة');
     const totalCharged   = charges.reduce((s, t) => s + (t.amount || 0), 0);
     const totalWithdrawn = withdraws.reduce((s, t) => s + (t.amount || 0), 0);
     const chargedToday   = charges.filter(t => new Date(t.created_at) >= today).reduce((s, t) => s + (t.amount || 0), 0);
     const chargedMonth   = charges.filter(t => new Date(t.created_at) >= month).reduce((s, t) => s + (t.amount || 0), 0);
 
     const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-    el('total-sales', fmt(totalRevenue));
-    el('orders-count', completed.length);
-    el('users-count', totalUsers);
+    el('total-sales',   fmt(totalRevenue));
+    el('orders-count',  filteredCompleted.length);
+    el('users-count',   totalUsers);
 
     document.getElementById('full-stats-section')?.remove();
 
@@ -93,9 +122,16 @@ async function loadDashboardStats() {
     section.id = 'full-stats-section';
     section.style.cssText = 'padding: 0 20px 40px; max-width:1200px; margin:0 auto;';
 
+    // ✅ تجهيز قيم الفلتر للعرض
+    const rFromVal = rFrom ? rFrom.toISOString().split('T')[0] : '';
+    const rToVal   = rTo   ? rTo.toISOString().split('T')[0]   : '';
+    const isFiltered = !!(rFrom || rTo);
+    const filterLabel = isFiltered
+        ? `${rFromVal || '...'} → ${rToVal || '...'}`
+        : '';
+
     section.innerHTML = `
     <style>
-        /* ── متغيرات الـ dashboard تتبع data-theme ── */
         :root {
             --ds-card:        #1e293b;
             --ds-card-border: rgba(255,255,255,0.07);
@@ -120,7 +156,6 @@ async function loadDashboardStats() {
             --ds-box-bg:      #ffffff;
             --ds-title-border:#e2e8f0;
         }
-
         .ds-title {
             font-size: 15px; font-weight: 800; color: #f97316;
             margin: 28px 0 14px; display: flex; align-items: center; gap: 8px;
@@ -140,43 +175,23 @@ async function loadDashboardStats() {
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         .ds-card:hover { transform: translateY(-2px); }
-        .ds-card .ds-label {
-            font-size: 11px; color: var(--ds-label);
-            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .ds-card .ds-val {
-            font-size: 22px; font-weight: 900; color: var(--ds-val); line-height: 1.2;
-        }
-        .ds-card .ds-sub  { font-size: 11px; color: var(--ds-sub); margin-top: 2px; }
-        .ds-card .ds-icon { font-size: 22px; margin-bottom: 6px; }
-
-        .ds-table {
-            width: 100%; border-collapse: collapse; font-size: 13px;
-        }
-        .ds-table th {
-            background: var(--ds-table-head); color: #f97316;
-            padding: 8px 12px; text-align: right; font-weight: 700;
-            border-bottom: 1px solid rgba(249,115,22,0.2);
-        }
-        .ds-table td {
-            padding: 8px 12px; border-bottom: 1px solid var(--ds-card-border);
-            color: var(--ds-table-td);
-        }
+        .ds-card .ds-label { font-size: 11px; color: var(--ds-label); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ds-card .ds-val   { font-size: 22px; font-weight: 900; color: var(--ds-val); line-height: 1.2; }
+        .ds-card .ds-sub   { font-size: 11px; color: var(--ds-sub); margin-top: 2px; }
+        .ds-card .ds-icon  { font-size: 22px; margin-bottom: 6px; }
+        .ds-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .ds-table th { background: var(--ds-table-head); color: #f97316; padding: 8px 12px; text-align: right; font-weight: 700; border-bottom: 1px solid rgba(249,115,22,0.2); }
+        .ds-table td { padding: 8px 12px; border-bottom: 1px solid var(--ds-card-border); color: var(--ds-table-td); }
         .ds-table tr:last-child td { border-bottom: none; }
         .ds-table tr:hover td { background: var(--ds-table-row); }
-
-        .ds-box {
-            background: var(--ds-box-bg);
-            border: 1px solid var(--ds-card-border);
-            border-radius: 14px; overflow: hidden; margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: background 0.3s, border-color 0.3s;
-        }
-
+        .ds-box { background: var(--ds-box-bg); border: 1px solid var(--ds-card-border); border-radius: 14px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: background 0.3s, border-color 0.3s; }
+        .ds-filter-box { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; background:var(--ds-card); border:1px solid var(--ds-card-border); border-radius:12px; padding:12px 16px; }
+        .ds-filter-input { padding:7px 12px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:13px; outline:none; font-family:'Tajawal',sans-serif; }
         @media (max-width: 640px) {
             .ds-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .ds-card { padding: 12px 14px; }
             .ds-card .ds-val { font-size: 18px; }
+            .ds-filter-box { flex-direction: column; align-items: stretch; }
         }
     </style>
 
@@ -217,7 +232,34 @@ async function loadDashboardStats() {
     </div>
 
     <!-- ===== الإيرادات ===== -->
-    <div class="ds-title"><i class="fas fa-money-bill-wave"></i> الإيرادات والأرباح</div>
+    <div class="ds-title">
+        <i class="fas fa-money-bill-wave"></i> الإيرادات والأرباح
+        ${isFiltered ? `<span style="font-size:11px;color:#f59e0b;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);padding:2px 10px;border-radius:20px;margin-right:auto;">${filterLabel}</span>` : ''}
+    </div>
+
+    <!-- ✅ فلتر التاريخ -->
+    <div class="ds-filter-box">
+        <span style="font-size:13px;color:#94a3b8;font-weight:600;">
+            <i class="fas fa-calendar-alt" style="color:#f97316;margin-left:4px;"></i> فلتر الفترة:
+        </span>
+        <input type="date" id="revenue-from" value="${rFromVal}" class="ds-filter-input">
+        <span style="color:#64748b;font-size:13px;">إلى</span>
+        <input type="date" id="revenue-to" value="${rToVal}" class="ds-filter-input">
+        <button onclick="applyRevenueFilter()"
+            style="padding:7px 16px;background:#f97316;color:white;border:none;
+                   border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;
+                   font-family:'Tajawal',sans-serif;">
+            <i class="fas fa-filter"></i> تطبيق
+        </button>
+        ${isFiltered ? `
+        <button onclick="resetRevenueFilter()"
+            style="padding:7px 14px;background:transparent;color:#94a3b8;
+                   border:1px solid #334155;border-radius:8px;cursor:pointer;
+                   font-size:13px;font-family:'Tajawal',sans-serif;">
+            <i class="fas fa-times"></i> إلغاء الفلتر
+        </button>` : ''}
+    </div>
+
     <div class="ds-grid">
         <div class="ds-card">
             <div class="ds-icon">💰</div>
@@ -258,7 +300,7 @@ async function loadDashboardStats() {
     </div>
 
     <!-- ===== طرق الدفع ===== -->
-    <div class="ds-title"><i class="fas fa-credit-card"></i> توزيع طرق الدفع</div>
+    <div class="ds-title"><i class="fas fa-credit-card"></i> توزيع طرق الدفع ${isFiltered ? '<span style="font-size:11px;color:#f59e0b;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);padding:2px 10px;border-radius:20px;">مفلتر</span>' : ''}</div>
     <div class="ds-box">
         <table class="ds-table">
             <thead><tr>
