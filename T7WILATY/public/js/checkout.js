@@ -266,7 +266,7 @@ async function checkAuthAndLoadData() {
 
         if (error) throw error;
 
-        const WHATSAPP_NUMBER = settings?.whatsapp_number || '22200000000';
+        const WHATSAPP_NUMBER = settings?.whatsapp_number || '22232900026';
 
         // ✅ رفع الحظر تلقائياً إذا انتهت المدة
         if (userData?.is_blocked && userData?.banned_until) {
