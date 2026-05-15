@@ -260,7 +260,7 @@ async function checkAuthAndLoadData() {
     try {
         // ✅ جلب بيانات المستخدم + رقم واتساب من الإعدادات
         const [{ data: userData, error }, { data: settings }] = await Promise.all([
-            supabase.from('users').select('balance, is_blocked, is_active, phone').eq('id', user.id).single(),
+            supabase.from('users').select('balance, is_blocked, is_active, banned_until, phone').eq('id', user.id).single(),
             supabase.from('settings').select('whatsapp_number').eq('id', 1).single()
         ]);
 
