@@ -8,19 +8,28 @@
 <link rel="stylesheet" href="./css/dashboard-main.css?v=2">
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
-    :root {
-        --bg:      #0a0f1a;
-        --surface: #0f172a;
-        --card:    #1e293b;
-        --border:  #334155;
-        --text:    #e2e8f0;
-        --muted:   #94a3b8;
-        --accent:  #f97316;
-        --green:   #22c55e;
-        --red:     #ef4444;
-        --blue:    #3b82f6;
-        --yellow:  #fcd535;
-    }
+:root {
+    --bg:      #0a0f1a;
+    --surface: #0f172a;
+    --card:    #1e293b;
+    --border:  #334155;
+    --text:    #e2e8f0;
+    --muted:   #94a3b8;
+    --accent:  #f97316;
+    --green:   #22c55e;
+    --red:     #ef4444;
+    --blue:    #3b82f6;
+    --yellow:  #fcd535;
+}
+
+[data-theme="light"] {
+    --bg:      #f1f5f9;
+    --surface: #ffffff;
+    --card:    #f8fafc;
+    --border:  #e2e8f0;
+    --text:    #0f172a;
+    --muted:   #64748b;
+}
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
         font-family: 'Tajawal', sans-serif;
@@ -202,6 +211,34 @@
         animation: spin 0.7s linear infinite;
         vertical-align: middle;
     }
+    /* ✅ modal الحظر في وضع النهار */
+[data-theme="light"] #block-modal > div {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+[data-theme="light"] #block-modal .duration-btn {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
+}
+
+[data-theme="light"] #block-modal input[type="number"] {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+[data-theme="light"] #block-modal button:last-child {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+}
+
+[data-theme="light"] #block-duration-info {
+    color: #f97316 !important;
+}
 </style>
 </head>
 <body>

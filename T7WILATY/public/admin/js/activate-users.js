@@ -284,9 +284,9 @@ window.showBlockModal = (userId, name) => {
     `;
 
     modal.innerHTML = `
-        <div style="background:#1e293b; border:1px solid #334155; border-radius:16px;
-                    padding:28px; width:100%; max-width:420px;
-                    font-family:'Tajawal',sans-serif; color:#e2e8f0;">
+    <div style="background:var(--ds-bg, #1e293b); border:1px solid var(--ds-border, #334155); border-radius:16px;
+                padding:28px; width:100%; max-width:420px;
+                font-family:'Tajawal',sans-serif; color:var(--ds-text, #e2e8f0);">
             <h3 style="text-align:center; color:#f59e0b; margin-bottom:20px;">
                 <i class="fas fa-ban"></i> حظر — ${name}
             </h3>
