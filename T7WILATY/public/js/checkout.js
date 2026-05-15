@@ -271,20 +271,62 @@ async function checkAuthAndLoadData() {
         if (error) throw error;
 
         if (userData?.is_blocked) {
-    document.body.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-                    height:100vh;background:#0f172a;color:white;font-family:'Cairo',sans-serif;
-                    text-align:center;gap:20px;padding:20px;">
-            <div style="font-size:80px;">🚫</div>
-            <h1 style="color:#ef4444;font-size:28px;">تم تعليق حسابك</h1>
-            <p style="color:#94a3b8;font-size:16px;max-width:400px;line-height:2;">
-                حسابك محظور حالياً ولا يمكنك إتمام عمليات الدفع.<br>يرجى التواصل مع الدعم الفني.
-            </p>
-            <a href="index.html" style="background:#f97316;color:white;padding:12px 30px;
-               border-radius:8px;text-decoration:none;font-size:16px;">العودة للرئيسية</a>
-        </div>`;
-    return;
-}
+            // ✅ حساب المدة المتبقية
+            let bannedInfo = '';
+            if (userData?.banned_until) {
+                const until    = new Date(userData.banned_until);
+                const now      = new Date();
+                const diffMs   = until - now;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHrs  = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHrs / 24);
+
+                let remaining = '';
+                if (diffMs <= 0) {
+                    remaining = 'انتهت مدة الحظر — تواصل مع الدعم لرفع الحظر';
+                } else if (diffDays > 0) {
+                    remaining = `ينتهي الحظر بعد: ${diffDays} يوم`;
+                } else if (diffHrs > 0) {
+                    remaining = `ينتهي الحظر بعد: ${diffHrs} ساعة و ${diffMins % 60} دقيقة`;
+                } else {
+                    remaining = `ينتهي الحظر بعد: ${diffMins} دقيقة`;
+                }
+
+                bannedInfo = `
+                    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+                                border-radius:12px;padding:14px 24px;margin-top:8px;">
+                        <div style="font-size:13px;color:#94a3b8;margin-bottom:4px;">
+                            <i class="fas fa-clock"></i> مدة الحظر
+                        </div>
+                        <div style="font-size:15px;color:#ef4444;font-weight:700;">${remaining}</div>
+                        <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                            حتى: ${until.toLocaleString('ar-SA', {
+                                day:'2-digit', month:'2-digit', year:'numeric',
+                                hour:'2-digit', minute:'2-digit'
+                            })}
+                        </div>
+                    </div>`;
+            }
+
+            document.body.innerHTML = `
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                            min-height:100vh;background:#0f172a;color:white;font-family:'Cairo',sans-serif;
+                            text-align:center;gap:16px;padding:20px;">
+                    <div style="font-size:80px;">🚫</div>
+                    <h1 style="color:#ef4444;font-size:28px;margin:0;">تم تعليق حسابك</h1>
+                    <p style="color:#94a3b8;font-size:15px;max-width:400px;line-height:2;margin:0;">
+                        حسابك محظور حالياً ولا يمكنك إتمام عمليات الدفع.
+                    </p>
+                    ${bannedInfo}
+                    <a href="index.html"
+                    style="background:#f97316;color:white;padding:12px 30px;
+                            border-radius:8px;text-decoration:none;font-size:16px;margin-top:8px;">
+                        العودة للرئيسية
+                    </a>
+                </div>`;
+            return;
+        }
 
 // ✅ فحص التفعيل
 if (!userData?.is_active) {
