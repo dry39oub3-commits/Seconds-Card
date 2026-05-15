@@ -27,14 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const name  = userData?.full_name || userData?.fullName || user.user_metadata?.full_name || 'مستخدم';
     const photo = userData?.avatar_url || user.user_metadata?.avatar_url || '';
+// ✅ جلب الهاتف من قاعدة البيانات فقط
 let phone = userData?.phone || '';
-
-if (!phone && user.user_metadata?.phone) {
-    await supabase.from('users')
-        .update({ phone: user.user_metadata.phone })
-        .eq('id', user.id);
-    phone = user.user_metadata.phone;
-}
 
 const displayPhone = phone;
 
