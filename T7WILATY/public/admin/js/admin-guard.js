@@ -67,8 +67,8 @@ async function initGuard() {
     };
 
     // ✅ صلاحيات الاسترداد والحذف
-    window.CAN_REFUND = window.IS_ADMIN || (u?.can_refund !== false);
-    window.CAN_DELETE = window.IS_ADMIN || (u?.can_delete !== false);
+    window.CAN_REFUND = u?.can_refund !== false;
+    window.CAN_DELETE = u?.can_delete !== false;
 
     // فحص صلاحية الصفحة الحالية — للعامل فقط
     if (!window.IS_ADMIN) {
