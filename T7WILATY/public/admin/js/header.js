@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <nav class="drawer-nav">
                 <ul class="drawer-nav-list">
                     <li><a href="orders.html"       class="nav-link"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+                    <li><a href="activate-users.html" class="nav-link"><i class="fas fa-user-check"></i> تفعيل الحسابات</a></li>
                     <li><a href="Slider-manager.html"   class="nav-link"><i class="fas fa-chart-line"></i> السلايدر</a></li>
                     <li><a href="admin-wallet.html"     class="nav-link"><i class="fas fa-wallet"></i> المحافظ</a></li>
                     <li><a href="payment-methods.html"  class="nav-link"><i class="fas fa-credit-card"></i> الدفع</a></li>
