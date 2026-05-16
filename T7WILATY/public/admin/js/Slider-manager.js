@@ -110,13 +110,9 @@ async function loadSlides() {
                 <button class="action-btn-sm btn-down" onclick="moveSlide('${s.id}', 'down')" title="إنزال">
                     <i class="fas fa-arrow-down"></i>
                 </button>
-                <button class="action-btn-sm ${s.is_active ? 'btn-toggle-active' : 'btn-toggle-active inactive'}"
-                    onclick="toggleActive('${s.id}', ${s.is_active})"
-                    title="${s.is_active ? 'تعطيل' : 'تفعيل'}"
-                    style="background:${s.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'};
-                        color:${s.is_active ? '#22c55e' : '#ef4444'};
-                        border:1px solid ${s.is_active ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'};">
-                    <i class="fas fa-${s.is_active ? 'toggle-on' : 'toggle-off'}"></i>
+                <button class="action-btn-sm btn-toggle-active ${s.is_active ? '' : 'inactive'}"
+                    onclick="toggleActive('${s.id}', ${s.is_active})" title="${s.is_active ? 'تعطيل' : 'تفعيل'}">
+                    <i class="fas fa-power-off"></i>
                 </button>
                 <button class="action-btn-sm btn-edit" onclick="editSlide(${JSON.stringify(s).replace(/"/g, '&quot;')})" title="تعديل">
                     <i class="fas fa-edit"></i>
@@ -190,14 +186,8 @@ window.deleteSlide = async (id) => {
 
 // ===== تفعيل/تعطيل =====
 window.toggleActive = async (id, current) => {
-    const { error } = await supabase
-        .from('sliders')
-        .update({ is_active: !current })
-        .eq('id', id);
-
+    const { error } = await supabase.from('sliders').update({ is_active: !current }).eq('id', id);
     if (error) { showToast('❌ خطأ: ' + error.message); return; }
-
-    showToast(!current ? '✅ تم التفعيل' : '⛔ تم التعطيل');
     loadSlides();
 };
 
