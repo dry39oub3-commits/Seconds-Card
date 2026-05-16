@@ -58,7 +58,7 @@ async function loadDashboardStats() {
     });
 
     const totalRevenue = filteredCompleted.reduce((s, o) => s + (o.price || 0) * (o.quantity || 1), 0);
-    const totalCost    = filteredCompleted.reduce((s, o) => s + (o.cost_price || 0) * 43 * (o.quantity || 1), 0);
+    const totalCost = filteredCompleted.reduce((s, o) => s + (o.cost_price || 0) * 43, 0);
     const totalProfit  = totalRevenue - totalCost;
 
     const todayOrders  = filteredCompleted.filter(o => new Date(o.created_at) >= today);
