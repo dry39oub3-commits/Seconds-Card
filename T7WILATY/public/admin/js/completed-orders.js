@@ -257,6 +257,7 @@ if (rejectedItems.length > 0) {
                 <td>
                     ${refundBtn}
                     ${window.CAN_DELETE ? `
+                    ${window.CAN_DELETE ? `
                     <button onclick="deleteOrderGroup('${group.order_number}')"
                         style="background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;
                             cursor:pointer;font-size:12px;width:100%;display:flex;
