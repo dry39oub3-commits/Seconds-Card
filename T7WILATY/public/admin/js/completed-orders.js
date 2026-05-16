@@ -257,7 +257,6 @@ if (rejectedItems.length > 0) {
                 <td>
                     ${refundBtn}
                     ${window.CAN_DELETE ? `
-                    ${window.CAN_DELETE ? `
                     <button onclick="deleteOrderGroup('${group.order_number}')"
                         style="background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;
                             cursor:pointer;font-size:12px;width:100%;display:flex;
@@ -636,7 +635,12 @@ window.loadCompletedOrders = loadCompletedOrders;
 
 // ==================== تشغيل ====================
 document.addEventListener('DOMContentLoaded', () => {
-    loadCompletedOrders();
+    // ✅ انتظر حتى يُحمَّل admin-guard
+    const waitForGuard = setInterval(() => {
+        if (window.CAN_DELETE === undefined) return;
+        clearInterval(waitForGuard);
+        loadCompletedOrders();
+    }, 50);
 });
 
 // ==================== إشعار عائم يستبدل alert ====================
