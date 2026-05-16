@@ -839,11 +839,14 @@ window.calcProfit = (orderPrice, currency) => {
             <span style="color:#94a3b8;font-size:13px;"> USDT</span>
         `;
     } else {
-        const totalCost = cost * USD_TO_MRU * quantity;
+        const codesCount = codesText
+            ? codesText.split('\n').filter(c => c.trim() !== '').length
+            : quantity;
+        const totalCost = cost * USD_TO_MRU * codesCount;
         const profit = orderPrice - totalCost;
         profitDisplay.style.display = 'block';
         profitDisplay.innerHTML = `
-            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">التكلفة: $${cost} × ${quantity} كود × ${USD_TO_MRU} = ${totalCost.toFixed(0)} MRU</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">التكلفة: $${cost} × ${codesCount} كود × ${USD_TO_MRU} = ${totalCost.toFixed(0)} MRU</div>
             <span style="color:#94a3b8;font-size:13px;">الربح: </span>
             <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:18px;font-weight:bold;">${profit.toFixed(0)}</span>
             <span style="color:#94a3b8;font-size:13px;"> MRU</span>
