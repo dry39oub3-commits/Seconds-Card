@@ -400,12 +400,12 @@ window.showOrderPopup = (orderId) => {
 
     let profitHtml = '';
     if (order.cost_price && order.cost_price > 0) {
-        const totalCost = order.cost_price * 43 * (order.quantity || 1);
+        const totalCost = order.cost_price * 43;
         const profit    = totalPrice - totalCost;
         profitHtml = `
             <div style="background:#0f172a;border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">
                 <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">
-                    التكلفة: $${order.cost_price} × ${order.quantity||1} × 43 = ${totalCost.toFixed(0)} MRU
+                   التكلفة: $${order.cost_price} × 43 = ${totalCost.toFixed(0)} MRU
                 </div>
                 <span style="color:#94a3b8;font-size:13px;">الربح: </span>
                 <span style="color:${profit >= 0 ? '#22c55e' : '#ef4444'};font-size:20px;font-weight:bold;">
