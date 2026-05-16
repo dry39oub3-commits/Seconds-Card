@@ -17,8 +17,6 @@ const PAGE_PERM_MAP = {
     'admin-chat.html':           'chat_support',
 };
 
-// dashboard.html مفتوح للجميع — لكن محتواه يتحكم فيه view_stats
-
 async function initGuard() {
     const currentPage = window.location.pathname.split('/').pop();
 
@@ -67,6 +65,10 @@ async function initGuard() {
         if (window.IS_ADMIN) return true;
         return Array.isArray(window.STAFF_PERMISSIONS) && window.STAFF_PERMISSIONS.includes(perm);
     };
+
+    // ✅ صلاحيات الاسترداد والحذف
+    window.CAN_REFUND = window.IS_ADMIN || window.hasPerm('can_refund');
+    window.CAN_DELETE = window.IS_ADMIN || window.hasPerm('can_delete');
 
     // فحص صلاحية الصفحة الحالية — للعامل فقط
     if (!window.IS_ADMIN) {

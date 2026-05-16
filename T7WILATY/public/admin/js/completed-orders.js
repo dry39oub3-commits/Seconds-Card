@@ -216,13 +216,13 @@ if (rejectedItems.length > 0) {
 
         const completedItems = group.items.filter(i => i.status === 'مكتمل');
         const completedIds   = JSON.stringify(completedItems.map(i => i.id)).replace(/"/g, '&quot;');
-        const refundBtn = completedItems.length > 0
+        const refundBtn = completedItems.length > 0 && window.CAN_REFUND
             ? `<button onclick="refundGroupOrders(${completedIds})"
                 style="background:#f59e0b;color:white;border:none;padding:6px 12px;border-radius:6px;
-                       cursor:pointer;font-size:12px;width:100%;display:flex;
-                       align-items:center;gap:4px;justify-content:center;">
+                    cursor:pointer;font-size:12px;width:100%;display:flex;
+                    align-items:center;gap:4px;justify-content:center;">
                 <i class="fas fa-undo"></i> استرداد
-               </button>`
+            </button>`
             : '';
 
         return `
@@ -256,12 +256,13 @@ if (rejectedItems.length > 0) {
                 </td>
                 <td>
                     ${refundBtn}
+                    ${window.CAN_DELETE ? `
                     <button onclick="deleteOrderGroup('${group.order_number}')"
                         style="background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;
                             cursor:pointer;font-size:12px;width:100%;display:flex;
                             align-items:center;gap:4px;justify-content:center;margin-top:6px;">
                         <i class="fas fa-trash"></i> حذف
-                    </button>
+                    </button>` : ''}
                 </td>
             </tr>
         `;
