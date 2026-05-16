@@ -31,7 +31,7 @@ async function initGuard() {
 
     const { data: u, error } = await supabase
         .from('users')
-        .select('is_admin, is_staff, is_active, full_name, staff_permissions')
+        .select('is_admin, is_staff, is_active, full_name, staff_permissions, can_refund, can_delete')
         .eq('id', session.user.id)
         .single();
 
@@ -67,8 +67,8 @@ async function initGuard() {
     };
 
     // ✅ صلاحيات الاسترداد والحذف
-    window.CAN_REFUND = window.IS_ADMIN || window.hasPerm('can_refund');
-    window.CAN_DELETE = window.IS_ADMIN || window.hasPerm('can_delete');
+    window.CAN_REFUND = window.IS_ADMIN || (u?.can_refund !== false);
+    window.CAN_DELETE = window.IS_ADMIN || (u?.can_delete !== false);
 
     // فحص صلاحية الصفحة الحالية — للعامل فقط
     if (!window.IS_ADMIN) {
