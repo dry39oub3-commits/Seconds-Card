@@ -77,13 +77,22 @@ function updateStats() {
     // ✅ تحديث عنوان الكارت
     const lbl = document.querySelector('#stat-month + .lbl') ||
                 document.querySelector('[id="stat-month"]')?.nextElementSibling;
-    const monthName = new Date(filterYear, filterMonth).toLocaleString('ar-SA', { month: 'long', year: 'numeric' });
+    const monthName = new Date(filterYear, filterMonth).toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
     const lblEl = document.querySelector('.stat-card .lbl:last-of-type');
     document.querySelectorAll('.stat-card').forEach(card => {
         if (card.querySelector('#stat-month')) {
             const l = card.querySelector('.lbl');
             if (l) l.textContent = `مصاريف ${monthName}`;
         }
+    });
+}
+
+// ✅ تنسيق التاريخ بـ fr-FR
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
     });
 }
 
@@ -110,9 +119,7 @@ window.renderTable = () => {
 
     tbody.innerHTML = filtered.map((e, i) => {
         const cat      = CAT_COLORS[e.category] || CAT_COLORS['أخرى'];
-        const date     = e.paid_at
-            ? new Date(e.paid_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' })
-            : '—';
+        const date = formatDate(e.paid_at);
         const amtColor = e.currency === 'MRU' ? '#a78bfa' : e.currency === 'EUR' ? '#fcd535' : '#ef4444';
 
         return `
