@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المصاريف | StoreCard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="./css/dashboard-main.css?v=2">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+    :root {
+        --bg:      #0a0f1a;
+        --surface: #0f172a;
+        --card:    #1e293b;
+        --border:  #334155;
+        --text:    #e2e8f0;
+        --muted:   #94a3b8;
+        --accent:  #f97316;
+        --green:   #22c55e;
+        --red:     #ef4444;
+        --blue:    #3b82f6;
+        --yellow:  #fcd535;
+        --purple:  #a855f7;
+    }
+    [data-theme="light"] {
+        --bg:      #f1f5f9;
+        --surface: #ffffff;
+        --card:    #f8fafc;
+        --border:  #e2e8f0;
+        --text:    #0f172a;
+        --muted:   #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Tajawal', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+        transition: background 0.3s, color 0.3s;
+    }
+
+    /* ===== إحصائيات ===== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        text-align: center;
+        transition: background 0.3s, border-color 0.3s;
+    }
+    .stat-card .num {
+        font-size: 24px;
+        font-weight: 900;
+        margin-bottom: 4px;
+    }
+    .stat-card .lbl {
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .stat-card .sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+    /* ===== نموذج الإضافة ===== */
+    .form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: background 0.3s, border-color 0.3s;
+    }
+    .form-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--accent);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .form-group label {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 10px 14px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        font-family: 'Tajawal', sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s, background 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: var(--accent);
+    }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    /* ===== أزرار ===== */
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: 'Tajawal', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity 0.2s, transform 0.15s;
+        white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-accent  { background: var(--accent);  color: white; }
+    .btn-green   { background: var(--green);   color: white; }
+    .btn-red     { background: var(--red);     color: white; }
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+    }
+
+    /* ===== فلاتر ===== */
+    .filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .filters input,
+    .filters select {
+        padding: 9px 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        font-family: 'Tajawal', sans-serif;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .filters input:focus,
+    .filters select:focus { border-color: var(--accent); }
+    .filters input { flex: 1; min-width: 180px; }
+
+    /* ===== جدول ===== */
+    .table-wrap {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        overflow-x: auto;
+        transition: background 0.3s, border-color 0.3s;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--card); border-bottom: 1px solid var(--border); }
+    th {
+        padding: 12px 16px;
+        text-align: right;
+        font-weight: 700;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(51,65,85,0.4);
+        vertical-align: middle;
+    }
+    [data-theme="light"] td { border-color: var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(249,115,22,0.03); }
+
+    /* ===== Badge الفئة ===== */
+    .cat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* ===== Empty ===== */
+    .empty {
+        text-align: center;
+        padding: 48px;
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    /* ===== Modal ===== */
+    #edit-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .modal-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        width: 100%;
+        max-width: 520px;
+        color: var(--text);
+        position: relative;
+    }
+    .modal-title {
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--accent);
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* ===== Toast ===== */
+    #toast {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        z-index: 999999;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+        font-family: 'Tajawal', sans-serif;
+    }
+    #toast.show    { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { background: var(--green); color: white; }
+    #toast.error   { background: var(--red);   color: white; }
+
+    @media (max-width: 640px) {
+        body { padding: 16px; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        .form-grid  { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<header class="admin-top-header">
+    <div class="header-container">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="logo">
+            <a href="orders.html" style="text-decoration:none;color:inherit;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <img src="../assets/Icon.png" alt="StoreCard" style="height:40px;width:40px;object-fit:contain;">
+                    <span style="font-size:18px;font-weight:800;color:white;">Store<span style="color:#f97316;">Card</span></span>
+                </div>
+            </a>
+        </div>
+        <nav class="main-nav">
+            <ul class="nav-list" id="main-nav-list">
+                <li><a href="Slider-manager.html"   class="nav-link"><i class="fas fa-chart-line"></i> السلايدر</a></li>
+                <li><a href="activate-users.html"   class="nav-link"><i class="fas fa-user-check"></i> تفعيل الحسابات</a></li>
+                <li><a href="admin-wallet.html"     class="nav-link"><i class="fas fa-wallet"></i> المحافظ</a></li>
+                <li><a href="payment-methods.html"  class="nav-link"><i class="fas fa-credit-card"></i> الدفع</a></li>
+                <li><a href="dashboard.html"        class="nav-link"><i class="fas fa-chart-bar"></i> الإحصائيات</a></li>
+                <li><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i> المنتجات</a></li>
+                <li><a href="stocks.html"           class="nav-link"><i class="fas fa-layer-group"></i> المخزون</a></li>
+                <li><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i> الطلبات المكتملة</a></li>
+                
+            </ul>
+        </nav>
+        <button id="theme-toggle" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;padding:6px;">
+            <i class="fas fa-moon"></i>
+        </button>
+        <div class="user-actions">
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ===== العنوان ===== -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <h1 style="font-size:22px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:10px;">
+        <i class="fas fa-receipt"></i> إدارة المصاريف
+    </h1>
+    <button class="btn btn-outline" onclick="loadExpenses()">
+        <i class="fas fa-sync-alt"></i> تحديث
+    </button>
+</div>
+
+<!-- ===== الإحصائيات ===== -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="num" id="stat-total-usd" style="color:var(--red);">—</div>
+        <div class="lbl">إجمالي المصاريف ($)</div>
+    </div>
+    <div class="stat-card">
+        <div class="num" id="stat-total-mru" style="color:var(--red);">—</div>
+        <div class="lbl">إجمالي المصاريف (MRU)</div>
+    </div>
+    <div class="stat-card">
+        <div class="num" id="stat-month" style="color:var(--yellow);">—</div>
+        <div class="lbl">مصاريف هذا الشهر</div>
+    </div>
+    <div class="stat-card">
+        <div class="num" id="stat-count" style="color:var(--blue);">—</div>
+        <div class="lbl">إجمالي السجلات</div>
+    </div>
+</div>
+
+<!-- ===== نموذج الإضافة ===== -->
+<div class="form-card">
+    <div class="form-title"><i class="fas fa-plus-circle"></i> إضافة مصروف جديد</div>
+    <div class="form-grid">
+        <div class="form-group" style="grid-column: span 2;">
+            <label>📝 اسم المصروف *</label>
+            <input type="text" id="inp-title" placeholder="مثال: اشتراك Supabase الشهري">
+        </div>
+        <div class="form-group">
+            <label>💰 المبلغ *</label>
+            <input type="number" id="inp-amount" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+            <label>💱 العملة</label>
+            <select id="inp-currency">
+                <option value="USD">USD - دولار</option>
+                <option value="MRU">MRU - أوقية</option>
+                <option value="EUR">EUR - يورو</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>🏷️ التصنيف</label>
+            <select id="inp-category" onchange="toggleCustomCategory(this, 'inp-custom-cat')">
+                <option value="استضافة">🖥️ استضافة</option>
+                <option value="دومين">🌐 دومين</option>
+                <option value="API">🔌 API</option>
+                <option value="تسويق">📢 تسويق</option>
+                <option value="برمجة">💻 برمجة</option>
+                <option value="أخرى">📦 أخرى (مخصص)</option>
+            </select>
+            <input type="text" id="inp-custom-cat" placeholder="أدخل التصنيف..."
+                style="display:none;margin-top:8px;padding:10px 14px;background:var(--bg);
+                    border:1px solid var(--border);border-radius:10px;color:var(--text);
+                    font-family:'Tajawal',sans-serif;font-size:14px;outline:none;width:100%;">
+        </div>
+        <div class="form-group">
+            <label>📅 تاريخ الدفع</label>
+            <input type="date" id="inp-date">
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+            <label>📌 ملاحظة (اختياري)</label>
+            <textarea id="inp-note" placeholder="تفاصيل إضافية..."></textarea>
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="clearForm()">
+            <i class="fas fa-times"></i> مسح
+        </button>
+        <button class="btn btn-accent" onclick="saveExpense()">
+            <i class="fas fa-save"></i> حفظ المصروف
+        </button>
+    </div>
+</div>
+
+<!-- ===== فلاتر وجدول ===== -->
+<div class="form-group">
+    <label>🏷️ التصنيف</label>
+    <select id="edit-category" onchange="toggleCustomCategory(this, 'edit-custom-cat')">
+        <option value="استضافة">🖥️ استضافة</option>
+        <option value="دومين">🌐 دومين</option>
+        <option value="API">🔌 API</option>
+        <option value="تسويق">📢 تسويق</option>
+        <option value="برمجة">💻 برمجة</option>
+        <option value="أخرى">📦 أخرى (مخصص)</option>
+    </select>
+    <input type="text" id="edit-custom-cat" placeholder="أدخل التصنيف..."
+        style="display:none;margin-top:8px;padding:10px 14px;background:var(--bg);
+               border:1px solid var(--border);border-radius:10px;color:var(--text);
+               font-family:'Tajawal',sans-serif;font-size:14px;outline:none;width:100%;">
+    <select id="filter-currency" onchange="filterTable()">
+        <option value="">كل العملات</option>
+        <option value="USD">USD</option>
+        <option value="MRU">MRU</option>
+        <option value="EUR">EUR</option>
+    </select>
+    <input type="month" id="filter-month" onchange="filterTable()"
+        style="padding:9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:13px;outline:none;">
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>اسم المصروف</th>
+                <th>المبلغ</th>
+                <th>التصنيف</th>
+                <th>تاريخ الدفع</th>
+                <th>ملاحظة</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="expenses-table">
+            <tr><td colspan="7" class="empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===== Modal التعديل ===== -->
+<div id="edit-modal" style="display:none;">
+    <div class="modal-box">
+        <button onclick="closeEditModal()"
+            style="position:absolute;top:14px;left:14px;background:#ef4444;color:white;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;">
+            ✕ إغلاق
+        </button>
+        <div class="modal-title"><i class="fas fa-edit"></i> تعديل المصروف</div>
+        <input type="hidden" id="edit-id">
+        <div class="form-grid" style="grid-template-columns:1fr;">
+            <div class="form-group">
+                <label>📝 اسم المصروف</label>
+                <input type="text" id="edit-title">
+            </div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="form-group">
+                    <label>💰 المبلغ</label>
+                    <input type="number" id="edit-amount" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>💱 العملة</label>
+                    <select id="edit-currency">
+                        <option value="USD">USD</option>
+                        <option value="MRU">MRU</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="form-group">
+                    <label>🏷️ التصنيف</label>
+                    <select id="edit-category">
+                        <option value="استضافة">🖥️ استضافة</option>
+                        <option value="دومين">🌐 دومين</option>
+                        <option value="API">🔌 API</option>
+                        <option value="تسويق">📢 تسويق</option>
+                        <option value="برمجة">💻 برمجة</option>
+                        <option value="أخرى">📦 أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>📅 تاريخ الدفع</label>
+                    <input type="date" id="edit-date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>📌 ملاحظة</label>
+                <textarea id="edit-note"></textarea>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="btn btn-outline" onclick="closeEditModal()" style="flex:1;">إلغاء</button>
+            <button class="btn btn-accent" onclick="updateExpense()" style="flex:2;">
+                <i class="fas fa-save"></i> حفظ التعديلات
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="./js/header.js?v=2"></script>
+<script type="module" src="./js/admin-guard.js"></script>
+<script type="module" src="./js/expenses.js"></script>
+</body>
+</html>
