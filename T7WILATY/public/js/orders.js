@@ -286,3 +286,22 @@ function showToast(message, color = '#22c55e') {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 6000);
 }
+
+async function checkAuthState() {
+    await fetchUserOrders();
+    watchOrders();
+
+    // ✅ طلب إذن الإشعارات
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user
+        && 'Notification' in window
+        && 'serviceWorker' in navigator
+        && Notification.permission !== 'denied') {
+        try {
+            const { subscribeToPush } = await import('./push-notifications.js');
+            await subscribeToPush(session.user.id);
+        } catch (e) {
+            console.warn('Push setup failed:', e.message);
+        }
+    }
+}
