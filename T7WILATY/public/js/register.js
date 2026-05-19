@@ -18,6 +18,13 @@ window.signInWithGoogle = async () => {
     }
 };
 
+window.signInWithGitHub = async () => {
+    await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: { redirectTo: 'https://storecard.online/index.html' }
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
 
