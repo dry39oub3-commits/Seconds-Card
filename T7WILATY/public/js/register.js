@@ -1,9 +1,27 @@
 import { supabase } from './supabase-config.js';
 
+// ✅ تسجيل بـ Google
+window.signInWithGoogle = async () => {
+    const btn = document.getElementById('google-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin + '/index.html'
+        }
+    });
+
+    if (error) {
+        showToast('⚠️ فشل التسجيل بـ Google');
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
 
-    // ── عرض/إخفاء كلمة المرور ──
+    // عرض/إخفاء كلمة المرور
     const togglePass = document.getElementById('toggle-reg-pass');
     const passInput  = document.getElementById('reg-pass');
     if (togglePass && passInput) {
@@ -15,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── السماح بالأرقام فقط في حقل الهاتف ──
+    // السماح بالأرقام فقط في حقل الهاتف
     const phoneInput = document.getElementById('reg-phone');
     if (phoneInput) {
         phoneInput.addEventListener('input', () => {
@@ -23,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── التسجيل ──
+    // التسجيل بالإيميل
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -34,19 +52,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const pass   = document.getElementById('reg-pass').value;
             const regBtn = document.getElementById('register-btn');
 
-            // التحقق من البريد
             if (!email.includes('@') || !email.includes('.')) {
                 showToast('⚠️ يرجى إدخال بريد إلكتروني صحيح');
                 return;
             }
 
-            // التحقق من الهاتف
             if (phone.length !== 8) {
                 showToast('⚠️ رقم الهاتف يجب أن يكون 8 أرقام');
                 return;
             }
 
-            // التحقق من كلمة المرور
             if (pass.length < 6) {
                 showToast('⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل');
                 return;
@@ -57,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
             regBtn.innerText = 'جاري إنشاء الحساب...';
             regBtn.disabled  = true;
 
-            // ✅ التحقق من أن رقم الهاتف غير مسجل مسبقاً
             const { data: existingPhone } = await supabase
                 .from('users')
                 .select('id')
@@ -71,15 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // إنشاء الحساب
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password: pass,
                 options: {
-                    data: {
-                        full_name: name,
-                        phone: fullPhone
-                    }
+                    data: { full_name: name, phone: fullPhone }
                 }
             });
 
@@ -94,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // ✅ حفظ بيانات المستخدم مع الهاتف
             if (data.user) {
                 await supabase.from('users').upsert({
                     id:        data.user.id,
@@ -103,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     phone:     fullPhone,
                     balance:   0,
                     role:      'user',
-                    is_active: false  // ← يحتاج تفعيل يدوي من الأدمن
+                    is_active: false
                 });
             }
 
@@ -119,23 +128,15 @@ function showToast(message, type = 'success') {
     t.id = '_toast';
     t.textContent = message;
     t.style.cssText = `
-        position: fixed;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-10px);
-        background: ${type === 'error' ? '#ef4444' : '#22c55e'};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        font-family: 'Tajawal', sans-serif;
-        z-index: 99999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        opacity: 0;
-        transition: opacity 0.3s, transform 0.3s;
-        pointer-events: none;
-        white-space: nowrap;
+        position:fixed; top:24px; left:50%;
+        transform:translateX(-50%) translateY(-10px);
+        background:${type === 'error' ? '#ef4444' : '#22c55e'};
+        color:white; padding:12px 24px; border-radius:10px;
+        font-size:14px; font-weight:700;
+        font-family:'Tajawal',sans-serif;
+        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.3);
+        opacity:0; transition:opacity 0.3s,transform 0.3s;
+        pointer-events:none; white-space:nowrap;
     `;
     document.body.appendChild(t);
     requestAnimationFrame(() => {

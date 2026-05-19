@@ -1,27 +1,42 @@
 import { supabase } from './supabase-config.js';
 
+// ✅ تسجيل الدخول بـ Google
+window.signInWithGoogle = async () => {
+    const btn = document.getElementById('google-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin + '/index.html'
+        }
+    });
+
+    if (error) {
+        showToast('⚠️ فشل تسجيل الدخول بـ Google');
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+};
+
 // ── الوضع الحالي: email أو phone ──
 let loginMode = 'email';
 
 window.switchTab = (mode) => {
     loginMode = mode;
 
-    // تحديث التبويبات
     document.getElementById('tab-email').classList.toggle('active', mode === 'email');
     document.getElementById('tab-phone').classList.toggle('active', mode === 'phone');
 
-    // إظهار/إخفاء الحقول
     document.getElementById('field-email').style.display = mode === 'email' ? 'block' : 'none';
     document.getElementById('field-phone').style.display = mode === 'phone' ? 'block' : 'none';
 
-    // تعديل الـ required
-    document.getElementById('reg-email').required  = mode === 'email';
-    document.getElementById('reg-phone').required  = mode === 'phone';
+    document.getElementById('reg-email').required = mode === 'email';
+    document.getElementById('reg-phone').required = mode === 'phone';
 };
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ── السماح بالأرقام فقط في حقل الهاتف ──
+    // السماح بالأرقام فقط في حقل الهاتف
     const phoneInput = document.getElementById('reg-phone');
     if (phoneInput) {
         phoneInput.addEventListener('input', () => {
@@ -29,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── عرض/إخفاء كلمة المرور ──
+    // عرض/إخفاء كلمة المرور
     const togglePass = document.getElementById('toggle-pass');
     const passInput  = document.getElementById('user-pass');
     if (togglePass && passInput) {
@@ -41,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── تسجيل الدخول ──
+    // تسجيل الدخول بالإيميل أو الهاتف
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -56,11 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let email = '';
 
             if (loginMode === 'email') {
-                // ── دخول بالبريد الإلكتروني مباشرة ──
                 email = document.getElementById('reg-email').value.trim();
-
             } else {
-                // ── دخول برقم الهاتف: ابحث عن الإيميل المرتبط ──
                 const phone = document.getElementById('reg-phone').value.trim();
 
                 if (phone.length !== 8) {
@@ -88,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 email = profile.email;
             }
 
-            // ── تسجيل الدخول ──
             const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
 
             if (error) {
@@ -113,23 +124,15 @@ function showToast(message) {
     t.id = '_toast';
     t.textContent = message;
     t.style.cssText = `
-        position: fixed;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-10px);
-        background: #ef4444;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        font-family: 'Tajawal', sans-serif;
-        z-index: 99999;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        opacity: 0;
-        transition: opacity 0.3s, transform 0.3s;
-        pointer-events: none;
-        white-space: nowrap;
+        position:fixed; top:24px; left:50%;
+        transform:translateX(-50%) translateY(-10px);
+        background:#ef4444; color:white;
+        padding:12px 24px; border-radius:10px;
+        font-size:14px; font-weight:700;
+        font-family:'Tajawal',sans-serif;
+        z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.3);
+        opacity:0; transition:opacity 0.3s,transform 0.3s;
+        pointer-events:none; white-space:nowrap;
     `;
     document.body.appendChild(t);
     requestAnimationFrame(() => {
