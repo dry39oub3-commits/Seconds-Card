@@ -1024,13 +1024,13 @@ window.approveOrder = async (orderId, quantity) => {
     }
 
     const { data: orderData, error } = await supabase.from('orders').update({
-        status: 'مكتمل',
-        card_code: hasPlayerId ? null : codes.join('\n'),
-        cost_price: parseFloat(cost),
-        supplier_id: supplierId,
+        status:            'مكتمل',
+        card_code:         hasPlayerId ? null : codes.join('\n'),
+        cost_price:        parseFloat(cost),
+        supplier_id:       supplierId,
         supplier_order_id: supplierOrderId,
         suppliers_details: suppliersDetails.length > 0 ? suppliersDetails : null,
-        approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
+        approved_by_name:  window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن',
         ...(playerReceiptUrl && { execution_receipt_url: playerReceiptUrl })
     }).eq('id', orderId).select().single();
 
@@ -1045,7 +1045,7 @@ window.approveOrder = async (orderId, quantity) => {
         if (reservedIds?.length > 0) {
             await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: orderId }).in('id', reservedIds);
             window._reservedStockIds = null;
-            window._stockCodesData = null;
+            window._stockCodesData   = null;
         } else {
             for (const code of codes) {
                 await supabase.from('stocks').update({ status: 'sold', sold_at: new Date().toISOString(), order_id: orderId }).eq('code', code).eq('status', 'available');
@@ -1055,8 +1055,39 @@ window.approveOrder = async (orderId, quantity) => {
 
     document.getElementById('order-modal').remove();
     showToast('✅ تم قبول الطلب بنجاح!');
+
+    // ✅ إشعار Push للعميل
+    await sendPushToUser(orderData?.user_id, {
+        title: '✅ تم إكمال طلبك!',
+        body:  `${orderData?.product_name || ''} ${orderData?.label ? `(${orderData.label})` : ''} — اضغط لعرض الكود`,
+        url:   '/orders.html'
+    });
+
     loadOrders();
 };
+
+// ==================== إرسال Push للعميل ====================
+async function sendPushToUser(userId, { title, body, url }) {
+    if (!userId) return;
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        await fetch(
+            'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/send-push',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type':  'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ user_id: userId, title, body, url })
+            }
+        );
+    } catch (e) {
+        console.warn('Push notification failed:', e.message);
+    }
+}
 
 window.approveGroupOrders = async () => {
     const items = window._groupItems || [];
@@ -1699,3 +1730,19 @@ function showCustomerNotification({ title, body, code, color, orderId }) {
         Notification.requestPermission();
     }
 }
+
+// ✅ اطلب إذن الإشعارات عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    // تحقق إذا كان المتصفح يدعم الإشعارات
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+    // لا تطلب الإذن إذا سبق رفضه
+    if (Notification.permission === 'denied') return;
+
+    // اشترك في الإشعارات
+    const { subscribeToPush } = await import('./push-notifications.js');
+    await subscribeToPush(session.user.id);
+});
