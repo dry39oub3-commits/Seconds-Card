@@ -12,7 +12,6 @@ export async function registerServiceWorker() {
 
     try {
         const reg = await navigator.serviceWorker.register('/service-worker.js');
-        // انتظر حتى يكون الـ Service Worker جاهزاً
         await navigator.serviceWorker.ready;
         console.log('✅ Service Worker مسجّل وجاهز');
         return reg;
@@ -32,7 +31,6 @@ export async function subscribeToPush(userId) {
     const reg = await registerServiceWorker();
     if (!reg) return;
 
-    // طلب إذن الإشعارات
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
         console.warn('❌ المستخدم رفض الإشعارات');
@@ -40,15 +38,19 @@ export async function subscribeToPush(userId) {
     }
 
     try {
-        // ✅ احذف الـ subscription القديمة دائماً وأنشئ جديدة
-        // هذا يضمن أن الـ token دائماً صالح
+        // ✅ احذف الـ subscription القديمة لهذا الجهاز فقط
         const existing = await reg.pushManager.getSubscription();
         if (existing) {
+            await supabase
+                .from('push_subscriptions')
+                .delete()
+                .eq('endpoint', existing.endpoint);
+
             await existing.unsubscribe();
-            console.log('🔄 تم إلغاء الاشتراك القديم');
+            console.log('🔄 تم إلغاء الاشتراك القديم لهذا الجهاز');
         }
 
-        // أنشئ subscription جديدة
+        // ✅ أنشئ subscription جديدة لهذا الجهاز
         const subscription = await reg.pushManager.subscribe({
             userVisibleOnly:      true,
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
@@ -56,25 +58,19 @@ export async function subscribeToPush(userId) {
 
         const subData = subscription.toJSON();
 
-        // ✅ احذف أي subscription قديمة لنفس المستخدم في قاعدة البيانات
-        await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('user_id', userId);
-
-        // ✅ احفظ الـ subscription الجديدة
+        // ✅ احفظ بـ endpoint كـ unique key — يدعم أجهزة متعددة لنفس المستخدم
         const { error } = await supabase
             .from('push_subscriptions')
-            .insert({
+            .upsert({
                 user_id:    userId,
                 endpoint:   subData.endpoint,
                 p256dh:     subData.keys?.p256dh,
                 auth:       subData.keys?.auth,
                 updated_at: new Date().toISOString()
-            });
+            }, { onConflict: 'endpoint' });
 
         if (error) {
-            console.error('❌ فشل حفظ الاشتراك في قاعدة البيانات:', error.message);
+            console.error('❌ فشل حفظ الاشتراك:', error.message);
             return;
         }
 
@@ -93,15 +89,14 @@ export async function unsubscribeFromPush(userId) {
         if (reg) {
             const subscription = await reg.pushManager.getSubscription();
             if (subscription) {
+                // احذف هذا الجهاز فقط من قاعدة البيانات
+                await supabase
+                    .from('push_subscriptions')
+                    .delete()
+                    .eq('endpoint', subscription.endpoint);
+
                 await subscription.unsubscribe();
             }
-        }
-
-        if (userId) {
-            await supabase
-                .from('push_subscriptions')
-                .delete()
-                .eq('user_id', userId);
         }
 
         console.log('✅ تم إلغاء الاشتراك بنجاح');
