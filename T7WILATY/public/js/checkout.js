@@ -531,6 +531,27 @@ async function executePayment() {
                 status:         'مكتمل'
             });
 
+            // ✅ إرسال إشعار للطلبات المكتملة تلقائياً
+if (allHaveStock && insertedOrders?.length > 0) {
+    for (const order of insertedOrders) {
+        fetch('https://btcmfdfepykwimukbiad.supabase.co/functions/v1/send-pending-notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`
+            },
+            body: JSON.stringify({
+                record: {
+                    ...order,
+                    status: 'مكتمل',
+                    notification_sent: false
+                },
+                old_record: { status: 'قيد الانتظار' }
+            })
+        }).catch(e => console.warn('Push failed:', e.message));
+    }
+}
+
             await clearCloudCart(user.id);
             showToast(allHaveStock ? '✅ تم الدفع وتسليم جميع بطاقاتك!' : '✅ تم الدفع! سيتم تسليم طلباتك قريباً', 'success');
             setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
