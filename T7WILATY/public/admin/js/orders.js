@@ -1063,10 +1063,9 @@ window.approveOrder = async (orderId, quantity) => {
         url:   '/orders.html'
     });
 
+    await sendOrderEmail(orderData);
     loadOrders();
 };
-
-await sendOrderEmail(orderData);
 
 // ==================== إرسال Push للعميل ====================
 async function sendPushToUser(userId, { title, body, url }) {
