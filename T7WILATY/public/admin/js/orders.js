@@ -1074,7 +1074,7 @@ async function sendPushToUser(userId, { title, body, url }) {
         if (!session?.access_token) return;
 
         await fetch(
-            'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/send-push',
+            'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/push-notifications',
             {
                 method: 'POST',
                 headers: {
