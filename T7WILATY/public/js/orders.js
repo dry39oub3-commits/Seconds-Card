@@ -4,10 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuthState();
 });
 
-async function checkAuthState() {
-    await fetchUserOrders();
-    watchOrders();
-}
+
 
 window.handleLogout = async () => {
     await supabase.auth.signOut();
