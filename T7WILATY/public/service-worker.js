@@ -2,15 +2,17 @@ self.addEventListener('push', (event) => {
     const data = event.data?.json() || {};
 
     const options = {
-        body:    data.body    || '',
-        icon:    data.icon    || '/assets/Icon.png',
-        badge:   data.badge   || '/assets/Icon.png',
-        tag:     data.tag     || 'storecard-notif',
-        vibrate: [200, 100, 200],
-        data:    { url: data.url || '/orders.html' },
+        body:               data.body    || '',
+        icon:               data.icon    || '/assets/Icon.png',
+        badge:              '/assets/Icon.png',
+        tag:                'storecard-notif',
+        vibrate:            [200, 100, 200],
+        requireInteraction: true,
+        silent:             false,
+        data:               { url: data.url || '/orders.html' },
         actions: [
             { action: 'view',  title: '📋 عرض الطلب' },
-            { action: 'close', title: 'إغلاق' }
+            { action: 'close', title: '✕ إغلاق' }
         ]
     };
 
@@ -24,11 +26,10 @@ self.addEventListener('notificationclick', (event) => {
     if (event.action === 'close') return;
 
     event.waitUntil(
-        clients.matchAll({ type: 'window' }).then(clientList => {
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             const url = event.notification.data?.url || '/orders.html';
             for (const client of clientList) {
-                if (client.url.includes(url) && 'focus' in client)
-                    return client.focus();
+                if ('focus' in client) return client.focus();
             }
             if (clients.openWindow) return clients.openWindow(url);
         })
