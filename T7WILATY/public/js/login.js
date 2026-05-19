@@ -8,7 +8,7 @@ window.signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin + '/index.html'
+            redirectTo: 'https://storecard.online/index.html'
         }
     });
 
