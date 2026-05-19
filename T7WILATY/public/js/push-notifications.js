@@ -1,7 +1,7 @@
 // public/js/push-notifications.js
 import { supabase } from './supabase-config.js';
 
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY'; // ستولّده لاحقاً
+const VAPID_PUBLIC_KEY = 'BBNACvNXSqWX6ojAjXyJ0KK_hjMo4JVQZYAU8zbuf6VyeiOKwcLxJKvipB6eddVJpKAqArbi2Vn7YJKGoEh4opQ'; // ستولّده لاحقاً
 
 // ==================== تسجيل Service Worker ====================
 export async function registerServiceWorker() {
