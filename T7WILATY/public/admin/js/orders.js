@@ -296,26 +296,6 @@ async function tryAutoApproveFromStock(order) {
     order_id: order.id 
 }).in('id', stockIds);
 
-// ✅ إرسال إشعار تلقائي
-const { data: { session } } = await supabase.auth.getSession();
-if (session?.access_token && order.user_id) {
-    fetch('https://btcmfdfepykwimukbiad.supabase.co/functions/v1/send-pending-notifications', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-            record: {
-                ...order,
-                status: 'مكتمل',
-                notification_sent: false,
-                card_code: codes.join('\n')
-            },
-            old_record: { status: 'قيد الانتظار' }
-        })
-    }).catch(e => console.warn('Push failed:', e.message));
-}
 
 return true;
 }
