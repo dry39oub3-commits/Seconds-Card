@@ -1,7 +1,6 @@
-// public/service-worker.js
 self.addEventListener('push', (event) => {
     const data = event.data?.json() || {};
-    
+
     const options = {
         body:    data.body    || '',
         icon:    data.icon    || '/assets/Icon.png',
@@ -10,7 +9,7 @@ self.addEventListener('push', (event) => {
         vibrate: [200, 100, 200],
         data:    { url: data.url || '/orders.html' },
         actions: [
-            { action: 'view', title: '📋 عرض الطلب' },
+            { action: 'view',  title: '📋 عرض الطلب' },
             { action: 'close', title: 'إغلاق' }
         ]
     };
