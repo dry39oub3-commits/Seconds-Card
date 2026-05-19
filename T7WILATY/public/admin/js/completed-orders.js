@@ -167,55 +167,60 @@ async function loadCompletedOrders() {
                     <i class="fas fa-box"></i> مخزون${autoApprovedCount > 1 ? ' (' + autoApprovedCount + ')' : ''}
                 </span></div>`;
         }
-        // ✅ استبدله بهذا
-            if (manualCount > 0) {
-    const manualItems    = group.items.filter(i => i.status === 'مكتمل' && !i.auto_approved);
-    const staffNames     = [...new Set(
-        manualItems.map(i => i.approved_by_name).filter(Boolean)
-    )].join(' / ');
-    const approvedByName = staffNames || 'يدوي';
+        if (manualCount > 0) {
+            const manualItems    = group.items.filter(i => i.status === 'مكتمل' && !i.auto_approved);
+            const staffNames     = [...new Set(manualItems.map(i => i.approved_by_name).filter(Boolean))].join(' / ');
+            const approvedByName = staffNames || 'يدوي';
+            approvalBadge += `<div style="margin-top:4px;">
+                <span style="display:inline-flex;align-items:center;gap:4px;
+                    background:rgba(168,85,247,0.12);color:#c084fc;
+                    border:1px solid rgba(168,85,247,0.3);
+                    padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                    <i class="fas fa-user-check"></i> ${approvedByName}${manualCount > 1 ? ' (' + manualCount + ')' : ''}
+                </span></div>`;
+        }
 
-    approvalBadge += `<div style="margin-top:4px;">
-        <span style="display:inline-flex;align-items:center;gap:4px;
-            background:rgba(168,85,247,0.12);color:#c084fc;
-            border:1px solid rgba(168,85,247,0.3);
-            padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
-            <i class="fas fa-user-check"></i> ${approvedByName}${manualCount > 1 ? ' (' + manualCount + ')' : ''}
-        </span></div>`;
-}
-
-            // بعد autoApprovedCount و manualCount — أضف هذا
-const refundedItems  = group.items.filter(i => i.status === 'مسترد');
-const rejectedItems  = group.items.filter(i => i.status === 'ملغي');
-
-if (refundedItems.length > 0) {
-    const refundedBy = refundedItems[0]?.approved_by_name || '';
-    if (refundedBy) {
-        approvalBadge += `<div style="margin-top:4px;">
-            <span style="display:inline-flex;align-items:center;gap:4px;
-                background:rgba(245,158,11,0.12);color:#fbbf24;
-                border:1px solid rgba(245,158,11,0.3);
-                padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
-                <i class="fas fa-undo"></i> ${refundedBy}
-            </span></div>`;
-    }
-}
-
-if (rejectedItems.length > 0) {
-    const rejectedBy = rejectedItems[0]?.approved_by_name || '';
-    if (rejectedBy) {
-        approvalBadge += `<div style="margin-top:4px;">
-            <span style="display:inline-flex;align-items:center;gap:4px;
-                background:rgba(239,68,68,0.12);color:#f87171;
-                border:1px solid rgba(239,68,68,0.3);
-                padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
-                <i class="fas fa-times"></i> ${rejectedBy}
-            </span></div>`;
-    }
-}
+        const refundedItems = group.items.filter(i => i.status === 'مسترد');
+        const rejectedItems = group.items.filter(i => i.status === 'ملغي');
+        if (refundedItems.length > 0) {
+            const refundedBy = refundedItems[0]?.approved_by_name || '';
+            if (refundedBy) {
+                approvalBadge += `<div style="margin-top:4px;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;
+                        background:rgba(245,158,11,0.12);color:#fbbf24;
+                        border:1px solid rgba(245,158,11,0.3);
+                        padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                        <i class="fas fa-undo"></i> ${refundedBy}
+                    </span></div>`;
+            }
+        }
+        if (rejectedItems.length > 0) {
+            const rejectedBy = rejectedItems[0]?.approved_by_name || '';
+            if (rejectedBy) {
+                approvalBadge += `<div style="margin-top:4px;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;
+                        background:rgba(239,68,68,0.12);color:#f87171;
+                        border:1px solid rgba(239,68,68,0.3);
+                        padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">
+                        <i class="fas fa-times"></i> ${rejectedBy}
+                    </span></div>`;
+            }
+        }
 
         const completedItems = group.items.filter(i => i.status === 'مكتمل');
         const completedIds   = JSON.stringify(completedItems.map(i => i.id)).replace(/"/g, '&quot;');
+
+        // ✅ زر إعادة إرسال الإشعار
+        const notifyBtn = completedItems.length > 0
+            ? `<button onclick="resendNotification('${group.order_number}')"
+                style="background:#3b82f6;color:white;border:none;padding:6px 12px;border-radius:6px;
+                       cursor:pointer;font-size:12px;width:100%;display:flex;
+                       align-items:center;gap:4px;justify-content:center;margin-bottom:6px;"
+                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <i class="fas fa-bell"></i> إرسال الإشعار
+               </button>`
+            : '';
+
         const refundBtn = completedItems.length > 0 && window.CAN_REFUND
             ? `<button onclick="refundGroupOrders(${completedIds})"
                 style="background:#f59e0b;color:white;border:none;padding:6px 12px;border-radius:6px;
@@ -255,6 +260,7 @@ if (rejectedItems.length > 0) {
                         : ''}
                 </td>
                 <td>
+                    ${notifyBtn}
                     ${refundBtn}
                     ${window.CAN_DELETE ? `
                     <button onclick="deleteOrderGroup('${group.order_number}')"
@@ -268,6 +274,78 @@ if (rejectedItems.length > 0) {
         `;
     }).join('');
 }
+
+// ==================== إرسال إشعار Push + إيميل ====================
+async function sendNotificationToUser(order, status) {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token || !order.user_id) return;
+
+        const headers = {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+        };
+
+        // تحديد محتوى الإشعار حسب الحالة
+        let pushTitle, pushBody, sendEmail = false;
+
+        if (status === 'مكتمل') {
+            pushTitle = '✅ تم إكمال طلبك!';
+            pushBody  = `${order.product_name || ''} ${order.label ? `(${order.label})` : ''} — اضغط لعرض الكود`;
+            sendEmail = true;
+        } else if (status === 'مسترد') {
+            pushTitle = '↩️ تم استرداد طلبك';
+            pushBody  = `${order.product_name || ''} — ${(order.price || 0) * (order.quantity || 1)} MRU`;
+        } else if (status === 'ملغي') {
+            pushTitle = '❌ تم رفض طلبك';
+            pushBody  = `${order.product_name || ''} — ${order.reject_reason || 'تواصل مع الدعم'}`;
+        }
+
+        // ✅ إرسال Push
+        await fetch('https://btcmfdfepykwimukbiad.supabase.co/functions/v1/push-notifications', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                user_id: order.user_id,
+                title:   pushTitle,
+                body:    pushBody,
+                url:     '/orders.html'
+            })
+        });
+
+        // ✅ إرسال إيميل فقط للطلبات المكتملة
+        if (sendEmail) {
+            await fetch('https://btcmfdfepykwimukbiad.supabase.co/functions/v1/send-order-email', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    user_id:      order.user_id,
+                    order_number: order.order_number,
+                    product_name: order.product_name,
+                    label:        order.label,
+                    quantity:     order.quantity || 1,
+                    amount:       (order.price || 0) * (order.quantity || 1),
+                    currency:     order.currency || 'MRU',
+                    card_code:    order.card_code,
+                    is_player_id: !!order.player_id
+                })
+            });
+        }
+    } catch (e) {
+        console.warn('Notification failed:', e.message);
+    }
+}
+
+// ==================== إعادة إرسال الإشعار يدوياً ====================
+window.resendNotification = async (orderNumber) => {
+    const order = (window._completedOrders || [])
+        .find(o => (o.order_number || o.id) === orderNumber && o.status === 'مكتمل');
+
+    if (!order) { showAlert('لا توجد طلبات مكتملة', 'warning'); return; }
+
+    await sendNotificationToUser(order, 'مكتمل');
+    showAlert('✅ تم إرسال الإشعار والإيميل للعميل', 'success');
+};
 
 // ==================== Popup تفاصيل الطلب ====================
 window.showOrderPopup = (orderId) => {
@@ -283,19 +361,13 @@ window.showOrderPopup = (orderId) => {
     let suppliersHtml = '';
 
     if (suppliersDetails.length > 0) {
-        // ==================== إصلاح حساب الأكواد لكل مورد ====================
-        // أولاً: نبني الخريطة بالأكواد الصريحة إن وجدت
         const suppliersMap = {};
         let hasCodeField = false;
 
         suppliersDetails.forEach(s => {
             const key = s.supplier_name || 'غير محدد';
             if (!suppliersMap[key]) {
-                suppliersMap[key] = {
-                    name:     key,
-                    order_id: s.supplier_order_id || '',
-                    codes:    []
-                };
+                suppliersMap[key] = { name: key, order_id: s.supplier_order_id || '', codes: [] };
             }
             if (s.code) {
                 suppliersMap[key].codes.push(s.code);
@@ -303,28 +375,21 @@ window.showOrderPopup = (orderId) => {
             }
         });
 
-        // ثانياً: إذا لم يكن هناك حقل code — نوزع الأكواد على الموردين بالتساوي
         if (!hasCodeField && codes.length > 0) {
             const supplierKeys   = Object.keys(suppliersMap);
             const totalSuppliers = supplierKeys.length;
-
             if (totalSuppliers === 1) {
-                // كل الأكواد لمورد واحد
                 suppliersMap[supplierKeys[0]].codes = [...codes];
             } else {
-                // توزيع الأكواد بالتساوي — الباقي يذهب للأخير
                 const baseCount = Math.floor(codes.length / totalSuppliers);
-                let   codeIndex = 0;
+                let codeIndex = 0;
                 supplierKeys.forEach((key, i) => {
-                    const count = (i === totalSuppliers - 1)
-                        ? codes.length - codeIndex   // الباقي كله للأخير
-                        : baseCount;
+                    const count = (i === totalSuppliers - 1) ? codes.length - codeIndex : baseCount;
                     suppliersMap[key].codes = codes.slice(codeIndex, codeIndex + count);
                     codeIndex += count;
                 });
             }
         }
-        // =================================================================
 
         suppliersHtml = `
             <div style="margin-bottom:16px;">
@@ -335,8 +400,7 @@ window.showOrderPopup = (orderId) => {
                     <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;margin-bottom:8px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                             <span style="font-weight:700;color:#e2e8f0;">🏪 ${s.name}</span>
-                            <span style="font-size:11px;background:rgba(34,197,94,0.1);color:#22c55e;
-                                         padding:2px 8px;border-radius:10px;">
+                            <span style="font-size:11px;background:rgba(34,197,94,0.1);color:#22c55e;padding:2px 8px;border-radius:10px;">
                                 ${s.codes.length} كود
                             </span>
                         </div>
@@ -345,8 +409,7 @@ window.showOrderPopup = (orderId) => {
                             <span style="font-size:12px;color:#94a3b8;">🔖 Order ID:</span>
                             <span style="font-family:monospace;font-size:12px;color:#60a5fa;">${s.order_id}</span>
                             <button onclick="copyText('${s.order_id}')"
-                                style="background:#334155;color:white;border:none;padding:3px 8px;
-                                       border-radius:4px;cursor:pointer;font-size:11px;">
+                                style="background:#334155;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>` : ''}
@@ -354,13 +417,11 @@ window.showOrderPopup = (orderId) => {
                         <div style="margin-top:8px;">
                             ${s.codes.map(c => `
                                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                                    <span style="font-family:monospace;font-size:12px;color:#22c55e;
-                                                 background:#1e293b;padding:4px 8px;border-radius:5px;flex:1;">
+                                    <span style="font-family:monospace;font-size:12px;color:#22c55e;background:#1e293b;padding:4px 8px;border-radius:5px;flex:1;">
                                         ${c}
                                     </span>
                                     <button onclick="copyText('${c.replace(/'/g, "\\'")}')"
-                                        style="background:#334155;color:white;border:none;padding:3px 8px;
-                                               border-radius:4px;cursor:pointer;font-size:11px;">
+                                        style="background:#334155;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
@@ -370,7 +431,7 @@ window.showOrderPopup = (orderId) => {
                 `).join('')}
             </div>`;
 
-} else if (order.supplier_id) {
+    } else if (order.supplier_id) {
         suppliersHtml = `
             <div style="margin-bottom:16px;">
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">🏪 المورد</div>
@@ -381,21 +442,18 @@ window.showOrderPopup = (orderId) => {
                         <span style="font-size:12px;color:#94a3b8;">🔖 Order ID:</span>
                         <span style="font-family:monospace;font-size:12px;color:#60a5fa;">${order.supplier_order_id}</span>
                         <button onclick="copyText('${order.supplier_order_id}')"
-                            style="background:#334155;color:white;border:none;padding:3px 8px;
-                                   border-radius:4px;cursor:pointer;font-size:11px;">
+                            style="background:#334155;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
                     <button onclick="unlinkBinance('${order.id}', '${order.supplier_order_id}')"
                         style="width:100%;margin-top:10px;padding:7px;background:transparent;
                                color:#ef4444;border:1px solid #ef4444;border-radius:8px;
-                               cursor:pointer;font-size:12px;font-weight:700;
-                               font-family:'Tajawal',sans-serif;">
+                               cursor:pointer;font-size:12px;font-weight:700;font-family:'Tajawal',sans-serif;">
                         🔗 إلغاء ربط Binance
                     </button>` : ''}
                 </div>
             </div>`;
-    
     }
 
     let profitHtml = '';
@@ -457,23 +515,19 @@ window.showOrderPopup = (orderId) => {
                      })}</div></div>
             </div>
             ${profitHtml}
-            ${suppliersHtml}            
+            ${suppliersHtml}
             ${order.player_id ? `
             <div style="margin-bottom:16px;">
-                <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">
-                    🎮 Player ID
-                </div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">🎮 Player ID</div>
                 <div style="background:#0f172a;border:1px solid rgba(34,197,94,0.3);border-radius:8px;
                             padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
                     <strong style="font-family:monospace;color:#22c55e;font-size:15px;">${order.player_id}</strong>
                     <button onclick="copyText('${order.player_id}')"
-                        style="background:#334155;color:white;border:none;padding:3px 8px;
-                            border-radius:4px;cursor:pointer;font-size:11px;">
+                        style="background:#334155;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
             </div>` : ''}
-
             ${order.receipt_url?.startsWith('http') ? `
             <div style="margin-bottom:16px;">
                 <div style="font-size:12px;color:#22c55e;margin-bottom:8px;font-weight:700;">
@@ -484,7 +538,6 @@ window.showOrderPopup = (orderId) => {
                     onclick="window.open('${order.receipt_url}','_blank')"
                     title="انقر للتكبير">
             </div>` : ''}
-
             <div>
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700;">
                     🔑 الأكواد (${codes.length})
@@ -540,33 +593,25 @@ window.refundGroupOrders = async (ids) => {
     for (const orderId of ids) {
         const { data: order } = await supabase
             .from('orders')
-            .select('id, user_id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, price, quantity, suppliers_details, paymentMethod, payment_method')
+            .select('id, user_id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price, price, quantity, suppliers_details, paymentMethod, payment_method, order_number, currency, player_id, reject_reason')
             .eq('id', orderId)
             .single();
 
         if (!order) continue;
 
-        await supabase.from('orders').update({ 
+        await supabase.from('orders').update({
             status: 'مسترد',
             approved_by_name: window.STAFF_NAME || window.CURRENT_USER?.email || 'أدمن'
         }).eq('id', orderId);
 
         const refundAmount = (order.price || 0) * (order.quantity || 1);
 
-    
-
         if (order.user_id && refundAmount > 0 && (order.paymentMethod === 'المحفظة' || order.payment_method === 'المحفظة')) {
-            const { data: userData } = await supabase
-                .from('users').select('balance').eq('id', order.user_id).single();
-
+            const { data: userData } = await supabase.from('users').select('balance').eq('id', order.user_id).single();
             const currentBalance = userData?.balance || 0;
-            await supabase.from('users')
-                .update({ balance: currentBalance + refundAmount })
-                .eq('id', order.user_id);
+            await supabase.from('users').update({ balance: currentBalance + refundAmount }).eq('id', order.user_id);
 
-            const { data: orderInfo } = await supabase
-                .from('orders').select('order_number').eq('id', orderId).single();
-
+            const { data: orderInfo } = await supabase.from('orders').select('order_number').eq('id', orderId).single();
             await supabase.from('wallet_transactions').insert({
                 user_id:        order.user_id,
                 type:           'deposit',
@@ -580,8 +625,8 @@ window.refundGroupOrders = async (ids) => {
             totalRefunded += refundAmount;
         }
 
-
-        // =======================================================================
+        // ✅ إشعار Push للعميل عند الاسترداد
+        await sendNotificationToUser(order, 'مسترد');
     }
 
     document.getElementById('order-detail-popup')?.remove();
@@ -591,17 +636,15 @@ window.refundGroupOrders = async (ids) => {
 
 // ==================== استرداد طلب واحد (legacy) ====================
 window.refundOrder = async (orderId) => {
-    const { data: mainOrder, error: fetchError } = await supabase
-        .from('orders').select('order_number').eq('id', orderId).single();
-    if (fetchError) { showToast('❌ خطأ: ' + fetchError.message); return; }
+    const { data: mainOrder, error: fetchError } = await supabase.from('orders').select('order_number').eq('id', orderId).single();
+    if (fetchError) { showAlert('❌ خطأ: ' + fetchError.message, 'error'); return; }
 
-    const { data: allOrders } = await supabase
-        .from('orders')
-        .select('id, card_code, product_id, label, product_name, supplier_id, supplier_order_id, cost_price')
+    const { data: allOrders } = await supabase.from('orders')
+        .select('id')
         .eq('order_number', mainOrder.order_number)
         .eq('status', 'مكتمل');
 
-    if (!allOrders || allOrders.length === 0) { showToast('لا توجد طلبات للاسترداد'); return; }
+    if (!allOrders || allOrders.length === 0) { showAlert('لا توجد طلبات للاسترداد', 'warning'); return; }
     await window.refundGroupOrders(allOrders.map(o => o.id));
 };
 
@@ -635,7 +678,6 @@ window.loadCompletedOrders = loadCompletedOrders;
 
 // ==================== تشغيل ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // ✅ انتظر حتى يُحمَّل admin-guard
     const waitForGuard = setInterval(() => {
         if (window.CAN_DELETE === undefined) return;
         clearInterval(waitForGuard);
@@ -643,9 +685,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 50);
 });
 
-// ==================== إشعار عائم يستبدل alert ====================
+// ==================== إشعار عائم ====================
 window.showAlert = (message, type = 'success') => {
-    // إزالة أي إشعار سابق
     document.getElementById('floating-alert')?.remove();
 
     const colors = {
@@ -657,48 +698,33 @@ window.showAlert = (message, type = 'success') => {
 
     const { bg, icon } = colors[type] || colors.success;
 
-    const showAlert = document.createElement('div');
-    showAlert.id = 'floating-showAlert';
-    showAlert.style.cssText = `
-        position: fixed;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-20px);
-        background: ${bg};
-        color: white;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-size: 14px;
-        font-weight: 700;
-        z-index: 999999;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        max-width: 90vw;
-        text-align: center;
-        white-space: pre-line;
-        opacity: 0;
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        pointer-events: none;
-        direction: rtl;
+    const alert = document.createElement('div');
+    alert.id = 'floating-alert';
+    alert.style.cssText = `
+        position:fixed; top:24px; left:50%;
+        transform:translateX(-50%) translateY(-20px);
+        background:${bg}; color:white; padding:14px 28px;
+        border-radius:12px; font-size:14px; font-weight:700;
+        z-index:999999; box-shadow:0 8px 30px rgba(0,0,0,0.4);
+        display:flex; align-items:center; gap:10px;
+        max-width:90vw; text-align:center; white-space:pre-line;
+        opacity:0; transition:opacity 0.3s ease,transform 0.3s ease;
+        pointer-events:none; direction:rtl;
     `;
-    showAlert.innerHTML = `<span style="font-size:18px;">${icon}</span><span>${message}</span>`;
-    document.body.appendChild(showAlert);
+    alert.innerHTML = `<span style="font-size:18px;">${icon}</span><span>${message}</span>`;
+    document.body.appendChild(alert);
 
-    // ظهور
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            showAlert.style.opacity = '1';
-            showAlert.style.transform = 'translateX(-50%) translateY(0)';
+            alert.style.opacity = '1';
+            alert.style.transform = 'translateX(-50%) translateY(0)';
         });
     });
 
-    // اختفاء بعد 3 ثواني
     setTimeout(() => {
-        showAlert.style.opacity = '0';
-        showAlert.style.transform = 'translateX(-50%) translateY(-20px)';
-        setTimeout(() => showAlert.remove(), 350);
+        alert.style.opacity = '0';
+        alert.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(() => alert.remove(), 350);
     }, 3000);
 };
 
@@ -706,24 +732,13 @@ window.deleteOrderGroup = async (orderNumberOrId) => {
     if (!confirm(`هل تريد حذف هذا الطلب نهائياً؟`)) return;
 
     let error;
-
-    // حاول الحذف بـ order_number أولاً
-    const res1 = await supabase
-        .from('orders')
-        .delete()
-        .eq('order_number', orderNumberOrId);
-
+    const res1 = await supabase.from('orders').delete().eq('order_number', orderNumberOrId);
     if (res1.error) {
-        // إذا فشل، احذف بالـ id
-        const res2 = await supabase
-            .from('orders')
-            .delete()
-            .eq('id', orderNumberOrId);
+        const res2 = await supabase.from('orders').delete().eq('id', orderNumberOrId);
         error = res2.error;
     }
 
     if (error) { showAlert('❌ خطأ في الحذف: ' + error.message, 'error'); return; }
-
     showAlert('✅ تم حذف الطلب بنجاح', 'success');
     loadCompletedOrders();
 };
@@ -732,11 +747,7 @@ window.deleteOrderGroup = async (orderNumberOrId) => {
 window.unlinkBinance = async (orderId, currentOrderId) => {
     if (!confirm(`هل تريد إلغاء ربط Binance؟\nسيتم مسح: ${currentOrderId}`)) return;
 
-    const { error } = await supabase
-        .from('orders')
-        .update({ supplier_order_id: null })
-        .eq('id', orderId);
-
+    const { error } = await supabase.from('orders').update({ supplier_order_id: null }).eq('id', orderId);
     if (error) { showAlert('❌ خطأ: ' + error.message, 'error'); return; }
 
     showAlert('✅ تم إلغاء ربط Binance — المعاملة ستظهر مجدداً', 'success');
