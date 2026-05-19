@@ -1066,6 +1066,8 @@ window.approveOrder = async (orderId, quantity) => {
     loadOrders();
 };
 
+await sendOrderEmail(orderData);
+
 // ==================== إرسال Push للعميل ====================
 async function sendPushToUser(userId, { title, body, url }) {
     if (!userId) return;
@@ -1088,6 +1090,64 @@ async function sendPushToUser(userId, { title, body, url }) {
         console.warn('Push notification failed:', e.message);
     }
 }
+
+// ==================== إرسال إيميل للعميل ====================
+// أضف هذه الدالة في orders.js بعد دالة sendPushToUser
+
+async function sendOrderEmail(orderData) {
+    if (!orderData?.user_id) return;
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        await fetch(
+            'https://btcmfdfepykwimukbiad.supabase.co/functions/v1/send-order-email',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type':  'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    user_id:      orderData.user_id,
+                    order_number: orderData.order_number,
+                    product_name: orderData.product_name,
+                    label:        orderData.label,
+                    quantity:     orderData.quantity || 1,
+                    amount:       (orderData.price || 0) * (orderData.quantity || 1),
+                    currency:     orderData.currency || 'MRU',
+                    card_code:    orderData.card_code,
+                    is_player_id: !!orderData.player_id
+                })
+            }
+        );
+
+        console.log('✅ تم إرسال إيميل للعميل');
+    } catch (e) {
+        console.warn('Email notification failed:', e.message);
+    }
+}
+
+// ==================== في دالة approveOrder ====================
+// بعد السطر:
+//   await sendPushToUser(orderData?.user_id, { ... });
+// أضف:
+//   await sendOrderEmail(orderData);
+
+// مثال على الكود بعد التعديل:
+/*
+    showToast('✅ تم قبول الطلب بنجاح!');
+
+    await sendPushToUser(orderData?.user_id, {
+        title: '✅ تم إكمال طلبك!',
+        body:  `${orderData?.product_name || ''} ${orderData?.label ? `(${orderData.label})` : ''} — اضغط لعرض الكود`,
+        url:   '/orders.html'
+    });
+
+    await sendOrderEmail(orderData); // ← أضف هذا السطر
+
+    loadOrders();
+*/
 
 window.approveGroupOrders = async () => {
     const items = window._groupItems || [];
