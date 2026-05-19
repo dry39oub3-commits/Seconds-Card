@@ -1209,7 +1209,7 @@ window.filterOrders = () => {
 };
 
 // ==================== DOMContentLoaded ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     loadOrders();
     loadCompletedOrders();
     checkNewOrders();
@@ -1222,6 +1222,16 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .subscribe();
     setInterval(checkNewOrders, 1000);
+
+    // ✅ طلب إذن الإشعارات
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user
+        && 'Notification' in window
+        && 'serviceWorker' in navigator
+        && Notification.permission !== 'denied') {
+        const { subscribeToPush } = await import('../../js/push-notifications.js');
+        await subscribeToPush(session.user.id);
+    }
 });
 
 function showToast(message, type = 'success') {
@@ -1731,18 +1741,3 @@ function showCustomerNotification({ title, body, code, color, orderId }) {
     }
 }
 
-// ✅ اطلب إذن الإشعارات عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    // تحقق إذا كان المتصفح يدعم الإشعارات
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-
-    // لا تطلب الإذن إذا سبق رفضه
-    if (Notification.permission === 'denied') return;
-
-    // اشترك في الإشعارات
-    const { subscribeToPush } = await import('./push-notifications.js');
-    await subscribeToPush(session.user.id);
-});
