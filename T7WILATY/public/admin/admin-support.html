@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة قنوات الدعم | StoreCard</title>
+    <link rel="stylesheet" href="./css/dashboard-main.css?v=2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* ── تعريف متغيرات إضافية متوافقة مع dashboard-main.css ── */
+        :root {
+            --edit-bg:       rgba(99,102,241,0.12);
+            --edit-color:    #6366f1;
+            --edit-border:   rgba(99,102,241,0.25);
+            --delete-bg:     rgba(231,76,60,0.1);
+            --delete-border: rgba(231,76,60,0.25);
+            --shadow-accent: rgba(249,115,22,0.35);
+        }
+        [data-theme="dark"] {
+            --edit-bg:       rgba(99,102,241,0.18);
+            --edit-color:    #818cf8;
+            --edit-border:   rgba(99,102,241,0.35);
+            --delete-bg:     rgba(231,76,60,0.15);
+            --delete-border: rgba(231,76,60,0.3);
+            --shadow-accent: rgba(249,115,22,0.45);
+        }
+
+        /* ── تخطيط الصفحة ── */
+        body { padding-top: 30px; }
+
+        .support-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        .page-header {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+
+        /* ── بطاقة القناة ── */
+        .channel-card {
+            background: var(--white);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow);
+            transition: var(--transition), border-color 0.2s;
+        }
+        .channel-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .channel-card.active { border-color: var(--accent-orange); box-shadow: 0 0 0 2px rgba(249,115,22,0.12), var(--shadow); }
+
+        .channel-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: white; flex-shrink: 0; overflow: hidden;
+        }
+        .channel-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+
+        .channel-info { flex: 1; min-width: 140px; }
+        .channel-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--text-main); }
+        .channel-type { font-size: 12px; color: var(--text-muted); }
+
+        .channel-input { flex: 2; min-width: 200px; }
+        .channel-input label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px; font-weight: 600; }
+        .channel-input input {
+            width: 100%; padding: 10px 14px;
+            background: var(--bg-light); border: 1px solid var(--border-light);
+            border-radius: 8px; color: var(--text-main);
+            font-size: 13px; font-family: inherit; outline: none;
+            transition: var(--transition);
+        }
+        .channel-input input:focus { border-color: var(--accent-orange); box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+
+        /* ── Toggle ── */
+        .toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+        .status-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .toggle-switch { position: relative; width: 52px; height: 28px; }
+        .toggle-switch input { display: none; }
+        .toggle-switch label {
+            position: absolute; inset: 0;
+            background: var(--border-light); border-radius: 14px;
+            cursor: pointer; transition: background 0.3s;
+        }
+        .toggle-switch label::after {
+            content: ''; position: absolute;
+            width: 22px; height: 22px; background: white;
+            border-radius: 50%; top: 3px; right: 3px; transition: transform 0.3s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch input:checked + label { background: var(--success); }
+        .toggle-switch input:checked + label::after { transform: translateX(-24px); }
+
+        /* ── أزرار الكارد ── */
+        .card-save-btn {
+            background: var(--accent-orange); color: white; border: none;
+            padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+            cursor: pointer; font-family: inherit; flex-shrink: 0;
+            transition: var(--transition); box-shadow: 0 3px 10px var(--shadow-accent);
+        }
+        .card-save-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .card-save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .edit-btn {
+            background: var(--edit-bg); color: var(--edit-color);
+            border: 1px solid var(--edit-border);
+            padding: 10px 14px; border-radius: 8px;
+            font-size: 13px; cursor: pointer; flex-shrink: 0; transition: var(--transition);
+        }
+        .edit-btn:hover { background: rgba(99,102,241,0.22); }
+
+        .delete-btn {
+            background: var(--delete-bg); color: var(--danger);
+            border: 1px solid var(--delete-border);
+            padding: 10px 14px; border-radius: 8px;
+            font-size: 13px; cursor: pointer; flex-shrink: 0; transition: var(--transition);
+        }
+        .delete-btn:hover { background: rgba(231,76,60,0.22); }
+
+        /* ── زر الإضافة ── */
+        .add-channel-btn {
+            background: var(--accent-orange); color: white; border: none;
+            padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 700;
+            cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 8px;
+            transition: var(--transition); box-shadow: 0 4px 14px var(--shadow-accent);
+        }
+        .add-channel-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); z-index: 9999;
+            align-items: center; justify-content: center; padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: flex; }
+
+        .support-modal {
+            background: var(--white); border-radius: var(--radius);
+            padding: 28px; width: 100%; max-width: 480px;
+            border: 1px solid var(--border-light);
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+            transition: background 0.3s;
+        }
+        .support-modal h2 { font-size: 18px; color: var(--accent-orange); margin-bottom: 22px; display: flex; align-items: center; gap: 10px; }
+
+        .support-modal .form-group { margin-bottom: 14px; }
+        .support-modal .form-group label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 600; }
+        .support-modal .form-group input,
+        .support-modal .form-group select {
+            width: 100%; padding: 11px 14px;
+            background: var(--bg-light); border: 1px solid var(--border-light);
+            border-radius: 8px; color: var(--text-main);
+            font-size: 14px; font-family: inherit; outline: none;
+            transition: var(--transition);
+        }
+        .support-modal .form-group input:focus,
+        .support-modal .form-group select:focus {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+            background: var(--white);
+        }
+        .support-modal select option { background: var(--white); color: var(--text-main); }
+
+        /* معاينة صورة */
+        .img-preview-wrap { margin-top: 8px; display: none; align-items: center; gap: 10px; }
+        .img-preview-wrap.visible { display: flex; }
+        .img-preview {
+            width: 48px; height: 48px; border-radius: 10px;
+            object-fit: cover; border: 2px solid var(--border-light);
+            background: var(--bg-light);
+        }
+        .img-preview-label { font-size: 12px; color: var(--text-muted); }
+
+        /* لون */
+        .color-row { display: flex; align-items: center; gap: 10px; }
+        .color-row input[type="color"] {
+            width: 48px; height: 44px; cursor: pointer; border-radius: 8px;
+            padding: 2px; border: 1px solid var(--border-light); background: var(--bg-light);
+        }
+        .color-row input[type="text"] { flex: 1; }
+
+        /* أزرار المودال */
+        .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
+        .modal-btns button {
+            flex: 1; padding: 12px; border-radius: 8px;
+            font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; border: none;
+            transition: var(--transition);
+        }
+        .btn-confirm { background: var(--accent-orange); color: white; box-shadow: 0 4px 12px var(--shadow-accent); }
+        .btn-confirm:hover { opacity: 0.9; }
+        .btn-cancel  { background: var(--bg-light); color: var(--text-muted); border: 1px solid var(--border-light); }
+        .btn-cancel:hover { background: var(--border-light); }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            color: white; padding: 12px 28px; border-radius: 10px;
+            font-weight: 700; font-size: 14px; z-index: 99999; display: none;
+            font-family: inherit; box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { opacity:0; transform: translateX(-50%) translateY(-10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+        /* ── حالة فارغة ── */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state i { font-size: 52px; margin-bottom: 16px; color: var(--border-light); display: block; }
+        .empty-state p { font-size: 15px; }
+    </style>
+</head>
+<body>
+
+    <header class="admin-top-header">
+        <div class="header-container">
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="القائمة">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="logo">
+                <a href="orders.html" style="text-decoration:none; color:inherit;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="../assets/Icon.png" alt="StoreCard" style="height:40px; width:40px; object-fit:contain;">
+                        <span style="font-size:18px; font-weight:800; color:white;">Store<span style="color:#f97316;">Card</span></span>
+                    </div>
+                </a>
+            </div>
+            <nav class="main-nav">
+                <ul class="nav-list" id="main-nav-list">
+                    <li data-perm="all"><a href="Slider-manager.html" class="nav-link"><i class="fas fa-chart-line"></i> السلايدر</a></li>
+                    <li data-perm="all"><a href="activate-users.html" class="nav-link"><i class="fas fa-user-check"></i> تفعيل الحسابات</a></li>
+                    <li data-perm="view_wallets"><a href="admin-wallet.html" class="nav-link"><i class="fas fa-wallet"></i> المحافظ</a></li>
+                    <li data-perm="all"><a href="payment-methods.html" class="nav-link"><i class="fas fa-credit-card"></i> الدفع</a></li>
+                    <li data-perm="view_stats"><a href="dashboard.html" class="nav-link"><i class="fas fa-chart-bar"></i> الإحصائيات</a></li>
+                    <li data-perm="all"><a href="products-manager.html" class="nav-link"><i class="fas fa-box-open"></i> المنتجات</a></li>
+                    <li data-perm="manage_stock"><a href="stocks.html" class="nav-link"><i class="fas fa-layer-group"></i> المخزون</a></li>
+                    <li data-perm="view_completed"><a href="completed-orders.html" class="nav-link"><i class="fas fa-check-double"></i> الطلبات المكتملة</a></li>
+                </ul>
+            </nav>
+            <div style="position:relative; display:inline-block; margin-left:15px;">
+                <button id="bell-btn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; position:relative;">
+                    <i class="fas fa-bell"></i>
+                    <span id="orders-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
+                </button>
+            </div>
+            <button id="theme-toggle" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:6px;">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="user-actions">
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="support-wrapper">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-headset"></i> إدارة قنوات الدعم الفني</h1>
+            <button class="add-channel-btn" onclick="openAddModal()">
+                <i class="fas fa-plus"></i> إضافة قناة جديدة
+            </button>
+        </div>
+
+        <div id="channels-container">
+            <p style="color:var(--text-muted);">جاري التحميل...</p>
+        </div>
+    </div>
+
+    <!-- Modal إضافة -->
+    <div class="modal-overlay" id="add-modal">
+        <div class="support-modal">
+            <h2><i class="fas fa-plus-circle"></i> إضافة قناة دعم جديدة</h2>
+            <div class="form-group">
+                <label>نوع القناة</label>
+                <select id="new-type" onchange="updateTypeFields()">
+                    <option value="whatsapp">واتساب</option>
+                    <option value="facebook">فيسبوك ماسنجر</option>
+                    <option value="email">البريد الإلكتروني</option>
+                    <option value="tawk">شات مباشر (Tawk.to)</option>
+                    <option value="custom">مخصص</option>
+                </select>
+            </div>
+            <div class="form-group" id="custom-label-group" style="display:none;">
+                <label>اسم القناة</label>
+                <input type="text" id="new-label" placeholder="مثال: تيليغرام">
+            </div>
+            <div class="form-group">
+                <label id="new-value-label">📱 رقم الهاتف (بدون +)</label>
+                <input type="text" id="new-value" placeholder="22200000000">
+            </div>
+            <div class="form-group" id="custom-icon-group" style="display:none;">
+                <label>🖼️ رابط صورة الأيقونة</label>
+                <input type="text" id="new-icon" placeholder="https://example.com/icon.png"
+                    oninput="previewImage('new-icon','add-img-preview','add-img-wrap')">
+                <div class="img-preview-wrap" id="add-img-wrap">
+                    <img class="img-preview" id="add-img-preview" src="" alt="معاينة">
+                    <span class="img-preview-label">معاينة الصورة</span>
+                </div>
+            </div>
+            <div class="form-group" id="custom-color-group" style="display:none;">
+                <label>لون خلفية الأيقونة</label>
+                <div class="color-row">
+                    <input type="color" id="new-color" value="#f97316"
+                        oninput="document.getElementById('new-color-text').value=this.value">
+                    <input type="text" id="new-color-text" placeholder="#f97316" value="#f97316"
+                        oninput="syncColorFromText('new-color','new-color-text')">
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-confirm" onclick="addChannel()"><i class="fas fa-plus"></i> إضافة</button>
+                <button class="btn-cancel" onclick="closeAddModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal تعديل -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="support-modal">
+            <h2><i class="fas fa-edit"></i> تعديل القناة</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-group">
+                <label>اسم القناة</label>
+                <input type="text" id="edit-label" placeholder="اسم القناة">
+            </div>
+            <div class="form-group">
+                <label>🔗 الرابط أو القيمة</label>
+                <input type="text" id="edit-value" placeholder="الرابط أو القيمة">
+            </div>
+            <div class="form-group">
+                <label>🖼️ رابط صورة الأيقونة</label>
+                <input type="text" id="edit-icon" placeholder="https://example.com/icon.png"
+                    oninput="previewImage('edit-icon','edit-img-preview','edit-img-wrap')">
+                <div class="img-preview-wrap" id="edit-img-wrap">
+                    <img class="img-preview" id="edit-img-preview" src="" alt="معاينة">
+                    <span class="img-preview-label">معاينة الصورة</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>لون خلفية الأيقونة</label>
+                <div class="color-row">
+                    <input type="color" id="edit-color"
+                        oninput="document.getElementById('edit-color-text').value=this.value">
+                    <input type="text" id="edit-color-text" placeholder="#f97316"
+                        oninput="syncColorFromText('edit-color','edit-color-text')">
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-confirm" onclick="saveEditChannel()"><i class="fas fa-save"></i> حفظ التعديلات</button>
+                <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        window._supabase = supabase;
+
+        const typeConfig = {
+            whatsapp: { label: 'واتساب',            icon: 'fab fa-whatsapp',          color: '#25d366', placeholder: '22200000000',              inputLabel: '📱 رقم الهاتف (بدون +)' },
+            facebook: { label: 'فيسبوك ماسنجر',     icon: 'fab fa-facebook-messenger', color: '#0084ff', placeholder: 'https://m.me/yourpage',    inputLabel: '🔗 رابط الماسنجر' },
+            email:    { label: 'البريد الإلكتروني', icon: 'fas fa-envelope',           color: '#f97316', placeholder: 'support@storecard.online', inputLabel: '📧 عنوان البريد' },
+            tawk:     { label: 'شات مباشر',         icon: 'fas fa-comments',           color: '#03a84e', placeholder: 'https://tawk.to/...',       inputLabel: '🔗 رابط Tawk.to' },
+            custom:   { label: '',                  icon: '',                          color: '#6366f1', placeholder: '',                          inputLabel: '🔗 الرابط أو القيمة' }
+        };
+        window._typeConfig = typeConfig;
+
+        function renderIcon(ch) {
+            const isImg = ch.icon && (ch.icon.startsWith('http') || ch.icon.startsWith('/') || ch.icon.startsWith('data:'));
+            if (isImg)   return `<img src="${ch.icon}" alt="${ch.label}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
+            if (ch.icon) return `<i class="${ch.icon}"></i>`;
+            return `<span style="font-size:18px;font-weight:700;">${ch.label?.charAt(0)||'?'}</span>`;
+        }
+
+        async function loadChannels() {
+            const { data: channels } = await supabase
+                .from('support_channels').select('*')
+                .order('sort_order', { ascending: true });
+
+            const container = document.getElementById('channels-container');
+            if (!channels?.length) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-headset"></i><p>لا توجد قنوات — أضف قناة جديدة</p></div>`;
+                return;
+            }
+            container.innerHTML = channels.map(ch => {
+                const meta = typeConfig[ch.type] || typeConfig.custom;
+                return `
+                <div class="channel-card ${ch.is_active?'active':''}" id="card-${ch.id}">
+                    <div class="channel-icon" style="background:${ch.color};">${renderIcon(ch)}</div>
+                    <div class="channel-info">
+                        <div class="channel-name">${ch.label}</div>
+                        <div class="channel-type">${ch.type}</div>
+                    </div>
+                    <div class="channel-input">
+                        <label>${meta.inputLabel||'🔗 القيمة'}</label>
+                        <input type="text" id="value-${ch.id}" value="${ch.value}" placeholder="${meta.placeholder||''}">
+                    </div>
+                    <div class="toggle-wrap">
+                        <span class="status-label" id="status-${ch.id}">${ch.is_active?'مفعّل':'مخفي'}</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-${ch.id}" ${ch.is_active?'checked':''}
+                                onchange="window.updateCard(${ch.id},this.checked)">
+                            <label for="toggle-${ch.id}"></label>
+                        </div>
+                    </div>
+                    <button class="card-save-btn" onclick="window.saveChannel(${ch.id})">
+                        <i class="fas fa-save"></i> حفظ
+                    </button>
+                    <button class="edit-btn" onclick="window.openEditModal(${ch.id},'${encodeURIComponent(JSON.stringify(ch))}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn" onclick="window.deleteChannel(${ch.id},'${ch.label}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        window.updateCard = (id, isActive) => {
+            document.getElementById(`card-${id}`).classList.toggle('active', isActive);
+            document.getElementById(`status-${id}`).textContent = isActive ? 'مفعّل' : 'مخفي';
+        };
+
+        window.saveChannel = async (id) => {
+            const value    = document.getElementById(`value-${id}`).value.trim();
+            const isActive = document.getElementById(`toggle-${id}`).checked;
+            const btn      = document.querySelector(`#card-${id} .card-save-btn`);
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const { error } = await supabase.from('support_channels').update({ value, is_active: isActive }).eq('id', id);
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> حفظ';
+            showToast(error ? '❌ خطأ في الحفظ' : '✅ تم الحفظ', !!error);
+        };
+
+        window.deleteChannel = async (id, label) => {
+            if (!confirm(`هل تريد حذف قناة "${label}" نهائياً؟`)) return;
+            const { error } = await supabase.from('support_channels').delete().eq('id', id);
+            if (!error) { showToast('🗑️ تم الحذف'); loadChannels(); }
+            else showToast('❌ خطأ في الحذف', true);
+        };
+
+        window.openEditModal = (id, encodedCh) => {
+            const ch = JSON.parse(decodeURIComponent(encodedCh));
+            document.getElementById('edit-id').value         = ch.id;
+            document.getElementById('edit-label').value      = ch.label || '';
+            document.getElementById('edit-value').value      = ch.value || '';
+            document.getElementById('edit-icon').value       = ch.icon  || '';
+            document.getElementById('edit-color').value      = ch.color || '#f97316';
+            document.getElementById('edit-color-text').value = ch.color || '#f97316';
+            previewImage('edit-icon','edit-img-preview','edit-img-wrap');
+            document.getElementById('edit-modal').classList.add('open');
+        };
+        window.closeEditModal = () => document.getElementById('edit-modal').classList.remove('open');
+
+        window.saveEditChannel = async () => {
+            const id    = document.getElementById('edit-id').value;
+            const label = document.getElementById('edit-label').value.trim();
+            const value = document.getElementById('edit-value').value.trim();
+            const icon  = document.getElementById('edit-icon').value.trim();
+            const color = document.getElementById('edit-color').value;
+            if (!label||!value) { showToast('⚠️ اسم القناة والقيمة مطلوبان', true); return; }
+            const { error } = await supabase.from('support_channels').update({ label,value,icon,color }).eq('id', id);
+            if (error) { showToast('❌ خطأ في التعديل', true); return; }
+            showToast('✅ تم التعديل بنجاح'); closeEditModal(); loadChannels();
+        };
+
+        window.openAddModal = () => { document.getElementById('add-modal').classList.add('open'); updateTypeFields(); };
+        window.closeAddModal = () => {
+            document.getElementById('add-modal').classList.remove('open');
+            ['new-value','new-label','new-icon'].forEach(id => document.getElementById(id).value='');
+            document.getElementById('add-img-wrap').classList.remove('visible');
+        };
+
+        window.updateTypeFields = () => {
+            const type     = document.getElementById('new-type').value;
+            const cfg      = typeConfig[type] || typeConfig.custom;
+            const isCustom = type === 'custom';
+            document.getElementById('new-value-label').textContent      = cfg.inputLabel;
+            document.getElementById('new-value').placeholder            = cfg.placeholder;
+            document.getElementById('custom-label-group').style.display = isCustom ? 'block' : 'none';
+            document.getElementById('custom-icon-group').style.display  = isCustom ? 'block' : 'none';
+            document.getElementById('custom-color-group').style.display = isCustom ? 'block' : 'none';
+        };
+
+        window.addChannel = async () => {
+            const type  = document.getElementById('new-type').value;
+            const value = document.getElementById('new-value').value.trim();
+            const cfg   = typeConfig[type] || typeConfig.custom;
+            if (!value) { showToast('⚠️ أدخل القيمة أولاً', true); return; }
+            const label = type==='custom' ? (document.getElementById('new-label').value.trim()||'قناة مخصصة') : cfg.label;
+            const icon  = type==='custom' ? document.getElementById('new-icon').value.trim()  : cfg.icon;
+            const color = type==='custom' ? document.getElementById('new-color').value        : cfg.color;
+            const { error } = await supabase.from('support_channels').insert({ type,label,value,icon,color,is_active:true,sort_order:99 });
+            if (error) { showToast('❌ خطأ في الإضافة', true); return; }
+            showToast('✅ تمت الإضافة'); closeAddModal(); loadChannels();
+        };
+
+        window.previewImage = (inputId, imgId, wrapId) => {
+            const url = document.getElementById(inputId).value.trim();
+            const wrap = document.getElementById(wrapId);
+            if (url && (url.startsWith('http')||url.startsWith('/'))) {
+                document.getElementById(imgId).src = url;
+                wrap.classList.add('visible');
+            } else { wrap.classList.remove('visible'); }
+        };
+
+        window.syncColorFromText = (colorId, textId) => {
+            const val = document.getElementById(textId).value.trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(val)) document.getElementById(colorId).value = val;
+        };
+
+        function showToast(msg, isError=false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = isError ? 'var(--danger)' : 'var(--success)';
+            t.style.display = 'block';
+            setTimeout(()=> t.style.display='none', 2500);
+        }
+        window._showToast = showToast;
+
+        loadChannels();
+    </script>
+    <script type="module" src="./js/header.js?v=2"></script>
+    <script type="module" src="./js/bell.js?v=2"></script>
+</body>
+</html>

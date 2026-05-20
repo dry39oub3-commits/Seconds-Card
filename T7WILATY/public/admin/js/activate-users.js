@@ -4,7 +4,43 @@ window._allUsers      = [];
 window._filterMode    = 'all';
 window._selectedHours = null;
 
-// ==================== تحميل ====================
+// ==================== واتساب ====================
+async function loadWhatsappNumber() {
+    const { data, error } = await supabase
+        .from('settings')
+        .select('whatsapp_number')
+        .eq('id', 1)
+        .single();
+
+    if (!error && data) {
+        const input = document.getElementById('wa-number-input');
+        if (input) input.value = data.whatsapp_number || '';
+    }
+}
+
+window.saveWhatsappNumber = async () => {
+    const input  = document.getElementById('wa-number-input');
+    const btn    = document.getElementById('wa-save-btn');
+    const number = input?.value.trim();
+
+    if (!number) { showToast('⚠️ أدخل رقم الهاتف أولاً', 'error'); return; }
+    if (!/^\d{10,15}$/.test(number)) { showToast('⚠️ الرقم غير صحيح — أرقام فقط بدون +', 'error'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    const { error } = await supabase
+        .from('settings')
+        .update({ whatsapp_number: number })
+        .eq('id', 1);
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> حفظ';
+
+    showToast(error ? '❌ خطأ في الحفظ' : '✅ تم حفظ الرقم بنجاح', error ? 'error' : 'success');
+};
+
+// ==================== تحميل المستخدمين ====================
 window.loadUsers = async () => {
     const tbody = document.getElementById('users-table');
     tbody.innerHTML = `<tr><td colspan="7" class="empty"><span class="spinner"></span> جاري التحميل...</td></tr>`;
@@ -32,7 +68,6 @@ window.loadUsers = async () => {
             .update({ is_blocked: false, banned_until: null })
             .in('id', ids);
 
-        // ✅ تحديث محلي
         expired.forEach(u => {
             u.is_blocked   = false;
             u.banned_until = null;
@@ -93,7 +128,6 @@ window.renderTable = () => {
         const isActive   = !isBlocked && !!u.is_active;
         const isInactive = !isBlocked && !u.is_active;
 
-        // ==================== نص الحظر ====================
         const bannedUntilText = isBlocked
             ? (() => {
                 if (!u.banned_until) {
@@ -290,10 +324,7 @@ window.showBlockModal = (userId, name) => {
             <h3 style="text-align:center; color:#f59e0b; margin-bottom:20px;">
                 <i class="fas fa-ban"></i> حظر — ${name}
             </h3>
-
-            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:8px;">
-                اختر مدة الحظر
-            </label>
+            <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:8px;">اختر مدة الحظر</label>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
                 ${[
                     { label: 'ساعة',    hours: 1    },
@@ -306,8 +337,7 @@ window.showBlockModal = (userId, name) => {
                     { label: '3 أشهر',  hours: 2160 },
                     { label: 'سنة',     hours: 8760 },
                 ].map(opt => `
-                    <button onclick="selectDuration(${opt.hours}, this)"
-                        class="duration-btn"
+                    <button onclick="selectDuration(${opt.hours}, this)" class="duration-btn"
                         style="padding:9px 6px; background:#0f172a; border:1px solid #334155;
                                border-radius:8px; color:#94a3b8; cursor:pointer;
                                font-family:'Tajawal',sans-serif; font-size:12px; font-weight:700;
@@ -316,7 +346,6 @@ window.showBlockModal = (userId, name) => {
                     </button>
                 `).join('')}
             </div>
-
             <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center;">
                 <input type="number" id="custom-hours" placeholder="عدد الساعات يدوياً"
                     min="1" oninput="updateBlockInfoCustom()"
@@ -325,18 +354,14 @@ window.showBlockModal = (userId, name) => {
                            font-size:13px; outline:none;">
                 <span style="color:#94a3b8; font-size:13px; white-space:nowrap;">ساعة</span>
             </div>
-
             <div id="block-duration-info"
-                style="text-align:center; font-size:12px; color:#f59e0b;
-                       margin-bottom:12px; min-height:18px;"></div>
-
+                style="text-align:center; font-size:12px; color:#f59e0b; margin-bottom:12px; min-height:18px;"></div>
             <button onclick="applyBlock('${userId}')"
                 style="width:100%; padding:12px; background:#f59e0b; color:white; border:none;
                        border-radius:10px; font-size:15px; font-weight:800; cursor:pointer;
                        font-family:'Tajawal',sans-serif; margin-bottom:8px;">
                 <i class="fas fa-ban"></i> تطبيق الحظر المؤقت
             </button>
-
             <button onclick="applyPermanentBlock('${userId}')"
                 style="width:100%; padding:11px; background:rgba(239,68,68,0.12); color:#ef4444;
                        border:1px solid #ef4444; border-radius:10px; font-size:14px; font-weight:800;
@@ -346,7 +371,6 @@ window.showBlockModal = (userId, name) => {
                 onmouseout="this.style.background='rgba(239,68,68,0.12)'">
                 🚫 حظر للأبد
             </button>
-
             <button onclick="document.getElementById('block-modal').remove()"
                 style="width:100%; padding:10px; background:transparent; color:#94a3b8;
                        border:1px solid #334155; border-radius:10px; font-size:14px;
@@ -396,10 +420,7 @@ window.applyBlock = async (userId) => {
     const customHours = parseInt(document.getElementById('custom-hours')?.value);
     const hours = customHours > 0 ? customHours : window._selectedHours;
 
-    if (!hours || hours <= 0) {
-        showToast('⚠️ اختر مدة الحظر أولاً', 'error');
-        return;
-    }
+    if (!hours || hours <= 0) { showToast('⚠️ اختر مدة الحظر أولاً', 'error'); return; }
 
     const bannedUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
@@ -460,4 +481,7 @@ window.showToast = (msg, type = 'success') => {
 };
 
 // ==================== تشغيل ====================
-document.addEventListener('DOMContentLoaded', () => loadUsers());
+document.addEventListener('DOMContentLoaded', () => {
+    loadWhatsappNumber();
+    loadUsers();
+});
