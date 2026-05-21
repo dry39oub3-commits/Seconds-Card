@@ -83,11 +83,10 @@ async function loadPaymentMethods() {
 // ===== اختيار طريقة الدفع =====
 window.selectMethod = async function(id, account, name) {
     document.querySelectorAll('.payment-method-card').forEach(c => {
-        c.style.borderColor = '#334155';
-        c.style.background  = '';
-        c.classList.remove('selected');
-    });
-
+    c.style.borderColor = '';
+    c.style.background  = '';
+    c.classList.remove('selected');
+});
     const card = document.getElementById(`pm-${id}`);
     if (card) card.classList.add('selected');
     selectedPaymentMethod = { id, account, name };
@@ -111,11 +110,18 @@ window.selectMethod = async function(id, account, name) {
     } else if (currency === 'USDT') {
         if (infoDiv) infoDiv.style.display = 'none';
         if (receiptSection) receiptSection.style.display = 'none';
-        if (statusMsg) statusMsg.innerHTML = `
-            <div style="text-align:center;padding:20px;color:#94a3b8;">
-                <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#f97316;"></i>
-                <p style="margin-top:10px;">جاري إنشاء QR Code...</p>
-            </div>`;
+        // ✅ بعد — استخدم class
+if (statusMsg) statusMsg.innerHTML = `
+    <div class="sender-phone-wrap">
+        <label class="sender-phone-label">
+            📱 رقم الهاتف المرسل منه
+        </label>
+        <input type="tel" id="sender-phone-input"
+               class="sender-phone-input"
+               placeholder="مثال: 22xxxxxxxx"
+               onfocus="this.classList.add('focused')"
+               onblur="this.classList.remove('focused')">
+    </div>`;
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -191,26 +197,22 @@ window.selectMethod = async function(id, account, name) {
             if (statusMsg) statusMsg.innerHTML = `<p style="color:#ef4444;">❌ خطأ: ${error.message}</p>`;
         }
 
-    } else {
-        if (infoDiv && accountElem) {
-            infoDiv.style.display = 'block';
-            accountElem.textContent = account || 'غير متوفر';
-        }
-        if (receiptSection) receiptSection.style.display = 'block';
-        if (statusMsg) statusMsg.innerHTML = `
-            <div style="margin-bottom:12px;">
-                <label style="display:block;font-size:13px;color:var(--text-secondary,#94a3b8);margin-bottom:6px;font-weight:600;">
-                    📱 رقم الهاتف المرسل منه
-                </label>
-                <input type="tel" id="sender-phone-input" placeholder="مثال: 22xxxxxxxx"
-                    style="width:100%;padding:12px 16px;background:var(--input-bg);
-                    border:1.5px solid var(--input-border);border-radius:10px;
-                    color:var(--text-color);font-size:15px;box-sizing:border-box;
-                    outline:none;font-family:'Cairo',sans-serif;transition:border-color 0.2s;"
-                    onfocus="this.style.borderColor='#f97316'"
-                    onblur="this.style.borderColor='var(--input-border)'">
-            </div>`;
+} else {
+    if (infoDiv && accountElem) {
+        infoDiv.style.display = 'block';
+        accountElem.textContent = account || 'غير متوفر';
     }
+    if (receiptSection) receiptSection.style.display = 'block';
+    if (statusMsg) statusMsg.innerHTML = `
+        <div class="sender-phone-wrap">
+            <label class="sender-phone-label">
+                📱 رقم الهاتف المرسل منه
+            </label>
+            <input type="tel" id="sender-phone-input"
+                   class="sender-phone-input"
+                   placeholder="مثال: 22xxxxxxxx">
+        </div>`;
+}
 };
 
 // ===== تحميل البيانات =====
@@ -691,16 +693,14 @@ window.copyAccount = function() {
     document.body.removeChild(el);
     const btn = document.querySelector('#selected-method-info button');
     if (btn) {
-        const original = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check" style="color:#22c55e;"></i>';
-        btn.style.borderColor = '#22c55e';
-        btn.style.color = '#22c55e';
-        setTimeout(() => {
-            btn.innerHTML = original;
-            btn.style.borderColor = '#334155';
-            btn.style.color = '#94a3b8';
-        }, 2000);
-    }
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i>';
+    btn.classList.add('copy-success');
+    setTimeout(() => {
+        btn.innerHTML = original;
+        btn.classList.remove('copy-success');
+    }, 2000);
+}
 };
 
 // ===== Logout =====

@@ -22,8 +22,8 @@
                 <div class="logo" style="display:flex; align-items:center; gap:10px;">
                     <img src="assets/Icon.png" alt="Store-Card" style="height:40px; width:40px; object-fit:contain;">
                     <div style="display:flex; flex-direction:column; line-height:1.1;">
-                        <span style="font-size:18px; font-weight:800; color:var(--text-primary, #1e293b);">Store<span
-                                style="color:#f97316;">Card</span></span>
+                        <span style="font-size:18px; font-weight:800; color:var(--text);">
+    Store<span style="color:#f97316;">Card</span>
                     </div>
                 </div>
             </a>
@@ -64,7 +64,8 @@
 
             <!-- ── العنوان ── -->
             <div class="checkout-title">
-                <i class="fas fa-shield-alt" style="color:#f97316;"></i>
+                <i class="fas fa-shield-alt" class="title-icon"></i>
+
                 مراجعة الدفع
             </div>
 
@@ -100,45 +101,34 @@
             </div>
 
             <!-- ── معلومات الطريقة المختارة ── -->
-            <div id="selected-method-info" style="display:none; margin-bottom:16px;
-                 background:rgba(249,115,22,0.06); border:1px solid rgba(249,115,22,0.2);
-                 border-radius:12px; padding:14px 16px;">
-                <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">
-                    <i class="fas fa-hashtag" style="color:#f97316;"></i> رقم الحساب
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                    <span id="selected-account" style="font-size:17px;font-weight:800;color:#f97316;
-                                 font-family:monospace;letter-spacing:1px;"></span>
-                    <button onclick="copyAccount()" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;
-                               padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;
-                               display:flex;align-items:center;gap:5px;transition:all 0.2s;"
-                        onmouseover="this.style.color='#f97316';this.style.borderColor='#f97316'"
-                        onmouseout="this.style.color='#94a3b8';this.style.borderColor='#334155'">
-                        <i class="fas fa-copy"></i> نسخ
-                    </button>
-                </div>
-            </div>
+<div id="selected-method-info" style="display:none;" class="account-info-box">
+    <div class="account-info-label">
+        <i class="fas fa-hashtag"></i> رقم الحساب
+    </div>
+    <div class="account-info-row">
+        <span id="selected-account" class="account-number"></span>
+        <button onclick="copyAccount()" class="copy-account-btn"
+            onmouseover="this.classList.add('hovered')"
+            onmouseout="this.classList.remove('hovered')">
+            <i class="fas fa-copy"></i> نسخ
+        </button>
+    </div>
+</div>
 
             <!-- ── رفع الإيصال ── -->
-            <div id="receipt-upload-section" style="display:none; margin-bottom:16px;">
-                <div style="font-size:13px;font-weight:700;color:#94a3b8;
-                            margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-                    <i class="fas fa-receipt" style="color:#f97316;"></i>
-                    ارفع إيصال الدفع
-                </div>
-                <input type="file" id="receipt-input" accept="image/*" style="display:none">
-                <div onclick="document.getElementById('receipt-input').click()" style="border:2px dashed rgba(249,115,22,0.35);border-radius:12px;
-                            padding:22px;text-align:center;cursor:pointer;
-                            background:rgba(249,115,22,0.03);transition:all 0.2s;"
-                    onmouseover="this.style.borderColor='#f97316';this.style.background='rgba(249,115,22,0.07)'"
-                    onmouseout="this.style.borderColor='rgba(249,115,22,0.35)';this.style.background='rgba(249,115,22,0.03)'">
-                    <i class="fas fa-cloud-upload-alt"
-                        style="font-size:26px;color:#f97316;margin-bottom:8px;display:block;"></i>
-                    <span style="font-size:13px;color:#64748b;">اضغط لرفع صورة الإيصال</span>
-                </div>
-                <img id="receipt-preview" src="" style="display:none;width:100%;border-radius:10px;margin-top:10px;
-                            border:1px solid rgba(255,255,255,0.06);">
-            </div>
+            <!-- بعد -->
+<div id="receipt-upload-section" style="display:none; margin-bottom:16px;">
+    <div class="receipt-title">
+        <i class="fas fa-receipt"></i>
+        ارفع إيصال الدفع
+    </div>
+    <input type="file" id="receipt-input" accept="image/*" style="display:none">
+    <div class="receipt-dropzone" onclick="document.getElementById('receipt-input').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span>اضغط لرفع صورة الإيصال</span>
+    </div>
+    <img id="receipt-preview" src="" style="display:none;width:100%;border-radius:10px;margin-top:10px;">
+</div>
 
             <!-- ── رسائل الحالة ── -->
             <div id="payment-status-msg"></div>

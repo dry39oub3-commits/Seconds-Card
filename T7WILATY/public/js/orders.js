@@ -160,19 +160,19 @@ async function fetchUserOrders() {
                     <div style="font-weight:700;font-size:15px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                         ${first.product_name || 'غير محدد'}
                     </div>
-                    <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">
-                        ${first.label ? `<span style="color:#f97316;margin-left:8px;">${first.label}</span>` : ''}
-                        ${multiProductBadge}
-                        Qty: ${totalQty}
-                    </div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">
+    ${first.label ? `<span style="color:var(--text-soft);margin-left:8px;">${first.label}</span>` : ''}
+    ${multiProductBadge}
+    Qty: ${totalQty}
+</div>
                     
-                    <div style="font-size:12px;color:#64748b;font-family:monospace;">${orderNum}</div>
-                </div>
+                    <div style="font-size:12px;color:var(--text-muted);font-family:monospace;">${orderNum}</div></div>
 
                 <!-- السعر والحالة والتاريخ -->
                 <div style="text-align:left;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
                     <span class="status-badge ${statusClass}" style="font-size:11px;">${statusText}</span>
-                    <div style="font-size:15px;font-weight:800;color:#e2e8f0;">
+                    <div style="font-size:15px;font-weight:800;color:var(--text);"
+>
                         ${group.totalPrice} ${currency}
                     </div>
                     <div style="font-size:11px;color:#64748b;">${date}</div>
@@ -195,10 +195,9 @@ let currentOrderFilter = 'all';
 window.setOrderFilter = (filter, btn) => {
     currentOrderFilter = filter;
     document.querySelectorAll('.order-filter-btn').forEach(b => {
-        b.style.opacity    = '0.5';
-        b.style.fontWeight = '600';
+        b.classList.remove('active-filter');
     });
-    if (btn) { btn.style.opacity = '1'; btn.style.fontWeight = '800'; }
+    if (btn) btn.classList.add('active-filter');
     filterOrders();
 };
 

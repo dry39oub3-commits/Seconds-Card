@@ -48,13 +48,16 @@ function setupUserMenu() {
         userDropdown.classList.toggle('show');
     };
 
-   window.addEventListener('header-search', (e) => {
+window.addEventListener('header-search', (e) => {
     searchProducts(e.detail);
+});
 
-        if (!userDropdown.contains(e.target) && !userBtn.contains(e.target)) {
-            userDropdown.classList.remove('show');
-        }
-    });
+// منفصل
+document.addEventListener('click', (e) => {
+    if (!userDropdown.contains(e.target) && !userBtn.contains(e.target)) {
+        userDropdown.classList.remove('show');
+    }
+});
 }
 
 // دالة تسجيل الخروج العامة

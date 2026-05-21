@@ -1,3 +1,32 @@
+/* ============================================
+   StoreCard — Checkout Page
+   Theme: Silver + Dark
+============================================ */
+
+:root {
+    --surface:      #ffffff;
+    --surface-2:    #f6f7f9;
+    --border:       rgba(30,36,51,0.09);
+    --text:         #1e2433;
+    --text-soft:    #3d4560;
+    --text-muted:   #8892a4;
+    --input-bg:     #ffffff;
+    --input-border: #dde0e8;
+    --text-color:   #1e2433;
+}
+
+[data-theme="dark"] {
+    --surface:      #1e2433;
+    --surface-2:    #252d3d;
+    --border:       rgba(255,255,255,0.07);
+    --text:         #e2e8f0;
+    --text-soft:    #94a3b8;
+    --text-muted:   #64748b;
+    --input-bg:     #252d3d;
+    --input-border: #334155;
+    --text-color:   #e2e8f0;
+}
+
 /* ── Checkout Container ── */
 .checkout-container {
     display: flex;
@@ -6,33 +35,32 @@
 }
 
 .checkout-card {
-    background: var(--surface, #111827);
+    background: var(--surface);
     width: 100%;
     max-width: 480px;
     padding: 32px 28px;
     border-radius: 24px;
-    border: 1px solid var(--border, rgba(255,255,255,0.06));
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    border: 1.5px solid var(--border);
+    box-shadow: 0 8px 40px rgba(30,36,51,0.08);
 }
 
 .checkout-title {
     font-size: 18px;
     font-weight: 700;
-    color: var(--text, #f1f5f9);
+    color: var(--text);
     margin-bottom: 24px;
     display: flex;
     align-items: center;
     gap: 10px;
 }
-
 .checkout-title::before {
     content: '';
     display: block;
-    width: 4px;
-    height: 20px;
-    background: #f97316;
+    width: 4px; height: 20px;
+    background: #1e2433;
     border-radius: 4px;
 }
+[data-theme="dark"] .checkout-title::before { background: #e2e8f0; }
 
 /* ── طرق الدفع ── */
 #payment-methods-list {
@@ -48,93 +76,98 @@
     gap: 14px;
     padding: 14px 18px;
     border-radius: 14px;
-    border: 1px solid var(--border, rgba(255,255,255,0.08));
-    background: var(--surface-2, rgba(255,255,255,0.03));
+    border: 1.5px solid var(--border);
+    background: var(--surface-2);
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s, transform 0.15s;
     position: relative;
     overflow: hidden;
 }
-
 .payment-method-card:hover {
-    border-color: rgba(249,115,22,0.4);
-    background: rgba(249,115,22,0.04);
+    border-color: rgba(30,36,51,0.3);
+    background: rgba(30,36,51,0.03);
     transform: translateY(-1px);
+}
+[data-theme="dark"] .payment-method-card:hover {
+    border-color: rgba(226,232,240,0.2);
+    background: rgba(226,232,240,0.03);
 }
 
 .payment-method-card.selected {
-    border-color: #f97316;
-    background: rgba(249,115,22,0.08);
+    border-color: #1e2433;
+    background: rgba(30,36,51,0.05);
+}
+[data-theme="dark"] .payment-method-card.selected {
+    border-color: #e2e8f0;
+    background: rgba(226,232,240,0.05);
 }
 
 .payment-method-card.selected::before {
     content: '';
     position: absolute;
-    right: 0;
-    top: 20%;
-    height: 60%;
-    width: 3px;
-    background: #f97316;
+    right: 0; top: 20%;
+    height: 60%; width: 3px;
+    background: #1e2433;
     border-radius: 4px 0 0 4px;
 }
+[data-theme="dark"] .payment-method-card.selected::before { background: #e2e8f0; }
 
 .payment-method-logo {
-    width: 42px;
-    height: 42px;
+    width: 42px; height: 42px;
     border-radius: 10px;
     object-fit: contain;
-    background: rgba(255,255,255,0.06);
+    background: #eceef2;
     padding: 6px;
     flex-shrink: 0;
-    border: 1px solid var(--border, rgba(255,255,255,0.06));
+    border: 1.5px solid var(--border);
 }
+[data-theme="dark"] .payment-method-logo { background: rgba(255,255,255,0.06); }
 
-.payment-method-info {
-    flex: 1;
-    text-align: right;
-}
-
+.payment-method-info { flex: 1; text-align: right; }
 .payment-method-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text, #f1f5f9);
-    margin-bottom: 3px;
+    font-size: 14px; font-weight: 700;
+    color: var(--text); margin-bottom: 3px;
 }
-
 .payment-method-desc {
     font-size: 12px;
-    color: var(--text-muted, #64748b);
+    color: var(--text-muted);
 }
 
 .payment-method-radio {
-    width: 18px;
-    height: 18px;
+    width: 18px; height: 18px;
     border-radius: 50%;
-    border: 2px solid #334155;
+    border: 2px solid #dde0e8;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: border-color 0.2s, background 0.2s;
 }
+[data-theme="dark"] .payment-method-radio { border-color: #334155; }
 
 .payment-method-card.selected .payment-method-radio {
-    border-color: #f97316;
-    background: #f97316;
+    border-color: #1e2433;
+    background: #1e2433;
+}
+[data-theme="dark"] .payment-method-card.selected .payment-method-radio {
+    border-color: #e2e8f0;
+    background: #e2e8f0;
 }
 
 .payment-method-card.selected .payment-method-radio::after {
     content: '';
-    width: 6px;
-    height: 6px;
+    width: 6px; height: 6px;
     border-radius: 50%;
     background: white;
+}
+[data-theme="dark"] .payment-method-card.selected .payment-method-radio::after {
+    background: #1e2433;
 }
 
 /* ── ملخص الطلب ── */
 .order-summary {
-    background: var(--surface-2, rgba(255,255,255,0.03));
-    border: 1px solid var(--border, rgba(255,255,255,0.06));
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
     border-radius: 14px;
     padding: 16px 18px;
     margin-bottom: 16px;
@@ -145,48 +178,44 @@
     justify-content: space-between;
     align-items: center;
     font-size: 14px;
-    color: var(--text-soft, #94a3b8);
+    color: var(--text-soft);
     padding: 7px 0;
-    border-bottom: 1px solid var(--border, rgba(255,255,255,0.05));
+    border-bottom: 1px solid var(--border);
 }
-
-.summary-line:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.summary-line .summary-val {
-    font-weight: 600;
-    color: var(--text, #f1f5f9);
-}
+.summary-line:last-child { border-bottom: none; padding-bottom: 0; }
+.summary-line .summary-val { font-weight: 600; color: var(--text); }
 
 .summary-line.total-line {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text, #f1f5f9);
-    padding-top: 12px;
-    margin-top: 4px;
-    border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+    font-size: 16px; font-weight: 700;
+    color: var(--text);
+    padding-top: 12px; margin-top: 4px;
+    border-top: 1.5px solid var(--border);
     border-bottom: none;
 }
-
 .summary-line.total-line .summary-val {
-    color: #f97316;
+    color: #1e2433;
     font-size: 18px;
 }
+[data-theme="dark"] .summary-line.total-line .summary-val { color: #e2e8f0; }
 
+/* ── رصيد المحفظة ── */
 .wallet-balance-line {
-    background: rgba(249,115,22,0.06);
-    border: 1px solid rgba(249,115,22,0.15);
+    background: rgba(30,36,51,0.04);
+    border: 1.5px solid rgba(30,36,51,0.12);
     border-radius: 10px;
     padding: 10px 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    color: #f97316;
+    color: #1e2433;
     font-weight: 600;
     margin-bottom: 16px;
+}
+[data-theme="dark"] .wallet-balance-line {
+    background: rgba(226,232,240,0.04);
+    border-color: rgba(226,232,240,0.1);
+    color: #e2e8f0;
 }
 
 /* ── زر الدفع ── */
@@ -195,13 +224,13 @@
     padding: 15px;
     border-radius: 14px;
     border: none;
-    background: linear-gradient(135deg, #22c55e, #16a34a);
+    background: #16a34a;
     color: white;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-    box-shadow: 0 4px 20px rgba(34,197,94,0.3);
+    box-shadow: 0 4px 20px rgba(22,163,74,0.25);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -209,30 +238,31 @@
     font-family: inherit;
     letter-spacing: 0.3px;
 }
-
 .pay-now-btn:hover:not(:disabled) {
     opacity: 0.88;
     transform: translateY(-2px);
-    box-shadow: 0 6px 28px rgba(34,197,94,0.4);
+    box-shadow: 0 6px 28px rgba(22,163,74,0.35);
 }
-
 .pay-now-btn:active:not(:disabled) { transform: translateY(0); }
-
 .pay-now-btn:disabled {
-    background: #334155;
-    color: #64748b;
+    background: #eceef2;
+    color: #8892a4;
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
 }
+[data-theme="dark"] .pay-now-btn:disabled {
+    background: #252d3d;
+    color: #64748b;
+}
 
 /* ── رسائل الحالة ── */
 .status-error {
-    color: #f87171;
+    color: #dc2626;
     font-size: 13px;
     font-weight: 600;
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.2);
+    background: rgba(220,38,38,0.06);
+    border: 1.5px solid rgba(220,38,38,0.15);
     border-radius: 10px;
     padding: 10px 14px;
     margin-bottom: 16px;
@@ -243,7 +273,7 @@
 
 .security-note {
     font-size: 12px;
-    color: var(--text-muted, #475569);
+    color: var(--text-muted);
     margin-top: 18px;
     text-align: center;
     display: flex;
@@ -257,26 +287,44 @@
 #user-dropdown {
     position: absolute;
     top: calc(100% + 8px);
-    left: 0;
-    right: auto;
+    left: 0; right: auto;
     min-width: 180px;
     z-index: 9999;
-    background: var(--surface, #1e293b);
-    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    background: var(--surface);
+    border: 1.5px solid var(--border);
     border-radius: 14px;
-    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    box-shadow: 0 12px 36px rgba(30,36,51,0.12);
     padding: 6px;
     display: none;
     animation: dropDown 0.2s ease;
 }
-
 @keyframes dropDown {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
 #user-dropdown.show { display: block; }
 .user-menu-wrapper, .nav-icons, header { position: relative; }
+
+/* ── أزرار الهيدر ── */
+.action-btn {
+    background: #eceef2;
+    border-color: var(--border);
+    color: #3d4560;
+}
+.action-btn:hover {
+    background: rgba(30,36,51,0.08);
+    border-color: #1e2433;
+    color: #1e2433;
+}
+[data-theme="dark"] .action-btn {
+    background: #252d3d;
+    color: #94a3b8;
+}
+[data-theme="dark"] .action-btn:hover {
+    background: rgba(226,232,240,0.08);
+    border-color: #e2e8f0;
+    color: #e2e8f0;
+}
 
 /* ── موبايل ── */
 @media (max-width: 520px) {
@@ -284,94 +332,139 @@
     .payment-method-card { padding: 12px 14px; }
     .pay-now-btn { font-size: 15px; padding: 14px; }
 }
-
-/* ══════════════════════════════════════
-   وضع النهار
-══════════════════════════════════════ */
-[data-theme="light"] .checkout-card {
-    background: #ffffff;
-    border-color: rgba(0,0,0,0.07);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+/* ── معلومات الحساب ── */
+.account-info-box {
+    margin-bottom: 16px;
+    background: rgba(30,36,51,0.04);
+    border: 1.5px solid rgba(30,36,51,0.12);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+[data-theme="dark"] .account-info-box {
+    background: rgba(226,232,240,0.04);
+    border-color: rgba(226,232,240,0.1);
 }
 
-[data-theme="light"] .checkout-title { color: #0f172a; }
+.account-info-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.account-info-label i { color: #1e2433; }
+[data-theme="dark"] .account-info-label i { color: #e2e8f0; }
 
-[data-theme="light"] .order-summary {
-    background: #f8fafc;
-    border-color: rgba(0,0,0,0.07);
+.account-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
-[data-theme="light"] .summary-line {
-    color: #475569;
-    border-bottom-color: rgba(0,0,0,0.05);
+.account-number {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text);
+    font-family: monospace;
+    letter-spacing: 1px;
 }
 
-[data-theme="light"] .summary-line .summary-val { color: #0f172a; }
+.copy-account-btn {
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 1.5px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.copy-account-btn:hover,
+.copy-account-btn.hovered {
+    color: #1e2433;
+    border-color: #1e2433;
+}
+[data-theme="dark"] .copy-account-btn:hover,
+[data-theme="dark"] .copy-account-btn.hovered {
+    color: #e2e8f0;
+    border-color: #e2e8f0;
+}
+/* في checkout.css */
+.checkout-title .title-icon { color: #1e2433; }
+[data-theme="dark"] .checkout-title .title-icon { color: #e2e8f0; }
 
-[data-theme="light"] .summary-line.total-line {
-    color: #0f172a;
-    border-top-color: rgba(0,0,0,0.07);
+/* في checkout.css */
+.receipt-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+}
+.receipt-title i { color: #1e2433; }
+[data-theme="dark"] .receipt-title i { color: #e2e8f0; }
+
+.receipt-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--surface-2);
+    transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.receipt-dropzone:hover {
+    border-color: #1e2433;
+    background: rgba(30,36,51,0.06);
+}
+[data-theme="dark"] .receipt-dropzone:hover {
+    border-color: #e2e8f0;
+    background: rgba(226,232,240,0.06);
+}
+.receipt-dropzone i {
+    font-size: 26px;
+    color: var(--text-muted);
+}
+.receipt-dropzone span {
+    font-size: 13px;
+    color: var(--text-muted);
 }
 
-[data-theme="light"] .payment-method-card {
-    background: #f8fafc;
-    border-color: rgba(0,0,0,0.08);
+/* ── حقل رقم الهاتف المرسل ── */
+#payment-status-msg .sender-phone-wrap {
+    margin-bottom: 12px;
 }
 
-[data-theme="light"] .payment-method-card:hover {
-    background: rgba(249,115,22,0.04);
-    border-color: rgba(249,115,22,0.35);
+#payment-status-msg .sender-phone-label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
 }
 
-[data-theme="light"] .payment-method-card.selected {
-    background: rgba(249,115,22,0.06);
+#payment-status-msg .sender-phone-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 15px;
+    box-sizing: border-box;
+    outline: none;
+    font-family: 'Cairo', sans-serif;
+    transition: border-color 0.2s;
+    display: block;
 }
 
-[data-theme="light"] .payment-method-name { color: #0f172a; }
-[data-theme="light"] .payment-method-desc { color: #64748b; }
-
-[data-theme="light"] .payment-method-radio { border-color: #cbd5e1; }
-
-[data-theme="light"] .payment-method-logo {
-    background: #f1f5f9;
-    border-color: rgba(0,0,0,0.06);
+#payment-status-msg .sender-phone-input:focus {
+    border-color: #1e2433;
 }
 
-[data-theme="light"] .pay-now-btn:disabled {
-    background: #e2e8f0;
-    color: #94a3b8;
-}
-
-[data-theme="light"] .security-note { color: #94a3b8; }
-
-[data-theme="light"] #user-dropdown {
-    background: #ffffff;
-    border-color: rgba(0,0,0,0.08);
-    box-shadow: 0 12px 36px rgba(0,0,0,0.12);
-}
-
-
-/* ── إصلاح أزرار الهيدر في النهار ── */
-[data-theme="light"] .action-btn {
-    background: #f1f5f9;
-    border-color: rgba(0,0,0,0.08);
-    color: #475569 !important;
-}
-
-[data-theme="light"] .action-btn:hover {
-    background: rgba(249,115,22,0.08);
-    border-color: #f97316;
-    color: #f97316 !important;
-}
-
-[data-theme="light"] {
-    --input-bg: #ffffff;
-    --input-border: #e2e8f0;
-    --text-color: #1e293b;
-}
-
-[data-theme="dark"] {
-    --input-bg: #1e293b;
-    --input-border: #334155;
-    --text-color: #e2e8f0;
+[data-theme="dark"] #payment-status-msg .sender-phone-input:focus {
+    border-color: #e2e8f0;
 }
